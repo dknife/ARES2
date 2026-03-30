@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARES - Autonomous Rover Exploration System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #0A0A23 0%, #1B1B4F 100%);
+            color: #E0E0FF;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Stars background */
+        .stars {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="white"/></svg>') repeat;
+            background-size: 4px 4px;
+            opacity: 0.3;
+            animation: twinkle 10s infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 35, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 204, 255, 0.3);
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 60px;
+        }
+
+        .nav-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00CCFF, #FF69B4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #C0C0FF;
+            text-decoration: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .nav-links a:hover {
+            color: #fff;
+            border-color: rgba(0, 204, 255, 0.5);
+            background: rgba(0, 204, 255, 0.1);
+        }
+
+        .nav-links a.active {
+            background: linear-gradient(45deg, rgba(0, 204, 255, 0.2), rgba(255, 105, 180, 0.2));
+            border-color: rgba(0, 204, 255, 0.5);
+            color: #fff;
+        }
+
+        .nav-links a.service-btn {
+            background: linear-gradient(45deg, #00CCFF, #FF69B4);
+            color: #fff;
+            border: none;
+            box-shadow: 0 0 12px rgba(0, 204, 255, 0.4);
+        }
+
+        .nav-links a.service-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.7);
+            transform: translateY(-1px);
+        }
+
+        /* Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 100px 24px 60px;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3em;
+            font-weight: 700;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #00CCFF, #FF69B4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s ease-in-out infinite alternate;
+            margin-bottom: 8px;
+        }
+
+        .hero .subtitle {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            font-weight: 400;
+            color: #8888CC;
+            letter-spacing: 6px;
+            margin-bottom: 24px;
+        }
+
+        .hero p {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #C0C0FF;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 48px;
+        }
+
+        section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 204, 255, 0.3);
+            color: #00CCFF;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(20, 20, 50, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 204, 255, 0.25);
+            border-radius: 16px;
+            padding: 28px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 20px rgba(0, 204, 255, 0.25);
+        }
+
+        .card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.05em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #FF69B4;
+        }
+
+        .card p {
+            font-size: 0.95em;
+            line-height: 1.7;
+            color: #B0B0DD;
+        }
+
+        /* Architecture diagram */
+        .arch-diagram {
+            background: rgba(20, 20, 50, 0.85);
+            border: 1px solid rgba(0, 204, 255, 0.25);
+            border-radius: 16px;
+            padding: 32px;
+            font-family: 'Roboto', monospace;
+            font-size: 0.95em;
+            line-height: 2;
+            color: #C0C0FF;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        .arch-diagram .flow-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 8px 0;
+        }
+
+        .arch-box {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .arch-web { background: rgba(0, 204, 255, 0.15); border: 1px solid #00CCFF; color: #00CCFF; }
+        .arch-ble { background: rgba(255, 184, 0, 0.15); border: 1px solid #FFB800; color: #FFB800; }
+        .arch-pico { background: rgba(255, 105, 180, 0.15); border: 1px solid #FF69B4; color: #FF69B4; }
+        .arch-hw { background: rgba(0, 255, 157, 0.15); border: 1px solid #00FF9D; color: #00FF9D; }
+
+        .arch-arrow {
+            color: #8888CC;
+            font-size: 1.4em;
+        }
+
+        /* Tech list */
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .tech-tag {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+            background: rgba(0, 204, 255, 0.1);
+            border: 1px solid rgba(0, 204, 255, 0.3);
+            color: #C0C0FF;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            color: #6666AA;
+            font-size: 0.85em;
+            border-top: 1px solid rgba(0, 204, 255, 0.15);
+        }
+
+        footer a {
+            color: #00CCFF;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px rgba(0, 204, 255, 0.5); }
+            to { text-shadow: 0 0 20px rgba(0, 204, 255, 0.8), 0 0 30px rgba(255, 105, 180, 0.5); }
+        }
+
+        @keyframes twinkle {
+            from { opacity: 0.3; }
+            to { opacity: 0.6; }
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2em; }
+            .hero .subtitle { font-size: 0.8em; letter-spacing: 3px; }
+            .card-grid { grid-template-columns: 1fr; }
+            .nav-inner { padding: 0 12px; }
+            .nav-links a { padding: 6px 12px; font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+
+    <nav>
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">ARES</a>
+            <div class="nav-links">
+                <a href="#about" class="active">소개</a>
+                <a href="#architecture">구조</a>
+                <a href="#components">구성</a>
+                <a href="Web/index.html" class="service-btn">서비스</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="content">
+        <!-- Hero -->
+        <div class="hero">
+            <h1>ARES</h1>
+            <div class="subtitle">Autonomous Rover Exploration System</div>
+            <p>
+                블록 코딩으로 화성 탐사 로버를 제어하는 교육용 로봇 프로젝트입니다.
+                웹 브라우저에서 블록을 조합하고, 블루투스로 로버에 명령을 전송하세요.
+            </p>
+        </div>
+
+        <!-- About -->
+        <section id="about">
+            <h2>프로젝트 소개</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>블록 코딩 인터페이스</h3>
+                    <p>Google Blockly 기반의 시각적 프로그래밍 환경으로, 코딩 경험이 없는 초등학생도 쉽게 로버를 제어할 수 있습니다. 이동, 센서, LED, 부저, BB탄 발사 등 다양한 블록을 제공합니다.</p>
+                </div>
+                <div class="card">
+                    <h3>무선 블루투스 제어</h3>
+                    <p>Web Bluetooth를 통해 브라우저에서 직접 로버와 통신합니다. 별도 앱 설치 없이 웹 브라우저만으로 로버를 연결하고 제어할 수 있습니다.</p>
+                </div>
+                <div class="card">
+                    <h3>AI 코딩 도우미</h3>
+                    <p>로컬 AI 모델이 블록 코딩에 대한 질문에 답변합니다. 아이들이 블록의 사용법이나 로봇 제어 방법을 쉽게 이해할 수 있도록 도와줍니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture -->
+        <section id="architecture">
+            <h2>시스템 구조</h2>
+            <div class="arch-diagram">
+                <div class="flow-row">
+                    <span class="arch-box arch-web">Web UI (Blockly)</span>
+                    <span class="arch-arrow">&rarr;</span>
+                    <span class="arch-box arch-ble">Web Bluetooth (BLE)</span>
+                    <span class="arch-arrow">&rarr;</span>
+                    <span class="arch-box arch-pico">Pico (UART 9600)</span>
+                    <span class="arch-arrow">&rarr;</span>
+                    <span class="arch-box arch-hw">Hardware Modules</span>
+                </div>
+                <div class="flow-row" style="margin-top: 16px;">
+                    <span class="arch-box arch-hw">센서 데이터</span>
+                    <span class="arch-arrow">&rarr;</span>
+                    <span class="arch-box arch-pico">CommandProcessor</span>
+                    <span class="arch-arrow">&rarr;</span>
+                    <span class="arch-box arch-ble">BLE 응답 (20B 청크)</span>
+                    <span class="arch-arrow">&rarr;</span>
+                    <span class="arch-box arch-web">Web UI 표시</span>
+                </div>
+            </div>
+
+            <div class="tech-list">
+                <span class="tech-tag">Raspberry Pi Pico</span>
+                <span class="tech-tag">MicroPython</span>
+                <span class="tech-tag">Web Bluetooth</span>
+                <span class="tech-tag">Google Blockly</span>
+                <span class="tech-tag">BLE / UART</span>
+                <span class="tech-tag">HM-10 / BT05</span>
+                <span class="tech-tag">SSD1306 OLED</span>
+                <span class="tech-tag">HC-SR04</span>
+                <span class="tech-tag">EXAONE 3.5 LLM</span>
+            </div>
+        </section>
+
+        <!-- Components -->
+        <section id="components">
+            <h2>주요 구성 요소</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>서보 모터 (바퀴)</h3>
+                    <p>360도 연속 회전 서보 2개로 전진, 후진, 좌회전, 우회전을 수행합니다. 시간 제어와 연속 제어 모드를 지원합니다.</p>
+                </div>
+                <div class="card">
+                    <h3>DC 모터</h3>
+                    <p>메인 구동 모터로 강한 힘을 제공합니다. PWM 속도 제어와 방향 전환을 지원합니다.</p>
+                </div>
+                <div class="card">
+                    <h3>초음파 센서 (HC-SR04)</h3>
+                    <p>전방 물체까지의 거리를 cm 단위로 측정합니다. 자동 정지 기능과 연동하여 충돌을 방지합니다.</p>
+                </div>
+                <div class="card">
+                    <h3>자기장 센서</h3>
+                    <p>자석의 존재를 감지하여 0(없음) 또는 1(감지) 값을 반환합니다. 탐사 미션에 활용됩니다.</p>
+                </div>
+                <div class="card">
+                    <h3>LED 배열 (5개)</h3>
+                    <p>5개의 LED를 개별 또는 전체 제어합니다. 밝기 조절(0~1)이 가능하며 변수를 활용한 동적 제어를 지원합니다.</p>
+                </div>
+                <div class="card">
+                    <h3>OLED 디스플레이</h3>
+                    <p>128x64 SSD1306 OLED 화면에 메시지를 표시합니다. 시스템 상태 확인 및 사용자 메시지 출력에 사용됩니다.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>ARES Project &mdash; 코리아사이언스 &mdash; <a href="https://github.com/dknife/ARES2" target="_blank">GitHub</a></p>
+    </footer>
+</body>
+</html>
