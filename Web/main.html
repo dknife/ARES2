@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코리아사이언스 화성 탐사선 제어</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
+    <script src="https://unpkg.com/blockly@11/blocks_compressed.js"></script>
+    <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
+    <script type="module" src="main.js"></script>
+    <style>
+        #dashboardFrame {
+            width: 100%;
+            height: calc(100vh - 230px);
+            min-height: 500px;
+            border: none;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            #dashboardFrame {
+                height: calc(100vh - 270px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>코리아사이언스 화성 탐사선 제어</h1>
+            <p class="subtitle">아레스와 알비의 화성 탐사선을 블록 코딩으로 제어하세요!</p>
+        </header>
+        <section id="controls">
+            <button id="connectButton">🔗 아레스 탐사선 찾기</button>
+            <button id="disconnectButton" disabled>🔗 탐사선 교신 중단</button>
+            <button id="runButton">▶️ 명령 실행</button>
+            <button id="saveButton">💾 저장하기</button>
+            <button id="loadButton">📂 불러오기</button>
+            <button id="dashboardButton">📊 대시보드</button>
+            <button id="emergencyStopButton">🛑 비상 정지</button>
+            <button id="logToggleButton">📝 로그</button>
+            <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
+            <span id="status">탐사선 연결 대기 중</span>
+            <div id="deviceInfo"></div>
+        </section>
+        <div class="main-content">
+            <div id="blocklyDiv"></div>
+            <iframe id="dashboardFrame" src="dashboard.html"></iframe>
+        </div>
+        <section id="logContainer">
+            <div id="logHeader">
+                통신 로그
+                <button id="clearLogBtn">로그 지우기</button>
+            </div>
+            <div id="logContent"></div>
+        </section>
+    </div>
+
+
+    <xml id="toolbox" style="display: none">
+        <!-- ========== 🚗 서보 모터 ========== -->
+        <category name="🚗 서보 모터" colour="#FF8C00">
+            <block type="timed_forward">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="timed_backward">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="timed_left">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="timed_right">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="move_forward"></block>
+            <block type="move_backward"></block>
+            <block type="turn_left"></block>
+            <block type="turn_right"></block>
+            <block type="stop_moving"></block>
+        </category>
+        
+        <!-- ========== ⚡ DC 모터 ========== -->
+        <category name="⚡ DC 모터" colour="#FFCC00">
+            <block type="main_motor_forward_timed">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="main_motor_backward_timed">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="main_motor_forward"></block>
+            <block type="main_motor_backward"></block>
+            <block type="main_motor_stop"></block>
+        </category>
+
+        <!-- ========== 💡 LED ========== -->
+        <category name="💡 LED" colour="#FF5555">
+            <block type="led_on">
+                <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="led_off"></block>
+            <block type="set_lamp">
+                <value name="LAMP0"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP1"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP2"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP3"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP4"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            </block>
+        </category>
+
+        <!-- ========== � 메인 LED ========== -->
+        <category name="💡 메인 LED" colour="#FF33CC">
+            <block type="main_led_on">
+                <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="main_led_off"></block>
+        </category>
+
+        <!-- ========== �🖥️ 디스플레이 ========== -->
+        <category name="🖥️ 디스플레이" colour="#9966FF">
+            <block type="send_message">
+                <value name="Msg"><shadow type="text"><field name="TEXT">Hello</field></shadow></value>
+            </block>
+            <block type="clear_display"></block>
+        </category>
+
+        <!-- ========== 🔊 소리 ========== -->
+        <category name="🔊 소리" colour="#00CCFF">
+            <block type="buzzer_on">
+                <value name="FREQ"><shadow type="math_number"><field name="NUM">262</field></shadow></value>
+                <value name="DURATION"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+        </category>
+        
+        <!-- ========== 🔫 발사 ========== -->
+        <category name="🔫 발사" colour="#FF4500">
+            <block type="gun_fire"></block>
+        </category>
+
+        <!-- ========== 📡 센서 ========== -->
+        <category name="📡 센서" colour="#5C81A6">
+            <block type="pico_check_device"></block>
+            <block type="check_distance"></block>
+            <block type="check_magnetic"></block>
+        </category>
+
+        <!-- ========== ⏱️ 시간 ========== -->
+        <category name="⏱️ 시간" colour="#5CA65C">
+            <block type="time_sleep">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+        </category>
+        
+        <!-- ========== 🔁 제어 ========== -->
+        <!-- 색상 210 = Blockly 기본 제어 블록 색상 -->
+        <category name="🔁 제어" colour="210">
+            <block type="controls_repeat_ext">
+                <value name="TIMES"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+            </block>
+            <block type="controls_whileUntil">
+                <field name="MODE">WHILE</field>
+            </block>
+            <block type="controls_if"></block>
+        </category>
+        
+        <!-- ========== 📦 변수 ========== -->
+        <!-- 색상 330 = Blockly 기본 변수 블록 색상 -->
+        <category name="📦 변수" colour="330" custom="VARIABLE"></category>
+        
+        <!-- ========== 🔢 수학/논리 ========== -->
+        <!-- 색상 230 = Blockly 기본 수학 블록 색상 -->
+        <category name="🔢 수학/논리" colour="230">
+            <block type="math_number"><field name="NUM">0</field></block>
+            <block type="math_arithmetic">
+                <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="B"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="math_random_int">
+                <value name="FROM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="TO"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="logic_compare">
+                <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="B"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="logic_operation"></block>
+            <block type="logic_negate"></block>
+            <block type="logic_boolean"></block>
+        </category>
+        
+        <!-- ========== 🔧 함수 ========== -->
+        <!-- 색상 290 = Blockly 기본 프로시저 블록 색상 -->
+        <category name="🔧 함수" colour="290" custom="PROCEDURE"></category>
+    </xml>
+</body>
+</html>

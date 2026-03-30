@@ -1,0 +1,134 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, #0A0A23 0%, #1B1B4F 100%);
+    color: #E0E0FF;
+    font-family: 'Roboto', sans-serif;
+    overflow: hidden;
+}
+
+.stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="white"/></svg>') repeat;
+    background-size: 4px 4px;
+    opacity: 0.3;
+    animation: twinkle 10s infinite alternate;
+}
+
+.container {
+    background: rgba(20, 20, 50, 0.85);
+    backdrop-filter: blur(10px);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0, 204, 255, 0.3);
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    border: 1px solid rgba(0, 204, 255, 0.5);
+}
+
+.intro-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8em;
+    font-weight: 700;
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #00CCFF, #FF69B4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+.intro-desc {
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: #C0C0FF;
+}
+
+.start-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2em;
+    padding: 14px 40px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #00CCFF, #FF69B4);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.5);
+}
+
+.start-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px rgba(0, 204, 255, 0.8);
+}
+
+.start-btn:active {
+    transform: translateY(0);
+}
+
+.status {
+    margin-top: 20px;
+    font-size: 1em;
+    font-weight: 400;
+    color: #C0C0FF;
+    transition: color 0.3s;
+}
+
+.status.connecting {
+    color: #FFAB19;
+}
+
+.status.connected {
+    color: #00FF88;
+}
+
+.status.error {
+    color: #FF5555;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px rgba(0, 204, 255, 0.5);
+    }
+    to {
+        text-shadow: 0 0 20px rgba(0, 204, 255, 0.8), 0 0 30px rgba(255, 105, 180, 0.5);
+    }
+}
+
+@keyframes twinkle {
+    from {
+        opacity: 0.3;
+    }
+    to {
+        opacity: 0.6;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        width: 85%;
+    }
+    .intro-title {
+        font-size: 2em;
+    }
+    .intro-desc {
+        font-size: 1em;
+    }
+    .start-btn {
+        font-size: 1em;
+        padding: 12px 30px;
+    }
+}
