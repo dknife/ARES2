@@ -369,6 +369,24 @@ function initializeEventListeners(workspace) {
   // 불러오기 버튼
   elements.loadButton.addEventListener('click', () => elements.fileInput.click());
 
+  // 예제 불러오기 버튼 (GitHub Pages / 로컬 서버에서 fetch)
+  const exampleButton = document.getElementById('exampleButton');
+  exampleButton?.addEventListener('click', async () => {
+    const url = 'examples/radar_demo.xml';
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const xmlText = await res.text();
+      const xml = Blockly.utils.xml.textToDom(xmlText);
+      workspace.clear();
+      Blockly.Xml.domToWorkspace(xml, workspace);
+      Logger.add('[예제] radar_demo 불러오기 완료', 'info');
+    } catch (err) {
+      alert('예제 불러오기에 실패했습니다: ' + err.message);
+      Logger.add(`[오류] 예제 불러오기 실패: ${err.message}`, 'error');
+    }
+  });
+
   // 파일 입력 처리
   elements.fileInput.addEventListener('change', (event) => {
     const file = event.target.files?.[0];
