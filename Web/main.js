@@ -372,18 +372,35 @@ function initializeEventListeners(workspace) {
   // 예제 불러오기 버튼 (GitHub Pages / 로컬 서버에서 fetch)
   const exampleButton = document.getElementById('exampleButton');
   exampleButton?.addEventListener('click', async () => {
-    const url = 'examples/radar_demo.xml';
+    const url = new URL('examples/radar_demo.xml', window.location.href).href;
+    Logger.add(`[예제] 요청: ${url}`, 'info');
     try {
       const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
       const xmlText = await res.text();
+      Logger.add(`[예제] 다운로드 ${xmlText.length} bytes`, 'info');
+
       const xml = Blockly.utils.xml.textToDom(xmlText);
       workspace.clear();
       Blockly.Xml.domToWorkspace(xml, workspace);
-      Logger.add('[예제] radar_demo 불러오기 완료', 'info');
+
+      // 블록코딩 모드로 전환 (대시보드 모드일 수 있으므로)
+      const blocklyDiv = document.getElementById('blocklyDiv');
+      const dashboardFrame = document.getElementById('dashboardFrame');
+      if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === 'block') {
+        dashboardFrame.style.display = 'none';
+        blocklyDiv.style.display = 'block';
+      }
+
+      Blockly.svgResize(workspace);
+      workspace.scrollCenter();
+
+      const count = workspace.getAllBlocks(false).length;
+      Logger.add(`[예제] 로드 완료 — 블록 ${count}개`, 'info');
     } catch (err) {
       alert('예제 불러오기에 실패했습니다: ' + err.message);
       Logger.add(`[오류] 예제 불러오기 실패: ${err.message}`, 'error');
+      console.error('[예제 로드 오류]', err);
     }
   });
 
