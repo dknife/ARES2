@@ -369,10 +369,13 @@ function initializeEventListeners(workspace) {
   // 불러오기 버튼
   elements.loadButton.addEventListener('click', () => elements.fileInput.click());
 
-  // 예제 불러오기 버튼 (GitHub Pages / 로컬 서버에서 fetch)
-  const exampleButton = document.getElementById('exampleButton');
-  exampleButton?.addEventListener('click', async () => {
-    const url = new URL('examples/radar_demo.xml', window.location.href).href;
+  // 예제 불러오기 드롭다운 (GitHub Pages / 로컬 서버에서 fetch)
+  const exampleSelect = document.getElementById('exampleSelect');
+  exampleSelect?.addEventListener('change', async (e) => {
+    const name = e.target.value;
+    if (!name) return;
+
+    const url = new URL(`examples/${name}.xml`, window.location.href).href;
     Logger.add(`[예제] 요청: ${url}`, 'info');
     try {
       const res = await fetch(url, { cache: 'no-store' });
@@ -396,11 +399,14 @@ function initializeEventListeners(workspace) {
       workspace.scrollCenter();
 
       const count = workspace.getAllBlocks(false).length;
-      Logger.add(`[예제] 로드 완료 — 블록 ${count}개`, 'info');
+      Logger.add(`[예제] ${name} 로드 완료 — 블록 ${count}개`, 'info');
     } catch (err) {
       alert('예제 불러오기에 실패했습니다: ' + err.message);
       Logger.add(`[오류] 예제 불러오기 실패: ${err.message}`, 'error');
       console.error('[예제 로드 오류]', err);
+    } finally {
+      // 같은 항목 재선택 가능하게 초기화
+      e.target.value = '';
     }
   });
 

@@ -1,0 +1,59 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="buzzer_on" x="40" y="40">
+    <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+    <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+    <next>
+      <block type="buzzer_on">
+        <value name="FREQ"><block type="math_number"><field name="NUM">659</field></block></value>
+        <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+        <next>
+          <block type="buzzer_on">
+            <value name="FREQ"><block type="math_number"><field name="NUM">784</field></block></value>
+            <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+            <next>
+              <block type="time_sleep">
+                <value name="SECONDS"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                <next>
+                  <block type="main_motor_forward">
+                    <next>
+                      <block type="time_sleep">
+                        <value name="SECONDS"><block type="math_number"><field name="NUM">1.5</field></block></value>
+                        <next>
+                          <block type="main_motor_stop">
+                            <next>
+                              <block type="time_sleep">
+                                <value name="SECONDS"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                                <next>
+                                  <block type="buzzer_on">
+                                    <value name="FREQ"><block type="math_number"><field name="NUM">784</field></block></value>
+                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                    <next>
+                                      <block type="buzzer_on">
+                                        <value name="FREQ"><block type="math_number"><field name="NUM">659</field></block></value>
+                                        <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                        <next>
+                                          <block type="buzzer_on">
+                                            <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+                                            <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>
