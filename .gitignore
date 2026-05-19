@@ -1,2 +1,8 @@
 www/.idea*
 .idea/
+
+# Document 폴더는 마크다운(.md)만 추적.
+# 원본 산출물(.hwp, .pdf, .docx 등)은 로컬에만 보관하고 원격에 올리지 않는다.
+Document/*
+!Document/*.md
+!Document/.gitignore
