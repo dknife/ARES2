@@ -1,0 +1,165 @@
+\section{12차시 --- 화성 로켓 최종 발사!}
+\label{sec:ch12}
+
+본 차시는 1분기 12차시 여정의 \emph{대단원}이다. 모든 부품(LED 5개,
+부저, DC모터)을 한 코드 안에서 통합 제어하여 "화성 로켓 발사"라는
+완성된 시나리오를 구현한다. 시스템 점검 → 카운트다운 → 실제 발사 →
+자유 창작 발표로 이어지며, 마지막 미션 4에서는 학습자가 1분기에 익힌
+모든 도구를 자유롭게 조합해 자기만의 작품을 발표한다.
+
+\subsection{미션 1 --- 발사 전 최종 점검!}
+\label{subsec:ch12-m1}
+\missionmeta{LED 5개, 부저, DC모터}{LAUNCH}
+
+\begin{storybox}
+\sayares{알비! 발사 전에 모든 시스템이 정상인지 최종 점검해야 해. LED, 부저, 모터 전부 확인하자!}
+\sayalbi{삐릿- 실제 우주선도 발사 전에 꼭 시스템 점검을 해요! 순서대로 각 장치를 확인하는 점검 코드를 만들어봐요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item LED 5개 순서대로 켜고 끄며 점등 확인
+  \item 부저로 테스트 음 짧게 출력
+  \item DC모터 1초 짧게 회전 후 정지
+  \item 모든 점검 완료 시 LED 전체 3번 깜빡 (점검 완료)
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 최종 점검 시스템}
+\begin{minted}{python}
+# 최종 점검 시스템
+print("=== 시스템 점검 시작 ===")
+for i in range(1,6):
+    led_on(i,1.0); time.sleep(0.3); led_off(i)
+print("LED OK")
+buzzer_on(500, 0.3)
+print("부저 OK")
+motor_forward(1); motor_stop()
+print("모터 OK")
+# 점검 완료 신호
+for j in range(3):
+    for i in range(1,6): led_on(i,1.0)
+    time.sleep(0.3)
+    for i in range(1,6): led_off(i)
+    time.sleep(0.3)
+print("=== 모든 시스템 정상 ===")
+print("발사 준비 완료!")
+\end{minted}
+\end{labbox}
+
+\subsection{미션 2 --- 로켓 발사 카운트다운!}
+\label{subsec:ch12-m2}
+\missionmeta{LED 5개, 부저}{LAUNCH}
+
+\begin{storybox}
+\sayalbi{삐릿! 발사 시퀀스 프로그래밍은 정확한 순서와 타이밍이에요!}
+\sayares{좋아! 경고음이 울리고, 불빛이 켜지고, 마지막으로 발사! "3, 2, 1 ... 발사!"}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 경고음(부저): 삐빅-삐빅-삐빅 3번 준비 알림
+  \item 카운트다운: LED 5개 하나씩 꺼지며 5→4→3→2→1
+  \item 각 숫자마다 부저 음 점점 높아지며 긴장감 고조
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 로켓 발사 카운트다운}
+\begin{minted}{python}
+# 로켓 발사 카운트다운
+# 경고음 3번
+for i in range(3):
+    buzzer_on(600, 0.2); time.sleep(0.3)
+# 카운트다운 5→1
+for i in range(1,6): led_on(i,1.0)
+for step,freq in enumerate([400,500,600,700,800]):
+    led_off(5-step)
+    buzzer_on(freq, 0.4)
+    time.sleep(0.6)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 화성 로켓 발사!!!}
+\label{subsec:ch12-m3}
+\missionmeta{LED 5개, 부저, DC모터}{LAUNCH}
+
+\begin{storybox}
+\sayares{알비!! 0이 됐어! 지금이야, 발사!!!}
+\sayalbi{삐릿!!!!!!!! 발사!!!! 아레스, 우리가 해냈어요!!!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 경고음 사이렌 울리기
+  \item DC모터 회전: 발사 장치 모터 작동
+  \item LED 5개 시퀀스: 순서대로 점등 → 전체 빠른 깜빡임
+  \item 발사용 건: 발사 신호 출력 → 로켓 발사!
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 최종 발사 시퀀스}
+\begin{minted}{python}
+# 최종 발사 시퀀스!
+print("발사 사이렌!")
+buzzer_on(400, 0.5); buzzer_on(800, 0.5)  # 사이렌
+print("발사 장치 작동!")
+motor_forward(2)    # DC모터 발사 장치
+print("LED 점화!")
+for i in range(1,6): led_on(i,1.0); time.sleep(0.1)
+for j in range(8):
+    for i in range(1,6): led_off(i)
+    time.sleep(0.1)
+    for i in range(1,6): led_on(i,1.0)
+    time.sleep(0.1)
+print("발사 성공!!!")
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 1분기 자유 창작 발표!}
+\label{subsec:ch12-m4}
+\missionmeta{LED, 부저, DC모터}{LAUNCH}
+
+\begin{storybox}
+\sayares{알비! 1분기 동안 정말 많은 걸 배웠어. 이제 이걸 전부 써서 내가 원하는 걸 만들 수 있겠어!}
+\sayalbi{삐릿♪ 맞아요! 이제 아레스는 진짜 탐험가 코더예요! 자유롭게 조합해서 나만의 시스템을 만들어봐요! ★ 화성 탐사 훈련생 칭호 수여! ★}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item LED, 부저, DC모터 중 자유롭게 선택
+  \item 나만의 아이디어로 우주 장치 구현
+  \item 완성한 작품 친구들 앞에서 시연 + 발표
+  \item 어떤 기능을 왜 만들었는지 설명하기
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 나만의 1분기 자유 창작}
+\begin{minted}{python}
+# 나만의 1분기 자유 창작!
+# 이 부분을 직접 채워봐요!
+
+# 예시 1: 경보 시스템
+while True:
+    buzzer_on(800, 0.1)
+    led_on(1,1.0); led_on(3,1.0)
+    time.sleep(0.1)
+    led_off(1); led_off(3)
+    time.sleep(0.1)
+
+# 예시 2: 자동 주행 로봇
+motor_forward(3)
+motor_stop()
+motor_backward(1)
+motor_stop()
+\end{minted}
+\end{labbox}
+
+\begin{summary}[1분기 12차시 총정리]
+\textbf{배운 부품:} LED 1$\to$2$\to$3$\to$5개, 부저, DC모터(회전/PWM/바퀴)
+
+\textbf{배운 개념:} 디지털 출력(HIGH/LOW), 시간 지연, 순차, 반복(for/while),
+PWM 듀티 사이클, 주파수 제어, 난수, 시나리오 통합
+
+\textbf{대표 작품:} 알비 눈빛(2차시), 화성 신호등(5차시), 가위바위보 게임
+(6차시), 알비 카트(8차시), 로켓 발사 시스템(10$\sim$12차시).
+
+12차시 미션 4의 자유 창작 발표는 학습자가 "코딩 도구의 사용자"에서
+"아이디어의 작가"로 전환되는 분기점이다. 2분기에서는 서보모터, 초음파
+센서, LCD 등 \emph{입력과 정밀 제어}로 학습이 확장된다.
+\end{summary}

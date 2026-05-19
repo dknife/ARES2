@@ -1,0 +1,127 @@
+\section{4차시 --- 부저로 소리 만들기}
+\label{sec:ch04}
+
+본 차시는 "소리"라는 새로운 출력 모달리티를 도입한다. 학습자는
+주파수(\texttt{Hz})와 지속 시간(\texttt{초})이라는 두 매개변수로
+다양한 소리를 합성할 수 있음을 체험한다. 기본 삐빅음에서 시작해 앰뷸런스
+사이렌, 운석 경보, 그리고 SOS 모스 부호까지 4단계로 발전한다.
+
+\subsection{미션 1 --- 알비, 소리 내! 부저 기초}
+\label{subsec:ch04-m1}
+\missionmeta{부저 1개}{BUZZER}
+
+\begin{storybox}
+\sayalbi{삐릿! 화성은 모래폭풍 등 다양한 위험이 있어요. 부저로 소리를 만들어봐요!}
+\sayares{맞아! 위험 상황을 소리로 알릴 수 있게 경고음 시스템을 만들자!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 부저 원리: 전기 신호 → 진동 → 소리
+  \item 부저 켜기 → 1초 대기 → 끄기 기본 코딩
+  \item 짧은 삐빅 소리 3번 반복
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 부저 기초 삐빅 3번}
+\begin{minted}{python}
+# 부저 기초 - 삐빅 3번
+for i in range(3):
+    buzzer_on(500, 0.5)  # 500Hz, 0.5초
+    time.sleep(0.3)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 2 --- 화성 앰뷸런스 사이렌!}
+\label{subsec:ch04-m2}
+\missionmeta{부저 1개}{BUZZER}
+
+\begin{storybox}
+\sayalbi{삐릿! 기지 외부에서 위험한 가스가 발견됐어요. 사이렌이 필요해요!}
+\sayares{앰뷸런스처럼 삐용삐용 소리를 만들어보자! 낮은 음과 높은 음을 번갈아!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 낮은 주파수(400Hz)로 0.5초
+  \item 높은 주파수(800Hz)로 0.5초
+  \item 두 음을 무한 반복 → 사이렌 완성
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 앰뷸런스 사이렌}
+\begin{minted}{python}
+# 앰뷸런스 사이렌
+while True:
+    buzzer_on(400, 0.5)  # 삐─
+    buzzer_on(800, 0.5)  # 용─
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 운석 충돌 긴급 경보!}
+\label{subsec:ch04-m3}
+\missionmeta{부저 1개}{BUZZER}
+
+\begin{storybox}
+\sayalbi{삐릿! 거대한 운석이 접근하고 있어요. 즉시 긴급 경보를 울려야 해요!}
+\sayares{날카롭고 짧게 반복되는 경보음을 만들자! 긴박감 있게!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 0.1초 켜기 → 0.1초 끄기를 10번 반복
+  \item 잠깐 멈춤(0.5초) 후 다시 10번 반복
+  \item 반복문으로 긴박한 연속 경보 완성
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 긴급 경보음}
+\begin{minted}{python}
+# 긴급 경보음
+while True:
+    for i in range(10):
+        buzzer_on(1000, 0.1)
+        time.sleep(0.1)
+    time.sleep(0.5)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 긴급 구조 SOS 신호!}
+\label{subsec:ch04-m4}
+\missionmeta{부저 1개}{BUZZER}
+
+\begin{storybox}
+\sayalbi{삐릿! 지구와의 주 통신이 끊겼어요. 연락할 방법을 찾아야 해요!}
+\sayares{괜찮아, 모스 부호로 SOS를 보내면 돼! 짧게 3번, 길게 3번, 짧게 3번!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 짧은 소리(0.2초) 3번: $\cdots$
+  \item 긴 소리(0.6초) 3번: ---
+  \item 짧은 소리(0.2초) 3번: $\cdots$
+  \item SOS 패턴 완성 후 반복 발신
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- SOS 모스 부호}
+\begin{minted}{python}
+# SOS 모스 부호
+while True:
+    # ···
+    for i in range(3):
+        buzzer_on(800, 0.2); time.sleep(0.1)
+    time.sleep(0.3)
+    # ———
+    for i in range(3):
+        buzzer_on(800, 0.6); time.sleep(0.1)
+    time.sleep(0.3)
+    # ···
+    for i in range(3):
+        buzzer_on(800, 0.2); time.sleep(0.1)
+    time.sleep(1)
+\end{minted}
+\end{labbox}
+
+\begin{keypoint}
+부저 제어는 본질적으로 LED 제어와 동일한 구조(켜기/끄기 + 시간 지연)이지만,
+\emph{주파수}라는 추가 차원이 도입된다. 학습자는 단일 매개변수(밝기 또는
+지연)에서 두 매개변수(주파수, 지속)로 확장된 코딩 모델을 자연스럽게
+받아들이게 된다.
+\end{keypoint}

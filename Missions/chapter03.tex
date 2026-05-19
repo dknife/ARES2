@@ -1,0 +1,138 @@
+\section{3차시 --- LED 2개로 표정 만들기}
+\label{sec:ch03}
+
+본 차시는 LED 2개를 이용하여 알비의 "눈빛" 즉 감정 표현을 만든다.
+동시 점등, 교대 점등(윙크), 빠른 깜빡임(놀람), 그리고 학습자 스스로
+설계하는 감정 표현으로 이어진다. 두 개의 출력 장치를 \emph{동시에}
+다루는 경험을 통해, 코드가 하드웨어 여러 개를 병렬적으로 조작할 수
+있다는 사고로 확장된다.
+
+\subsection{미션 1 --- 알비의 눈이 반짝!}
+\label{subsec:ch03-m1}
+\missionmeta{LED 2개}{WINK}
+
+\begin{storybox}
+\sayares{일어나, 알비! 반짝반짝 깜빡이게 만들어볼까?}
+\sayalbi{삐릿- 안녕하세요! 양쪽 눈이 동시에 깜빡이면 살아있는 것처럼 보여요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item LED 1번, 2번 동시에 켜기
+  \item 1초 대기 후 동시에 끄기
+  \item 무한 반복으로 계속 깜빡이게 구현
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 양쪽 눈 동시 깜빡임}
+\begin{minted}{python}
+# 양쪽 눈 동시 깜빡이기
+while True:
+    led_on(1, 1.0)  # 왼쪽 눈
+    led_on(2, 1.0)  # 오른쪽 눈
+    time.sleep(1)
+    led_off(1)
+    led_off(2)
+    time.sleep(1)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 2 --- 알비가 윙크해요!}
+\label{subsec:ch03-m2}
+\missionmeta{LED 2개}{WINK}
+
+\begin{storybox}
+\sayalbi{삐릿! 아레스, 저 윙크할 수 있어요! 한쪽 눈씩 번갈아 깜빡이는 거예요!}
+\sayares{왼쪽, 오른쪽 눈이 번갈아 켜지면 윙크처럼 보이겠는데? 해보자!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 왼쪽 눈(LED1) 켜기 → 1초 → 끄기
+  \item 오른쪽 눈(LED2) 켜기 → 1초 → 끄기
+  \item 무한 반복으로 알비가 윙크하듯 구현
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 윙크 코딩}
+\begin{minted}{python}
+# 윙크 코딩!
+while True:
+    led_on(1, 1.0)   # 왼쪽 윙크
+    time.sleep(1)
+    led_off(1)
+    led_on(2, 1.0)   # 오른쪽 윙크
+    time.sleep(1)
+    led_off(2)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 알비가 깜짝 놀랐어요!}
+\label{subsec:ch03-m3}
+\missionmeta{LED 2개}{WINK}
+
+\begin{storybox}
+\sayares{알비! 갑자기 운석이 날아오면 어떻게 돼?}
+\sayalbi{삐릿!! 깜짝 놀라죠! 놀라면 두 눈이 막 빠르게 깜빡이잖아요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 두 눈 동시에 0.1초 간격 빠른 깜빡이기
+  \item 10번 빠르게 깜빡인 후 잠깐 멈추기
+  \item 반복문으로 놀람 표현 완성
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 운석 경보 빠른 깜빡임}
+\begin{minted}{python}
+# 운석 경보! 빠른 깜빡임
+while True:
+    for i in range(10):
+        led_on(1, 1.0)
+        led_on(2, 1.0)
+        time.sleep(0.1)
+        led_off(1)
+        led_off(2)
+        time.sleep(0.1)
+    time.sleep(0.5)  # 잠깐 멈춤
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 나만의 알비 눈빛 만들기}
+\label{subsec:ch03-m4}
+\missionmeta{LED 2개}{WINK}
+
+\begin{storybox}
+\sayares{알비, 이제 직접 원하는 눈빛을 만들어봐!}
+\sayalbi{삐릿♪ 기쁠 때, 슬플 때, 생각할 때... 각각 다른 눈빛으로 감정을 표현해줘요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 기쁨: 두 눈 빠르게 반짝 (0.2초)
+  \item 슬픔: 두 눈 천천히 깜빡 (1.5초)
+  \item 생각 중: 한쪽 눈만 깜빡
+  \item 나만의 감정 눈빛 하나 추가 창작
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 기쁨과 슬픔 표현}
+\begin{minted}{python}
+# 기쁨 표현
+for i in range(5):
+    led_on(1, 1.0); led_on(2, 1.0)
+    time.sleep(0.2)
+    led_off(1); led_off(2)
+    time.sleep(0.2)
+
+# 슬픔 표현
+for i in range(3):
+    led_on(1, 1.0); led_on(2, 1.0)
+    time.sleep(1.5)
+    led_off(1); led_off(2)
+    time.sleep(1.5)
+\end{minted}
+\end{labbox}
+
+\begin{notebox}{창작 활동}
+미션 4는 학습자 자유 창작 미션이다. 4가지 감정 외에도 학습자가 직접
+"화남"(빨갛게 빠르게), "졸림"(점점 느려짐) 등 자신만의 표현을
+설계하도록 격려한다.
+\end{notebox}
