@@ -187,16 +187,36 @@ export const CommandExecutor = {
     }
   },
 
+  // 즉시 완료 명령 — Pico가 blocking 처리하지 않으므로 응답 대기 불필요.
+  // 시간 의존적(BUZZER_ON, SERVO_t*, DC_t*, SLEEP) 또는 값 반환(DISTANCE, MAGNET, PING)은
+  // 이 집합에 넣지 말 것. 응답 대기로 두어야 타이밍/값이 보장된다.
+  FIRE_AND_FORGET_HEADS: new Set([
+    'LED_ON', 'LED_OFF',
+    'MAIN_LED_ON', 'MAIN_LED_OFF',
+    'MSG', 'CLEAR_DISPLAY',
+    'SERVO_FORWARD', 'SERVO_BACKWARD', 'SERVO_LEFT', 'SERVO_RIGHT', 'SERVO_STOP',
+    'DC_FORWARD', 'DC_BACKWARD', 'DC_STOP',
+    'GUN_FIRE',
+  ]),
+
+  _isFireAndForget(command) {
+    if (command.startsWith('[')) return true;     // LED 패턴 [v0 v1 v2 v3 v4]
+    const head = command.split(',')[0];
+    return this.FIRE_AND_FORGET_HEADS.has(head);
+  },
+
   async sendCommand(command) {
     if (!state.isExecuting) {
       Logger.add('[중단] 실행이 중단되었습니다', 'warning');
       return;
     }
-    
+
     BluetoothManager.updateStatus('명령 실행 중...', STATUS_COLORS.ORANGE);
-    
+
+    const fireAndForget = this._isFireAndForget(command);
+
     try {
-      await BluetoothManager.sendData(command, true);
+      await BluetoothManager.sendData(command, !fireAndForget);
       if (DEBUG) Logger.add(`[완료] ${command}`, 'info');
     } catch (error) {
       if (error.message.includes('시간 초과')) {
@@ -209,8 +229,12 @@ export const CommandExecutor = {
         }
       }
     }
-    
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 송신 간격 가드.
+    // - fire-and-forget: UART(9600 baud)/BLE 버퍼 오버플로우 방지 최소 마진.
+    // - 응답 대기: 이미 라운드트립을 거쳤으므로 가드 단축.
+    const cooldown = fireAndForget ? 40 : 20;
+    await new Promise(resolve => setTimeout(resolve, cooldown));
   },
 
   async handleLogicBlock(block) {
