@@ -1,0 +1,130 @@
+\section{6차시 --- 랜덤 함수와 가위바위보 게임}
+\label{sec:ch06}
+
+본 차시는 "난수"라는 새로운 개념을 도입한다. 학습자는
+\texttt{random.randint()}으로 매번 다른 결과를 만들어내는 비결정적
+코드를 작성하며, 이를 게임 시나리오(가위바위보 / 3판 2선승제 / 타임어택
+/ 표정 변화)로 발전시킨다.
+
+\subsection{미션 1 --- 랜덤 가위바위보 시작!}
+\label{subsec:ch06-m1}
+\missionmeta{LED 3개}{RANDOM}
+
+\begin{storybox}
+\sayalbi{삐릿! 아레스, 심심한데 저와 가위바위보 게임 어때요?}
+\sayares{오, 재미있을 것 같아! 그럼 알비는 LED 불빛으로, 나는 손으로 가위바위보 하는 거지?}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item LED 3개에 가위/바위/보 스티커 부착
+  \item 랜덤으로 1$\sim$3 중 숫자 하나 선택
+  \item 선택된 번호 LED 1개만 켜기
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 가위바위보 랜덤}
+\begin{minted}{python}
+# 가위바위보 랜덤
+import random
+choice = random.randint(1, 3)
+led_on(choice, 1.0)
+time.sleep(2)
+led_off(choice)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 2 --- 3판 2선승제 대결!}
+\label{subsec:ch06-m2}
+\missionmeta{LED 3개}{RANDOM}
+
+\begin{storybox}
+\sayares{알비, 한 번만 하면 허무하잖아. 3번 해서 많이 이기는 쪽이 최종 승리!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 게임을 3번 반복하는 반복문
+  \item 매 라운드마다 알비(LED)가 랜덤으로 바뀌도록
+  \item 3번 후 모든 LED 동시 깜빡임으로 게임 종료
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 3판 대결}
+\begin{minted}{python}
+# 3판 대결
+for round in range(3):
+    import random
+    choice = random.randint(1, 3)
+    led_on(choice, 1.0)
+    time.sleep(1.5)
+    led_off(choice)
+    time.sleep(0.5)
+# 종료 신호
+for i in range(3):
+    led_on(1,1); led_on(2,1); led_on(3,1)
+    time.sleep(0.3)
+    led_off(1); led_off(2); led_off(3)
+    time.sleep(0.3)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 타임어택! 빠르게 눌러라!}
+\label{subsec:ch06-m3}
+\missionmeta{LED 3개}{RANDOM}
+
+\begin{storybox}
+\sayares{알비, 이번엔 스피드 게임이야! LED가 켜지면 1초 안에 같은 손 모양을 내는 거야!}
+\sayalbi{삐릿! LED가 빠르게 바뀌기 전에 맞춰야 해요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 알비가 LED를 랜덤으로 켜기
+  \item 1초 후 자동으로 다음 랜덤 LED로 바뀌기
+  \item LED가 빠르게 바뀌는 타임어택 완성
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 타임어택 모드}
+\begin{minted}{python}
+# 타임어택 모드
+while True:
+    import random
+    choice = random.randint(1, 3)
+    led_on(choice, 1.0)
+    time.sleep(1)    # 1초 안에 맞춰야!
+    led_off(choice)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 알비의 표정 변화!}
+\label{subsec:ch06-m4}
+\missionmeta{LED 3개}{RANDOM}
+
+\begin{storybox}
+\sayares{알비, 내가 이겼을 때랑 졌을 때 알비 눈빛이 달라지면 더 재밌겠어!}
+\sayalbi{삐릿♪ 이겼을 때는 빠르게 반짝이고, 졌을 때는 천천히 깜빡이면 어때요?}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 아레스 승리: LED 3개 빠르게 5번 깜빡 (기쁨)
+  \item 알비 승리: LED 3개 순서대로 느리게 점등
+  \item 비김: LED 3개 번갈아 2번씩 깜빡
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 승리 표현}
+\begin{minted}{python}
+# 승리 표현
+for i in range(5):         # 기쁨 깜빡
+    led_on(1,1); led_on(2,1); led_on(3,1)
+    time.sleep(0.2)
+    led_off(1); led_off(2); led_off(3)
+    time.sleep(0.2)
+\end{minted}
+\end{labbox}
+
+\begin{keypoint}
+난수는 "결정적 코드도 다른 결과를 만들 수 있다"는 점에서 학습자에게
+강한 인상을 남긴다. \texttt{random.randint(a,b)}의 의미와, 동일 코드를
+실행해도 매번 결과가 달라지는 현상을 직접 관찰하게 하는 것이 본 차시의
+핵심 학습 포인트이다.
+\end{keypoint}

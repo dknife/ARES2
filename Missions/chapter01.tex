@@ -1,0 +1,114 @@
+\section{1차시 --- 코딩 입문과 알비 만남}
+\label{sec:ch01}
+
+본 차시는 ARES 교육과정의 출발점이다. "코딩이란 무엇인가?" 라는 근본
+질문에서 시작하여, 모바일 블록 코딩 앱 설치 및 블루투스를 통한 로버 알비
+(Pico W)와의 첫 연결까지를 다룬다. 본격적인 하드웨어 제어 이전에 학습자는
+\emph{순차(Sequence)}와 \emph{반복(Loop)}이라는 두 가지 핵심 개념을 익히고,
+앞으로 만들 작품들을 미리 살펴본다.
+
+\subsection{미션 1 --- 코딩이란 무엇인가?}
+\label{subsec:ch01-m1}
+\missionmeta{(이론 수업)}{theory}
+
+\begin{storybox}
+\sayares{알비! 앞으로 내가 코딩으로 명령을 내리면 네가 움직이는 거지?}
+\sayalbi{삐릿- 맞아요! 스마트폰 앱으로 저와 연결하면 언제든 명령을 보낼 수 있어요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 코딩 = 컴퓨터에게 할 일을 순서대로 알려주는 것
+  \item 순차(Sequence): 정해진 순서대로 실행
+  \item 반복(Loop): 같은 동작을 여러 번 자동 실행
+  \item 코딩 환경(앱) 설치 및 소개
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 코딩 이론 수업}
+\begin{minted}{python}
+# 1차시: 코딩 이론 수업
+# 코딩이란 컴퓨터에게 할 일을 순서대로 알려주는 것!
+# 이번 시간은 이론 수업입니다 :)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 2 --- 모바일 앱 설치하기}
+\label{subsec:ch01-m2}
+\missionmeta{(이론/설치 활동)}{theory}
+
+\begin{storybox}
+\sayares{알비, 앱을 어떻게 설치해?}
+\sayalbi{삐릿- QR코드를 스캔하거나 웹 주소로 접속하면 돼요! Wi-Fi가 없어도 파일로 설치할 수 있어요.}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 와이파이 없는 환경: 웹 파일 다운로드 후 설치
+  \item 와이파이 있는 환경: QR코드 또는 웹페이지 접속
+  \item Bluetooth로 알비(Pico W)와 연결 테스트
+  \item 앱 화면 구성 익히기
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 앱 설치 및 블루투스 연결}
+\begin{minted}{python}
+# 앱 설치 및 블루투스 연결
+# 이 수업은 실습 활동입니다.
+# 앱을 설치하고 블루투스로 연결해보세요!
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 블루투스 연결 테스트}
+\label{subsec:ch01-m3}
+\missionmeta{(이론/연결 실습)}{theory}
+
+\begin{storybox}
+\sayalbi{삐릿! 연결이 됐나요? 화면에 CONNECTED라고 뜨면 성공이에요!}
+\sayares{오! 연결됐어! 이제 코딩으로 알비를 움직일 수 있겠구나!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 스마트폰과 피코 W 블루투스 페어링
+  \item 앱에서 연결 버튼 눌러 CONNECTED 확인
+  \item 연결 상태 LED로 확인하기
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 연결 확인}
+\begin{minted}{python}
+# 연결 확인
+if bluetooth.connected():
+    print("CONNECTED")
+    led_on(1, 1.0)  # 연결 확인 LED
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 1분기 탐사 일지 작성}
+\label{subsec:ch01-m4}
+\missionmeta{(이론/예고편)}{theory}
+
+\begin{storybox}
+\sayares{알비! 우리가 앞으로 뭘 만들게 되는 거야?}
+\sayalbi{삐릿♪ LED로 빛을, 부저로 소리를, 모터로 움직임을 만들어요. 마지막엔 로켓 발사까지!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 1분기 전체 제작 목록 미리보기
+  \item 탐사 일지 첫 페이지 작성하기
+  \item LED·부저·DC모터가 무엇인지 소개
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 1분기 예고편}
+\begin{minted}{python}
+# 1분기 예고편!
+# LED → 부저 → DC모터 순서로 배울 거예요
+print("화성 탐사 대장정 시작!")
+\end{minted}
+\end{labbox}
+
+\begin{summary}[1차시 요약]
+1차시는 이론 중심 수업이다. 코딩의 본질(순서대로 명령을 전달하는 행위)을
+이해하고, 학습 환경(블록 코딩 앱 + Pico W 블루투스 페어링)을 구축하는
+것이 핵심이다. 4개 미션 모두 코드 작성은 최소화되어 있으며, 학습자는
+앞으로 펼쳐질 12차시 여정의 큰 그림을 그리는 데 집중한다.
+\end{summary}

@@ -1,0 +1,135 @@
+\section{7차시 --- DC모터 입문: 회전과 룰렛}
+\label{sec:ch07}
+
+본 차시는 학습자가 처음으로 \emph{운동}을 코드로 제어하는 단계이다.
+DC모터의 회전 방향(정/역)과 PWM 기반 속도 조절을 익히고, 모터에 원판을
+달아 "룰렛 게임"을 완성한다. 출력 장치가 정적인 빛/소리에서 동적인
+회전으로 확장되며, 학습자는 이제 "움직이는 작품"을 만들 수 있게 된다.
+
+\subsection{미션 1 --- DC모터 기본 회전}
+\label{subsec:ch07-m1}
+\missionmeta{DC모터}{MOTOR}
+
+\begin{storybox}
+\sayares{알비! 이 모터에 전기를 공급하면 어떻게 돼?}
+\sayalbi{삐릿- 코딩으로 전기를 보내면 빙글빙글 돌아요! 방향도 바꿀 수 있고 속도도 조절할 수 있어요.}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item DC모터 원리: 전기 → 자기장 → 회전 ($\bigstar$ 첫 등장)
+  \item 정방향(앞)으로 3초 회전 후 정지
+  \item 역방향(뒤)으로 3초 회전 후 정지
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- DC모터 기본 회전}
+\begin{minted}{python}
+# DC모터 기본 회전
+# 정방향 전진
+motor_forward(3)   # 3초 전진
+motor_stop()
+time.sleep(0.5)
+# 역방향 후진
+motor_backward(3)  # 3초 후진
+motor_stop()
+\end{minted}
+\end{labbox}
+
+\subsection{미션 2 --- 차림표 원판 룰렛 돌리기!}
+\label{subsec:ch07-m2}
+\missionmeta{DC모터, 원판}{MOTOR}
+
+\begin{storybox}
+\sayares{이제 원판을 모터에 꽂고 화살표도 달았어! 돌리면 화살표가 어디에 멈추는지 봐야지!}
+\sayalbi{삐릿- 룰렛이에요! 회전하다가 멈추면 그곳이 오늘의 선택!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 모터 최고 속도로 3초 회전 (룰렛 돌리기)
+  \item 속도 100→70→40→0\% 서서히 감속 후 정지
+  \item 화살표가 멈추면 결과 확인
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 룰렛 돌리기}
+\begin{minted}{python}
+# 룰렛 돌리기
+motor_forward_pwm(100)  # 최고 속도
+time.sleep(3)
+motor_forward_pwm(70)
+time.sleep(1)
+motor_forward_pwm(40)
+time.sleep(1)
+motor_stop()
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 속도 조절 빠르게 느리게!}
+\label{subsec:ch07-m3}
+\missionmeta{DC모터}{MOTOR}
+
+\begin{storybox}
+\sayalbi{삐릿! 아레스, 룰렛을 빠르게도 돌리고 느리게도 돌리면 더 재밌는 게임이 될 것 같아요!}
+\sayares{처음엔 천천히 돌다가 갑자기 빠르게! 두근두근 긴장감이 있겠는데?}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 느린 속도(30\%) → 2초
+  \item 중간 속도(60\%) → 2초
+  \item 빠른 속도(100\%) → 2초
+  \item 빠름→느림→정지 순서로 자연스럽게 완성
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 속도 단계 조절}
+\begin{minted}{python}
+# 속도 단계 조절
+motor_forward_pwm(30)
+time.sleep(2)
+motor_forward_pwm(60)
+time.sleep(2)
+motor_forward_pwm(100)
+time.sleep(2)
+motor_forward_pwm(70)
+time.sleep(1)
+motor_forward_pwm(40)
+time.sleep(1)
+motor_stop()
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 나만의 화성 룰렛 게임!}
+\label{subsec:ch07-m4}
+\missionmeta{DC모터, 원판}{MOTOR}
+
+\begin{storybox}
+\sayares{알비! 원판 칸에 미션이나 벌칙을 써도 재밌겠다! "노래 한 곡 부르기" 같은 거!}
+\sayalbi{삐릿♪ 재밌겠어요! 나만의 룰렛 게임을 완성해봐요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 원판 칸에 나만의 내용 채우기
+  \item 버튼 누르면 룰렛 돌고 멈추는 게임 완성
+  \item 친구들과 함께 즐길 화성 룰렛 시연
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 나만의 룰렛}
+\begin{minted}{python}
+# 나만의 룰렛
+motor_forward_pwm(100)
+time.sleep(2)
+motor_forward_pwm(60)
+time.sleep(1)
+motor_forward_pwm(20)
+time.sleep(1)
+motor_stop()
+print("결과 확인!")
+\end{minted}
+\end{labbox}
+
+\begin{caution}
+DC모터는 큰 전류를 소모하므로 USB 전원만으로는 부족할 수 있다. 별도
+배터리 팩 사용을 권장하며, 모터 정지 시에는 반드시 \texttt{motor\_stop()}을
+호출해 전류 차단을 명시할 것.
+\end{caution}
