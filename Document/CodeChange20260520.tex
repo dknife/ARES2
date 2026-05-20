@@ -119,7 +119,7 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\fancyfoot[L]{\sffamily\small\color{deepblue}\bfseries ARES BLE 파이프라인 · 부팅 안정화 · DC 모터 · HTTPS 사유}
+\fancyfoot[L]{\sffamily\small\color{deepblue}\bfseries ARES BLE 파이프라인 · 부팅 안정화 · DC 모터 · HTTPS · BATCH}
 \fancyfoot[R]{\sffamily\small\thepage}
 
 \usepackage{hyperref}
@@ -135,7 +135,7 @@
 
 \title{%
   {\sffamily\bfseries\fontsize{20}{24}\selectfont\color{deepblue}ARES 코드 수정 보고서}\\[4pt]
-  {\rmfamily\normalsize\color{accentcopper}BLE 명령 파이프라인 최적화 · 부팅 안정화 · DC 모터 대칭 출력 · HTTPS 사용 사유}\\[2pt]
+  {\rmfamily\normalsize\color{accentcopper}BLE 명령 파이프라인 최적화 · 부팅 안정화 · DC 모터 대칭 출력 · HTTPS 사용 사유 · BATCH 명령 블록}\\[2pt]
   {\rmfamily\footnotesize\color{rulegray}\textit{2026-05-19 \textendash{} 2026-05-20 합본}}
 }
 \author{\sffamily (주)코리아사이언스\quad/\quad 동명대학교 게임학부}
@@ -171,6 +171,10 @@
         보안 컨텍스트의 문제가 아니라 \emph{ES module의 같은-출처
         정책}이 원인이며, 향후 학생 배포 시 HTTPS 호스팅(또는
         \texttt{localhost})이 사실상 강제됨을 명시.
+  \item \textbf{(2026-05-20, 오후)} 명령을 묶어 한 BLE 라운드트립으로
+        보내는 BATCH(``한꺼번에 실행'') Blockly 컨테이너 블록 도입과,
+        클론 BT05/HM-10 환경에서 멀티 청크 송수신을 안정화하기 위한
+        5단계 페이싱/race condition 수정.
 \end{enumerate}
 
 \begin{keypoint}
@@ -742,6 +746,273 @@ D. ES module 제거, 전역 객체로 통합 & \texttt{import/export} 제거 후
 열기에 의존하는 워크플로우는 장기적으로 권장되지 않는다.
 \end{keypoint}
 
+\section{2026-05-20 (오후) --- BATCH ``한꺼번에 실행'' 명령 블록과 파이프라인 정착}
+
+BLE 파이프라인을 출력 명령에 대해 fire-and-forget으로 최적화한 결과
+단일 명령당 약 40\,ms의 Web 측 cooldown까지는 줄였지만, 명령이 수십 개에
+달하는 시퀀스(카운트다운, 사이렌, LED 시퀀스)에서는 누적 cooldown이
+여전히 수 초에 이르는 문제가 남았다. 본 절은 명령을 묶어 한 번의 BLE
+라운드트립으로 보내는 BATCH 메커니즘과, 이를 클론 BT05/HM-10 환경에서
+안정적으로 동작시키기 위해 진행한 단계별 수정을 정리한다.
+
+\subsection{동기와 설계}
+
+명령을 묶을 컨테이너 블록을 Blockly에 도입하고, 안에 들어간 자식 블록들의
+명령 문자열을 \texttt{|}로 이어 \texttt{BATCH;cmd1|cmd2|cmd3} 형태의 단일
+명령으로 Pico에 보낸다. Pico는 자체 큐로 순차 실행하고 마지막에 단일
+응답을 돌려준다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
+\toprule
+이득 & 의존 매개변수 & BATCH로 달성 \\
+\midrule
+명령당 cooldown 누적 제거 & Web cooldown 정책 & 단일 cooldown(20\,ms)으로 압축 \\
+\texttt{SLEEP}/\texttt{BUZZER\_ON} 타이밍 정확도 & Pico 내부 처리 & 네트워크 지연 영향 제거 \\
+응답 매칭 어긋남 위험 제거 & 단일 ACK 구조 & sub-command별 ACK 없음 \\
+BLE 송신 시간 단축 & 청크 수 & 부수적 (\texttt{CHUNK\_DELAY}에 영향) \\
+\bottomrule
+\end{tabularx}
+\caption{BATCH 도입의 본질적 이득 분해.}
+\end{table}
+
+\subsection{Blockly 블록 디자인과 차단 정책}
+
+새 블록 \texttt{batch\_block}은 단일 \texttt{statement input}을 가지는
+컨테이너이며 보라색(\#8E44AD)으로 시각적으로 두드러진다. 안에 들어가면
+안 되는 블록(센서 값 반환, 반복/조건/변수, 함수 호출, 자기 자신)은
+미리 집합으로 명시한다.
+
+\begin{minted}{javascript}
+// Web/blocklyconfig.js
+export const BATCH_FORBIDDEN_TYPES = new Set([
+  // 값 반환
+  'check_distance', 'check_magnetic', 'pico_check_device',
+  // 제어 흐름
+  'controls_if', 'controls_whileUntil', 'controls_repeat_ext',
+  // 변수/함수 (제어 흐름은 Web 측 책임)
+  'variables_set', 'assign_variable', 'math_change',
+  'procedures_callnoreturn', 'procedures_callreturn',
+  'procedures_defnoreturn', 'procedures_defreturn',
+  // 중첩 금지
+  'batch_block',
+]);
+\end{minted}
+
+학생이 금지 블록을 batch 안에 떨어뜨리면 \texttt{setOnChange} 콜백이
+자식을 순회해 노란 ⚠️ 경고를 즉시 띄운다. 실행 시점에도
+\texttt{commandexecutor.js}의 \texttt{\_processBatch}가 한 번 더 검증하여
+금지 블록 발견 시 빨간 로그와 함께 실행을 중단한다(이중 방어).
+
+\subsection{프로토콜과 핵심 구현}
+
+\begin{minted}{javascript}
+// Web/commandexecutor.js
+async _processBatch(block) {
+  const commands = [];
+  let cur = block.getInputTargetBlock('DO');
+  while (cur) {
+    if (BATCH_FORBIDDEN_TYPES.has(cur.type)) {
+      Logger.add(`[오류] '${cur.type}' 블록은 [한꺼번에 실행] 안에 넣을 수 없습니다.`, 'error');
+      state.isExecuting = false;
+      return;
+    }
+    const cmd = this.generateCommand(cur);
+    if (cmd) commands.push(cmd);
+    cur = cur.getNextBlock();
+  }
+  if (commands.length === 0) return;
+  const payload = `BATCH;${commands.join('|')}`;
+  await BluetoothManager.sendData(payload, true);   // 응답 대기 1회
+  await new Promise(r => setTimeout(r, 20));
+}
+\end{minted}
+
+\begin{minted}{python}
+# Pico/process_data.py
+def _handle_batch(self, data):
+    """BATCH;cmd1|cmd2|cmd3 — 기존 디스패처로 차례 실행 후 단일 응답."""
+    try:
+        body = data[len("BATCH;"):]
+        for cmd in body.split('|'):
+            cmd = cmd.strip()
+            if not cmd:
+                continue
+            self.process(cmd)
+        return 1
+    except Exception as e:
+        print(f"BATCH 오류: {e}")
+        return 0
+\end{minted}
+
+\subsection{진행 중 발견된 안정화 이슈와 단계별 수정}
+
+초기 구현은 단일 청크에 들어가는 매우 짧은 BATCH에서만 정상 동작했고,
+일반 학습 시나리오(LED 2개 + SLEEP 등)는 멀티 청크로 전송되며 다음 5단계의
+문제를 차례로 드러냈다.
+
+\subsubsection*{1단계 --- 부분 라인 반환으로 인한 BATCH 절단}
+
+\texttt{\_read\_uart\_line()}이 \texttt{RECEIVE\_TIMEOUT\_MS} 동안 newline을
+못 만나면 \emph{쉼표로 끝나지 않은 부분 데이터를 반환}하는 옛 동작 때문에,
+첫 청크 \texttt{"BATCH;LED\_ON,0,1|LED"}가 그대로 디스패처에 넘어가
+\texttt{LED\_ON,0,1}만 실행되고 나머지가 잘려나갔다. 부분 반환을 제거하고
+buffer를 유지한 채 \texttt{None}을 반환하도록 변경했다.
+
+\begin{minted}{python}
+# Pico/main.py
+def _read_uart_line(self):
+    if not self.uart.any() and not self.rx_buffer:
+        return None
+    start = utime.ticks_ms()
+    while utime.ticks_diff(utime.ticks_ms(), start) < RECEIVE_TIMEOUT_MS:
+        if self.uart.any():
+            chunk = self.uart.read()
+            if chunk:
+                self.rx_buffer += chunk.decode('utf-8', 'ignore')
+            if len(self.rx_buffer) > MAX_BUFFER_SIZE:
+                print("[UART] 버퍼 오버플로우, 초기화")
+                self.rx_buffer = ""
+                return None
+            if '\n' in self.rx_buffer:
+                idx = self.rx_buffer.index('\n')
+                line = self.rx_buffer[:idx].strip()
+                self.rx_buffer = self.rx_buffer[idx + 1:]
+                return line
+        else:
+            utime.sleep_ms(2)
+    # 타임아웃 시 buffer 유지, 다음 호출에서 이어받음
+    return None
+\end{minted}
+
+\subsubsection*{2단계 --- 청크 손실 진단과 페이싱 조정}
+
+원인 추적 끝에 BT05/HM-10 클론에서 청크 사이 간격이 BLE connection
+interval(30--70\,ms)과 겹쳐 청크가 일부 손실됨을 확인했다. AT 명령으로
+connection interval을 단축하는 정식 경로는 클론에서 미지원이므로 Web 측
+페이싱을 보수적으로 조정했다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+매개변수 & 변경 전 & 정착값 \\
+\midrule
+\texttt{Web/constants.js : CHUNK\_DELAY} & 50\,ms & \textbf{100\,ms} \\
+\texttt{Pico/main.py : RECEIVE\_TIMEOUT\_MS} & 50\,ms & \textbf{500\,ms} \\
+\bottomrule
+\end{tabular}
+\caption{클론 BLE 모듈을 위한 페이싱 정착값.}
+\end{table}
+
+\subsubsection*{3단계 --- GATT ACK 왕복 제거}
+
+\texttt{writeValueWithResponse}는 매 청크마다 GATT 수준 ACK를 기다리므로
+멀티 청크 송신 시간이 누적된다. characteristic이 지원하면
+\texttt{writeValueWithoutResponse}를 우선 사용하고, 그렇지 않으면 기존
+방식으로 fallback하도록 했다.
+
+\begin{minted}{javascript}
+// Web/bluetooth.js
+const useWithoutResponse =
+  state.characteristic.properties &&
+  state.characteristic.properties.writeWithoutResponse;
+// for-loop 내부에서:
+if (useWithoutResponse) {
+    await state.characteristic.writeValueWithoutResponse(chunk);
+} else {
+    await state.characteristic.writeValueWithResponse(chunk);
+}
+\end{minted}
+
+\subsubsection*{4단계 --- 응답 race condition 수정}
+
+BATCH가 Pico에서 매우 빠르게 처리되어 마지막 청크 송신 완료 직후 응답이
+도착하는데, \texttt{pendingResolve}가 송신 \emph{후}에 설치되어 있어 응답이
+\texttt{state.pendingResolve === null} 상태에서 버려졌다. 5초
+\texttt{RESPONSE\_TIMEOUT} 후 명령이 실패한 것처럼 보였지만 Pico에서는
+이미 두 LED 모두 점등되어 있었다. promise 설치를 송신 시작 \emph{전}으로
+옮겨 race를 닫았다.
+
+\begin{minted}{javascript}
+// Web/bluetooth.js — sendData 발췌
+let responsePromise = null;
+if (waitForResponse) {
+    responsePromise = new Promise((resolve, reject) => {
+        state.pendingResolve = resolve;     // ← 송신 전 설치
+        state.pendingReject = reject;
+        state.pendingTimeout = setTimeout(() => {
+            state.pendingResolve = null;
+            state.pendingReject = null;
+            state.pendingTimeout = null;
+            reject(new Error('응답 시간 초과'));
+        }, BLUETOOTH_CONFIG.RESPONSE_TIMEOUT);
+    });
+}
+// ... 청크 송신 ...
+return waitForResponse ? responsePromise : 'OK';
+\end{minted}
+
+\subsubsection*{5단계 --- 단일 청크 명령의 마지막 \texttt{CHUNK\_DELAY} 제거}
+
+\texttt{CHUNK\_DELAY=100\,ms}로 정착한 뒤 일반 LED 명령처럼 단일 청크
+명령조차 매번 100\,ms를 추가로 기다리는 부작용이 관찰되었다. 송신 루프가
+\emph{마지막 청크 송신 후에도} 무조건 \texttt{CHUNK\_DELAY}를 실행했기
+때문이다. 청크 \emph{사이}에만 페이싱이 적용되도록 guard를 추가했다.
+
+\begin{minted}{javascript}
+for (let i = 0; i < encodedData.length; i += BLUETOOTH_CONFIG.MAX_CHUNK_SIZE) {
+    const chunk = encodedData.slice(i, ...);
+    if (useWithoutResponse) await state.characteristic.writeValueWithoutResponse(chunk);
+    else                    await state.characteristic.writeValueWithResponse(chunk);
+    // 청크 사이에만 페이싱 — 마지막 청크 후엔 즉시 종료
+    if (i + BLUETOOTH_CONFIG.MAX_CHUNK_SIZE < encodedData.length) {
+        await this.delay(BLUETOOTH_CONFIG.CHUNK_DELAY);
+    }
+}
+\end{minted}
+
+\subsection{최종 효과}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lXXX@{}}
+\toprule
+명령 형태 & 변경 전 & BATCH 도입 직후 & BATCH 정착 후 \\
+\midrule
+단일 청크 출력 (\texttt{LED\_ON} 등) & 약 40\,ms & 약 140\,ms (마지막 \texttt{CHUNK\_DELAY} 100\,ms 가산) & 약 40\,ms (마지막 \texttt{CHUNK\_DELAY} guard로 회복) \\
+멀티 청크 시퀀스 100명령 누적 cooldown & 약 4\,초 & --- & 단일 cooldown으로 압축 \\
+\texttt{SLEEP}/\texttt{BUZZER\_ON} 타이밍 정확도 & 네트워크 지연 영향 & --- & Pico 내부 처리, 정확 \\
+응답 매칭 어긋남 & 가능성 있음 & 가능성 있음 & 단일 응답이라 구조적 제거 \\
+\bottomrule
+\end{tabularx}
+\caption{BATCH 도입 전후의 명령별 종단 효과.}
+\end{table}
+
+\begin{keypoint}
+이번 작업은 두 가지 가치가 함께 간다. 첫째, 카운트다운/사이렌 같은 시간
+의존 시퀀스가 \textbf{시각적으로 부드러워졌다}. 둘째, 학생이 ``하나씩 결과를
+확인하고 싶은 동작''과 ``빠르게 한 번에 보내고 싶은 동작''을 \emph{Blockly
+블록 위에 명시적으로 표현}하게 되었다. 추상적으로는 원격 호출(RPC)과 원격
+스크립트 송신의 차이를 초등 수준에서 체험하는 학습 도구이기도 하다.
+\end{keypoint}
+
+\subsection{BATCH 관련 잔여 사항}
+
+\begin{itemize}
+  \item \texttt{RESPONSE\_TIMEOUT=5\,초}는 BATCH 안의 누적 \texttt{SLEEP}이
+        5\,초를 넘으면 timeout이 먼저 도착한다. 후속 개선으로 BATCH의 명령
+        합에 비례한 \emph{동적 timeout} 산정 또는 BATCH 전용 더 긴 timeout
+        도입을 검토한다.
+  \item BATCH 안 명령을 단축 토큰(예: \texttt{LED\_ON,0,1}\,$\rightarrow$\,\texttt{L+0})
+        으로 packing하면 한 청크에 더 많은 명령이 들어가 송신 시간을 더
+        단축할 수 있다. 디스패처 호환성 작업이 필요하므로 별도 분리.
+\end{itemize}
+
 \section{잔여 위험 및 후속 작업}
 
 \subsection{Web 측 \texttt{saveSystemSettings()} 응답 검증}
@@ -785,6 +1056,16 @@ baud UART이다. HM-10/BT05의 AT 명령(\texttt{AT+BAUD8} 등)으로 38400
   \item \textbf{대시보드 \texttt{max\_speed} 영구 저장} --- 슬라이더
         조정 $\rightarrow$ 업로드 $\rightarrow$ 다른 탭 이동 $\rightarrow$ 대시보드 복귀 시
         값이 유지되는지 확인. Pico 재부팅 후에도 유지되어야 한다.
+  \item \textbf{BATCH 카운트다운} --- ``한꺼번에 실행'' 블록 안에 LED 5
+        $\rightarrow$ 1 점등/소등 + \texttt{SLEEP,1}을 넣고 실행. 한 번의
+        \texttt{[전송] BATCH;...} 로그와 단일 \texttt{[묶음 완료]} 응답이
+        떠야 하며, LED 시퀀스가 끊김 없이 매끄러워야 한다.
+  \item \textbf{BATCH 금지 블록 차단} --- 거리 센서/반복/조건 블록을
+        ``한꺼번에 실행'' 안에 끌어놓을 때 노란 ⚠️ 경고가 즉시 표시되고,
+        실행 시 빨간 오류 로그와 함께 중단되는지 확인.
+  \item \textbf{단일 청크 명령 속도 회복} --- 일반 \texttt{LED\_ON} 단일
+        블록을 5\,$\sim$\,10회 연속 실행. 명령 사이 체감 지연이 \texttt{CHUNK\_DELAY}
+        도입 전 수준(약 40\,ms)으로 돌아왔는지 확인.
 \end{enumerate}
 
 \section{변경 파일 요약}
@@ -802,6 +1083,15 @@ baud UART이다. HM-10/BT05의 AT 명령(\texttt{AT+BAUD8} 등)으로 38400
 05-20 & \texttt{Pico/main.py} & \texttt{boot()}의 OLED 호출 None 가드 추가. 05-19 BLE 최적화 재적용. \\
 05-20 & \texttt{Pico/process\_data.py} & 누락되어 있던 \texttt{\_handle\_sys\_set()} 메서드 헤더 복구. \\
 05-20 & \texttt{Pico/dcmotor.py} & \texttt{DIR+PWM} 단일 변조에서 양 핀 모두 PWM으로 전환. \texttt{dc\_forward}/\texttt{dc\_backward}가 한쪽 핀을 \texttt{PWM\_MAX} 고정, 다른 쪽을 \texttt{PWM\_MAX-speed}로 변조하여 양방향 brake-modulated 대칭 출력. \\
+\midrule
+05-20 & \texttt{Web/blocklyconfig.js} & \texttt{batch\_block} JSON 정의 + \texttt{BATCH\_FORBIDDEN\_TYPES} + \texttt{attachBatchBlockValidator()}. \\
+05-20 & \texttt{Web/main.js} & \texttt{attachBatchBlockValidator(Blockly)} 호출 등록. \\
+05-20 & \texttt{Web/commandexecutor.js} & \texttt{processBlock}에서 \texttt{batch\_block} 분기, \texttt{\_processBatch} 헬퍼 (자식 평탄화 + 금지 블록 차단 + 단일 \texttt{BATCH;...} 송신). \\
+05-20 & \texttt{Web/main.html} & toolbox에 ``🚀 한꺼번에'' 카테고리 추가. \\
+05-20 & \texttt{Web/constants.js} & \texttt{CHUNK\_DELAY} 50 $\rightarrow$ 100\,ms. \\
+05-20 & \texttt{Web/bluetooth.js} & \texttt{writeValueWithoutResponse} 우선 사용(fallback 포함), \texttt{pendingResolve}를 송신 \emph{전} 설치(race 해소), 마지막 청크 후 \texttt{CHUNK\_DELAY} guard. \\
+05-20 & \texttt{Pico/process\_data.py} & \texttt{BATCH;} 디스패처 + \texttt{\_handle\_batch()} (파이프 분리 후 기존 \texttt{process()} 재진입). \\
+05-20 & \texttt{Pico/main.py} & \texttt{RECEIVE\_TIMEOUT\_MS} 50 $\rightarrow$ 500\,ms, 타임아웃 시 부분 데이터 반환 제거(buffer 유지). \\
 \bottomrule
 \end{tabularx}
 \caption{2026-05-19 \textendash{} 05-20 변경 범위.}
@@ -819,6 +1109,11 @@ baud UART이다. HM-10/BT05의 AT 명령(\texttt{AT+BAUD8} 등)으로 38400
 05-20 & \texttt{600243a} & Re-apply BLE pipeline optimization with OLED boot crash fix \\
 05-20 & \texttt{de9cffc} & Fix DC motor: forward PWM asymmetry and missing SYS\_SET handler \\
 05-20 & \texttt{5780485} & Drive H-bridge with dual PWM for symmetric DC motor output \\
+05-20 & \texttt{4fccfe7} & Add ``한꺼번에 실행'' (BATCH) block to bundle commands into one BLE write \\
+05-20 & \texttt{c6d57ae} & Hold UART buffer across timeouts so multi-chunk BATCH stays intact \\
+05-20 & \texttt{8d341af} & Settle BATCH path: drop debug prints, switch BLE writes to without-response \\
+05-20 & \texttt{21c4e26} & Fix BLE response race: install pendingResolve before sending \\
+05-20 & \texttt{233f185} & Skip CHUNK\_DELAY after the final chunk so single-chunk commands stay fast \\
 \bottomrule
 \end{tabularx}
 \caption{관련 커밋 (\texttt{main} 브랜치).}
