@@ -10,8 +10,9 @@ export const BLUETOOTH_CONFIG = {
     MAX_CHUNK_SIZE: 20,
     // 명령 사이 딜레이 (ms) - 응답 기반이므로 최소값
     COMMAND_DELAY: 100,
-    // BLE 청크 사이 딜레이 (ms)
-    CHUNK_DELAY: 50,
+    // BLE 청크 사이 딜레이 (ms). HM-10/BT05 connection interval(30~70ms)을 충분히 넘기는
+    // 100ms로 두어 멀티 청크 명령(BATCH, LED 패턴, SYS_SET)의 청크 손실을 줄인다.
+    CHUNK_DELAY: 100,
     // 주기적 읽기 간격 (ms)
     READ_INTERVAL: 500,
     // 응답 타임아웃 (ms) - 대부분 명령은 빠르게 응답

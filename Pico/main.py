@@ -12,10 +12,10 @@ UART_BAUDRATE = 9600
 
 # 루프 설정
 MAIN_LOOP_DELAY_MS = 10
-# CHUNK_DELAY(=50ms, Web 측 BLE 청크 간격)보다 충분히 크게 잡아 멀티 청크 명령
+# CHUNK_DELAY(=100ms, Web 측 BLE 청크 간격)보다 충분히 크게 잡아 멀티 청크 명령
 # (BATCH, LED 패턴, SYS_SET 등)이 한 번의 _read_uart_line 호출 안에 newline까지
 # 도달할 확률을 높인다. 단일 청크 명령은 newline 발견 즉시 종료하므로 이 값과 무관.
-RECEIVE_TIMEOUT_MS = 200
+RECEIVE_TIMEOUT_MS = 500
 MAX_BUFFER_SIZE = 512
 
 
@@ -92,6 +92,8 @@ class AresRover:
                 chunk = self.uart.read()
                 if chunk:
                     self.rx_buffer += chunk.decode('utf-8', 'ignore')
+                    # 진단 print: 청크 수신 시점/길이를 시리얼에 노출 (멀티 청크 디버그용)
+                    print(f"[UART rx] +{len(chunk)}B, buf={len(self.rx_buffer)}, head={self.rx_buffer[:30]!r}")
 
                 # 버퍼 오버플로우 방지
                 if len(self.rx_buffer) > MAX_BUFFER_SIZE:
