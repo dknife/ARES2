@@ -36,31 +36,31 @@ while True:
 \end{minted}
 \end{labbox}
 
-\subsection{미션 2 --- 알비가 윙크해요!}
+\subsection{미션 2 --- 알비의 눈 번갈아 깜빡이기}
 \label{subsec:ch03-m2}
 \missionmeta{LED 2개}{WINK}
 
 \begin{storybox}
-\sayalbi{삐릿! 아레스, 저 윙크할 수 있어요! 한쪽 눈씩 번갈아 깜빡이는 거예요!}
-\sayares{왼쪽, 오른쪽 눈이 번갈아 켜지면 윙크처럼 보이겠는데? 해보자!}
+\sayalbi{삐릿! 아레스, 이번엔 왼쪽 눈, 오른쪽 눈을 번갈아 깜빡여볼게요!}
+\sayares{왼쪽 깜빡, 오른쪽 깜빡, 번갈아가면서 5번 해보자!}
 \end{storybox}
 
 \subsubsection*{학습 목표}
 \begin{itemize}[leftmargin=1.4em]
-  \item 왼쪽 눈(LED1) 켜기 → 1초 → 끄기
-  \item 오른쪽 눈(LED2) 켜기 → 1초 → 끄기
-  \item 무한 반복으로 알비가 윙크하듯 구현
+  \item 왼쪽 눈(LED1) 켜기 $\rightarrow$ 0.5초 $\rightarrow$ 끄기
+  \item 오른쪽 눈(LED2) 켜기 $\rightarrow$ 0.5초 $\rightarrow$ 끄기
+  \item 이 동작을 5번 반복하기
 \end{itemize}
 
-\begin{labbox}{샘플 코드 --- 윙크 코딩}
+\begin{labbox}{샘플 코드 --- 눈 번갈아 깜빡이기}
 \begin{minted}{python}
-# 윙크 코딩!
-while True:
-    led_on(1, 1.0)   # 왼쪽 윙크
-    time.sleep(1)
+# 눈 번갈아 깜빡이기 (5회)
+for i in range(5):
+    led_on(1, 1.0)   # 왼쪽 눈
+    time.sleep(0.5)
     led_off(1)
-    led_on(2, 1.0)   # 오른쪽 윙크
-    time.sleep(1)
+    led_on(2, 1.0)   # 오른쪽 눈
+    time.sleep(0.5)
     led_off(2)
 \end{minted}
 \end{labbox}
@@ -96,38 +96,34 @@ while True:
 \end{minted}
 \end{labbox}
 
-\subsection{미션 4 --- 나만의 알비 눈빛 만들기}
+\subsection{미션 4 --- 알비의 윙크 리듬!}
 \label{subsec:ch03-m4}
 \missionmeta{LED 2개}{WINK}
 
 \begin{storybox}
-\sayares{알비, 이제 직접 원하는 눈빛을 만들어봐!}
-\sayalbi{삐릿♪ 기쁠 때, 슬플 때, 생각할 때... 각각 다른 눈빛으로 감정을 표현해줘요!}
+\sayares{알비! 왼쪽 눈을 두 번 깜빡이고, 잠깐 쉬었다가 오른쪽 눈도 두 번 깜빡이면 어때?}
+\sayalbi{삐릿♪ 마치 비밀 신호 같아요! 그 윙크 리듬을 5번 반복해봐요!}
 \end{storybox}
 
 \subsubsection*{학습 목표}
 \begin{itemize}[leftmargin=1.4em]
-  \item 기쁨: 두 눈 빠르게 반짝 (0.2초)
-  \item 슬픔: 두 눈 천천히 깜빡 (1.5초)
-  \item 생각 중: 한쪽 눈만 깜빡
-  \item 나만의 감정 눈빛 하나 추가 창작
+  \item 왼쪽 눈(LED1) 두 번 깜빡이기 (0.4초 간격)
+  \item 1초 쉬기
+  \item 오른쪽 눈(LED2) 두 번 깜빡이기
+  \item 이 윙크 리듬을 5번 반복
 \end{itemize}
 
-\begin{labbox}{샘플 코드 --- 기쁨과 슬픔 표현}
+\begin{labbox}{샘플 코드 --- 윙크 리듬}
 \begin{minted}{python}
-# 기쁨 표현
+# 윙크 리듬: 왼쪽 2번, 쉬고, 오른쪽 2번 (5회 반복)
 for i in range(5):
-    led_on(1, 1.0); led_on(2, 1.0)
-    time.sleep(0.2)
-    led_off(1); led_off(2)
-    time.sleep(0.2)
-
-# 슬픔 표현
-for i in range(3):
-    led_on(1, 1.0); led_on(2, 1.0)
-    time.sleep(1.5)
-    led_off(1); led_off(2)
-    time.sleep(1.5)
+    # 왼쪽 눈 2번
+    led_on(1, 1.0); time.sleep(0.4); led_off(1); time.sleep(0.2)
+    led_on(1, 1.0); time.sleep(0.4); led_off(1)
+    time.sleep(0.8)  # 쉬기
+    # 오른쪽 눈 2번
+    led_on(2, 1.0); time.sleep(0.4); led_off(2); time.sleep(0.2)
+    led_on(2, 1.0); time.sleep(0.4); led_off(2)
 \end{minted}
 \end{labbox}
 
