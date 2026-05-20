@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>코리아사이언스 화성 탐사선 제어</title>
+    <title>肄붾━?꾩궗?댁뼵???붿꽦 ?먯궗???쒖뼱</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="vendor/blockly_compressed.js"></script>
@@ -29,26 +29,26 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>코리아사이언스 화성 탐사선 제어</h1>
-            <p class="subtitle">아레스와 알비의 화성 탐사선을 블록 코딩으로 제어하세요!</p>
+            <h1>肄붾━?꾩궗?댁뼵???붿꽦 ?먯궗???쒖뼱</h1>
+            <p class="subtitle">?꾨젅?ㅼ? ?뚮퉬???붿꽦 ?먯궗?좎쓣 釉붾줉 肄붾뵫?쇰줈 ?쒖뼱?섏꽭??</p>
         </header>
         <section id="controls">
-            <button id="connectButton">🔗 아레스 탐사선 찾기</button>
-            <button id="disconnectButton" disabled>🔗 탐사선 교신 중단</button>
-            <button id="runButton">▶️ 명령 실행</button>
-            <button id="saveButton">💾 저장하기</button>
-            <button id="loadButton">📂 불러오기</button>
-            <select id="exampleSelect" title="예제 불러오기">
-                <option value="">📦 예제 선택</option>
-                <option value="greeting">👋 인사하기</option>
-                <option value="countdown">⏰ 카운트다운</option>
-                <option value="radar_demo">📡 레이더 데모</option>
+            <button id="connectButton">?뵕 ?꾨젅???먯궗??李얘린</button>
+            <button id="disconnectButton" disabled>?뵕 ?먯궗??援먯떊 以묐떒</button>
+            <button id="runButton">?띰툘 紐낅졊 ?ㅽ뻾</button>
+            <button id="saveButton">?뮶 ??ν븯湲?/button>
+            <button id="loadButton">?뱛 遺덈윭?ㅺ린</button>
+            <select id="exampleSelect" title="?덉젣 遺덈윭?ㅺ린">
+                <option value="">?벀 ?덉젣 ?좏깮</option>
+                <option value="greeting">?몝 ?몄궗?섍린</option>
+                <option value="countdown">??移댁슫?몃떎??/option>
+                <option value="radar_demo">?뱻 ?덉씠???곕え</option>
             </select>
-            <button id="dashboardButton">📊 대시보드</button>
-            <button id="emergencyStopButton">🛑 비상 정지</button>
-            <button id="logToggleButton">📝 로그</button>
+            <button id="dashboardButton">?뱤 ??쒕낫??/button>
+            <button id="emergencyStopButton">?썞 鍮꾩긽 ?뺤?</button>
+            <button id="logToggleButton">?뱷 濡쒓렇</button>
             <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
-            <span id="status">탐사선 연결 대기 중</span>
+            <span id="status">?먯궗???곌껐 ?湲?以?/span>
             <div id="deviceInfo"></div>
         </section>
         <div class="main-content">
@@ -57,8 +57,8 @@
         </div>
         <section id="logContainer">
             <div id="logHeader">
-                통신 로그
-                <button id="clearLogBtn">로그 지우기</button>
+                ?듭떊 濡쒓렇
+                <button id="clearLogBtn">濡쒓렇 吏?곌린</button>
             </div>
             <div id="logContent"></div>
         </section>
@@ -66,8 +66,8 @@
 
 
     <xml id="toolbox" style="display: none">
-        <!-- ========== 🚗 서보 모터 ========== -->
-        <category name="🚗 서보 모터" colour="#FF8C00">
+        <!-- ========== ?슅 ?쒕낫 紐⑦꽣 ========== -->
+        <category name="?슅 ?쒕낫 紐⑦꽣" colour="#FF8C00">
             <block type="timed_forward">
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
@@ -87,8 +87,8 @@
             <block type="stop_moving"></block>
         </category>
         
-        <!-- ========== ⚡ DC 모터 ========== -->
-        <category name="⚡ DC 모터" colour="#FFCC00">
+        <!-- ========== ??DC 紐⑦꽣 ========== -->
+        <category name="??DC 紐⑦꽣" colour="#FFCC00">
             <block type="main_motor_forward_timed">
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
@@ -100,8 +100,8 @@
             <block type="main_motor_stop"></block>
         </category>
 
-        <!-- ========== 💡 LED ========== -->
-        <category name="💡 LED" colour="#FF5555">
+        <!-- ========== ?뮕 LED ========== -->
+        <category name="?뮕 LED" colour="#FF5555">
             <block type="led_on">
                 <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
                 <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
@@ -116,52 +116,52 @@
             </block>
         </category>
 
-        <!-- ========== � 메인 LED ========== -->
-        <category name="💡 메인 LED" colour="#FF33CC">
+        <!-- ========== 占?硫붿씤 LED ========== -->
+        <category name="?뮕 硫붿씤 LED" colour="#FF33CC">
             <block type="main_led_on">
                 <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
             <block type="main_led_off"></block>
         </category>
 
-        <!-- ========== �🖥️ 디스플레이 ========== -->
-        <category name="🖥️ 디스플레이" colour="#9966FF">
+        <!-- ========== 占쏜윏ο툘 ?붿뒪?뚮젅??========== -->
+        <category name="?뼢截??붿뒪?뚮젅?? colour="#9966FF">
             <block type="send_message">
                 <value name="Msg"><shadow type="text"><field name="TEXT">Hello</field></shadow></value>
             </block>
             <block type="clear_display"></block>
         </category>
 
-        <!-- ========== 🔊 소리 ========== -->
-        <category name="🔊 소리" colour="#00CCFF">
+        <!-- ========== ?뵄 ?뚮━ ========== -->
+        <category name="?뵄 ?뚮━" colour="#00CCFF">
             <block type="buzzer_on">
                 <value name="FREQ"><shadow type="math_number"><field name="NUM">262</field></shadow></value>
                 <value name="DURATION"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
         </category>
         
-        <!-- ========== 🔫 발사 ========== -->
-        <category name="🔫 발사" colour="#FF4500">
+        <!-- ========== ?뵭 諛쒖궗 ========== -->
+        <category name="?뵭 諛쒖궗" colour="#FF4500">
             <block type="gun_fire"></block>
         </category>
 
-        <!-- ========== 📡 센서 ========== -->
-        <category name="📡 센서" colour="#5C81A6">
+        <!-- ========== ?뱻 ?쇱꽌 ========== -->
+        <category name="?뱻 ?쇱꽌" colour="#5C81A6">
             <block type="pico_check_device"></block>
             <block type="check_distance"></block>
             <block type="check_magnetic"></block>
         </category>
 
-        <!-- ========== ⏱️ 시간 ========== -->
-        <category name="⏱️ 시간" colour="#5CA65C">
+        <!-- ========== ?깍툘 ?쒓컙 ========== -->
+        <category name="?깍툘 ?쒓컙" colour="#5CA65C">
             <block type="time_sleep">
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
         </category>
         
-        <!-- ========== 🔁 제어 ========== -->
-        <!-- 색상 210 = Blockly 기본 제어 블록 색상 -->
-        <category name="🔁 제어" colour="210">
+        <!-- ========== ?봺 ?쒖뼱 ========== -->
+        <!-- ?됱긽 210 = Blockly 湲곕낯 ?쒖뼱 釉붾줉 ?됱긽 -->
+        <category name="?봺 ?쒖뼱" colour="210">
             <block type="controls_repeat_ext">
                 <value name="TIMES"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
             </block>
@@ -171,18 +171,18 @@
             <block type="controls_if"></block>
         </category>
 
-        <!-- ========== 🚀 한꺼번에 ========== -->
-        <category name="🚀 한꺼번에" colour="#8E44AD">
+        <!-- ========== ?? ?쒓볼踰덉뿉 ========== -->
+        <category name="?? ?쒓볼踰덉뿉" colour="#8E44AD">
             <block type="batch_block"></block>
         </category>
         
-        <!-- ========== 📦 변수 ========== -->
-        <!-- 색상 330 = Blockly 기본 변수 블록 색상 -->
-        <category name="📦 변수" colour="330" custom="VARIABLE"></category>
+        <!-- ========== ?벀 蹂??========== -->
+        <!-- ?됱긽 330 = Blockly 湲곕낯 蹂??釉붾줉 ?됱긽 -->
+        <category name="?벀 蹂?? colour="330" custom="VARIABLE"></category>
         
-        <!-- ========== 🔢 수학/논리 ========== -->
-        <!-- 색상 230 = Blockly 기본 수학 블록 색상 -->
-        <category name="🔢 수학/논리" colour="230">
+        <!-- ========== ?뵢 ?섑븰/?쇰━ ========== -->
+        <!-- ?됱긽 230 = Blockly 湲곕낯 ?섑븰 釉붾줉 ?됱긽 -->
+        <category name="?뵢 ?섑븰/?쇰━" colour="230">
             <block type="math_number"><field name="NUM">0</field></block>
             <block type="math_arithmetic">
                 <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
@@ -201,9 +201,9 @@
             <block type="logic_boolean"></block>
         </category>
         
-        <!-- ========== 🔧 함수 ========== -->
-        <!-- 색상 290 = Blockly 기본 프로시저 블록 색상 -->
-        <category name="🔧 함수" colour="290" custom="PROCEDURE"></category>
+        <!-- ========== ?뵩 ?⑥닔 ========== -->
+        <!-- ?됱긽 290 = Blockly 湲곕낯 ?꾨줈?쒖? 釉붾줉 ?됱긽 -->
+        <category name="?뵩 ?⑥닔" colour="290" custom="PROCEDURE"></category>
     </xml>
 </body>
 </html>
