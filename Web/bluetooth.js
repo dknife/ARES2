@@ -423,7 +423,12 @@ export const BluetoothManager = {
                 } else {
                     await state.characteristic.writeValueWithResponse(chunk);
                 }
-                await this.delay(BLUETOOTH_CONFIG.CHUNK_DELAY);
+                // 청크 사이에만 페이싱 — 마지막 청크 송신 후에는 즉시 종료한다.
+                // 단일 청크 명령(LED_ON 등)이 100ms를 통째로 손해보던 문제를 제거하고,
+                // 멀티 청크 BATCH는 청크 사이 100ms 안정성을 그대로 유지한다.
+                if (i + BLUETOOTH_CONFIG.MAX_CHUNK_SIZE < encodedData.length) {
+                    await this.delay(BLUETOOTH_CONFIG.CHUNK_DELAY);
+                }
             }
             if (DEBUG) Logger.add(`전송 완료: ${data}`, 'info');
         } catch (error) {
