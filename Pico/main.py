@@ -92,8 +92,6 @@ class AresRover:
                 chunk = self.uart.read()
                 if chunk:
                     self.rx_buffer += chunk.decode('utf-8', 'ignore')
-                    # 진단 print: 청크 수신 시점/길이를 시리얼에 노출 (멀티 청크 디버그용)
-                    print(f"[UART rx] +{len(chunk)}B, buf={len(self.rx_buffer)}, head={self.rx_buffer[:30]!r}")
 
                 # 버퍼 오버플로우 방지
                 if len(self.rx_buffer) > MAX_BUFFER_SIZE:
