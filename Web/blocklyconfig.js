@@ -1,5 +1,21 @@
 // Blockly 블록 정의
 
+// [한꺼번에 실행] 블록 안에 넣을 수 없는 블록 타입.
+// 값 반환(센서 응답이 batch 끝의 단일 ACK와 충돌)과 제어 흐름(Web 측 평탄화가
+// 정의되지 않음)을 차단한다. batch_block 자기 자신도 중첩 금지.
+export const BATCH_FORBIDDEN_TYPES = new Set([
+  // 값 반환
+  'check_distance', 'check_magnetic', 'pico_check_device',
+  // 제어 흐름
+  'controls_if', 'controls_whileUntil', 'controls_repeat_ext',
+  // 변수/함수 (제어 흐름은 Web 측 책임)
+  'variables_set', 'assign_variable', 'math_change',
+  'procedures_callnoreturn', 'procedures_callreturn',
+  'procedures_defnoreturn', 'procedures_defreturn',
+  // 중첩 금지
+  'batch_block',
+]);
+
 export const BlocklyConfig = {
   blocks: [
     // 서보 모터 블록 (주황색 #FF8C00)
@@ -294,6 +310,45 @@ export const BlocklyConfig = {
       output: "Number",
       colour: 230,
       tooltip: "지정한 범위 내에서 무작위 정수를 반환합니다."
+    },
+
+    // 묶음 실행 (보라색 #8E44AD)
+    {
+      type: "batch_block",
+      message0: "🚀 한꺼번에 실행 %1 %2",
+      args0: [
+        { type: "input_dummy" },
+        { type: "input_statement", name: "DO" }
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: "#8E44AD",
+      tooltip: "안에 담은 블록들을 한 묶음으로 Pico에 보내 빠르게 차례 실행합니다. 센서값을 받는 블록과 제어/반복 블록은 안에 넣을 수 없습니다."
     }
   ]
 };
+
+// batch_block에 자식 검증 onchange 핸들러를 부착한다.
+// Blockly가 defineBlocksWithJsonArray로 만든 init 위에 onchange를 덧붙여
+// 학생이 금지 블록을 드래그하면 노란 경고를 띄운다.
+export function attachBatchBlockValidator(BlocklyLib) {
+  const proto = BlocklyLib.Blocks['batch_block'];
+  if (!proto) return;
+  const originalInit = proto.init;
+  proto.init = function() {
+    originalInit.call(this);
+    this.setOnChange((event) => {
+      // 워크스페이스 전체 이벤트 중 자기 자식 관련만 처리
+      if (!this.workspace || this.isInFlyout) return;
+      let bad = null;
+      let cur = this.getInputTargetBlock('DO');
+      while (cur) {
+        if (BATCH_FORBIDDEN_TYPES.has(cur.type)) { bad = cur.type; break; }
+        cur = cur.getNextBlock();
+      }
+      this.setWarningText(bad
+        ? `'${bad}' 블록은 [한꺼번에 실행] 안에 넣을 수 없어요. 바깥으로 빼주세요.`
+        : null);
+    });
+  };
+}

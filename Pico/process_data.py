@@ -45,7 +45,9 @@ class CommandProcessor:
             return self._handle_set_pin(data)
         elif data.startswith("SET_MODULE"):
             return self._handle_set_module(data)
-            
+        elif data.startswith("BATCH;"):
+            return self._handle_batch(data)
+
         # 부저
         elif data.startswith("BUZZER_ON"):
             return self._handle_buzzer_on(data)
@@ -249,6 +251,22 @@ class CommandProcessor:
         except Exception as e:
             print(f"SET_MODULE 오류: {e}")
         return "MODULE_SET,ERROR"
+
+    def _handle_batch(self, data):
+        """일괄 실행: BATCH;cmd1|cmd2|cmd3.
+        파이프로 구분된 각 명령을 기존 디스패처로 차례 실행하고, 마지막에 한 번의 응답을 보낸다.
+        값 반환 명령(DISTANCE/MAGNET/PING)과 제어 흐름은 Web 측에서 미리 차단한다."""
+        try:
+            body = data[len("BATCH;"):]
+            for cmd in body.split('|'):
+                cmd = cmd.strip()
+                if not cmd:
+                    continue
+                self.process(cmd)
+            return 1
+        except Exception as e:
+            print(f"BATCH 오류: {e}")
+            return 0
 
     def _handle_sys_set(self, data):
         """시스템 설정 저장: SYS_SET,max_speed,col_dist,auto_stop,name"""

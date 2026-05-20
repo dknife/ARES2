@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BluetoothManager } from './bluetooth.js';
-import { BlocklyConfig } from './blocklyconfig.js';
+import { BlocklyConfig, attachBatchBlockValidator } from './blocklyconfig.js';
 import { CommandExecutor } from './commandexecutor.js';
 
 // Blockly 워크스페이스 초기화
@@ -15,6 +15,7 @@ function initializeBlockly() {
 
   // 커스텀 블록 정의 등록
   Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
+  attachBatchBlockValidator(Blockly);
 
   // 한글 메시지 오버라이드 - 반복
   Blockly.Msg["CONTROLS_REPEAT_TITLE"] = "반복 %1 번";
