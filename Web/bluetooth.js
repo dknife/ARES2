@@ -386,6 +386,24 @@ export const BluetoothManager = {
         const encodedData = encoder.encode(data + '\n');
         state.lastCommand = data;
 
+        // 응답 대기 명령은 송신을 시작하기 *전*에 미리 promise를 설정한다.
+        // Pico의 BATCH 처리가 매우 빨라 마지막 청크 송신 완료 직후 도착하는
+        // 응답이 pendingResolve=null 상태에서 _resolvePromise에 의해 버려지는
+        // race를 막는다. 일반 응답 대기 명령(센서 등)에도 같은 안전성이 적용된다.
+        let responsePromise = null;
+        if (waitForResponse) {
+            responsePromise = new Promise((resolve, reject) => {
+                state.pendingResolve = resolve;
+                state.pendingReject = reject;
+                state.pendingTimeout = setTimeout(() => {
+                    state.pendingResolve = null;
+                    state.pendingReject = null;
+                    state.pendingTimeout = null;
+                    reject(new Error('응답 시간 초과'));
+                }, BLUETOOTH_CONFIG.RESPONSE_TIMEOUT);
+            });
+        }
+
         // writeValueWithoutResponse는 GATT ACK를 기다리지 않아 청크 사이 지연이
         // CHUNK_DELAY 만으로 결정된다. with-response 모드보다 멀티 청크 송신이
         // 빠르며, BT05/HM-10 클론에서 connection interval에 더 많은 청크를
@@ -416,16 +434,7 @@ export const BluetoothManager = {
             return 'OK';
         }
 
-        return new Promise((resolve, reject) => {
-            state.pendingResolve = resolve;
-            state.pendingReject = reject;
-            state.pendingTimeout = setTimeout(() => {
-                state.pendingResolve = null;
-                state.pendingReject = null;
-                state.pendingTimeout = null;
-                reject(new Error('응답 시간 초과'));
-            }, BLUETOOTH_CONFIG.RESPONSE_TIMEOUT);
-        });
+        return responsePromise;
     },
 
     // 딜레이 유틸리티
