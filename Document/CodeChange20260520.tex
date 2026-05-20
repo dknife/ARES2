@@ -119,7 +119,7 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\fancyfoot[L]{\sffamily\small\color{deepblue}\bfseries ARES BLE 파이프라인 · 부팅 안정화 · DC 모터 · HTTPS · BATCH}
+\fancyfoot[L]{\sffamily\small\color{deepblue}\bfseries ARES BLE 파이프라인 · 부팅 안정화 · DC 모터 · HTTPS · BATCH · FinalBuild}
 \fancyfoot[R]{\sffamily\small\thepage}
 
 \usepackage{hyperref}
@@ -135,7 +135,7 @@
 
 \title{%
   {\sffamily\bfseries\fontsize{20}{24}\selectfont\color{deepblue}ARES 코드 수정 보고서}\\[4pt]
-  {\rmfamily\normalsize\color{accentcopper}BLE 명령 파이프라인 최적화 · 부팅 안정화 · DC 모터 대칭 출력 · HTTPS 사용 사유 · BATCH 명령 블록}\\[2pt]
+  {\rmfamily\normalsize\color{accentcopper}BLE 명령 파이프라인 최적화 · 부팅 안정화 · DC 모터 대칭 출력 · HTTPS 사용 사유 · BATCH 명령 블록 · 오프라인 빌드 자동화}\\[2pt]
   {\rmfamily\footnotesize\color{rulegray}\textit{2026-05-19 \textendash{} 2026-05-20 합본}}
 }
 \author{\sffamily (주)코리아사이언스\quad/\quad 동명대학교 게임학부}
@@ -175,6 +175,12 @@
         보내는 BATCH(``한꺼번에 실행'') Blockly 컨테이너 블록 도입과,
         클론 BT05/HM-10 환경에서 멀티 청크 송수신을 안정화하기 위한
         5단계 페이싱/race condition 수정.
+  \item \textbf{(2026-05-20, 저녁)} \texttt{file://}에서도 동작하는
+        오프라인 배포본을 위해 ES module 8개를 esbuild IIFE 번들로
+        합치고 Blockly CDN 사본을 \texttt{Build/vendor/}에 두는
+        패키징 절차 정착. 더블클릭 한 번으로 \texttt{Build/} 폴더
+        전체를 재생산하는 \texttt{build.bat}/\texttt{build.ps1}
+        자동화와 \texttt{Document/FinalBuild.md} 가이드.
 \end{enumerate}
 
 \begin{keypoint}
@@ -1066,7 +1072,117 @@ baud UART이다. HM-10/BT05의 AT 명령(\texttt{AT+BAUD8} 등)으로 38400
   \item \textbf{단일 청크 명령 속도 회복} --- 일반 \texttt{LED\_ON} 단일
         블록을 5\,$\sim$\,10회 연속 실행. 명령 사이 체감 지연이 \texttt{CHUNK\_DELAY}
         도입 전 수준(약 40\,ms)으로 돌아왔는지 확인.
+  \item \textbf{오프라인 빌드 재현} --- \texttt{Build/} 폴더 삭제 후
+        \texttt{build.bat} 더블클릭. 5단계가 모두 성공하고 \texttt{Build/}가
+        새로 생성된 뒤, \texttt{Build/index.html}을 \texttt{file://}로 열어
+        한글 표시·BLE 페어링·\texttt{한꺼번에 실행} 시퀀스가 모두 정상
+        동작하는지 확인.
 \end{enumerate}
+
+\section{2026-05-20 (저녁) --- FinalBuild: 오프라인 (\texttt{file://}) 배포 빌드와 자동화}
+
+학생 PC 배포와 인터넷이 없는 학교 환경을 가정하면 \texttt{Web/main.html}의
+ES module + Blockly CDN 의존 구조를 그대로 둘 수 없다. 본 절은
+\texttt{main.html}을 \texttt{file://}로 직접 열어도 BLE까지 전 기능이
+동작하도록 패키징하는 절차를 정착시킨 작업, 그 과정에서 마주친 함정들,
+그리고 \texttt{build.bat} 한 번의 더블클릭으로 재현 가능한 자동화
+파이프라인을 정리한다.
+
+\subsection{두 가지 외부 의존성과 해법}
+
+\texttt{file://}에서 \texttt{main.html}이 실패하는 원인은 두 가지였다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
+\toprule
+의존성 & \texttt{file://}에서의 문제 & 본 빌드의 해법 \\
+\midrule
+\texttt{Web/} 8개 ES module & \texttt{<script type="module">}이 fetch될 때 \texttt{origin: null}의 같은-출처 정책으로 차단 & esbuild로 단일 IIFE 번들(\texttt{main.bundle.js})로 합쳐 일반 \texttt{<script>}로 로드 \\
+Blockly CDN 3개 스크립트 & \texttt{unpkg.com}에 인터넷 연결 필요 & \texttt{Build/vendor/}에 사본 두고 상대 경로로 참조 \\
+\bottomrule
+\end{tabularx}
+\caption{\texttt{file://} 동작을 막던 두 외부 의존성과 본 빌드의 대응.}
+\end{table}
+
+\subsection{산출물 --- \texttt{Build/} 폴더 한 단위}
+
+빌드 결과는 프로젝트 루트의 \texttt{Build/} 폴더 한 곳에 모인다. 이
+폴더 자체가 \emph{완전한 자족(self-contained) 배포 단위}이며, USB로
+복사하거나 zip으로 묶어 옮기면 그 자체로 ARES 앱이 동작한다.
+
+\begin{minted}{text}
+Build/                          1.2 MB
+├── index.html                  9.9 KB   (main.html 패치: vendor/ 경로 + main.bundle.js defer)
+├── main.bundle.js             77.6 KB   (8개 ES module을 합친 IIFE 번들)
+├── styles.css                 11.3 KB
+├── dashboard.html             32.6 KB   (인라인 스크립트만 사용, 수정 없음)
+└── vendor/
+    ├── blockly_compressed.js  900.8 KB
+    ├── blocks_compressed.js    86.8 KB
+    └── python_compressed.js    50.3 KB
+\end{minted}
+
+\subsection{자동화 --- \texttt{build.bat} + \texttt{build.ps1}}
+
+수동 5단계 절차(\texttt{Document/FinalBuild.md \S 4})를 반복하지 않도록
+프로젝트 루트의 \texttt{build.bat} 한 번 더블클릭으로 \texttt{Build/}
+폴더 전체가 재생산되도록 자동화했다.
+
+\begin{minted}{text}
+build.bat        (cmd 진입점, ASCII 메시지로 한국어 CP949 콘솔 호환)
+  └── build.ps1  (PowerShell, 모든 빌드 로직)
+        1. Build\ 폴더 초기화 + Build\vendor 생성
+        2. npx --yes esbuild Web/main.js → Build/main.bundle.js
+        3. Invoke-WebRequest로 Blockly 3개 다운로드
+        4. dashboard.html, styles.css 복사
+        5. main.html → index.html, 두 곳 패치 + Select-String 검증
+\end{minted}
+
+마지막 단계의 자체 검증은 패치 결과에 \texttt{main.bundle.js}가 포함되고
+\texttt{type="module"}이 사라졌는지를 확인한다. 어느 하나라도 빠지면
+\texttt{throw}로 즉시 실패하여 조용히 깨진 산출물을 만들지 않는다.
+
+\subsection{진행 중 발견된 네 가지 함정}
+
+오프라인 빌드는 표면적으로는 ``파일 몇 개 복사''로 보이지만 보안
+컨텍스트, CORS, 인코딩, 셸 escape의 미세한 차이가 차례로 드러났다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
+\toprule
+\# & 증상 & 해법 \\
+\midrule
+1 & \texttt{type="module"} 제거 후 일반 \texttt{<script>}가 head에서 즉시 실행되어, \texttt{elements.js}의 \texttt{document.getElementById(...)}가 DOM 준비 전 호출됨. 모든 element 참조가 \texttt{null}이라 ``아레스 탐사선 찾기'' 클릭 핸들러가 부착 못 됨. & \texttt{<script src="main.bundle.js" defer>}로 deferred 실행 보장. \\
+\midrule
+2 & 첫 가이드에서 \texttt{styles.css} 복사가 누락. 시각적으로 스타일이 빠진 상태로 표시. & \texttt{FinalBuild.md \S 4.4}에 명시 + \texttt{build.ps1}에 복사 단계 추가. \\
+\midrule
+3 & 첫 \texttt{build.bat} 시도가 PowerShell \texttt{-replace}를 cmd inline으로 호출. cmd의 \texttt{""} escape이 PowerShell에 두 글자 \texttt{""}로 전달되어 single-quote 정규식이 매치 실패. 두 번째 치환이 조용히 no-op. & 로직 전체를 별도 \texttt{build.ps1}로 분리하여 cmd-측 escape을 회피. \\
+\midrule
+4 & \texttt{build.ps1}의 \texttt{Get-Content -Raw}가 PowerShell 5.1 기본 인코딩(한국 Windows의 CP949)으로 \texttt{main.html}을 읽어 모든 한글이 mojibake. UTF-8로 다시 쓰지만 이미 손상된 후. & \texttt{[System.IO.File]::ReadAllText(\$path, [System.Text.Encoding]::UTF8)}로 명시적 UTF-8 읽기. PowerShell 버전·시스템 코드페이지 무관하게 동작. \\
+\bottomrule
+\end{tabularx}
+\caption{오프라인 빌드 정착 과정에서 마주친 네 가지 함정.}
+\end{table}
+
+\begin{keypoint}
+함정 1, 3, 4는 모두 ``성공적인 빌드처럼 보였지만 동작은 일부만 깨진''
+패턴이다. 빌드 스크립트의 마지막에 둔 \texttt{Select-String} 자체
+검증과, 시스템 코드페이지에 의존하지 않는 명시적 UTF-8 입출력이 향후
+환경 변화에도 같은 함정을 다시 밟지 않도록 막아준다.
+\end{keypoint}
+
+\subsection{학습 및 운영 시사점}
+
+\texttt{ks01.html}이 모든 코드를 인라인으로 둔 단일 파일이라 \texttt{file://}
+에서 동작했던 반면, 본 빌드는 \emph{모듈 단위 코드베이스를 유지하면서도
+같은 동작 표면}을 갖춘다. 학생 PC 배포 시 \texttt{Build/} 폴더만 복사하면
+되고, 코드 수정 후에는 \texttt{build.bat} 한 번으로 재빌드된다.
+\texttt{Document/FinalBuild.md}는 매뉴얼 절차와 자동화 양쪽을 모두
+설명한다.
 
 \section{변경 파일 요약}
 
@@ -1092,6 +1208,11 @@ baud UART이다. HM-10/BT05의 AT 명령(\texttt{AT+BAUD8} 등)으로 38400
 05-20 & \texttt{Web/bluetooth.js} & \texttt{writeValueWithoutResponse} 우선 사용(fallback 포함), \texttt{pendingResolve}를 송신 \emph{전} 설치(race 해소), 마지막 청크 후 \texttt{CHUNK\_DELAY} guard. \\
 05-20 & \texttt{Pico/process\_data.py} & \texttt{BATCH;} 디스패처 + \texttt{\_handle\_batch()} (파이프 분리 후 기존 \texttt{process()} 재진입). \\
 05-20 & \texttt{Pico/main.py} & \texttt{RECEIVE\_TIMEOUT\_MS} 50 $\rightarrow$ 500\,ms, 타임아웃 시 부분 데이터 반환 제거(buffer 유지). \\
+\midrule
+05-20 & \texttt{build.bat} (root) & cmd 진입점. \texttt{build.ps1} 호출 후 결과 \texttt{pause}. ASCII 메시지로 CP949 콘솔 호환. \\
+05-20 & \texttt{build.ps1} (root) & 빌드 5단계 + 자체 검증(\texttt{Select-String}). UTF-8 명시 입출력. \\
+05-20 & \texttt{Document/FinalBuild.md} & 오프라인 (\texttt{file://}) 배포 빌드 가이드. 매뉴얼 절차와 자동화 안내. \\
+05-20 & \texttt{Build/} & 자족 배포 산출물(\texttt{index.html}, \texttt{main.bundle.js}, \texttt{styles.css}, \texttt{dashboard.html}, \texttt{vendor/*.js}). \\
 \bottomrule
 \end{tabularx}
 \caption{2026-05-19 \textendash{} 05-20 변경 범위.}
@@ -1114,6 +1235,11 @@ baud UART이다. HM-10/BT05의 AT 명령(\texttt{AT+BAUD8} 등)으로 38400
 05-20 & \texttt{8d341af} & Settle BATCH path: drop debug prints, switch BLE writes to without-response \\
 05-20 & \texttt{21c4e26} & Fix BLE response race: install pendingResolve before sending \\
 05-20 & \texttt{233f185} & Skip CHUNK\_DELAY after the final chunk so single-chunk commands stay fast \\
+05-20 & \texttt{328c81a} & Add FinalBuild.md --- offline (file://) packaging guide \\
+05-20 & \texttt{eea8b54} & Produce Build/ offline artifact and patch FinalBuild.md for styles.css \\
+05-20 & \texttt{e6a35ce} & Add defer to Build/index.html bundle <script> so DOM is ready first \\
+05-20 & \texttt{0af8ac2} & Add build.bat / build.ps1 to automate the FinalBuild procedure \\
+05-20 & \texttt{316aa2b} & Read main.html as UTF-8 in build.ps1 so Korean text survives the patch \\
 \bottomrule
 \end{tabularx}
 \caption{관련 커밋 (\texttt{main} 브랜치).}
