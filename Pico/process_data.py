@@ -258,11 +258,15 @@ class CommandProcessor:
         값 반환 명령(DISTANCE/MAGNET/PING)과 제어 흐름은 Web 측에서 미리 차단한다."""
         try:
             body = data[len("BATCH;"):]
-            for cmd in body.split('|'):
+            parts = body.split('|')
+            print(f"[BATCH] {len(parts)} sub-command(s)")
+            for idx, cmd in enumerate(parts):
                 cmd = cmd.strip()
                 if not cmd:
                     continue
+                print(f"[BATCH {idx+1}/{len(parts)}] {cmd}")
                 self.process(cmd)
+            print("[BATCH] done")
             return 1
         except Exception as e:
             print(f"BATCH 오류: {e}")
