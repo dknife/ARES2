@@ -107,17 +107,17 @@ curl -L -o python_compressed.js   https://unpkg.com/blockly@11/python_compressed
 <script src="vendor/python_compressed.js"></script>
 ```
 
-**ES module → 번들 스크립트**
+**ES module → 번들 스크립트 (`defer` 필수)**
 
 ```html
 <!-- 변경 전 -->
 <script type="module" src="main.js"></script>
 
 <!-- 변경 후 -->
-<script src="main.bundle.js"></script>
+<script src="main.bundle.js" defer></script>
 ```
 
-`type="module"` 속성을 **반드시 제거**해야 합니다. 이게 `file://` 차단의 직접 원인입니다.
+`type="module"` 속성을 **반드시 제거**해야 합니다. 이게 `file://` 차단의 직접 원인입니다. 단 `type="module"`은 자동으로 deferred 실행이지만 일반 `<script>`는 그렇지 않으므로 **반드시 `defer` 속성을 추가**해야 합니다. 그렇지 않으면 `Web/elements.js`의 모듈 로드 시점 `document.getElementById(...)` 호출이 DOM 준비 전에 실행되어 모든 element 참조가 `null`이 되고, "아레스 탐사선 찾기" 같은 버튼 클릭 핸들러가 부착되지 못합니다.
 
 ### 4.4 `dashboard.html`과 `styles.css` 복사
 
