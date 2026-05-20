@@ -39,10 +39,12 @@ class KSDCMotor:
 
     def dc_forward(self, speed):
         """전진"""
+        # DIR=1일 때 드라이버가 drive↔brake 변조로 동작하여 실효 듀티가 1-speed가 된다.
+        # 후진(DIR=0, coast↔drive)과 출력을 맞추기 위해 PWM을 반전한다.
         if DEBUG_MOTOR:
             print(f"[DCMotor] 전진: speed={speed}")
         self.DIR.value(1)
-        self.PWM_PIN.duty_u16(speed)
+        self.PWM_PIN.duty_u16(PWM_MAX - speed)
         self._is_running = True
 
     def dc_backward(self, speed):

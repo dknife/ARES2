@@ -249,7 +249,9 @@ class CommandProcessor:
         except Exception as e:
             print(f"SET_MODULE 오류: {e}")
         return "MODULE_SET,ERROR"
-        """시스템 설정 저장"""
+
+    def _handle_sys_set(self, data):
+        """시스템 설정 저장: SYS_SET,max_speed,col_dist,auto_stop,name"""
         try:
             parts = data.split(',')
             if len(parts) >= 5:
