@@ -3,6 +3,7 @@ import { state, DEBUG } from './state.js';
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BLUETOOTH_CONFIG, STATUS_COLORS } from './constants.js';
+import { BATCH_FORBIDDEN_TYPES } from './blocklyconfig.js';
 
 export const CommandExecutor = {
   // 즉시 완료 명령 — Pico가 blocking 처리하지 않으므로 응답 대기 불필요.
@@ -107,6 +108,13 @@ export const CommandExecutor = {
     if (!block) return;
     if (!state.isExecuting) return;
 
+    // [한꺼번에 실행] 블록은 자식들을 BATCH 명령 하나로 묶어 보낸다.
+    if (block.type === 'batch_block') {
+      await this._processBatch(block);
+      await this.processBlock(block.getNextBlock());
+      return;
+    }
+
     const command = this.generateCommand(block);
     if (command) {
       await this.sendCommand(command);
@@ -114,6 +122,42 @@ export const CommandExecutor = {
 
     await this.handleLogicBlock(block);
     await this.processBlock(block.getNextBlock());
+  },
+
+  async _processBatch(block) {
+    // 자식 블록을 평탄화해 명령 문자열 배열로 모으면서 금지 블록을 검증한다.
+    const commands = [];
+    let cur = block.getInputTargetBlock('DO');
+    while (cur) {
+      if (BATCH_FORBIDDEN_TYPES.has(cur.type)) {
+        Logger.add(`[오류] '${cur.type}' 블록은 [한꺼번에 실행] 안에 넣을 수 없습니다. 바깥으로 빼주세요.`, 'error');
+        state.isExecuting = false;
+        return;
+      }
+      const cmd = this.generateCommand(cur);
+      if (cmd) commands.push(cmd);
+      cur = cur.getNextBlock();
+    }
+
+    if (commands.length === 0) {
+      if (DEBUG) Logger.add('[묶음] 비어 있어 건너뜀', 'info');
+      return;
+    }
+
+    // BATCH;cmd1|cmd2|cmd3 형태로 한 번에 송신. 응답 대기 유지 (마지막 1/0 ACK).
+    const payload = `BATCH;${commands.join('|')}`;
+    BluetoothManager.updateStatus('묶음 실행 중...', STATUS_COLORS.ORANGE);
+    try {
+      await BluetoothManager.sendData(payload, true);
+      if (DEBUG) Logger.add(`[묶음 완료] ${commands.length}개 명령`, 'info');
+    } catch (error) {
+      Logger.add(`[오류] 묶음 실행 실패: ${error.message}`, 'error');
+      if (error.message.includes('연결') || error.message.includes('BLE')) {
+        state.isExecuting = false;
+        throw error;
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 20));
   },
 
   generateCommand(block) {
