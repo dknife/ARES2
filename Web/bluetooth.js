@@ -386,13 +386,25 @@ export const BluetoothManager = {
         const encodedData = encoder.encode(data + '\n');
         state.lastCommand = data;
 
+        // writeValueWithoutResponse는 GATT ACK를 기다리지 않아 청크 사이 지연이
+        // CHUNK_DELAY 만으로 결정된다. with-response 모드보다 멀티 청크 송신이
+        // 빠르며, BT05/HM-10 클론에서 connection interval에 더 많은 청크를
+        // 묶어 보낼 수 있다. 일부 characteristic이 without-response를 지원하지
+        // 않는 경우에 대비해 with-response로 fallback한다.
+        const useWithoutResponse =
+          state.characteristic.properties &&
+          state.characteristic.properties.writeWithoutResponse;
         try {
             for (let i = 0; i < encodedData.length; i += BLUETOOTH_CONFIG.MAX_CHUNK_SIZE) {
                 const chunk = encodedData.slice(
                     i,
                     Math.min(i + BLUETOOTH_CONFIG.MAX_CHUNK_SIZE, encodedData.length)
                 );
-                await state.characteristic.writeValueWithResponse(chunk);
+                if (useWithoutResponse) {
+                    await state.characteristic.writeValueWithoutResponse(chunk);
+                } else {
+                    await state.characteristic.writeValueWithResponse(chunk);
+                }
                 await this.delay(BLUETOOTH_CONFIG.CHUNK_DELAY);
             }
             if (DEBUG) Logger.add(`전송 완료: ${data}`, 'info');
