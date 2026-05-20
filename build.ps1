@@ -58,7 +58,9 @@ Write-Host '[5/5] generating and patching index.html'
 Copy-Item 'Web\main.html' 'Build\index.html' -Force
 
 $path = (Resolve-Path 'Build\index.html').Path
-$c    = Get-Content -Raw -LiteralPath $path
+# UTF-8을 명시해서 읽는다. PowerShell 5.1의 Get-Content는 시스템 기본 인코딩
+# (한국어 Windows는 CP949)으로 읽기 때문에 한글이 깨진다.
+$c    = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
 $c    = $c -replace 'https://unpkg\.com/blockly@11/(\w+_compressed\.js)', 'vendor/$1'
 $c    = $c -replace '<script type="module" src="main\.js"></script>',     '<script src="main.bundle.js" defer></script>'
 [System.IO.File]::WriteAllText($path, $c, (New-Object System.Text.UTF8Encoding($false)))
