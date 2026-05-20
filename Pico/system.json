@@ -1,5 +1,5 @@
 {
-    "max_speed": 80,
+    "max_speed": 50,
     "collision_dist": 10,
     "auto_stop": 1,
     "device_name": "ARES",
