@@ -12,7 +12,10 @@ UART_BAUDRATE = 9600
 
 # 루프 설정
 MAIN_LOOP_DELAY_MS = 10
-RECEIVE_TIMEOUT_MS = 50
+# CHUNK_DELAY(=50ms, Web 측 BLE 청크 간격)보다 충분히 크게 잡아 멀티 청크 명령
+# (BATCH, LED 패턴, SYS_SET 등)이 한 번의 _read_uart_line 호출 안에 newline까지
+# 도달할 확률을 높인다. 단일 청크 명령은 newline 발견 즉시 종료하므로 이 값과 무관.
+RECEIVE_TIMEOUT_MS = 200
 MAX_BUFFER_SIZE = 512
 
 
@@ -105,13 +108,9 @@ class AresRover:
             else:
                 utime.sleep_ms(2)
 
-        # 타임아웃: 라인 종료자 없는 부분 데이터 반환
-        if self.rx_buffer:
-            data = self.rx_buffer.strip()
-            if data and not data.endswith(','):
-                self.rx_buffer = ""
-                return data
-
+        # 타임아웃: 부분 데이터를 반환하지 않고 buffer를 유지한다.
+        # 다음 _read_uart_line 호출에서 이어받아 newline까지 누적한다.
+        # (이전 구현은 잘린 BATCH 명령을 정상 명령으로 오해해 첫 부분만 실행하는 문제가 있었다.)
         return None
 
     def _needs_response(self, data):
