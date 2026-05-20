@@ -22,6 +22,7 @@ ARES_Project/
 └── Build/                          ← 이 폴더만 배포하면 됨
     ├── index.html                  ← main.html을 수정한 진입점
     ├── main.bundle.js              ← esbuild로 묶은 단일 JS (8개 모듈 통합)
+    ├── styles.css                  ← main.html이 참조하는 스타일시트
     ├── dashboard.html              ← 대시보드 (iframe 자식, ES module 사용 안 함)
     └── vendor/
         ├── blockly_compressed.js
@@ -118,12 +119,13 @@ curl -L -o python_compressed.js   https://unpkg.com/blockly@11/python_compressed
 
 `type="module"` 속성을 **반드시 제거**해야 합니다. 이게 `file://` 차단의 직접 원인입니다.
 
-### 4.4 `dashboard.html` 복사
+### 4.4 `dashboard.html`과 `styles.css` 복사
 
-`Web/dashboard.html`은 ES module을 사용하지 않으므로 별다른 수정 없이 그대로 `Build/dashboard.html`로 복사합니다. `index.html` 안에서 iframe으로 임베드되어 동작합니다.
+`Web/dashboard.html`은 ES module을 사용하지 않으므로 별다른 수정 없이 그대로 `Build/`로 복사합니다. `index.html` 안에서 iframe으로 임베드되어 동작합니다. `Web/styles.css`는 `main.html`이 직접 참조하는 스타일시트라 함께 복사해야 합니다.
 
 ```bash
 cp Web/dashboard.html Build/dashboard.html
+cp Web/styles.css     Build/styles.css
 ```
 
 ## 5. 검증
@@ -163,7 +165,7 @@ cd Web && npx esbuild main.js --bundle --format=iife --target=es2018 \
 ## 7. 제약 및 주의 사항
 
 - **Web Bluetooth 자체는 file://에서 동작 가능**합니다 (Chromium 계열은 `file://`을 secure context로 인정). 단 모바일 Chrome은 `file://`에서 Web Bluetooth를 더 엄격히 제한하는 경우가 있어, 모바일 배포가 목적이면 HTTPS 호스팅이 더 안전합니다.
-- 빌드 산출물에 외부 폰트(Google Fonts 등)나 이미지 CDN을 사용한다면 그것도 함께 로컬화해야 완전 오프라인입니다. 현재 `main.html`은 외부 폰트를 추가 로드하지 않으므로 본 가이드 범위에서는 무관합니다.
+- `index.html`(원본 `main.html`)은 Google Fonts CDN(`fonts.googleapis.com`)에서 Inter Tight 폰트를 불러옵니다. 인터넷이 없는 환경에서는 폰트 로드만 실패하고 시스템 fallback으로 표시되어 **기능 동작에는 영향이 없습니다**. 완전 오프라인 환경에서 시각적 일관성까지 보장하려면 폰트 파일을 별도로 받아 로컬 `@font-face`로 교체하세요.
 - `dashboard.html`은 부모(iframe 컨텍스트) 가정 코드(`window.parent.postMessage`)가 있어 `index.html` 안에서 iframe으로 임베드된 상태로만 정상 동작합니다. 단독 실행은 의도하지 않은 사용입니다.
 - 학생 PC에 Chrome/Edge가 없다면 이 가이드는 동작하지 않습니다. Web Bluetooth API를 지원하는 브라우저가 필수입니다.
 
@@ -188,8 +190,9 @@ cd ../..
 cp Web/main.html Build/index.html
 # (에디터로 type="module" 제거 + Blockly src를 vendor/ 로 변경. 자동화하려면 sed 활용)
 
-# 4. dashboard.html은 그대로 복사
+# 4. dashboard.html과 styles.css는 그대로 복사
 cp Web/dashboard.html Build/dashboard.html
+cp Web/styles.css     Build/styles.css
 
 # 5. 검증: Build/index.html 더블클릭
 
