@@ -35,8 +35,38 @@ motor_stop()
 \end{minted}
 \end{labbox}
 
-\subsection{미션 2 --- 차림표 원판 룰렛 돌리기!}
+\subsection{미션 2 --- 속도 조절 빠르게 느리게!}
 \label{subsec:ch07-m2}
+\missionmeta{DC모터}{MOTOR}
+
+\begin{storybox}
+\sayares{알비, DC모터로 전진·후진 속도를 조절해보자! 빠르게 갔다가 느리게 돌아오면 어떨까?}
+\sayalbi{삐릿- 속도를 100\%에서 50\%로 바꾸면서 전진했다가 후진할 수 있어요! 두 가지 속도로 왕복해봐요!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 전진 최고속(100\%) 2초
+  \item 전진 반속(50\%) 2초
+  \item 정지!
+  \item 후진 최고속(100\%) 2초
+  \item 후진 반속(50\%) 2초 $\rightarrow$ 최종 정지
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 전진·후진 속도 조절}
+\begin{minted}{python}
+# 전진·후진 속도 조절
+motor_forward(2, 100)   # 전진 2초 최고속
+motor_forward(2, 50)    # 전진 2초 반속
+motor_stop()
+motor_backward(2, 100)  # 후진 2초 최고속
+motor_backward(2, 50)   # 후진 2초 반속
+motor_stop()
+\end{minted}
+\end{labbox}
+
+\subsection{미션 3 --- 차림표 원판 룰렛 돌리기!}
+\label{subsec:ch07-m3}
 \missionmeta{DC모터, 원판}{MOTOR}
 
 \begin{storybox}
@@ -47,53 +77,18 @@ motor_stop()
 \subsubsection*{학습 목표}
 \begin{itemize}[leftmargin=1.4em]
   \item 모터 최고 속도로 3초 회전 (룰렛 돌리기)
-  \item 속도 100→70→40→0\% 서서히 감속 후 정지
+  \item 속도 100$\rightarrow$70$\rightarrow$40$\rightarrow$0\% 서서히 감속 후 정지
   \item 화살표가 멈추면 결과 확인
 \end{itemize}
 
 \begin{labbox}{샘플 코드 --- 룰렛 돌리기}
 \begin{minted}{python}
 # 룰렛 돌리기
-motor_forward_pwm(100)  # 최고 속도
+motor_forward(3, 100)  # 최고 속도
 time.sleep(3)
-motor_forward_pwm(70)
+motor_forward(1, 70)   # 감속
 time.sleep(1)
-motor_forward_pwm(40)
-time.sleep(1)
-motor_stop()
-\end{minted}
-\end{labbox}
-
-\subsection{미션 3 --- 속도 조절 빠르게 느리게!}
-\label{subsec:ch07-m3}
-\missionmeta{DC모터}{MOTOR}
-
-\begin{storybox}
-\sayalbi{삐릿! 아레스, 룰렛을 빠르게도 돌리고 느리게도 돌리면 더 재밌는 게임이 될 것 같아요!}
-\sayares{처음엔 천천히 돌다가 갑자기 빠르게! 두근두근 긴장감이 있겠는데?}
-\end{storybox}
-
-\subsubsection*{학습 목표}
-\begin{itemize}[leftmargin=1.4em]
-  \item 느린 속도(30\%) → 2초
-  \item 중간 속도(60\%) → 2초
-  \item 빠른 속도(100\%) → 2초
-  \item 빠름→느림→정지 순서로 자연스럽게 완성
-\end{itemize}
-
-\begin{labbox}{샘플 코드 --- 속도 단계 조절}
-\begin{minted}{python}
-# 속도 단계 조절
-motor_forward_pwm(30)
-time.sleep(2)
-motor_forward_pwm(60)
-time.sleep(2)
-motor_forward_pwm(100)
-time.sleep(2)
-motor_forward_pwm(70)
-time.sleep(1)
-motor_forward_pwm(40)
-time.sleep(1)
+motor_forward(1, 40)   # 더 느리게
 motor_stop()
 \end{minted}
 \end{labbox}
@@ -103,28 +98,26 @@ motor_stop()
 \missionmeta{DC모터, 원판}{MOTOR}
 
 \begin{storybox}
-\sayares{알비! 원판 칸에 미션이나 벌칙을 써도 재밌겠다! "노래 한 곡 부르기" 같은 거!}
-\sayalbi{삐릿♪ 재밌겠어요! 나만의 룰렛 게임을 완성해봐요!}
+\sayares{알비! 원판 칸에 벌칙이나 상품 스티커를 붙이고 룰렛을 돌려봐! 멈추는 곳이 오늘의 미션!}
+\sayalbi{삐릿♪ 빠르게 돌다가 서서히 멈추고, 마지막엔 살짝 후진해서 딱 멈추는 진짜 룰렛이에요!}
 \end{storybox}
 
 \subsubsection*{학습 목표}
 \begin{itemize}[leftmargin=1.4em]
-  \item 원판 칸에 나만의 내용 채우기
-  \item 버튼 누르면 룰렛 돌고 멈추는 게임 완성
-  \item 친구들과 함께 즐길 화성 룰렛 시연
+  \item 전진 3초 100\% (룰렛 최고속 회전)
+  \item 전진 2초 50\% (서서히 감속)
+  \item 멈춤!
+  \item 후진 1초 50\% (미세 조정 $\rightarrow$ 정확히 멈춤)
 \end{itemize}
 
-\begin{labbox}{샘플 코드 --- 나만의 룰렛}
+\begin{labbox}{샘플 코드 --- 나만의 룰렛 게임}
 \begin{minted}{python}
-# 나만의 룰렛
-motor_forward_pwm(100)
-time.sleep(2)
-motor_forward_pwm(60)
-time.sleep(1)
-motor_forward_pwm(20)
-time.sleep(1)
-motor_stop()
-print("결과 확인!")
+# 나만의 룰렛 게임
+motor_forward(3, 100)   # 전진 3초 최고속
+motor_forward(2, 50)    # 전진 2초 반속 감속
+motor_stop()             # 멈춤
+motor_backward(1, 50)   # 후진 1초 반속 (미세 조정)
+motor_stop()             # 최종 정지
 \end{minted}
 \end{labbox}
 

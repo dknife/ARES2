@@ -33,92 +33,108 @@ led_off(choice)
 \end{minted}
 \end{labbox}
 
-\subsection{미션 2 --- 3판 2선승제 대결!}
+\subsection{미션 2 --- 가위바위보 하나 빼기!}
 \label{subsec:ch06-m2}
 \missionmeta{LED 3개}{RANDOM}
 
 \begin{storybox}
-\sayares{알비, 한 번만 하면 허무하잖아. 3번 해서 많이 이기는 쪽이 최종 승리!}
+\sayalbi{삐릿♪ 아레스, 하나 빼기 게임 알아요? 가위바위보, 하나 빼기$\sim$ 하면서 노는 거예요!}
+\sayares{오, 재밌겠다! LED 3개가 다 켜졌다가 2개 남고, 그다음 1개만 남는 거지?}
 \end{storybox}
 
 \subsubsection*{학습 목표}
 \begin{itemize}[leftmargin=1.4em]
-  \item 게임을 3번 반복하는 반복문
-  \item 매 라운드마다 알비(LED)가 랜덤으로 바뀌도록
-  \item 3번 후 모든 LED 동시 깜빡임으로 게임 종료
+  \item LED 3개 동시에 3번 깜빡임 (시작 신호)
+  \item \texttt{one\_out} 블록으로 2개 랜덤 켜기
+  \item 1.5초 후 랜덤으로 1개 끄기 $\rightarrow$ 1개만 남음!
+  \item ``가위바위보, 하나 빼기$\sim$!'' 게임 완성
 \end{itemize}
 
-\begin{labbox}{샘플 코드 --- 3판 대결}
+\begin{labbox}{샘플 코드 --- 하나 빼기}
 \begin{minted}{python}
-# 3판 대결
-for round in range(3):
-    import random
-    choice = random.randint(1, 3)
-    led_on(choice, 1.0)
-    time.sleep(1.5)
-    led_off(choice)
-    time.sleep(0.5)
-# 종료 신호
+# 시작 신호 (3번 깜빡)
 for i in range(3):
-    led_on(1,1); led_on(2,1); led_on(3,1)
+    led_on(1, 1.0); led_on(2, 1.0); led_on(3, 1.0)
     time.sleep(0.3)
     led_off(1); led_off(2); led_off(3)
     time.sleep(0.3)
+# 하나 빼기!
+one_out()   # 랜덤 2개 켜기 → 1.5초 후 1개 끄기
 \end{minted}
 \end{labbox}
 
-\subsection{미션 3 --- 타임어택! 빠르게 눌러라!}
+\subsection{미션 3 --- 알비를 이겨라!}
 \label{subsec:ch06-m3}
 \missionmeta{LED 3개}{RANDOM}
 
 \begin{storybox}
-\sayares{알비, 이번엔 스피드 게임이야! LED가 켜지면 1초 안에 같은 손 모양을 내는 거야!}
-\sayalbi{삐릿! LED가 빠르게 바뀌기 전에 맞춰야 해요!}
+\sayares{알비, 이번엔 진짜 게임이야! 알비가 5번 내면, 나는 매번 이기는 손을 빠르게 내는 거야!}
+\sayalbi{삐릿- 도전 받아드려요! 시작 신호 3번 깜빡이고, 알비가 2초마다 랜덤으로 5번 낼게요!}
 \end{storybox}
 
 \subsubsection*{학습 목표}
 \begin{itemize}[leftmargin=1.4em]
-  \item 알비가 LED를 랜덤으로 켜기
-  \item 1초 후 자동으로 다음 랜덤 LED로 바뀌기
-  \item LED가 빠르게 바뀌는 타임어택 완성
+  \item 시작 신호: LED 3개 3번 깜빡임
+  \item 알비가 2초마다 랜덤으로 5번 손을 냄
+  \item 아레스는 이기는 손을 빠르게 내야 해요!
+  \item 종료 신호: LED 3개 3번 깜빡임
 \end{itemize}
 
-\begin{labbox}{샘플 코드 --- 타임어택 모드}
+\begin{labbox}{샘플 코드 --- 알비를 이겨라}
 \begin{minted}{python}
-# 타임어택 모드
-while True:
-    import random
-    choice = random.randint(1, 3)
-    led_on(choice, 1.0)
-    time.sleep(1)    # 1초 안에 맞춰야!
-    led_off(choice)
-\end{minted}
-\end{labbox}
-
-\subsection{미션 4 --- 알비의 표정 변화!}
-\label{subsec:ch06-m4}
-\missionmeta{LED 3개}{RANDOM}
-
-\begin{storybox}
-\sayares{알비, 내가 이겼을 때랑 졌을 때 알비 눈빛이 달라지면 더 재밌겠어!}
-\sayalbi{삐릿♪ 이겼을 때는 빠르게 반짝이고, 졌을 때는 천천히 깜빡이면 어때요?}
-\end{storybox}
-
-\subsubsection*{학습 목표}
-\begin{itemize}[leftmargin=1.4em]
-  \item 아레스 승리: LED 3개 빠르게 5번 깜빡 (기쁨)
-  \item 알비 승리: LED 3개 순서대로 느리게 점등
-  \item 비김: LED 3개 번갈아 2번씩 깜빡
-\end{itemize}
-
-\begin{labbox}{샘플 코드 --- 승리 표현}
-\begin{minted}{python}
-# 승리 표현
-for i in range(5):         # 기쁨 깜빡
+# 시작 신호
+for i in range(3):
     led_on(1,1); led_on(2,1); led_on(3,1)
     time.sleep(0.2)
     led_off(1); led_off(2); led_off(3)
     time.sleep(0.2)
+# 알비 5번 랜덤 선택
+for i in range(5):
+    random_led()
+# 종료 신호
+for i in range(3):
+    led_on(1,1); led_on(2,1); led_on(3,1)
+    time.sleep(0.2)
+    led_off(1); led_off(2); led_off(3)
+    time.sleep(0.2)
+\end{minted}
+\end{labbox}
+
+\subsection{미션 4 --- 가위바위보 왕중왕!}
+\label{subsec:ch06-m4}
+\missionmeta{LED 3개}{RANDOM}
+
+\begin{storybox}
+\sayares{알비, 드디어 마지막 결전이야! 3라운드를 해서 모두 이기면 화성 가위바위보 챔피언!}
+\sayalbi{삐릿♪ 매 라운드 3번 깜빡이면 알비가 손을 낼게요! 이기는 손을 빠르게 내세요! 도전!}
+\end{storybox}
+
+\subsubsection*{학습 목표}
+\begin{itemize}[leftmargin=1.4em]
+  \item 3라운드 반복 구조 완성
+  \item 매 라운드: 가위바위보$\sim$ 신호 3번 $\rightarrow$ 알비 랜덤 선택
+  \item 이기는 손을 빠르게 내세요!
+  \item 마지막엔 축하 댄스: LED 5번 빠르게 깜빡
+\end{itemize}
+
+\begin{labbox}{샘플 코드 --- 가위바위보 왕중왕}
+\begin{minted}{python}
+# 3라운드 가위바위보 왕중왕!
+for round in range(3):
+    # 준비 신호: 가위바위보~
+    for i in range(3):
+        led_on(1,1); led_on(2,1); led_on(3,1)
+        time.sleep(0.3)
+        led_off(1); led_off(2); led_off(3)
+        time.sleep(0.3)
+    random_led()     # 알비의 선택
+    time.sleep(0.3)
+# 챔피언 축하 댄스!
+for i in range(5):
+    led_on(1,1); led_on(2,1); led_on(3,1)
+    time.sleep(0.15)
+    led_off(1); led_off(2); led_off(3)
+    time.sleep(0.15)
 \end{minted}
 \end{labbox}
 
