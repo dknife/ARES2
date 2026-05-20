@@ -51,7 +51,23 @@ node --version
 npx esbuild --version
 ```
 
-`curl` 또는 브라우저로 파일 다운로드 가능한 환경이면 됩니다.
+`curl` 또는 브라우저로 파일 다운로드 가능한 환경이면 됩니다. Windows 10/11에는 `curl`과 PowerShell이 기본 탑재되어 있습니다.
+
+### 자동화 — `build.bat` (Windows)
+
+수동 단계를 반복하지 않으려면 프로젝트 루트의 `build.bat`을 더블클릭하세요. 내부적으로 `build.ps1`을 호출해 §4의 다섯 단계를 모두 수행합니다.
+
+```text
+build.bat
+ └── build.ps1   (PowerShell, 모든 빌드 로직)
+       ├── 1) Build\ 폴더 초기화 + Build\vendor 생성
+       ├── 2) npx esbuild로 main.bundle.js 번들
+       ├── 3) Invoke-WebRequest로 Blockly 3개 다운로드
+       ├── 4) dashboard.html, styles.css 복사
+       └── 5) main.html을 index.html로 복사 후 두 곳 패치 + 검증
+```
+
+`build.ps1`의 마지막 단계는 패치 결과를 `Select-String`으로 다시 검증하여 `main.bundle.js`가 포함되고 `type="module"`이 사라졌는지 확인합니다. 한 줄이라도 빠지면 `throw`로 실패합니다.
 
 ## 4. 빌드 절차
 
@@ -170,6 +186,9 @@ cd Web && npx esbuild main.js --bundle --format=iife --target=es2018 \
 - 학생 PC에 Chrome/Edge가 없다면 이 가이드는 동작하지 않습니다. Web Bluetooth API를 지원하는 브라우저가 필수입니다.
 
 ## 8. 요약 — 명령 한 줄 정리
+
+가장 빠른 방법은 **`build.bat` 더블클릭** (§3 자동화 참고). 아래는 수동으로 같은 절차를 따라갈 때 사용하는 명령 모음입니다.
+
 
 ```bash
 # 0. Build 폴더 준비
