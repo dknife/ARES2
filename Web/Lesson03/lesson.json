@@ -1,0 +1,80 @@
+{
+  "lessonNumber": 3,
+  "title": "LED 2개로 표정 만들기",
+  "tag": "WINK",
+  "hardware": "LED 2개",
+  "concept": "다채널 동시 제어, 윙크 리듬",
+  "intro": "본 차시는 LED 2개를 이용하여 알비의 '눈빛' 즉 감정 표현을 만든다. 동시 점등, 교대 점등(윙크), 빠른 깜빡임(놀람), 그리고 학습자 스스로 설계하는 감정 표현으로 이어진다. 두 개의 출력 장치를 동시에 다루는 경험을 통해, 코드가 하드웨어 여러 개를 병렬적으로 조작할 수 있다는 사고로 확장된다.",
+  "missions": [
+    {
+      "id": 1,
+      "title": "알비의 눈이 반짝!",
+      "tag": "WINK",
+      "hardware": "LED 2개",
+      "story": [
+        {"speaker": "ares", "text": "일어나, 알비! 반짝반짝 깜빡이게 만들어볼까?"},
+        {"speaker": "albi", "text": "삐릿- 안녕하세요! 양쪽 눈이 동시에 깜빡이면 살아있는 것처럼 보여요!"}
+      ],
+      "goals": [
+        "LED 1번, 2번 동시에 켜기",
+        "1초 대기 후 동시에 끄기",
+        "무한 반복으로 계속 깜빡이게 구현"
+      ],
+      "sampleCode": "# 양쪽 눈 동시 깜빡이기\nwhile True:\n    led_on(1, 1.0)  # 왼쪽 눈\n    led_on(2, 1.0)  # 오른쪽 눈\n    time.sleep(1)\n    led_off(1)\n    led_off(2)\n    time.sleep(1)"
+    },
+    {
+      "id": 2,
+      "title": "알비의 눈 번갈아 깜빡이기",
+      "tag": "WINK",
+      "hardware": "LED 2개",
+      "story": [
+        {"speaker": "albi", "text": "삐릿! 아레스, 이번엔 왼쪽 눈, 오른쪽 눈을 번갈아 깜빡여볼게요!"},
+        {"speaker": "ares", "text": "왼쪽 깜빡, 오른쪽 깜빡, 번갈아가면서 5번 해보자!"}
+      ],
+      "goals": [
+        "왼쪽 눈(LED1) 켜기 → 0.5초 → 끄기",
+        "오른쪽 눈(LED2) 켜기 → 0.5초 → 끄기",
+        "이 동작을 5번 반복하기"
+      ],
+      "sampleCode": "# 눈 번갈아 깜빡이기 (5회)\nfor i in range(5):\n    led_on(1, 1.0)   # 왼쪽 눈\n    time.sleep(0.5)\n    led_off(1)\n    led_on(2, 1.0)   # 오른쪽 눈\n    time.sleep(0.5)\n    led_off(2)"
+    },
+    {
+      "id": 3,
+      "title": "알비가 깜짝 놀랐어요!",
+      "tag": "WINK",
+      "hardware": "LED 2개",
+      "story": [
+        {"speaker": "ares", "text": "알비! 갑자기 운석이 날아오면 어떻게 돼?"},
+        {"speaker": "albi", "text": "삐릿!! 깜짝 놀라죠! 놀라면 두 눈이 막 빠르게 깜빡이잖아요!"}
+      ],
+      "goals": [
+        "두 눈 동시에 0.1초 간격 빠른 깜빡이기",
+        "10번 빠르게 깜빡인 후 잠깐 멈추기",
+        "반복문으로 놀람 표현 완성"
+      ],
+      "sampleCode": "# 운석 경보! 빠른 깜빡임\nwhile True:\n    for i in range(10):\n        led_on(1, 1.0)\n        led_on(2, 1.0)\n        time.sleep(0.1)\n        led_off(1)\n        led_off(2)\n        time.sleep(0.1)\n    time.sleep(0.5)  # 잠깐 멈춤"
+    },
+    {
+      "id": 4,
+      "title": "알비의 윙크 리듬!",
+      "tag": "WINK",
+      "hardware": "LED 2개",
+      "story": [
+        {"speaker": "ares", "text": "알비! 왼쪽 눈을 두 번 깜빡이고, 잠깐 쉬었다가 오른쪽 눈도 두 번 깜빡이면 어때?"},
+        {"speaker": "albi", "text": "삐릿♪ 마치 비밀 신호 같아요! 그 윙크 리듬을 5번 반복해봐요!"}
+      ],
+      "goals": [
+        "왼쪽 눈(LED1) 두 번 깜빡이기 (0.4초 간격)",
+        "1초 쉬기",
+        "오른쪽 눈(LED2) 두 번 깜빡이기",
+        "이 윙크 리듬을 5번 반복"
+      ],
+      "sampleCode": "# 윙크 리듬: 왼쪽 2번, 쉬고, 오른쪽 2번 (5회 반복)\nfor i in range(5):\n    # 왼쪽 눈 2번\n    led_on(1, 1.0); time.sleep(0.4); led_off(1); time.sleep(0.2)\n    led_on(1, 1.0); time.sleep(0.4); led_off(1)\n    time.sleep(0.8)  # 쉬기\n    # 오른쪽 눈 2번\n    led_on(2, 1.0); time.sleep(0.4); led_off(2); time.sleep(0.2)\n    led_on(2, 1.0); time.sleep(0.4); led_off(2)"
+    }
+  ],
+  "summary": {
+    "type": "notebox",
+    "title": "창작 활동",
+    "text": "미션 4는 학습자 자유 창작 미션이다. 4가지 감정 외에도 학습자가 직접 '화남'(빨갛게 빠르게), '졸림'(점점 느려짐) 등 자신만의 표현을 설계하도록 격려한다."
+  }
+}

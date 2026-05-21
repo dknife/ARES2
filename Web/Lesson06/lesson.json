@@ -1,0 +1,82 @@
+{
+  "lessonNumber": 6,
+  "title": "랜덤 함수와 가위바위보 게임",
+  "tag": "RANDOM",
+  "hardware": "LED 3개",
+  "concept": "random.randint, 비결정적 코드",
+  "intro": "본 차시는 '난수'라는 새로운 개념을 도입한다. 학습자는 random.randint()으로 매번 다른 결과를 만들어내는 비결정적 코드를 작성하며, 이를 게임 시나리오(가위바위보 / 3판 2선승제 / 타임어택 / 표정 변화)로 발전시킨다.",
+  "missions": [
+    {
+      "id": 1,
+      "title": "랜덤 가위바위보 시작!",
+      "tag": "RANDOM",
+      "hardware": "LED 3개",
+      "story": [
+        {"speaker": "albi", "text": "삐릿! 아레스, 심심한데 저와 가위바위보 게임 어때요?"},
+        {"speaker": "ares", "text": "오, 재미있을 것 같아! 그럼 알비는 LED 불빛으로, 나는 손으로 가위바위보 하는 거지?"}
+      ],
+      "goals": [
+        "LED 3개에 가위/바위/보 스티커 부착",
+        "랜덤으로 1~3 중 숫자 하나 선택",
+        "선택된 번호 LED 1개만 켜기"
+      ],
+      "sampleCode": "# 가위바위보 랜덤\nimport random\nchoice = random.randint(1, 3)\nled_on(choice, 1.0)\ntime.sleep(2)\nled_off(choice)"
+    },
+    {
+      "id": 2,
+      "title": "가위바위보 하나 빼기!",
+      "tag": "RANDOM",
+      "hardware": "LED 3개",
+      "story": [
+        {"speaker": "albi", "text": "삐릿♪ 아레스, 하나 빼기 게임 알아요? 가위바위보, 하나 빼기~ 하면서 노는 거예요!"},
+        {"speaker": "ares", "text": "오, 재밌겠다! LED 3개가 다 켜졌다가 2개 남고, 그다음 1개만 남는 거지?"}
+      ],
+      "goals": [
+        "LED 3개 동시에 3번 깜빡임 (시작 신호)",
+        "one_out 블록으로 2개 랜덤 켜기",
+        "1.5초 후 랜덤으로 1개 끄기 → 1개만 남음!",
+        "'가위바위보, 하나 빼기~!' 게임 완성"
+      ],
+      "sampleCode": "# 시작 신호 (3번 깜빡)\nfor i in range(3):\n    led_on(1, 1.0); led_on(2, 1.0); led_on(3, 1.0)\n    time.sleep(0.3)\n    led_off(1); led_off(2); led_off(3)\n    time.sleep(0.3)\n# 하나 빼기!\none_out()   # 랜덤 2개 켜기 → 1.5초 후 1개 끄기"
+    },
+    {
+      "id": 3,
+      "title": "알비를 이겨라!",
+      "tag": "RANDOM",
+      "hardware": "LED 3개",
+      "story": [
+        {"speaker": "ares", "text": "알비, 이번엔 진짜 게임이야! 알비가 5번 내면, 나는 매번 이기는 손을 빠르게 내는 거야!"},
+        {"speaker": "albi", "text": "삐릿- 도전 받아드려요! 시작 신호 3번 깜빡이고, 알비가 2초마다 랜덤으로 5번 낼게요!"}
+      ],
+      "goals": [
+        "시작 신호: LED 3개 3번 깜빡임",
+        "알비가 2초마다 랜덤으로 5번 손을 냄",
+        "아레스는 이기는 손을 빠르게 내야 해요!",
+        "종료 신호: LED 3개 3번 깜빡임"
+      ],
+      "sampleCode": "# 시작 신호\nfor i in range(3):\n    led_on(1,1); led_on(2,1); led_on(3,1)\n    time.sleep(0.2)\n    led_off(1); led_off(2); led_off(3)\n    time.sleep(0.2)\n# 알비 5번 랜덤 선택\nfor i in range(5):\n    random_led()\n# 종료 신호\nfor i in range(3):\n    led_on(1,1); led_on(2,1); led_on(3,1)\n    time.sleep(0.2)\n    led_off(1); led_off(2); led_off(3)\n    time.sleep(0.2)"
+    },
+    {
+      "id": 4,
+      "title": "가위바위보 왕중왕!",
+      "tag": "RANDOM",
+      "hardware": "LED 3개",
+      "story": [
+        {"speaker": "ares", "text": "알비, 드디어 마지막 결전이야! 3라운드를 해서 모두 이기면 화성 가위바위보 챔피언!"},
+        {"speaker": "albi", "text": "삐릿♪ 매 라운드 3번 깜빡이면 알비가 손을 낼게요! 이기는 손을 빠르게 내세요! 도전!"}
+      ],
+      "goals": [
+        "3라운드 반복 구조 완성",
+        "매 라운드: 가위바위보~ 신호 3번 → 알비 랜덤 선택",
+        "이기는 손을 빠르게 내세요!",
+        "마지막엔 축하 댄스: LED 5번 빠르게 깜빡"
+      ],
+      "sampleCode": "# 3라운드 가위바위보 왕중왕!\nfor round in range(3):\n    # 준비 신호: 가위바위보~\n    for i in range(3):\n        led_on(1,1); led_on(2,1); led_on(3,1)\n        time.sleep(0.3)\n        led_off(1); led_off(2); led_off(3)\n        time.sleep(0.3)\n    random_led()     # 알비의 선택\n    time.sleep(0.3)\n# 챔피언 축하 댄스!\nfor i in range(5):\n    led_on(1,1); led_on(2,1); led_on(3,1)\n    time.sleep(0.15)\n    led_off(1); led_off(2); led_off(3)\n    time.sleep(0.15)"
+    }
+  ],
+  "summary": {
+    "type": "keypoint",
+    "title": "핵심 포인트",
+    "text": "난수는 '결정적 코드도 다른 결과를 만들 수 있다'는 점에서 학습자에게 강한 인상을 남긴다. random.randint(a,b)의 의미와, 동일 코드를 실행해도 매번 결과가 달라지는 현상을 직접 관찰하게 하는 것이 본 차시의 핵심 학습 포인트이다."
+  }
+}

@@ -198,6 +198,11 @@ export const CommandExecutor = {
         const duration = this.evaluateValueBlock(block.getInputTargetBlock('DURATION')) || '1';
         return `BUZZER_ON,${freq},${duration}`;
       }
+      case 'buzzer_note': {
+        const freq = parseInt(block.getFieldValue('NOTE'), 10) || 262;
+        const duration = this.evaluateValueBlock(block.getInputTargetBlock('DURATION')) || '1';
+        return `BUZZER_ON,${freq},${duration}`;
+      }
       case 'gun_fire': return 'GUN_FIRE';
       
       // 서보 모터 (시간 제한) - SERVO_t방향,초

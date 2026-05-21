@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>코리아사이언스 화성 탐사선 제어</title>
+    <title>ARES 관제실</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
@@ -13,48 +13,111 @@
     <style>
         #dashboardFrame {
             width: 100%;
-            height: calc(100vh - 230px);
+            height: 100%;
             min-height: 500px;
             border: none;
             display: none;
-        }
-
-        @media (max-width: 768px) {
-            #dashboardFrame {
-                height: calc(100vh - 270px);
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>코리아사이언스 화성 탐사선 제어</h1>
-            <p class="subtitle">아레스와 알비의 화성 탐사선을 블록 코딩으로 제어하세요!</p>
+            <div class="header-main">
+                <h1>ARES 관제실</h1>
+                <div id="controls">
+                    <button id="connectButton">🔗 신호 연결</button>
+                    <button id="disconnectButton" disabled>⛔ 신호 중단</button>
+                    <button id="runButton" disabled>▶️ 미션 전송</button>
+                    <button id="saveButton" disabled>💾 미션 저장</button>
+                    <button id="loadButton" disabled>📂 미션 읽기</button>
+                    <button id="dashboardButton">🔍 점검</button>
+                    <button id="emergencyStopButton">🛑 비상정지</button>
+                    <button id="logToggleButton">📝 로그끄기</button>
+                    <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
+                </div>
+            </div>
+            <div class="header-sub">
+                <select id="exampleSelect" title="예제 불러오기" disabled>
+                    <option value="">📦 예제 선택</option>
+                    <option value="greeting">👋 인사하기</option>
+                    <option value="countdown">⏰ 카운트다운</option>
+                    <option value="radar_demo">📡 레이더 데모</option>
+                </select>
+                <span id="status">탐사선 연결 대기 중</span>
+                <div id="deviceInfo"></div>
+            </div>
         </header>
-        <section id="controls">
-            <button id="connectButton">🔗 아레스 탐사선 찾기</button>
-            <button id="disconnectButton" disabled>🔗 탐사선 교신 중단</button>
-            <button id="runButton">▶️ 명령 실행</button>
-            <button id="saveButton">💾 저장하기</button>
-            <button id="loadButton">📂 불러오기</button>
-            <select id="exampleSelect" title="예제 불러오기">
-                <option value="">📦 예제 선택</option>
-                <option value="greeting">👋 인사하기</option>
-                <option value="countdown">⏰ 카운트다운</option>
-                <option value="radar_demo">📡 레이더 데모</option>
+
+        <!-- ===== 차시/미션 네비게이터 ===== -->
+        <nav id="missionNav">
+            <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
+            <select id="lessonSelect" aria-label="차시 선택">
+                <option value="">차시 선택…</option>
             </select>
-            <button id="dashboardButton">📊 대시보드</button>
-            <button id="emergencyStopButton">🛑 비상 정지</button>
-            <button id="logToggleButton">📝 로그</button>
-            <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
-            <span id="status">탐사선 연결 대기 중</span>
-            <div id="deviceInfo"></div>
-        </section>
+            <select id="missionSelect" aria-label="미션 선택" disabled>
+                <option value="">미션 선택…</option>
+            </select>
+            <span id="breadcrumb" aria-live="polite"></span>
+        </nav>
+
+        <!-- ===== 콘텐츠 영역: overview / lesson / mission 3-state ===== -->
         <div class="main-content">
-            <div id="blocklyDiv"></div>
-            <iframe id="dashboardFrame" src="dashboard.html"></iframe>
+
+            <!-- 개요 뷰 (초기 진입 시 노출) -->
+            <section id="overviewView" class="content-view" data-view="overview">
+                <div id="overviewContent">불러오는 중…</div>
+            </section>
+
+            <!-- 차시 소개 뷰 -->
+            <section id="lessonView" class="content-view" data-view="lesson" hidden>
+                <div class="lesson-header">
+                    <span class="lesson-tag" id="lessonTagBadge"></span>
+                    <h2 id="lessonHeading"></h2>
+                    <p class="lesson-meta">
+                        <span id="lessonHardware"></span>
+                        <span class="dot-sep">·</span>
+                        <span id="lessonConcept"></span>
+                    </p>
+                </div>
+                <div class="lesson-body">
+                    <p id="lessonIntro"></p>
+                    <h3>미션 목록</h3>
+                    <ol id="lessonMissionList" class="mission-list"></ol>
+                    <div id="lessonSummary" class="lesson-summary"></div>
+                </div>
+            </section>
+
+            <!-- 미션 코딩 뷰 -->
+            <section id="missionView" class="content-view" data-view="mission" hidden>
+                <aside id="missionPanel" class="mission-panel">
+                    <div class="mission-panel-head">
+                        <span class="lesson-tag" id="missionTagBadge"></span>
+                        <h3 id="missionHeading"></h3>
+                        <p class="mission-meta" id="missionHardware"></p>
+                    </div>
+                    <div class="mission-story" id="missionStory"></div>
+                    <div class="mission-section">
+                        <h4>🎯 학습 목표</h4>
+                        <ul id="missionGoals"></ul>
+                    </div>
+                    <details class="mission-section">
+                        <summary>💡 샘플 코드 보기</summary>
+                        <pre id="missionSampleCode" class="sample-code"></pre>
+                    </details>
+                    <div class="mission-prev-next">
+                        <button id="prevMissionBtn" class="nav-btn-small" disabled>← 이전 미션</button>
+                        <button id="nextMissionBtn" class="nav-btn-small" disabled>다음 미션 →</button>
+                    </div>
+                </aside>
+                <div class="mission-workspace">
+                    <div id="blocklyDiv"></div>
+                    <iframe id="dashboardFrame" src="dashboard.html"></iframe>
+                </div>
+            </section>
+
         </div>
+
         <section id="logContainer">
             <div id="logHeader">
                 통신 로그
@@ -86,7 +149,7 @@
             <block type="turn_right"></block>
             <block type="stop_moving"></block>
         </category>
-        
+
         <!-- ========== ⚡ DC 모터 ========== -->
         <category name="⚡ DC 모터" colour="#FFCC00">
             <block type="main_motor_forward_timed">
@@ -116,7 +179,7 @@
             </block>
         </category>
 
-        <!-- ========== � 메인 LED ========== -->
+        <!-- ========== 💡 메인 LED ========== -->
         <category name="💡 메인 LED" colour="#FF33CC">
             <block type="main_led_on">
                 <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
@@ -124,7 +187,7 @@
             <block type="main_led_off"></block>
         </category>
 
-        <!-- ========== �🖥️ 디스플레이 ========== -->
+        <!-- ========== 🖥️ 디스플레이 ========== -->
         <category name="🖥️ 디스플레이" colour="#9966FF">
             <block type="send_message">
                 <value name="Msg"><shadow type="text"><field name="TEXT">Hello</field></shadow></value>
@@ -138,8 +201,11 @@
                 <value name="FREQ"><shadow type="math_number"><field name="NUM">262</field></shadow></value>
                 <value name="DURATION"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
+            <block type="buzzer_note">
+                <value name="DURATION"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
         </category>
-        
+
         <!-- ========== 🔫 발사 ========== -->
         <category name="🔫 발사" colour="#FF4500">
             <block type="gun_fire"></block>
@@ -158,9 +224,8 @@
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
         </category>
-        
+
         <!-- ========== 🔁 제어 ========== -->
-        <!-- 색상 210 = Blockly 기본 제어 블록 색상 -->
         <category name="🔁 제어" colour="210">
             <block type="controls_repeat_ext">
                 <value name="TIMES"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
@@ -175,13 +240,11 @@
         <category name="🚀 한꺼번에" colour="#8E44AD">
             <block type="batch_block"></block>
         </category>
-        
+
         <!-- ========== 📦 변수 ========== -->
-        <!-- 색상 330 = Blockly 기본 변수 블록 색상 -->
         <category name="📦 변수" colour="330" custom="VARIABLE"></category>
-        
+
         <!-- ========== 🔢 수학/논리 ========== -->
-        <!-- 색상 230 = Blockly 기본 수학 블록 색상 -->
         <category name="🔢 수학/논리" colour="230">
             <block type="math_number"><field name="NUM">0</field></block>
             <block type="math_arithmetic">
@@ -200,9 +263,8 @@
             <block type="logic_negate"></block>
             <block type="logic_boolean"></block>
         </category>
-        
+
         <!-- ========== 🔧 함수 ========== -->
-        <!-- 색상 290 = Blockly 기본 프로시저 블록 색상 -->
         <category name="🔧 함수" colour="290" custom="PROCEDURE"></category>
     </xml>
 </body>
