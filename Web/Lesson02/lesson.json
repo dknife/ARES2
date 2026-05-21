@@ -1,0 +1,80 @@
+{
+  "lessonNumber": 2,
+  "title": "LED 기초: 알비의 첫 호흡",
+  "tag": "LED",
+  "hardware": "LED 1개",
+  "concept": "디지털 출력 HIGH/LOW, time.sleep",
+  "intro": "본 차시는 학습자가 처음으로 실제 하드웨어를 코드로 제어하는 단계이다. 가장 단순한 출력 장치인 LED를 통해 HIGH/LOW 두 상태, 시간 지연(time.sleep), 그리고 짧은 반복문을 익힌다. 4개의 미션은 'LED 1개를 한 번 켜기 → 여러 번 깜빡이기 → 속도 조절 → 메인보드 박스 완성'의 흐름으로 이어진다.",
+  "missions": [
+    {
+      "id": 1,
+      "title": "LED 점등 테스트",
+      "tag": "LED",
+      "hardware": "LED 1개",
+      "story": [
+        {"speaker": "ares", "text": "알비, 박스도 완성됐어! 내가 코딩한 게 진짜 작동하는지 어떻게 알 수 있어?"},
+        {"speaker": "albi", "text": "삐릿- LED를 깜빡이게 해보면 돼요! 불이 켜지면 앱과 메인보드가 정상 연결된 거예요!"}
+      ],
+      "goals": [
+        "LED를 메인보드에 연결",
+        "코딩으로 LED 켜기 (HIGH)",
+        "1초 대기 후 끄기 (LOW)",
+        "LED 1번 깜빡이면 테스트 성공!"
+      ],
+      "sampleCode": "# 2차시 미션1: LED 점등 테스트\nled_on(1, 1.0)   # LED 1번 켜기\ntime.sleep(1)    # 1초 기다리기\nled_off(1)       # LED 1번 끄기"
+    },
+    {
+      "id": 2,
+      "title": "LED 켜고 끄기 이해",
+      "tag": "LED",
+      "hardware": "LED 1개",
+      "story": [
+        {"speaker": "ares", "text": "HIGH가 켜기고 LOW가 끄기라고?"},
+        {"speaker": "albi", "text": "삐릿- 맞아요! 전기를 보내면 켜지고(HIGH), 끊으면 꺼져요(LOW). 마치 스위치처럼요!"}
+      ],
+      "goals": [
+        "HIGH = 켜기, LOW = 끄기 개념 이해",
+        "LED를 3번 천천히 깜빡이기",
+        "대기 시간을 바꿔가며 속도 차이 느끼기"
+      ],
+      "sampleCode": "# LED 3번 깜빡이기\nfor i in range(3):\n    led_on(1, 1.0)\n    time.sleep(1)\n    led_off(1)\n    time.sleep(1)"
+    },
+    {
+      "id": 3,
+      "title": "1초 기다리기 활용",
+      "tag": "LED",
+      "hardware": "LED 1개",
+      "story": [
+        {"speaker": "albi", "text": "삐릿! 기다리기 블록의 숫자를 바꾸면 속도가 달라져요!"},
+        {"speaker": "ares", "text": "오, 0.5초로 바꾸면 더 빠르게 깜빡이겠구나?"}
+      ],
+      "goals": [
+        "time.sleep()으로 대기 시간 조절",
+        "0.5초, 1초, 2초 각각 테스트",
+        "시간 지연의 중요성 이해"
+      ],
+      "sampleCode": "# 대기 시간 비교\nled_on(1, 1.0)\ntime.sleep(2.0)  # 2초 켜두기\nled_off(1)\ntime.sleep(0.5)  # 0.5초 끄기"
+    },
+    {
+      "id": 4,
+      "title": "알비 탄생! 메인보드 박스 완성",
+      "tag": "LED",
+      "hardware": "LED 1개",
+      "story": [
+        {"speaker": "ares", "text": "알비, 네 몸체가 될 박스를 내가 직접 만들어줄게!"},
+        {"speaker": "albi", "text": "삐릿- 고마워요! 제 몸이 될 박스를 정성껏 만들어주세요. 다 만들면 LED로 테스트해봐요!"}
+      ],
+      "goals": [
+        "메인보드 박스 설계도대로 제작·조립",
+        "LED 연결 후 켜기/끄기로 완성 확인",
+        "나만의 알비에게 이름 붙여주기"
+      ],
+      "sampleCode": "# 박스 완성 기념 LED 점등!\nled_on(1, 1.0)\ntime.sleep(0.3)\nled_off(1)\ntime.sleep(0.1)\nled_on(1, 1.0)\ntime.sleep(0.3)\nled_off(1)\nprint(\"알비 탄생!\")"
+    }
+  ],
+  "summary": {
+    "type": "keypoint",
+    "title": "핵심 포인트",
+    "text": "LED 제어의 두 축은 디지털 출력(켜기/끄기)과 시간 지연이다. time.sleep()의 인자만 바꾸어도 동일한 코드 구조에서 전혀 다른 시각적 결과가 나오므로, 학습자가 매개변수와 결과의 관계를 직관적으로 체득하기 좋다."
+  }
+}
