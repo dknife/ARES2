@@ -6,21 +6,42 @@
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
+# Set-Location 은 PSDrive cwd 만 바꾸므로 .NET 의 Environment.CurrentDirectory 도
+# 같이 맞춰 둔다. 그렇지 않으면 [System.IO.File]::WriteAllText('Build\...') 같은
+# 상대 경로가 호출자의 셸 cwd(예: Missions\) 기준으로 풀려 실패한다.
+[System.Environment]::CurrentDirectory = $PSScriptRoot
+
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+function Read-Utf8([string]$path) {
+    return [System.IO.File]::ReadAllText((Resolve-Path $path).Path, [System.Text.Encoding]::UTF8)
+}
+
+function Write-Utf8([string]$path, [string]$content) {
+    [System.IO.File]::WriteAllText($path, $content, $Utf8NoBom)
+}
+
+# JSON-encode a .NET string as a valid JS string literal.
+# Also neutralises any "</" so the literal cannot terminate its enclosing <script> tag.
+function Encode-JsString([string]$s) {
+    $json = ConvertTo-Json -InputObject $s -Compress -Depth 1
+    return $json.Replace('</', '<\/')
+}
 
 Write-Host '=== ARES Offline Build ==='
 Write-Host ''
 
 # ---------- 1) Reset Build/ ----------
 if (Test-Path Build) {
-    Write-Host '[1/5] removing existing Build\ folder'
+    Write-Host '[1/7] removing existing Build\ folder'
     Remove-Item -Recurse -Force Build
 }
 New-Item -ItemType Directory -Force -Path 'Build\vendor' | Out-Null
-Write-Host '[1/5] Build\vendor created'
+Write-Host '[1/7] Build\vendor created'
 Write-Host ''
 
 # ---------- 2) ES module bundle ----------
-Write-Host '[2/5] bundling ES modules with esbuild...'
+Write-Host '[2/7] bundling ES modules with esbuild...'
 Push-Location Web
 try {
     & npx --yes esbuild main.js --bundle --format=iife --target=es2018 --outfile='..\Build\main.bundle.js'
@@ -31,7 +52,7 @@ try {
 Write-Host ''
 
 # ---------- 3) Blockly download ----------
-Write-Host '[3/5] downloading Blockly copies to vendor\...'
+Write-Host '[3/7] downloading Blockly copies to vendor\...'
 $blockly = @(
     'blockly_compressed.js',
     'blocks_compressed.js',
@@ -46,37 +67,138 @@ foreach ($f in $blockly) {
 Write-Host ''
 
 # ---------- 4) Static assets ----------
-Write-Host '[4/5] copying dashboard.html and styles.css'
+Write-Host '[4/7] copying dashboard.html, styles.css, index.css'
 Copy-Item 'Web\dashboard.html' 'Build\dashboard.html' -Force
 Copy-Item 'Web\styles.css'     'Build\styles.css'     -Force
+Copy-Item 'Web\index.css'      'Build\index.css'      -Force
 Write-Host ''
 
-# ---------- 5) Patch index.html ----------
-#   (a) Blockly CDN URL -> vendor/ local path
-#   (b) <script type="module" src="main.js"> -> <script src="main.bundle.js" defer>
-Write-Host '[5/5] generating and patching index.html'
-Copy-Item 'Web\main.html' 'Build\index.html' -Force
+# ---------- 5) Landing page (Web/index.html -> Build/index.html) ----------
+# 새 진입점은 "탐사선 연결" 버튼이 있는 Web/index.html 이다. 이 파일의
+# "../index.html"(프로젝트 루트로 돌아가기) 백링크는 Build 단독 배포에서는
+# 도착지가 없으므로 제거한다.
+Write-Host '[5/7] generating index.html (landing page)'
+$landing = Read-Utf8 'Web\index.html'
+$landing = $landing -replace '\s*<a href="\.\./index\.html"[^>]*>[^<]*</a>\s*', ''
+Write-Utf8 'Build\index.html' $landing
+Write-Host ''
 
-$path = (Resolve-Path 'Build\index.html').Path
-# UTF-8을 명시해서 읽는다. PowerShell 5.1의 Get-Content는 시스템 기본 인코딩
-# (한국어 Windows는 CP949)으로 읽기 때문에 한글이 깨진다.
-$c    = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
-$c    = $c -replace 'https://unpkg\.com/blockly@11/(\w+_compressed\.js)', 'vendor/$1'
-$c    = $c -replace '<script type="module" src="main\.js"></script>',     '<script src="main.bundle.js" defer></script>'
-[System.IO.File]::WriteAllText($path, $c, (New-Object System.Text.UTF8Encoding($false)))
+# ---------- 6) Patch main.html (block editor) ----------
+# (a) Blockly CDN URL -> vendor/ local path
+# (b) <script type="module" src="main.js"> -> inline_assets shim + main.bundle.js (defer)
+Write-Host '[6/7] generating and patching main.html'
+Copy-Item 'Web\main.html' 'Build\main.html' -Force
+$mainPath = (Resolve-Path 'Build\main.html').Path
+$c = Read-Utf8 'Build\main.html'
+$c = $c -replace 'https://unpkg\.com/blockly@11/(\w+_compressed\.js)', 'vendor/$1'
+$c = $c -replace `
+    '<script type="module" src="main\.js"></script>', `
+    '<script src="vendor/inline_assets.js" defer></script><script src="main.bundle.js" defer></script>'
+Write-Utf8 $mainPath $c
 
 # Sanity check
-if (-not (Select-String -Path $path -SimpleMatch 'main.bundle.js' -Quiet)) {
-    throw 'index.html patch failed: main.bundle.js not present'
+if (-not (Select-String -Path $mainPath -SimpleMatch 'main.bundle.js' -Quiet)) {
+    throw 'main.html patch failed: main.bundle.js not present'
 }
-if (Select-String -Path $path -SimpleMatch 'type="module"' -Quiet) {
-    throw 'index.html patch failed: type="module" still present'
+if (Select-String -Path $mainPath -SimpleMatch 'type="module"' -Quiet) {
+    throw 'main.html patch failed: type="module" still present'
+}
+if (-not (Select-String -Path $mainPath -SimpleMatch 'inline_assets.js' -Quiet)) {
+    throw 'main.html patch failed: inline_assets.js script tag not injected'
+}
+Write-Host ''
+
+# ---------- 7) Inline assets (overview.html + 12 lesson.json + examples/*.xml) ----------
+# main.js 는 런타임에 다음 세 종류를 fetch() 한다:
+#   - overview.html
+#   - Lesson{NN}/lesson.json   (NN = 01..12)
+#   - examples/{name}.xml
+# file:// 컨텍스트에서는 동일 출처 정책으로 fetch 가 차단되므로,
+# 이 데이터들을 한 JS 파일에 문자열로 인라인하고 window.fetch 를 가로채는
+# 얇은 shim 을 생성한다. shim 은 main.bundle.js 실행 전(같은 defer 순서)에
+# 한 번만 설치된다.
+Write-Host '[7/7] generating vendor\inline_assets.js'
+
+$sb = New-Object System.Text.StringBuilder
+[void]$sb.AppendLine('// Auto-generated by build.ps1 -- inlined fetch() targets for file:// support.')
+[void]$sb.AppendLine('(function () {')
+[void]$sb.AppendLine('  if (window.__ARES_INLINE_INSTALLED__) return;')
+[void]$sb.AppendLine('  window.__ARES_INLINE_INSTALLED__ = true;')
+[void]$sb.AppendLine('  var DATA = {};')
+
+# overview.html
+$overview = Read-Utf8 'Web\overview.html'
+[void]$sb.AppendLine("  DATA['overview.html'] = " + (Encode-JsString $overview) + ';')
+
+# Lesson{NN}/lesson.json
+for ($i = 1; $i -le 12; $i++) {
+    $pad = '{0:D2}' -f $i
+    $p   = "Web\Lesson$pad\lesson.json"
+    if (Test-Path $p) {
+        $json = Read-Utf8 $p
+        [void]$sb.AppendLine("  DATA['Lesson$pad/lesson.json'] = " + (Encode-JsString $json) + ';')
+    } else {
+        Write-Warning "missing $p -- skipped"
+    }
+}
+
+# examples/*.xml
+$exampleDir = 'Web\examples'
+if (Test-Path $exampleDir) {
+    foreach ($f in (Get-ChildItem $exampleDir -Filter '*.xml')) {
+        $xml = Read-Utf8 $f.FullName
+        $key = 'examples/' + $f.Name
+        [void]$sb.AppendLine('  DATA[' + (Encode-JsString $key) + '] = ' + (Encode-JsString $xml) + ';')
+    }
+}
+
+[void]$sb.AppendLine(@'
+  var origFetch = window.fetch ? window.fetch.bind(window) : null;
+  function lookup(input) {
+    var url = (typeof input === 'string') ? input : (input && input.url) || '';
+    url = String(url).split('?')[0].split('#')[0];
+    for (var key in DATA) {
+      if (!Object.prototype.hasOwnProperty.call(DATA, key)) continue;
+      if (url === key) return key;
+      if (url.endsWith('/' + key)) return key;
+      if (url.endsWith(key)) return key;
+    }
+    return null;
+  }
+  function mimeFor(key) {
+    if (key.endsWith('.json')) return 'application/json';
+    if (key.endsWith('.xml'))  return 'application/xml';
+    return 'text/html; charset=utf-8';
+  }
+  window.fetch = function (input, init) {
+    var key = lookup(input);
+    if (key !== null) {
+      var body = DATA[key];
+      return Promise.resolve(new Response(body, {
+        status: 200,
+        headers: { 'Content-Type': mimeFor(key) }
+      }));
+    }
+    if (origFetch) return origFetch(input, init);
+    return Promise.reject(new Error('fetch unsupported (no inline match)'));
+  };
+})();
+'@)
+
+Write-Utf8 'Build\vendor\inline_assets.js' $sb.ToString()
+
+# Sanity check inline_assets
+$inlineKeys = (Select-String -Path 'Build\vendor\inline_assets.js' -Pattern "DATA\[" -AllMatches).Matches.Count
+Write-Host ("        inlined entries: {0}" -f $inlineKeys)
+if ($inlineKeys -lt 13) {
+    throw "inline_assets.js: expected >= 13 entries (overview + 12 lessons), got $inlineKeys"
 }
 Write-Host ''
 
 Write-Host '=== Build complete ==='
 Write-Host ''
 Write-Host 'Output    : Build\'
+Write-Host 'Entry     : Build\index.html  (랜딩) -> 탐사선 연결 -> main.html'
 Write-Host 'Verify    : double-click Build\index.html'
 Write-Host 'Distribute: ship the entire Build\ folder (self-contained)'
 Write-Host ''
