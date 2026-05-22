@@ -227,6 +227,10 @@ function showView(view) {
   if (exampleSelect) exampleSelect.disabled = !inMission;
   if (elements.runButton) elements.runButton.disabled = !inMission || !ble;
 
+  // 미션 설명 패널 토글 버튼은 미션 뷰에서만 노출
+  const panelToggle = document.getElementById('missionPanelToggle');
+  if (panelToggle) panelToggle.hidden = !inMission;
+
   // 미션 뷰에 진입할 때만 Blockly 리사이즈
   if (inMission && workspace) {
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
@@ -557,6 +561,47 @@ function setupLogVisibilityButton() {
 }
 
 // ============================================================
+// 미션 설명 패널(미션 정보) 토글 — 미션 선택 드롭다운 옆 버튼
+//   - 초기 상태: 열림 (panel 노출, 버튼 텍스트 "미션 설명 닫기")
+//   - 사용자 선택은 localStorage 에 보존
+// ============================================================
+function setupMissionPanelToggle() {
+  const STORAGE_KEY = 'ares.missionPanel.opened';
+  const btn = document.getElementById('missionPanelToggle');
+  const panel = document.getElementById('missionPanel');
+  if (!btn || !panel) return;
+
+  const readOpened = () => {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v === null) return true; // 처음 시작: 열림
+      return v === 'true';
+    } catch { return true; }
+  };
+  const writeOpened = (v) => {
+    try { localStorage.setItem(STORAGE_KEY, String(v)); } catch {}
+  };
+
+  const apply = (opened) => {
+    panel.classList.toggle('collapsed', !opened);
+    btn.setAttribute('aria-pressed', String(opened));
+    btn.textContent = opened ? '📖 미션 설명 닫기' : '📖 미션 설명 열기';
+    btn.title = opened ? '미션 설명 패널 숨기기' : '미션 설명 패널 보이기';
+    if (workspace) {
+      setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
+    }
+  };
+
+  apply(readOpened());
+
+  btn.addEventListener('click', () => {
+    const nextOpened = panel.classList.contains('collapsed'); // 현재 닫혀 있으면 열기
+    apply(nextOpened);
+    writeOpened(nextOpened);
+  });
+}
+
+// ============================================================
 // 툴박스 토글 버튼 — 미션 워크스페이스 영역에 배치
 // ============================================================
 let _toggleBtnOpened = true;
@@ -810,6 +855,15 @@ function initializeMissionListeners(ws) {
         }
       }
     }
+    if (data.type === 'exit_dashboard') {
+      // dashboard iframe 안의 "점검완료 관제실로 복귀" 버튼.
+      // 현재 대시보드가 표시 중이면 블록 코딩 뷰로 토글.
+      const dashboardFrame = document.getElementById('dashboardFrame');
+      if (dashboardFrame && dashboardFrame.style.display === 'block') {
+        toggleDashboard();
+      }
+      return;
+    }
     if (data.type === 'log_toggle') {
       const logContainer = document.getElementById('logContainer');
       const btn = document.getElementById('logToggleButton');
@@ -847,11 +901,12 @@ function main() {
   // 4) 네비게이션 UI
   buildLessonSelect();
 
-  // 5) 로그 토글
+  // 5) 로그 토글 + 미션 설명 패널 토글
   const logContainer = document.getElementById('logContainer');
   if (logContainer) logContainer.classList.add('compact');
   setupLogToggle();
   setupLogVisibilityButton();
+  setupMissionPanelToggle();
 
   // 6) 상태 초기화 + 라우팅
   BluetoothManager.updateConnectionStatus(false);

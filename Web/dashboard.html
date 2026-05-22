@@ -75,6 +75,29 @@
             font-weight: 400;
         }
 
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-exit-btn {
+            height: 36px;
+            padding: 0 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: #fff;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .header-exit-btn:hover { background: #383838; }
+        .header-exit-btn:active { transform: scale(0.98); }
+
         /* Tabs */
         .nav-tabs {
             display: flex;
@@ -348,7 +371,10 @@
 <div class="container">
     <!-- 헤더 영역 -->
     <header class="header">
-        <h2>ARES <span>미션 컨트롤</span></h2>
+        <div class="header-title-group">
+            <h2>ARES <span>미션 컨트롤</span></h2>
+            <button id="exit-dashboard-btn" type="button" class="header-exit-btn" title="점검을 마치고 블록 코딩 화면으로 복귀">🧩 점검완료 관제실로 복귀</button>
+        </div>
         <div class="nav-tabs">
             <div class="nav-tab active" data-tab="dashboard">개요</div>
             <div class="nav-tab" data-tab="settings">시스템</div>
@@ -897,6 +923,12 @@
         setDashboardInteractive(false);
         window.addEventListener('message', handleMessage);
         startConnectionMonitor();
+
+        // 점검 완료 후 부모(main.html) 에 복귀 요청
+        document.getElementById('exit-dashboard-btn')?.addEventListener('click', () => {
+            window.parent.postMessage({ type: 'exit_dashboard' }, '*');
+        });
+
         addLog('대시보드 준비 완료. 블루투스 연결 대기 중...', 'info');
     }
 

@@ -995,6 +995,10 @@ iframe, #dashboardFrame {
     box-sizing: border-box;
 }
 
+#missionView .mission-panel.collapsed {
+    display: none;
+}
+
 .mission-panel-head h3 {
     margin: 6px 0 4px;
     font-size: 1.08em;
