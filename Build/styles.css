@@ -145,16 +145,54 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 .header {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
-.header h1 {
+.header-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 12px;
+    background: var(--background-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.header-main h1 {
     font-family: 'Inter Tight', sans-serif;
-    font-size: 1.4em;
+    font-size: 1.2em;
     font-weight: 700;
     margin: 0;
     letter-spacing: -0.5px;
     color: var(--text-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.header-sub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 4px 6px 0;
+    font-size: 0.85em;
+}
+
+.header-sub #exampleSelect {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 0.88em;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--background-white);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.header-sub #exampleSelect:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .subtitle {
@@ -164,16 +202,24 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 #controls {
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     flex-wrap: wrap;
-    min-height: 90px;
-    padding: 10px;
-    background: var(--background-main);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    border: 1px solid var(--border-color);
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    margin: 0;
+    min-height: 0;
+}
+
+#controls button {
+    height: 34px;
+    padding: 0 12px;
+    margin: 2px;
+    font-size: 0.85em;
 }
 
 button {
@@ -432,6 +478,20 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
     min-height: 100dvh;
   }
 
+  .header-main {
+    flex-direction: column;
+    align-items: stretch;
+    background: transparent;
+    border: none;
+    padding: 0;
+    gap: 6px;
+  }
+
+  .header-main h1 {
+    font-size: 1.1em;
+    padding: 0 4px;
+  }
+
   #controls, .nav-tabs, .quick-actions {
     flex-wrap: wrap;
     gap: 8px;
@@ -583,4 +643,517 @@ iframe, #dashboardFrame {
   opacity: 0.9;
   font-size: 12px;
   white-space: pre-wrap;
+}
+
+/* ============================================================
+   ARES 미션 UI — 차시/미션 네비게이터 + 3-state 콘텐츠
+   ============================================================ */
+
+/* ----- 차시/미션 네비게이터 ----- */
+#missionNav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background: var(--background-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+#missionNav .nav-btn {
+    background: var(--background-white);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    height: 36px;
+    padding: 0 12px;
+    font-size: 0.85em;
+}
+
+#missionNav .nav-btn:hover {
+    background: var(--background-secondary);
+}
+
+#missionNav select {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 0.88em;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--background-white);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 200px;
+}
+
+#missionNav select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#breadcrumb {
+    margin-left: auto;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ----- 콘텐츠 뷰 공통 ----- */
+.content-view {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.content-view[hidden] {
+    display: none !important;
+}
+
+#overviewView,
+#lessonView {
+    overflow-y: auto;
+    padding: 20px 24px;
+}
+
+#missionView {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+}
+
+/* ----- 태그 배지 ----- */
+.lesson-tag {
+    display: inline-block;
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--background-secondary);
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tag-theory   { background:#E0E0E0; color:#555; }
+.tag-LED      { background:#FFE0E0; color:#C0392B; }
+.tag-WINK     { background:#FFE7CC; color:#C77410; }
+.tag-BUZZER   { background:#D5F1FF; color:#0577AB; }
+.tag-TRAFFIC  { background:#FFF5C2; color:#9A7800; }
+.tag-RANDOM   { background:#E9DCFF; color:#5A2EBE; }
+.tag-MOTOR    { background:#FFD7BB; color:#A04400; }
+.tag-SEQUENCE { background:#D4F4DD; color:#1E7E34; }
+.tag-SYNC     { background:#FFD6F2; color:#A02080; }
+.tag-LAUNCH   { background:#FFE2CC; color:#D94A00; }
+
+/* ----- 개요 뷰 ----- */
+.overview-hero h2 {
+    font-size: 1.6em;
+    margin: 0 0 8px;
+    color: var(--text-primary);
+}
+
+.overview-lede {
+    font-size: 1em;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0 0 24px;
+}
+
+.overview-flow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.flow-step {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: var(--background-main);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.flow-num {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+}
+
+.flow-step strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.95em;
+}
+
+.flow-step p {
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.overview-table-title {
+    margin: 24px 0 12px;
+    font-size: 1.15em;
+}
+
+.overview-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.lesson-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    text-align: left;
+}
+
+.lesson-table thead {
+    background: var(--background-main);
+}
+
+.lesson-table th,
+.lesson-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.lesson-table tbody tr:hover {
+    background: var(--background-secondary);
+}
+
+.lesson-table td.lesson-n {
+    font-weight: 700;
+    color: var(--accent-color);
+    width: 50px;
+    text-align: center;
+}
+
+.lesson-table .lesson-title-cell a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.lesson-table .lesson-title-cell a:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+.overview-howto {
+    background: var(--background-main);
+    border-radius: 10px;
+    padding: 16px 20px;
+    border: 1px solid var(--border-color);
+}
+
+.overview-howto h3 {
+    margin: 0 0 10px;
+    font-size: 1.05em;
+}
+
+.overview-howto ol {
+    margin: 0;
+    padding-left: 22px;
+    line-height: 1.7;
+    font-size: 0.92em;
+    color: var(--text-secondary);
+}
+
+/* ----- 차시 소개 뷰 ----- */
+.lesson-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.lesson-header h2 {
+    margin: 8px 0 6px;
+    font-size: 1.45em;
+}
+
+.lesson-meta {
+    margin: 0;
+    font-size: 0.92em;
+    color: var(--text-secondary);
+}
+
+.lesson-meta .dot-sep {
+    margin: 0 6px;
+    color: var(--text-muted);
+}
+
+.lesson-body p {
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.lesson-body h3 {
+    margin: 24px 0 10px;
+    font-size: 1.1em;
+}
+
+.mission-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+}
+
+.mission-list-item a {
+    display: block;
+    padding: 14px 16px;
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.18s ease;
+}
+
+.mission-list-item a:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(250, 93, 41, 0.12);
+}
+
+.mission-id {
+    display: inline-block;
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-right: 8px;
+    letter-spacing: 0.04em;
+}
+
+.mission-list-title {
+    font-weight: 600;
+    font-size: 0.98em;
+}
+
+.mission-list-hw {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.82em;
+    color: var(--text-muted);
+}
+
+.lesson-summary {
+    margin-top: 20px;
+}
+
+.summary-box {
+    padding: 14px 18px;
+    border-left: 4px solid var(--accent-color);
+    background: var(--background-main);
+    border-radius: 0 8px 8px 0;
+}
+
+.summary-box h4 {
+    margin: 0 0 6px;
+    font-size: 0.98em;
+}
+
+.summary-box p {
+    margin: 0;
+    font-size: 0.9em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.summary-keypoint { border-left-color: #FA5D29; }
+.summary-summary  { border-left-color: #5C81A6; }
+.summary-notebox  { border-left-color: #7BDCB5; }
+.summary-caution  { border-left-color: #E74C3C; background:#FFF3F1; }
+
+/* ----- 미션 코딩 뷰 ----- */
+#missionView .mission-panel {
+    flex: 0 0 320px;
+    width: 320px;
+    background: var(--background-main);
+    border-right: 1px solid var(--border-color);
+    padding: 16px 16px 12px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#missionView .mission-panel.collapsed {
+    display: none;
+}
+
+.mission-panel-head h3 {
+    margin: 6px 0 4px;
+    font-size: 1.08em;
+    line-height: 1.3;
+}
+
+.mission-meta {
+    margin: 0 0 12px;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+}
+
+.mission-story {
+    background: var(--background-white);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border-color);
+}
+
+.story-line {
+    font-size: 0.85em;
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+.story-line:last-child { margin-bottom: 0; }
+
+.story-avatar { margin-right: 4px; }
+
+.story-name {
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-right: 4px;
+}
+
+.story-albi .story-name { color: #0693E3; }
+
+.story-text {
+    color: var(--text-secondary);
+}
+
+.mission-section {
+    margin-bottom: 14px;
+}
+
+.mission-section h4 {
+    margin: 0 0 6px;
+    font-size: 0.92em;
+    font-weight: 700;
+}
+
+#missionGoals {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.85em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+#missionGoals li {
+    margin-bottom: 4px;
+}
+
+details.mission-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9em;
+    padding: 6px 0;
+    user-select: none;
+}
+
+.sample-code {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    background: #1e1e1e;
+    color: #f0f0f0;
+    border-radius: 6px;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.78em;
+    line-height: 1.45;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.mission-prev-next {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-btn-small {
+    flex: 1;
+    height: 32px;
+    font-size: 0.8em;
+    padding: 0 8px;
+    background: var(--background-white);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.nav-btn-small:hover:not(:disabled) {
+    background: var(--background-secondary);
+}
+
+#missionView .mission-workspace {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+}
+
+#missionView #blocklyDiv {
+    width: 100%;
+    height: 100%;
+}
+
+/* ----- 반응형: 모바일에서는 미션 패널이 상단으로 ----- */
+@media (max-width: 900px) {
+    #missionView {
+        flex-direction: column;
+    }
+    #missionView .mission-panel {
+        flex: 0 0 auto;
+        width: 100%;
+        max-height: 38vh;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    #missionView .mission-workspace {
+        flex: 1;
+        min-height: 0;
+    }
+    #missionNav select {
+        min-width: 150px;
+        flex: 1;
+    }
+    #breadcrumb {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 4px;
+    }
+}
+
+@media (max-width: 600px) {
+    #overviewView,
+    #lessonView {
+        padding: 14px 16px;
+    }
+    .overview-hero h2 {
+        font-size: 1.3em;
+    }
+    .mission-list {
+        grid-template-columns: 1fr;
+    }
 }

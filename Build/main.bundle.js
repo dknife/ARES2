@@ -746,6 +746,43 @@
         colour: "#00CCFF",
         tooltip: "\uC9C0\uC815\uD55C \uC8FC\uD30C\uC218(Hz)\uC640 \uC2DC\uAC04(\uCD08)\uC73C\uB85C \uBD80\uC800\uB97C \uC6B8\uB9BD\uB2C8\uB2E4. \uC608: 262Hz=\uB3C4, 392Hz=\uC194"
       },
+      {
+        type: "buzzer_note",
+        message0: "\u{1F50A} \uACC4\uBA85 %1 \uB85C %2 \uCD08 \uC6B8\uB9AC\uAE30",
+        args0: [
+          { type: "field_dropdown", name: "NOTE", options: [
+            // 낮은 옥타브 (C3 ~ B3)
+            ["\uB3C4(\u2193)", "131"],
+            ["\uB808(\u2193)", "147"],
+            ["\uBBF8(\u2193)", "165"],
+            ["\uD30C(\u2193)", "175"],
+            ["\uC194(\u2193)", "196"],
+            ["\uB77C(\u2193)", "220"],
+            ["\uC2DC(\u2193)", "247"],
+            // 가운데 옥타브 (C4 ~ B4)
+            ["\uB3C4", "262"],
+            ["\uB808", "294"],
+            ["\uBBF8", "330"],
+            ["\uD30C", "349"],
+            ["\uC194", "392"],
+            ["\uB77C", "440"],
+            ["\uC2DC", "494"],
+            // 높은 옥타브 (C5 ~ B5)
+            ["\uB3C4(\u2191)", "523"],
+            ["\uB808(\u2191)", "587"],
+            ["\uBBF8(\u2191)", "659"],
+            ["\uD30C(\u2191)", "698"],
+            ["\uC194(\u2191)", "784"],
+            ["\uB77C(\u2191)", "880"],
+            ["\uC2DC(\u2191)", "988"]
+          ] },
+          { type: "input_value", name: "DURATION", check: "Number" }
+        ],
+        previousStatement: null,
+        nextStatement: null,
+        colour: "#00CCFF",
+        tooltip: "\uC120\uD0DD\uD55C \uACC4\uBA85\uC5D0 \uD574\uB2F9\uD558\uB294 \uC8FC\uD30C\uC218\uB85C \uBD80\uC800\uB97C \uC6B8\uB9BD\uB2C8\uB2E4. \uC138 \uC625\uD0C0\uBE0C \uC9C0\uC6D0 \u2014 (\u2193)\uB0AE\uC740 \uC625\uD0C0\uBE0C / \uAE30\uBCF8 \uAC00\uC6B4\uB370 / (\u2191)\uB192\uC740 \uC625\uD0C0\uBE0C. \uAC00\uC6B4\uB370 \uB3C4=262 Hz, \uB77C=440 Hz."
+      },
       // 발사 블록 (빨강주황 #FF4500)
       {
         type: "gun_fire",
@@ -1071,6 +1108,11 @@
           const duration = this.evaluateValueBlock(block.getInputTargetBlock("DURATION")) || "1";
           return `BUZZER_ON,${freq},${duration}`;
         }
+        case "buzzer_note": {
+          const freq = parseInt(block.getFieldValue("NOTE"), 10) || 262;
+          const duration = this.evaluateValueBlock(block.getInputTargetBlock("DURATION")) || "1";
+          return `BUZZER_ON,${freq},${duration}`;
+        }
         case "gun_fire":
           return "GUN_FIRE";
         // 서보 모터 (시간 제한) - SERVO_t방향,초
@@ -1231,9 +1273,9 @@
         }
       }
     },
-    _findProcedureDefinition(workspace, name, hasReturn) {
+    _findProcedureDefinition(workspace2, name, hasReturn) {
       const defType = hasReturn ? "procedures_defreturn" : "procedures_defnoreturn";
-      const allBlocks = workspace.getAllBlocks();
+      const allBlocks = workspace2.getAllBlocks();
       for (const block of allBlocks) {
         if (block.type === defType && block.getFieldValue("NAME") === name) {
           return block;
@@ -1257,14 +1299,14 @@
         }
       }
     },
-    async executeWorkspace(workspace) {
+    async executeWorkspace(workspace2) {
       var _a, _b;
       state.isExecuting = true;
       elements.runButton.disabled = true;
       BluetoothManager.updateStatus("\uD504\uB85C\uADF8\uB7A8 \uC2E4\uD589 \uC911...", STATUS_COLORS.ORANGE);
       Logger.add("[\uC2E4\uD589] \uD504\uB85C\uADF8\uB7A8 \uC2DC\uC791", "info");
       try {
-        const topBlocks = workspace.getTopBlocks(true);
+        const topBlocks = workspace2.getTopBlocks(true);
         for (const block of topBlocks) {
           if (!state.isExecuting) {
             Logger.add("[\uC2E4\uD589] \uC911\uB2E8\uB428", "warning");
@@ -1293,6 +1335,23 @@
   };
 
   // main.js
+  var LESSON_CATALOG = [
+    { n: 1, title: "\uCF54\uB529 \uC785\uBB38\uACFC \uC54C\uBE44 \uB9CC\uB0A8", tag: "theory", hardware: "(\uC774\uB860) Bluetooth \uD398\uC5B4\uB9C1", concept: "\uC21C\uCC28/\uBC18\uBCF5 \uAC1C\uB150, \uC571 \uC124\uCE58" },
+    { n: 2, title: "LED \uAE30\uCD08: \uC54C\uBE44\uC758 \uCCAB \uD638\uD761", tag: "LED", hardware: "LED 1\uAC1C", concept: "\uB514\uC9C0\uD138 \uCD9C\uB825 HIGH/LOW, time.sleep" },
+    { n: 3, title: "LED 2\uAC1C\uB85C \uD45C\uC815 \uB9CC\uB4E4\uAE30", tag: "WINK", hardware: "LED 2\uAC1C", concept: "\uB2E4\uCC44\uB110 \uB3D9\uC2DC \uC81C\uC5B4, \uC719\uD06C \uB9AC\uB4EC" },
+    { n: 4, title: "\uBD80\uC800\uB85C \uC18C\uB9AC \uB9CC\uB4E4\uAE30", tag: "BUZZER", hardware: "\uBD80\uC800", concept: "\uC8FC\uD30C\uC218(Hz) \xD7 \uC9C0\uC18D\uC2DC\uAC04" },
+    { n: 5, title: "LED 3\uAC1C\uB85C \uC2E0\uD638\uB4F1 \uB9CC\uB4E4\uAE30", tag: "TRAFFIC", hardware: "LED 3\uAC1C", concept: "\uC2DC\uD000\uC2A4 \uC0AC\uACE0, \uBAA8\uB4DC \uBD84\uAE30" },
+    { n: 6, title: "\uB79C\uB364 \uD568\uC218\uC640 \uAC00\uC704\uBC14\uC704\uBCF4 \uAC8C\uC784", tag: "RANDOM", hardware: "LED 3\uAC1C", concept: "random.randint, \uBE44\uACB0\uC815\uC801 \uCF54\uB4DC" },
+    { n: 7, title: "DC\uBAA8\uD130 \uC785\uBB38: \uD68C\uC804\uACFC \uB8F0\uB81B", tag: "MOTOR", hardware: "DC\uBAA8\uD130 + \uC6D0\uD310", concept: "\uC815/\uC5ED \uD68C\uC804, PWM \uC18D\uB3C4 \uC870\uC808" },
+    { n: 8, title: "\uC54C\uBE44 \uCE74\uD2B8 \uC8FC\uD589", tag: "MOTOR", hardware: "DC\uBAA8\uD130 + \uBC14\uD034 2\uAC1C", concept: "\uC804\xB7\uD6C4\uC9C4 \uC8FC\uD589, \uAC00\uAC10\uC18D \uACE1\uC120" },
+    { n: 9, title: "\uBC1C\uC0AC\uB300 \uC81C\uC791\uACFC 1\uBD84\uAE30 \uD68C\uACE0", tag: "theory", hardware: "(\uC81C\uC791/\uC774\uB860)", concept: "1\uBD84\uAE30 \uCD1D\uC815\uB9AC, 2\uBD84\uAE30 \uC608\uACE0" },
+    { n: 10, title: "LED 5\uAC1C \uC2DC\uD000\uC2A4\uC640 \uCE74\uC6B4\uD2B8\uB2E4\uC6B4", tag: "SEQUENCE", hardware: "LED 5\uAC1C", concept: "\uBC1C\uC0AC \uC2DC\uD000\uC2A4, \uBAA8\uB4C8\uD654 \uC0AC\uACE0" },
+    { n: 11, title: "LED\uC640 \uBD80\uC800 \uB3D9\uAE30\uD654", tag: "SYNC", hardware: "LED 5\uAC1C + \uBD80\uC800", concept: "\uBE5B/\uC18C\uB9AC \uB3D9\uAE30, \uC74C\uACC4(\uB3C4\uB808\uBBF8\uD30C\uC194)" },
+    { n: 12, title: "\uD654\uC131 \uB85C\uCF13 \uCD5C\uC885 \uBC1C\uC0AC!", tag: "LAUNCH", hardware: "LED 5\uAC1C + \uBD80\uC800 + DC\uBAA8\uD130", concept: "\uD1B5\uD569 \uC2DC\uB098\uB9AC\uC624, \uC790\uC720 \uCC3D\uC791 \uBC1C\uD45C" }
+  ];
+  var lessonCache = /* @__PURE__ */ new Map();
+  var workspace = null;
+  var currentView = "overview";
   function initializeBlockly() {
     if (!navigator.bluetooth) {
       alert("\uC774 \uBE0C\uB77C\uC6B0\uC800\uB294 Web Bluetooth API\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Chrome 56+ \uB610\uB294 Edge 79+\uB97C \uC0AC\uC6A9\uD574\uC8FC\uC138\uC694.");
@@ -1300,6 +1359,25 @@
     }
     Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
     attachBatchBlockValidator(Blockly);
+    applyKoreanMessages();
+    workspace = Blockly.inject("blocklyDiv", {
+      toolbox: document.getElementById("toolbox"),
+      scrollbars: true,
+      trashcan: true,
+      zoom: {
+        controls: true,
+        wheel: true,
+        pinch: true,
+        startScale: 0.9,
+        maxScale: 2,
+        minScale: 0.3,
+        scaleSpeed: 1.2
+      }
+    });
+    Blockly.Python.init(workspace);
+    return workspace;
+  }
+  function applyKoreanMessages() {
     Blockly.Msg["CONTROLS_REPEAT_TITLE"] = "\uBC18\uBCF5 %1 \uBC88";
     Blockly.Msg["CONTROLS_REPEAT_INPUT_DO"] = "\uC2E4\uD589";
     Blockly.Msg["CONTROLS_REPEAT_TOOLTIP"] = "\uC9C0\uC815\uB41C \uD69F\uC218\uB9CC\uD07C \uBB38\uC7A5\uC744 \uBC18\uBCF5\uD569\uB2C8\uB2E4.";
@@ -1382,22 +1460,6 @@
     Blockly.Msg["PROCEDURES_CALL_BEFORE_PARAMS"] = "\uB9E4\uAC1C\uBCC0\uC218:";
     Blockly.Msg["PROCEDURES_ADD_PARAMETER"] = "\uB9E4\uAC1C\uBCC0\uC218 \uCD94\uAC00";
     Blockly.Msg["PROCEDURES_REMOVE_PARAMETER"] = "\uB9E4\uAC1C\uBCC0\uC218 \uC81C\uAC70";
-    const workspace = Blockly.inject("blocklyDiv", {
-      toolbox: document.getElementById("toolbox"),
-      scrollbars: true,
-      trashcan: true,
-      zoom: {
-        controls: true,
-        wheel: true,
-        pinch: true,
-        startScale: 0.9,
-        maxScale: 2,
-        minScale: 0.3,
-        scaleSpeed: 1.2
-      }
-    });
-    Blockly.Python.init(workspace);
-    return workspace;
   }
   function isBleConnected() {
     var _a, _b;
@@ -1411,31 +1473,280 @@
     }
     return true;
   }
+  function parseHash() {
+    const hash = window.location.hash.replace(/^#/, "");
+    const params = new URLSearchParams(hash);
+    const lessonRaw = parseInt(params.get("lesson"), 10);
+    const missionRaw = parseInt(params.get("mission"), 10);
+    const lesson = Number.isFinite(lessonRaw) && lessonRaw >= 1 && lessonRaw <= 12 ? lessonRaw : null;
+    const mission = Number.isFinite(missionRaw) && missionRaw >= 1 && missionRaw <= 4 ? missionRaw : null;
+    return { lesson, mission: lesson ? mission : null };
+  }
+  function navigate({ lesson = null, mission = null } = {}) {
+    let target = "";
+    if (lesson) {
+      target = `lesson=${lesson}`;
+      if (mission) target += `&mission=${mission}`;
+    }
+    const next = "#" + target;
+    if (window.location.hash !== next) {
+      window.location.hash = next;
+    } else {
+      applyRoute();
+    }
+  }
+  async function applyRoute() {
+    const { lesson, mission } = parseHash();
+    if (lesson && mission) {
+      await enterMission(lesson, mission);
+    } else if (lesson) {
+      await enterLesson(lesson);
+    } else {
+      enterOverview();
+    }
+  }
+  function showView(view) {
+    for (const v of ["overview", "lesson", "mission"]) {
+      const el = document.getElementById(v + "View");
+      if (el) el.hidden = v !== view;
+    }
+    currentView = view;
+    const inMission = view === "mission";
+    const ble = isBleConnected();
+    if (elements.saveButton) elements.saveButton.disabled = !inMission;
+    if (elements.loadButton) elements.loadButton.disabled = !inMission;
+    const exampleSelect = document.getElementById("exampleSelect");
+    if (exampleSelect) exampleSelect.disabled = !inMission;
+    if (elements.runButton) elements.runButton.disabled = !inMission || !ble;
+    const panelToggle = document.getElementById("missionPanelToggle");
+    if (panelToggle) panelToggle.hidden = !inMission;
+    if (inMission && workspace) {
+      setTimeout(() => {
+        try {
+          Blockly.svgResize(workspace);
+        } catch (e) {
+        }
+      }, 0);
+    }
+  }
+  async function enterOverview() {
+    showView("overview");
+    document.getElementById("lessonSelect").value = "";
+    populateMissionSelect(null);
+    updateBreadcrumb(null, null);
+    const container = document.getElementById("overviewContent");
+    if (container && container.dataset.loaded !== "true") {
+      try {
+        const res = await fetch("overview.html", { cache: "no-store" });
+        container.innerHTML = await res.text();
+        container.dataset.loaded = "true";
+        const tbody = document.getElementById("overviewLessonTableBody");
+        if (tbody) {
+          tbody.innerHTML = LESSON_CATALOG.map((l) => `
+          <tr data-lesson="${l.n}">
+            <td class="lesson-n">${l.n}</td>
+            <td class="lesson-title-cell">
+              <a href="#lesson=${l.n}">${escapeHtml2(l.title)}</a>
+            </td>
+            <td>${escapeHtml2(l.hardware)}</td>
+            <td>${escapeHtml2(l.concept)}</td>
+            <td><span class="tag tag-${l.tag}">${escapeHtml2(l.tag)}</span></td>
+          </tr>
+        `).join("");
+        }
+      } catch (e) {
+        container.innerHTML = '<p style="color:#E74C3C">\uAC1C\uC694\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.</p>';
+        Logger.add(`[\uC624\uB958] overview.html \uB85C\uB4DC \uC2E4\uD328: ${e.message}`, "error");
+      }
+    }
+  }
+  async function enterLesson(n) {
+    const data = await loadLesson(n);
+    if (!data) {
+      enterOverview();
+      return;
+    }
+    showView("lesson");
+    document.getElementById("lessonSelect").value = String(n);
+    populateMissionSelect(n, data);
+    updateBreadcrumb(n, null);
+    document.getElementById("lessonHeading").textContent = `${n}\uCC28\uC2DC \u2014 ${data.title}`;
+    document.getElementById("lessonTagBadge").textContent = data.tag;
+    document.getElementById("lessonTagBadge").className = `lesson-tag tag-${data.tag}`;
+    document.getElementById("lessonHardware").textContent = `\u{1F527} ${data.hardware}`;
+    document.getElementById("lessonConcept").textContent = `\u{1F4A1} ${data.concept}`;
+    document.getElementById("lessonIntro").textContent = data.intro;
+    const ml = document.getElementById("lessonMissionList");
+    ml.innerHTML = data.missions.map((m) => `
+    <li class="mission-list-item">
+      <a href="#lesson=${n}&mission=${m.id}">
+        <span class="mission-id">\uBBF8\uC158 ${m.id}</span>
+        <span class="mission-list-title">${escapeHtml2(m.title)}</span>
+        <span class="mission-list-hw">${escapeHtml2(m.hardware)}</span>
+      </a>
+    </li>
+  `).join("");
+    const sm = document.getElementById("lessonSummary");
+    if (data.summary) {
+      sm.innerHTML = `
+      <div class="summary-box summary-${data.summary.type}">
+        <h4>${escapeHtml2(data.summary.title)}</h4>
+        <p>${escapeHtml2(data.summary.text)}</p>
+      </div>
+    `;
+    } else {
+      sm.innerHTML = "";
+    }
+  }
+  async function enterMission(n, m) {
+    const data = await loadLesson(n);
+    if (!data) {
+      enterOverview();
+      return;
+    }
+    const mission = data.missions.find((x) => x.id === m);
+    if (!mission) {
+      enterLesson(n);
+      return;
+    }
+    showView("mission");
+    document.getElementById("lessonSelect").value = String(n);
+    populateMissionSelect(n, data);
+    document.getElementById("missionSelect").value = String(m);
+    updateBreadcrumb(n, m);
+    document.getElementById("missionHeading").textContent = `${n}\uCC28\uC2DC \uBBF8\uC158 ${m} \u2014 ${mission.title}`;
+    document.getElementById("missionTagBadge").textContent = mission.tag;
+    document.getElementById("missionTagBadge").className = `lesson-tag tag-${mission.tag}`;
+    document.getElementById("missionHardware").textContent = `\u{1F527} ${mission.hardware}`;
+    const storyEl = document.getElementById("missionStory");
+    storyEl.innerHTML = (mission.story || []).map((line) => `
+    <div class="story-line story-${line.speaker}">
+      <span class="story-avatar">${line.speaker === "ares" ? "\u{1F9D1}\u200D\u{1F680}" : "\u{1F916}"}</span>
+      <span class="story-name">${line.speaker === "ares" ? "\uC544\uB808\uC2A4" : "\uC54C\uBE44"}</span>
+      <span class="story-text">${escapeHtml2(line.text)}</span>
+    </div>
+  `).join("");
+    const goalsEl = document.getElementById("missionGoals");
+    goalsEl.innerHTML = (mission.goals || []).map((g) => `<li>${escapeHtml2(g)}</li>`).join("");
+    document.getElementById("missionSampleCode").textContent = mission.sampleCode || "";
+    const prev = document.getElementById("prevMissionBtn");
+    const next = document.getElementById("nextMissionBtn");
+    prev.disabled = m <= 1 && n <= 1;
+    next.disabled = m >= 4 && n >= 12;
+    prev.onclick = () => {
+      if (m > 1) navigate({ lesson: n, mission: m - 1 });
+      else if (n > 1) navigate({ lesson: n - 1, mission: 4 });
+    };
+    next.onclick = () => {
+      if (m < 4) navigate({ lesson: n, mission: m + 1 });
+      else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
+    };
+    if (workspace) {
+      placeToolboxToggleBtn();
+      setTimeout(() => {
+        try {
+          Blockly.svgResize(workspace);
+        } catch (e) {
+        }
+      }, 0);
+    }
+  }
+  async function loadLesson(n) {
+    if (lessonCache.has(n)) return lessonCache.get(n);
+    const padded = String(n).padStart(2, "0");
+    const url = `Lesson${padded}/lesson.json`;
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      lessonCache.set(n, json);
+      return json;
+    } catch (e) {
+      Logger.add(`[\uC624\uB958] ${url} \uB85C\uB4DC \uC2E4\uD328: ${e.message}`, "error");
+      return null;
+    }
+  }
+  function buildLessonSelect() {
+    const sel = document.getElementById("lessonSelect");
+    if (!sel) return;
+    for (const l of LESSON_CATALOG) {
+      const opt = document.createElement("option");
+      opt.value = String(l.n);
+      opt.textContent = `${l.n}\uCC28\uC2DC \u2014 ${l.title}`;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener("change", () => {
+      const n = parseInt(sel.value, 10);
+      if (Number.isFinite(n)) navigate({ lesson: n });
+      else navigate({});
+    });
+  }
+  function populateMissionSelect(n, data = null) {
+    const sel = document.getElementById("missionSelect");
+    if (!sel) return;
+    sel.innerHTML = '<option value="">\uBBF8\uC158 \uC120\uD0DD\u2026</option>';
+    if (!n) {
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+    const missions = (data == null ? void 0 : data.missions) || [];
+    if (missions.length === 0) {
+      for (let i = 1; i <= 4; i++) {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = `\uBBF8\uC158 ${i}`;
+        sel.appendChild(opt);
+      }
+    } else {
+      for (const m of missions) {
+        const opt = document.createElement("option");
+        opt.value = String(m.id);
+        opt.textContent = `\uBBF8\uC158 ${m.id} \u2014 ${m.title}`;
+        sel.appendChild(opt);
+      }
+    }
+  }
+  function updateBreadcrumb(n, m) {
+    const bc = document.getElementById("breadcrumb");
+    if (!bc) return;
+    if (n && m) bc.textContent = `${n}\uCC28\uC2DC \u203A \uBBF8\uC158 ${m}`;
+    else if (n) bc.textContent = `${n}\uCC28\uC2DC`;
+    else bc.textContent = "";
+  }
+  function escapeHtml2(s) {
+    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
   function toggleDashboard() {
     const blocklyDiv = document.getElementById("blocklyDiv");
     const dashboardFrame = document.getElementById("dashboardFrame");
     const dashboardButton = document.getElementById("dashboardButton");
     const toolboxToggleBtn = document.getElementById("toolboxToggleBtn");
     if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
+    if (currentView !== "mission") {
+      navigate({ lesson: 1, mission: 1 });
+      setTimeout(() => toggleDashboard(), 100);
+      return;
+    }
     const isDashboardHidden = dashboardFrame.style.display === "none" || dashboardFrame.style.display === "";
     if (isDashboardHidden) {
       blocklyDiv.style.display = "none";
       dashboardFrame.style.display = "block";
       if (toolboxToggleBtn) toolboxToggleBtn.style.display = "none";
-      dashboardButton.textContent = "\u{1F9E9} \uBE14\uB85D\uCF54\uB529";
-      elements.runButton.disabled = true;
-      elements.saveButton.disabled = true;
-      elements.loadButton.disabled = true;
+      dashboardButton.textContent = "\u{1F9E9} \uCF54\uB529";
+      if (elements.runButton) elements.runButton.disabled = true;
+      if (elements.saveButton) elements.saveButton.disabled = true;
+      if (elements.loadButton) elements.loadButton.disabled = true;
       BluetoothManager.updateConnectionStatus(isBleConnected());
       Logger.add("[\uBAA8\uB4DC] \uB300\uC2DC\uBCF4\uB4DC \uC804\uD658", "info");
     } else {
       blocklyDiv.style.display = "block";
       dashboardFrame.style.display = "none";
       if (toolboxToggleBtn) toolboxToggleBtn.style.display = "";
-      dashboardButton.textContent = "\u{1F4CA} \uB300\uC2DC\uBCF4\uB4DC";
-      elements.saveButton.disabled = false;
-      elements.loadButton.disabled = false;
-      elements.runButton.disabled = !isBleConnected();
+      dashboardButton.textContent = "\u{1F50D} \uC810\uAC80";
+      if (elements.saveButton) elements.saveButton.disabled = false;
+      if (elements.loadButton) elements.loadButton.disabled = false;
+      if (elements.runButton) elements.runButton.disabled = !isBleConnected();
       BluetoothManager.updateConnectionStatus(isBleConnected());
       Logger.add("[\uBAA8\uB4DC] \uBE14\uB85D\uCF54\uB529 \uC804\uD658", "info");
     }
@@ -1454,7 +1765,7 @@
       Logger.refresh();
     });
   }
-  function setupLogVisibilityButton(workspace) {
+  function setupLogVisibilityButton() {
     const btn = document.getElementById("logToggleButton");
     const logContainer = document.getElementById("logContainer");
     if (!btn || !logContainer) return;
@@ -1478,7 +1789,7 @@
       document.body.classList.toggle("log-hidden", !visible);
       btn.setAttribute("aria-pressed", String(visible));
       btn.title = visible ? "\uD1B5\uC2E0 \uB85C\uADF8 \uC228\uAE30\uAE30" : "\uD1B5\uC2E0 \uB85C\uADF8 \uBCF4\uAE30";
-      btn.textContent = visible ? "\u{1F4DD} \uB85C\uADF8 \uB044\uAE30" : "\u{1F4DD} \uB85C\uADF8 \uCF1C\uAE30";
+      btn.textContent = visible ? "\u{1F4DD} \uB85C\uADF8\uB044\uAE30" : "\u{1F4DD} \uB85C\uADF8\uCF1C\uAE30";
       if (workspace) {
         setTimeout(() => {
           try {
@@ -1496,17 +1807,132 @@
       Logger.refresh();
     });
   }
-  function initializeEventListeners(workspace) {
-    elements.connectButton.addEventListener("click", () => BluetoothManager.connect());
-    elements.disconnectButton.addEventListener("click", () => BluetoothManager.disconnect());
-    elements.clearLogBtn.addEventListener("click", () => {
+  function setupMissionPanelToggle() {
+    const STORAGE_KEY = "ares.missionPanel.opened";
+    const btn = document.getElementById("missionPanelToggle");
+    const panel = document.getElementById("missionPanel");
+    if (!btn || !panel) return;
+    const readOpened = () => {
+      try {
+        const v = localStorage.getItem(STORAGE_KEY);
+        if (v === null) return true;
+        return v === "true";
+      } catch (e) {
+        return true;
+      }
+    };
+    const writeOpened = (v) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, String(v));
+      } catch (e) {
+      }
+    };
+    const apply = (opened) => {
+      panel.classList.toggle("collapsed", !opened);
+      btn.setAttribute("aria-pressed", String(opened));
+      btn.textContent = opened ? "\u{1F4D6} \uBBF8\uC158 \uC124\uBA85 \uB2EB\uAE30" : "\u{1F4D6} \uBBF8\uC158 \uC124\uBA85 \uC5F4\uAE30";
+      btn.title = opened ? "\uBBF8\uC158 \uC124\uBA85 \uD328\uB110 \uC228\uAE30\uAE30" : "\uBBF8\uC158 \uC124\uBA85 \uD328\uB110 \uBCF4\uC774\uAE30";
+      if (workspace) {
+        setTimeout(() => {
+          try {
+            Blockly.svgResize(workspace);
+          } catch (e) {
+          }
+        }, 0);
+      }
+    };
+    apply(readOpened());
+    btn.addEventListener("click", () => {
+      const nextOpened = panel.classList.contains("collapsed");
+      apply(nextOpened);
+      writeOpened(nextOpened);
+    });
+  }
+  var _toggleBtnOpened = true;
+  function placeToolboxToggleBtn() {
+    const btn = document.getElementById("toolboxToggleBtn");
+    if (!btn) return;
+    const toolboxDiv = document.querySelector(".blocklyToolboxDiv");
+    const ws = document.querySelector(".mission-workspace");
+    if (_toggleBtnOpened && toolboxDiv && toolboxDiv.offsetWidth > 0 && toolboxDiv.offsetHeight > 0) {
+      if (btn.parentElement !== toolboxDiv) toolboxDiv.prepend(btn);
+      btn.classList.remove("toolbox-toggle--handle");
+      btn.classList.add("toolbox-toggle--inside");
+      return;
+    }
+    if (ws && btn.parentElement !== ws) ws.appendChild(btn);
+    btn.classList.remove("toolbox-toggle--inside");
+    btn.classList.add("toolbox-toggle--handle");
+  }
+  function setupToolboxToggle() {
+    var _a;
+    const STORAGE_KEY = "ares.toolbox.opened";
+    let btn = document.getElementById("toolboxToggleBtn");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "toolboxToggleBtn";
+      btn.type = "button";
+      btn.title = "\uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30/\uB2EB\uAE30";
+      btn.setAttribute("aria-pressed", "true");
+      const stop = (e) => e.stopPropagation();
+      btn.addEventListener("pointerdown", stop, true);
+      btn.addEventListener("mousedown", stop, true);
+      btn.addEventListener("touchstart", stop, true);
+      (_a = document.querySelector(".mission-workspace")) == null ? void 0 : _a.appendChild(btn);
+    }
+    const readOpened = () => {
+      try {
+        const v = localStorage.getItem(STORAGE_KEY);
+        if (v === null) return null;
+        return v === "true";
+      } catch (e) {
+        return null;
+      }
+    };
+    const writeOpened = (v) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, String(v));
+      } catch (e) {
+      }
+    };
+    const updateToggleText = () => {
+      btn.textContent = _toggleBtnOpened ? "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uB2EB\uAE30" : "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30";
+      btn.setAttribute("aria-pressed", String(_toggleBtnOpened));
+      btn.title = _toggleBtnOpened ? "\uBE14\uB7ED\uCF54\uB529 \uC228\uAE30\uAE30" : "\uBE14\uB7ED\uCF54\uB529 \uBCF4\uAE30";
+    };
+    const applyToolboxVisibility = (nextOpened) => {
+      var _a2;
+      _toggleBtnOpened = nextOpened;
+      const tb = (_a2 = workspace == null ? void 0 : workspace.getToolbox) == null ? void 0 : _a2.call(workspace);
+      if ((tb == null ? void 0 : tb.show) && (tb == null ? void 0 : tb.hide)) {
+        _toggleBtnOpened ? tb.show() : tb.hide();
+      } else {
+        const toolboxDiv = document.querySelector(".blocklyToolboxDiv");
+        if (toolboxDiv) toolboxDiv.style.display = _toggleBtnOpened ? "" : "none";
+      }
+      placeToolboxToggleBtn();
+      updateToggleText();
+      if (workspace) Blockly.svgResize(workspace);
+    };
+    const defaultOpened = !window.matchMedia("(max-width: 768px)").matches;
+    const savedOpened = readOpened();
+    applyToolboxVisibility(savedOpened === null ? defaultOpened : savedOpened);
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      applyToolboxVisibility(!_toggleBtnOpened);
+      writeOpened(_toggleBtnOpened);
+    });
+  }
+  function initializeAlwaysOnListeners() {
+    var _a, _b, _c, _d, _e, _f, _g;
+    (_a = elements.connectButton) == null ? void 0 : _a.addEventListener("click", () => BluetoothManager.connect());
+    (_b = elements.disconnectButton) == null ? void 0 : _b.addEventListener("click", () => BluetoothManager.disconnect());
+    (_c = elements.clearLogBtn) == null ? void 0 : _c.addEventListener("click", () => {
       Logger.clear();
       Logger.refresh();
     });
-    const dashboardButton = document.getElementById("dashboardButton");
-    dashboardButton == null ? void 0 : dashboardButton.addEventListener("click", toggleDashboard);
-    const emergencyStopButton = document.getElementById("emergencyStopButton");
-    emergencyStopButton == null ? void 0 : emergencyStopButton.addEventListener("click", async () => {
+    (_d = document.getElementById("dashboardButton")) == null ? void 0 : _d.addEventListener("click", toggleDashboard);
+    (_e = document.getElementById("emergencyStopButton")) == null ? void 0 : _e.addEventListener("click", async () => {
       Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uC2E4\uD589\uB428", "error");
       state.isExecuting = false;
       if (isBleConnected()) {
@@ -1520,22 +1946,40 @@
         Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uBE14\uB8E8\uD22C\uC2A4 \uBBF8\uC5F0\uACB0 - \uBE14\uB85D\uB9CC \uC911\uB2E8\uB428", "info");
       }
     });
-    elements.runButton.addEventListener("click", async () => {
+    (_f = document.getElementById("homeButton")) == null ? void 0 : _f.addEventListener("click", () => navigate({}));
+    (_g = document.getElementById("missionSelect")) == null ? void 0 : _g.addEventListener("change", (e) => {
+      const m = parseInt(e.target.value, 10);
+      const n = parseInt(document.getElementById("lessonSelect").value, 10);
+      if (Number.isFinite(n) && Number.isFinite(m)) {
+        navigate({ lesson: n, mission: m });
+      }
+    });
+    window.addEventListener("beforeunload", () => {
+      var _a2, _b2;
+      if ((_b2 = (_a2 = state.bluetoothDevice) == null ? void 0 : _a2.gatt) == null ? void 0 : _b2.connected) {
+        BluetoothManager.disconnect();
+      }
+    });
+    window.addEventListener("hashchange", applyRoute);
+  }
+  function initializeMissionListeners(ws) {
+    var _a, _b, _c, _d, _e;
+    (_a = elements.runButton) == null ? void 0 : _a.addEventListener("click", async () => {
       if (!validateConnection()) return;
       if (state.isExecuting) {
         alert("\uC774\uBBF8 \uBA85\uB839\uC774 \uC2E4\uD589 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC\uB9CC \uAE30\uB2E4\uB824\uC8FC\uC138\uC694.");
         return;
       }
       try {
-        await CommandExecutor.executeWorkspace(workspace);
+        await CommandExecutor.executeWorkspace(ws);
       } catch (error) {
         console.error("\uBA85\uB839 \uC2E4\uD589 \uC624\uB958:", error);
         alert("\uBA85\uB839 \uC2E4\uD589 \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4: " + error.message);
         Logger.add(`[\uC624\uB958] \uBA85\uB839 \uC2E4\uD589 \uC2E4\uD328: ${error.message}`, "error");
       }
     });
-    elements.saveButton.addEventListener("click", () => {
-      const xml = Blockly.Xml.workspaceToDom(workspace);
+    (_b = elements.saveButton) == null ? void 0 : _b.addEventListener("click", () => {
+      const xml = Blockly.Xml.workspaceToDom(ws);
       const xmlText = Blockly.utils.xml.domToText(xml);
       const fileName = prompt("\uC800\uC7A5\uD560 \uD30C\uC77C \uC774\uB984\uC744 \uC785\uB825\uD558\uC138\uC694 (\uD655\uC7A5\uC790 \uC81C\uC678):", "Ares_Workspace");
       if (!fileName) return;
@@ -1544,6 +1988,58 @@
       link.href = URL.createObjectURL(blob);
       link.download = `${fileName}.xml`;
       link.click();
+    });
+    (_c = elements.loadButton) == null ? void 0 : _c.addEventListener("click", () => elements.fileInput.click());
+    (_d = elements.fileInput) == null ? void 0 : _d.addEventListener("change", (event) => {
+      var _a2;
+      const file = (_a2 = event.target.files) == null ? void 0 : _a2[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const xmlText = e.target.result;
+        try {
+          const xml = Blockly.utils.xml.textToDom(xmlText);
+          ws.clear();
+          Blockly.Xml.domToWorkspace(xml, ws);
+          Logger.add(`[\uD30C\uC77C] ${file.name} \uBD88\uB7EC\uC624\uAE30 \uC644\uB8CC`, "info");
+        } catch (err) {
+          alert("Blockly \uC791\uC5C5 \uACF5\uAC04\uC744 \uBD88\uB7EC\uC624\uB294 \uB370 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC720\uD6A8\uD55C XML \uD30C\uC77C\uC778\uC9C0 \uD655\uC778\uD574\uC8FC\uC138\uC694.");
+          Logger.add(`[\uC624\uB958] ${file.name} \uD30C\uC77C \uB85C\uB4DC \uC2E4\uD328`, "error");
+          console.error("Error loading workspace:", err);
+        }
+      };
+      reader.readAsText(file);
+    });
+    (_e = document.getElementById("exampleSelect")) == null ? void 0 : _e.addEventListener("change", async (e) => {
+      const name = e.target.value;
+      if (!name) return;
+      const url = new URL(`examples/${name}.xml`, window.location.href).href;
+      Logger.add(`[\uC608\uC81C] \uC694\uCCAD: ${url}`, "info");
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        const xmlText = await res.text();
+        Logger.add(`[\uC608\uC81C] \uB2E4\uC6B4\uB85C\uB4DC ${xmlText.length} bytes`, "info");
+        const xml = Blockly.utils.xml.textToDom(xmlText);
+        ws.clear();
+        Blockly.Xml.domToWorkspace(xml, ws);
+        const blocklyDiv = document.getElementById("blocklyDiv");
+        const dashboardFrame = document.getElementById("dashboardFrame");
+        if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === "block") {
+          dashboardFrame.style.display = "none";
+          blocklyDiv.style.display = "block";
+        }
+        Blockly.svgResize(ws);
+        ws.scrollCenter();
+        const count = ws.getAllBlocks(false).length;
+        Logger.add(`[\uC608\uC81C] ${name} \uB85C\uB4DC \uC644\uB8CC \u2014 \uBE14\uB85D ${count}\uAC1C`, "info");
+      } catch (err) {
+        alert("\uC608\uC81C \uBD88\uB7EC\uC624\uAE30\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4: " + err.message);
+        Logger.add(`[\uC624\uB958] \uC608\uC81C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328: ${err.message}`, "error");
+        console.error("[\uC608\uC81C \uB85C\uB4DC \uC624\uB958]", err);
+      } finally {
+        e.target.value = "";
+      }
     });
     window.addEventListener("message", async (event) => {
       const data = event.data;
@@ -1570,6 +2066,13 @@
           }
         }
       }
+      if (data.type === "exit_dashboard") {
+        const dashboardFrame = document.getElementById("dashboardFrame");
+        if (dashboardFrame && dashboardFrame.style.display === "block") {
+          toggleDashboard();
+        }
+        return;
+      }
       if (data.type === "log_toggle") {
         const logContainer = document.getElementById("logContainer");
         const btn = document.getElementById("logToggleButton");
@@ -1583,166 +2086,32 @@
           if (btn) {
             btn.setAttribute("aria-pressed", String(data.visible));
             btn.title = data.visible ? "\uD1B5\uC2E0 \uB85C\uADF8 \uC228\uAE30\uAE30" : "\uD1B5\uC2E0 \uB85C\uADF8 \uBCF4\uAE30";
-            btn.textContent = data.visible ? "\u{1F4DD} \uB85C\uADF8 \uB044\uAE30" : "\u{1F4DD} \uB85C\uADF8 \uCF1C\uAE30";
+            btn.textContent = data.visible ? "\u{1F4DD} \uB85C\uADF8\uB044\uAE30" : "\u{1F4DD} \uB85C\uADF8\uCF1C\uAE30";
           }
           try {
-            Blockly.svgResize(workspace);
+            Blockly.svgResize(ws);
           } catch (e) {
           }
           Logger.refresh();
         }
       }
     });
-    elements.loadButton.addEventListener("click", () => elements.fileInput.click());
-    const exampleSelect = document.getElementById("exampleSelect");
-    exampleSelect == null ? void 0 : exampleSelect.addEventListener("change", async (e) => {
-      const name = e.target.value;
-      if (!name) return;
-      const url = new URL(`examples/${name}.xml`, window.location.href).href;
-      Logger.add(`[\uC608\uC81C] \uC694\uCCAD: ${url}`, "info");
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-        const xmlText = await res.text();
-        Logger.add(`[\uC608\uC81C] \uB2E4\uC6B4\uB85C\uB4DC ${xmlText.length} bytes`, "info");
-        const xml = Blockly.utils.xml.textToDom(xmlText);
-        workspace.clear();
-        Blockly.Xml.domToWorkspace(xml, workspace);
-        const blocklyDiv = document.getElementById("blocklyDiv");
-        const dashboardFrame = document.getElementById("dashboardFrame");
-        if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === "block") {
-          dashboardFrame.style.display = "none";
-          blocklyDiv.style.display = "block";
-        }
-        Blockly.svgResize(workspace);
-        workspace.scrollCenter();
-        const count = workspace.getAllBlocks(false).length;
-        Logger.add(`[\uC608\uC81C] ${name} \uB85C\uB4DC \uC644\uB8CC \u2014 \uBE14\uB85D ${count}\uAC1C`, "info");
-      } catch (err) {
-        alert("\uC608\uC81C \uBD88\uB7EC\uC624\uAE30\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4: " + err.message);
-        Logger.add(`[\uC624\uB958] \uC608\uC81C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328: ${err.message}`, "error");
-        console.error("[\uC608\uC81C \uB85C\uB4DC \uC624\uB958]", err);
-      } finally {
-        e.target.value = "";
-      }
-    });
-    elements.fileInput.addEventListener("change", (event) => {
-      var _a;
-      const file = (_a = event.target.files) == null ? void 0 : _a[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const xmlText = e.target.result;
-        try {
-          const xml = Blockly.utils.xml.textToDom(xmlText);
-          workspace.clear();
-          Blockly.Xml.domToWorkspace(xml, workspace);
-          Logger.add(`[\uD30C\uC77C] ${file.name} \uBD88\uB7EC\uC624\uAE30 \uC644\uB8CC`, "info");
-        } catch (err) {
-          alert("Blockly \uC791\uC5C5 \uACF5\uAC04\uC744 \uBD88\uB7EC\uC624\uB294 \uB370 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC720\uD6A8\uD55C XML \uD30C\uC77C\uC778\uC9C0 \uD655\uC778\uD574\uC8FC\uC138\uC694.");
-          Logger.add(`[\uC624\uB958] ${file.name} \uD30C\uC77C \uB85C\uB4DC \uC2E4\uD328`, "error");
-          console.error("Error loading workspace:", err);
-        }
-      };
-      reader.readAsText(file);
-    });
-    window.addEventListener("beforeunload", () => {
-      var _a, _b;
-      if ((_b = (_a = state.bluetoothDevice) == null ? void 0 : _a.gatt) == null ? void 0 : _b.connected) {
-        BluetoothManager.disconnect();
-      }
-    });
-    {
-      const STORAGE_KEY = "ares.toolbox.opened";
-      let opened = true;
-      const getMainContent = () => document.querySelector(".main-content");
-      const getToolboxDiv = () => document.querySelector(".blocklyToolboxDiv");
-      const readOpened = () => {
-        try {
-          const v = localStorage.getItem(STORAGE_KEY);
-          if (v === null) return null;
-          return v === "true";
-        } catch (e) {
-          return null;
-        }
-      };
-      const writeOpened = (v) => {
-        try {
-          localStorage.setItem(STORAGE_KEY, String(v));
-        } catch (e) {
-        }
-      };
-      const getOrCreateToggleBtn = () => {
-        let btn = document.getElementById("toolboxToggleBtn");
-        if (btn) return btn;
-        btn = document.createElement("button");
-        btn.id = "toolboxToggleBtn";
-        btn.type = "button";
-        btn.title = "\uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30/\uB2EB\uAE30";
-        btn.setAttribute("aria-pressed", "true");
-        const stop = (e) => e.stopPropagation();
-        btn.addEventListener("pointerdown", stop, true);
-        btn.addEventListener("mousedown", stop, true);
-        btn.addEventListener("touchstart", stop, true);
-        const mainContent = getMainContent();
-        if (mainContent) mainContent.appendChild(btn);
-        return btn;
-      };
-      const placeToggleBtn = () => {
-        const btn = getOrCreateToggleBtn();
-        const toolboxDiv = getToolboxDiv();
-        const mainContent = getMainContent();
-        if (opened && toolboxDiv && toolboxDiv.offsetWidth > 0 && toolboxDiv.offsetHeight > 0) {
-          if (btn.parentElement !== toolboxDiv) toolboxDiv.prepend(btn);
-          btn.classList.remove("toolbox-toggle--handle");
-          btn.classList.add("toolbox-toggle--inside");
-          return;
-        }
-        if (mainContent && btn.parentElement !== mainContent) mainContent.appendChild(btn);
-        btn.classList.remove("toolbox-toggle--inside");
-        btn.classList.add("toolbox-toggle--handle");
-      };
-      const updateToggleText = () => {
-        const btn = document.getElementById("toolboxToggleBtn");
-        if (!btn) return;
-        btn.textContent = opened ? "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uB2EB\uAE30" : "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30";
-        btn.setAttribute("aria-pressed", String(opened));
-        btn.title = opened ? "\uBE14\uB7ED\uCF54\uB529 \uC228\uAE30\uAE30" : "\uBE14\uB7ED\uCF54\uB529 \uBCF4\uAE30";
-      };
-      const applyToolboxVisibility = (nextOpened) => {
-        var _a;
-        opened = nextOpened;
-        const tb = (_a = workspace.getToolbox) == null ? void 0 : _a.call(workspace);
-        if ((tb == null ? void 0 : tb.show) && (tb == null ? void 0 : tb.hide)) {
-          opened ? tb.show() : tb.hide();
-        } else {
-          const toolboxDiv = getToolboxDiv();
-          if (toolboxDiv) toolboxDiv.style.display = opened ? "" : "none";
-        }
-        placeToggleBtn();
-        updateToggleText();
-        Blockly.svgResize(workspace);
-      };
-      const defaultOpened = !window.matchMedia("(max-width: 768px)").matches;
-      const savedOpened = readOpened();
-      applyToolboxVisibility(savedOpened === null ? defaultOpened : savedOpened);
-      getOrCreateToggleBtn().addEventListener("click", (e) => {
-        e.stopPropagation();
-        applyToolboxVisibility(!opened);
-        writeOpened(opened);
-      });
-    }
+    setupToolboxToggle();
   }
   function main() {
-    const workspace = initializeBlockly();
-    initializeEventListeners(workspace);
+    workspace = initializeBlockly();
+    initializeAlwaysOnListeners();
+    initializeMissionListeners(workspace);
+    buildLessonSelect();
     const logContainer = document.getElementById("logContainer");
     if (logContainer) logContainer.classList.add("compact");
     setupLogToggle();
-    setupLogVisibilityButton(workspace);
+    setupLogVisibilityButton();
+    setupMissionPanelToggle();
     BluetoothManager.updateConnectionStatus(false);
     Logger.add("[\uC2DC\uC791] ARES \uC900\uBE44 \uC644\uB8CC - BLE \uC5F0\uACB0\uC744 \uC2DC\uC791\uD558\uC138\uC694", "info");
     Logger.refresh();
+    applyRoute();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", main);
