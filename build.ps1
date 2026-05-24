@@ -71,6 +71,31 @@ Write-Host '[4/7] copying dashboard.html, styles.css, index.css'
 Copy-Item 'Web\dashboard.html' 'Build\dashboard.html' -Force
 Copy-Item 'Web\styles.css'     'Build\styles.css'     -Force
 Copy-Item 'Web\index.css'      'Build\index.css'      -Force
+
+# 랜딩 페이지의 3D 로봇 히어로 에셋.
+# three.js 로컬 번들 + 로봇 GLB를 base64 로 임베드한 클래식 스크립트.
+# Build\index.html 은 file:// 로 열리므로(아래 5단계) index.html 은
+# Mesh\ares_robot.embed.js 를 동적 로드해 fetch 없이 parse 한다.
+Write-Host '        + robot 3D assets (three bundle + embedded GLB)'
+Copy-Item 'Web\vendor\three-bundle.min.js' 'Build\vendor\three-bundle.min.js' -Force
+New-Item -ItemType Directory -Force -Path 'Build\Mesh' | Out-Null
+Copy-Item 'Web\Mesh\ares_robot.embed.js'   'Build\Mesh\ares_robot.embed.js'   -Force
+if (Test-Path 'Web\Mesh\ares_robot.glb') {
+    Copy-Item 'Web\Mesh\ares_robot.glb'    'Build\Mesh\ares_robot.glb'        -Force
+}
+
+# WebGL 로봇 뷰어(4종 애니메이션)도 함께 배포 → Build\viewer\.
+# 자체적으로 three 번들 + Idle 임베드를 포함하므로 file:// + 오프라인 동작.
+# WebGL\ 은 개인 개발 폴더라 저장소에 없을 수 있으므로 존재할 때만 복사한다.
+if (Test-Path 'WebGL\index.html') {
+    Write-Host '        + WebGL robot viewer -> Build\viewer\ (offline file://)'
+    New-Item -ItemType Directory -Force -Path 'Build\viewer\vendor' | Out-Null
+    Copy-Item 'WebGL\index.html'                 'Build\viewer\index.html'                 -Force
+    Copy-Item 'WebGL\models-embedded.js'         'Build\viewer\models-embedded.js'         -Force
+    Copy-Item 'WebGL\vendor\three-bundle.min.js' 'Build\viewer\vendor\three-bundle.min.js' -Force
+} else {
+    Write-Host '        (WebGL\ 없음 -- viewer 복사 건너뜀)'
+}
 Write-Host ''
 
 # ---------- 5) Landing page (Web/index.html -> Build/index.html) ----------
@@ -198,7 +223,8 @@ Write-Host ''
 Write-Host '=== Build complete ==='
 Write-Host ''
 Write-Host 'Output    : Build\'
-Write-Host 'Entry     : Build\index.html  (랜딩) -> 탐사선 연결 -> main.html'
+Write-Host 'Entry     : Build\index.html  (랜딩, 3D 로봇 손흔들기) -> 탐사선 연결 -> main.html'
+Write-Host 'Viewer    : Build\viewer\index.html  (WebGL 3D 로봇 뷰어, file:// 오프라인)'
 Write-Host 'Verify    : double-click Build\index.html'
 Write-Host 'Distribute: ship the entire Build\ folder (self-contained)'
 Write-Host ''
