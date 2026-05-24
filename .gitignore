@@ -9,3 +9,6 @@ Document/*
 !Document/.gitignore
 !Document/CodeChange*.tex
 !Document/CodeChange*.pdf
+
+# WebGL 폴더는 개인 개발용 — 공유하지 않음
+WebGL/
