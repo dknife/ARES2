@@ -231,6 +231,11 @@ function showView(view) {
   const panelToggle = document.getElementById('missionPanelToggle');
   if (panelToggle) panelToggle.hidden = !inMission;
 
+  // 시뮬레이션 버튼도 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
+  const simToggle = document.getElementById('simToggle');
+  if (simToggle) simToggle.hidden = !inMission;
+  if (!inMission && simController) simController.close();
+
   // 미션 뷰에 진입할 때만 Blockly 리사이즈
   if (inMission && workspace) {
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
@@ -602,6 +607,161 @@ function setupMissionPanelToggle() {
 }
 
 // ============================================================
+// 3D 시뮬레이션 (알비 로봇 + 눈 LED) — "시뮬레이션 열기" 버튼으로 카드 토글
+//   - LED 1 → 왼쪽 눈, LED 2 → 오른쪽 눈 (밝은 녹색 발광 구)
+//   - three.js 는 vendor/three-bundle.min.js 가 window.THREE / window.ARES3 로 노출
+// ============================================================
+let simController = null;
+
+// 카드 안에 알비 3D 씬을 구성해 { render, resize, setEye, eyeL, eyeR } 반환
+function buildAlbiSim(THREE, A, stage, loadingEl) {
+  const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
+  const EYE = { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] };
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+
+  scene.add(new THREE.HemisphereLight(0xdfeaff, 0x32402f, 0.55));
+  const key = new THREE.DirectionalLight(0xfff4e6, 2.0);
+  key.position.set(3, 6, 5); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0003;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0x9fc0f0, 0.5);
+  fill.position.set(-4, 2, 4); scene.add(fill);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  // 발광 구용 라디얼 글로우 텍스처
+  const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+  const gx = gc.getContext('2d');
+  const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gg.addColorStop(0.0, 'rgba(180,255,210,1)');
+  gg.addColorStop(0.25, 'rgba(40,255,120,0.65)');
+  gg.addColorStop(1.0, 'rgba(0,255,90,0)');
+  gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
+  const glowTex = new THREE.CanvasTexture(gc); glowTex.colorSpace = THREE.SRGBColorSpace;
+
+  function makeEye(pos) {
+    const grp = new THREE.Group(); grp.position.fromArray(pos);
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(EYE.radius, 28, 28),
+      new THREE.MeshStandardMaterial({ color: 0x0c2a18, emissive: 0x00ff66, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
+    );
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x55ff99, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
+    glow.scale.setScalar(EYE.radius * 3.3); glow.visible = false;
+    const light = new THREE.PointLight(0x33ff77, 0, EYE.radius * 22, 2);
+    grp.add(sphere, glow, light);
+    return { group: grp, sphere, glow, light, on: false };
+  }
+  const eyeL = makeEye(EYE.left), eyeR = makeEye(EYE.right);
+  function setEye(side, on) {
+    const e = (side === 'L') ? eyeL : eyeR;
+    e.on = on;
+    e.sphere.material.emissiveIntensity = on ? 3.2 : 0.0;
+    e.sphere.material.opacity = on ? 0.92 : 0.4;
+    e.glow.visible = on;
+    e.light.intensity = on ? 1.8 : 0.0;
+  }
+
+  let modelH = 1.9;
+  new GLTFLoader().load('Mesh/AlbiStaticLow.glb', (gltf) => {
+    const root = gltf.scene;
+    root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+    const box = new THREE.Box3().setFromObject(root);
+    const sz = box.getSize(new THREE.Vector3());
+    const c = box.getCenter(new THREE.Vector3());
+    root.position.x -= c.x; root.position.z -= c.z; root.position.y -= box.min.y;
+    modelH = sz.y;
+    root.add(eyeL.group, eyeR.group);
+    scene.add(root);
+    const maxDim = Math.max(sz.x, sz.y, sz.z);
+    const fov = camera.fov * Math.PI / 180;
+    const dist = (maxDim / 2) / Math.tan(fov / 2) * 1.9;
+    const cy = modelH * 0.55;
+    camera.position.set(0, cy, dist);
+    camera.near = dist / 100; camera.far = dist * 100; camera.updateProjectionMatrix();
+    controls.target.set(0, cy, 0); controls.update();
+    if (loadingEl) loadingEl.style.display = 'none';
+  }, undefined, (err) => {
+    console.error('알비 모델 로드 실패:', err);
+    if (loadingEl) loadingEl.textContent = '로봇을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
+  });
+
+  function resize() {
+    const w = stage.clientWidth || 360, h = stage.clientHeight || 300;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  resize();
+  function render() { controls.update(); renderer.render(scene, camera); }
+  return { render, resize, setEye, get eyeL() { return eyeL; }, get eyeR() { return eyeR; } };
+}
+
+function setupSimulation() {
+  const btn = document.getElementById('simToggle');
+  const card = document.getElementById('simCard');
+  const stage = document.getElementById('simStage');
+  const loadingEl = document.getElementById('simLoading');
+  if (!btn || !card || !stage) return;
+
+  const THREE = window.THREE, A = window.ARES3;
+  if (!THREE || !A || !A.GLTFLoader) {
+    btn.disabled = true;
+    btn.title = '3D 라이브러리(three.js)를 불러오지 못했습니다';
+    return;
+  }
+
+  let sim = null, raf = 0;
+  const loop = () => { sim.render(); raf = requestAnimationFrame(loop); };
+
+  const open = () => {
+    card.hidden = false;
+    if (!sim) sim = buildAlbiSim(THREE, A, stage, loadingEl);
+    sim.resize();
+    cancelAnimationFrame(raf); loop();
+    btn.textContent = '🤖 시뮬레이션 닫기';
+    btn.setAttribute('aria-pressed', 'true');
+  };
+  const close = () => {
+    if (card.hidden) return;
+    card.hidden = true;
+    cancelAnimationFrame(raf); raf = 0;
+    btn.textContent = '🤖 시뮬레이션 열기';
+    btn.setAttribute('aria-pressed', 'false');
+  };
+
+  btn.addEventListener('click', () => { card.hidden ? open() : close(); });
+
+  card.querySelectorAll('.sim-led-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (!sim) return;
+      const side = b.dataset.side;
+      const cur = (side === 'L') ? sim.eyeL.on : sim.eyeR.on;
+      sim.setEye(side, !cur);
+      b.classList.toggle('on', !cur);
+    });
+  });
+
+  addEventListener('resize', () => { if (!card.hidden && sim) sim.resize(); });
+  simController = { close };
+}
+
+// ============================================================
 // 툴박스 토글 버튼 — 미션 워크스페이스 영역에 배치
 // ============================================================
 let _toggleBtnOpened = true;
@@ -907,6 +1067,7 @@ function main() {
   setupLogToggle();
   setupLogVisibilityButton();
   setupMissionPanelToggle();
+  setupSimulation();
 
   // 6) 상태 초기화 + 라우팅
   BluetoothManager.updateConnectionStatus(false);
