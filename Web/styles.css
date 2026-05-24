@@ -1008,7 +1008,11 @@ iframe, #dashboardFrame {
     display: flex; align-items: center; justify-content: space-between;
     gap: 10px; padding: 10px 12px; flex-wrap: wrap;
     border-bottom: 1px solid var(--border-color);
+    cursor: move;                 /* 헤더를 끌어 카드 이동 */
+    touch-action: none;           /* 모바일에서 헤더 드래그가 배경 스크롤로 새지 않도록 */
+    user-select: none;
 }
+.sim-card-head h3 { cursor: move; }
 .sim-card-head h3 { margin: 0; font-size: 0.98em; }
 .sim-led-buttons { display: flex; gap: 6px; }
 .sim-led-btn {
@@ -1039,6 +1043,25 @@ iframe, #dashboardFrame {
 .sim-hint {
     margin: 0; padding: 7px 12px; font-size: 0.74em;
     color: var(--text-secondary); border-top: 1px solid var(--border-color);
+}
+
+/* 모바일: 카드가 잘리지 않도록 화면 중앙 고정 + (필요 시) 내부 스크롤.
+   본문(body)이 overflow:hidden 이라 페이지 스크롤이 안 되므로, 카드 자체를
+   뷰포트 기준 fixed 로 중앙에 띄우고 화면보다 길면 카드 안에서 스크롤한다. */
+@media (max-width: 600px) {
+    .sim-card {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+        width: calc(100vw - 20px);
+        max-width: 440px;
+        max-height: calc(100dvh - 20px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .sim-stage { height: 240px; }
 }
 
 #missionView .mission-panel {

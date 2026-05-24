@@ -231,10 +231,11 @@ function showView(view) {
   const panelToggle = document.getElementById('missionPanelToggle');
   if (panelToggle) panelToggle.hidden = !inMission;
 
-  // 시뮬레이션 버튼도 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
+  // 시뮬레이션 버튼도 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기,
+  // 미션이 바뀌면 열려 있는 시뮬레이션을 해당 미션 것으로 교체
   const simToggle = document.getElementById('simToggle');
   if (simToggle) simToggle.hidden = !inMission;
-  if (!inMission && simController) simController.close();
+  if (simController) { if (inMission) simController.refresh(); else simController.close(); }
 
   // 미션 뷰에 진입할 때만 Blockly 리사이즈
   if (inMission && workspace) {
@@ -607,16 +608,32 @@ function setupMissionPanelToggle() {
 }
 
 // ============================================================
-// 3D 시뮬레이션 (알비 로봇 + 눈 LED) — "시뮬레이션 열기" 버튼으로 카드 토글
-//   - LED 1 → 왼쪽 눈, LED 2 → 오른쪽 눈 (밝은 녹색 발광 구)
+// 3D 시뮬레이션 — "시뮬레이션 열기" 버튼으로 카드 토글
+//   - 미션별로 다른 시뮬레이션을 띄울 수 있도록 레지스트리 구조를 둔다.
+//     현재는 모든 미션이 DEFAULT_SIM(알비 + 눈 LED)을 사용한다.
 //   - three.js 는 vendor/three-bundle.min.js 가 window.THREE / window.ARES3 로 노출
 // ============================================================
 let simController = null;
 
-// 카드 안에 알비 3D 씬을 구성해 { render, resize, setEye, eyeL, eyeR } 반환
-function buildAlbiSim(THREE, A, stage, loadingEl) {
+// 시뮬레이션 정의: model(GLB 경로), title, eyes(눈 LED 설정 또는 null)
+const DEFAULT_SIM = {
+  model: 'Mesh/AlbiStaticLow.glb',
+  title: '🤖 알비 시뮬레이션',
+  eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] },
+};
+// 미션별 시뮬레이션 매핑. 키는 'L{차시}M{미션}'. 비어 있으면 DEFAULT_SIM 사용.
+//   예) SIM_REGISTRY['L7M2'] = { model:'Mesh/Roulette.glb', title:'룰렛', eyes:null };
+const SIM_REGISTRY = {};
+function getCurrentSim() {
+  const l = document.getElementById('lessonSelect')?.value || '';
+  const m = document.getElementById('missionSelect')?.value || '';
+  return SIM_REGISTRY[`L${l}M${m}`] || DEFAULT_SIM;
+}
+
+// 카드 안에 3D 씬을 구성해 { render, resize, setEye, dispose, hasEyes, eyeL, eyeR } 반환
+function buildAlbiSim(THREE, A, stage, loadingEl, cfg) {
   const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
-  const EYE = { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] };
+  const EYE = cfg.eyes || null;   // 눈 LED 설정 (없으면 null)
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -646,30 +663,33 @@ function buildAlbiSim(THREE, A, stage, loadingEl) {
   const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 
-  // 발광 구용 라디얼 글로우 텍스처
-  const gc = document.createElement('canvas'); gc.width = gc.height = 128;
-  const gx = gc.getContext('2d');
-  const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gg.addColorStop(0.0, 'rgba(180,255,210,1)');
-  gg.addColorStop(0.25, 'rgba(40,255,120,0.65)');
-  gg.addColorStop(1.0, 'rgba(0,255,90,0)');
-  gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
-  const glowTex = new THREE.CanvasTexture(gc); glowTex.colorSpace = THREE.SRGBColorSpace;
-
-  function makeEye(pos) {
-    const grp = new THREE.Group(); grp.position.fromArray(pos);
-    const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(EYE.radius, 28, 28),
-      new THREE.MeshStandardMaterial({ color: 0x0c2a18, emissive: 0x00ff66, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
-    );
-    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x55ff99, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
-    glow.scale.setScalar(EYE.radius * 3.3); glow.visible = false;
-    const light = new THREE.PointLight(0x33ff77, 0, EYE.radius * 22, 2);
-    grp.add(sphere, glow, light);
-    return { group: grp, sphere, glow, light, on: false };
+  // 눈 LED(발광 구) — eyes 설정이 있을 때만 구성
+  let eyeL = null, eyeR = null, glowTex = null;
+  if (EYE) {
+    const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+    const gx = gc.getContext('2d');
+    const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gg.addColorStop(0.0, 'rgba(180,255,210,1)');
+    gg.addColorStop(0.25, 'rgba(40,255,120,0.65)');
+    gg.addColorStop(1.0, 'rgba(0,255,90,0)');
+    gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
+    glowTex = new THREE.CanvasTexture(gc); glowTex.colorSpace = THREE.SRGBColorSpace;
+    const makeEye = (pos) => {
+      const grp = new THREE.Group(); grp.position.fromArray(pos);
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(EYE.radius, 28, 28),
+        new THREE.MeshStandardMaterial({ color: 0x0c2a18, emissive: 0x00ff66, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
+      );
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x55ff99, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
+      glow.scale.setScalar(EYE.radius * 3.3); glow.visible = false;
+      const light = new THREE.PointLight(0x33ff77, 0, EYE.radius * 22, 2);
+      grp.add(sphere, glow, light);
+      return { group: grp, sphere, glow, light, on: false };
+    };
+    eyeL = makeEye(EYE.left); eyeR = makeEye(EYE.right);
   }
-  const eyeL = makeEye(EYE.left), eyeR = makeEye(EYE.right);
   function setEye(side, on) {
+    if (!EYE) return;
     const e = (side === 'L') ? eyeL : eyeR;
     e.on = on;
     e.sphere.material.emissiveIntensity = on ? 3.2 : 0.0;
@@ -679,7 +699,7 @@ function buildAlbiSim(THREE, A, stage, loadingEl) {
   }
 
   let modelH = 1.9;
-  new GLTFLoader().load('Mesh/AlbiStaticLow.glb', (gltf) => {
+  new GLTFLoader().load(cfg.model, (gltf) => {
     const root = gltf.scene;
     root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
     const box = new THREE.Box3().setFromObject(root);
@@ -687,7 +707,7 @@ function buildAlbiSim(THREE, A, stage, loadingEl) {
     const c = box.getCenter(new THREE.Vector3());
     root.position.x -= c.x; root.position.z -= c.z; root.position.y -= box.min.y;
     modelH = sz.y;
-    root.add(eyeL.group, eyeR.group);
+    if (EYE) root.add(eyeL.group, eyeR.group);
     scene.add(root);
     const maxDim = Math.max(sz.x, sz.y, sz.z);
     const fov = camera.fov * Math.PI / 180;
@@ -698,8 +718,8 @@ function buildAlbiSim(THREE, A, stage, loadingEl) {
     controls.target.set(0, cy, 0); controls.update();
     if (loadingEl) loadingEl.style.display = 'none';
   }, undefined, (err) => {
-    console.error('알비 모델 로드 실패:', err);
-    if (loadingEl) loadingEl.textContent = '로봇을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
+    console.error('시뮬레이션 모델 로드 실패:', err);
+    if (loadingEl) loadingEl.textContent = '모델을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
   });
 
   function resize() {
@@ -709,7 +729,18 @@ function buildAlbiSim(THREE, A, stage, loadingEl) {
   }
   resize();
   function render() { controls.update(); renderer.render(scene, camera); }
-  return { render, resize, setEye, get eyeL() { return eyeL; }, get eyeR() { return eyeR; } };
+  function dispose() {
+    try { controls.dispose(); } catch {}
+    scene.traverse((o) => {
+      if (o.isMesh) {
+        o.geometry?.dispose?.();
+        const m = o.material; (Array.isArray(m) ? m : [m]).forEach((mm) => mm?.dispose?.());
+      }
+    });
+    try { renderer.dispose(); } catch {}
+    if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+  }
+  return { render, resize, setEye, dispose, hasEyes: !!EYE, get eyeL() { return eyeL; }, get eyeR() { return eyeR; } };
 }
 
 function setupSimulation() {
@@ -717,6 +748,8 @@ function setupSimulation() {
   const card = document.getElementById('simCard');
   const stage = document.getElementById('simStage');
   const loadingEl = document.getElementById('simLoading');
+  const titleEl = document.getElementById('simTitle');
+  const ledWrap = card ? card.querySelector('.sim-led-buttons') : null;
   if (!btn || !card || !stage) return;
 
   const THREE = window.THREE, A = window.ARES3;
@@ -726,12 +759,25 @@ function setupSimulation() {
     return;
   }
 
-  let sim = null, raf = 0;
+  let sim = null, raf = 0, builtCfg = null;
   const loop = () => { sim.render(); raf = requestAnimationFrame(loop); };
+
+  // 현재 미션 설정으로 (재)빌드. 이전 씬은 dispose.
+  const build = (cfg) => {
+    cancelAnimationFrame(raf); raf = 0;
+    if (sim) { sim.dispose(); sim = null; }
+    if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
+    card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
+    if (titleEl) titleEl.textContent = cfg.title || '🤖 시뮬레이션';
+    if (ledWrap) ledWrap.style.display = cfg.eyes ? '' : 'none';
+    sim = buildAlbiSim(THREE, A, stage, loadingEl, cfg);
+    builtCfg = cfg;
+  };
 
   const open = () => {
     card.hidden = false;
-    if (!sim) sim = buildAlbiSim(THREE, A, stage, loadingEl);
+    const cfg = getCurrentSim();
+    if (!sim || builtCfg !== cfg) build(cfg);
     sim.resize();
     cancelAnimationFrame(raf); loop();
     btn.textContent = '🤖 시뮬레이션 닫기';
@@ -744,12 +790,18 @@ function setupSimulation() {
     btn.textContent = '🤖 시뮬레이션 열기';
     btn.setAttribute('aria-pressed', 'false');
   };
+  // 미션이 바뀌면 열려 있는 시뮬레이션을 해당 미션 것으로 교체
+  const refresh = () => {
+    if (card.hidden) return;
+    const cfg = getCurrentSim();
+    if (cfg !== builtCfg) { build(cfg); sim.resize(); cancelAnimationFrame(raf); loop(); }
+  };
 
   btn.addEventListener('click', () => { card.hidden ? open() : close(); });
 
   card.querySelectorAll('.sim-led-btn').forEach((b) => {
     b.addEventListener('click', () => {
-      if (!sim) return;
+      if (!sim || !sim.hasEyes) return;
       const side = b.dataset.side;
       const cur = (side === 'L') ? sim.eyeL.on : sim.eyeR.on;
       sim.setEye(side, !cur);
@@ -757,8 +809,45 @@ function setupSimulation() {
     });
   });
 
+  // 헤더(제목 영역)를 잡아 카드를 이동 — 모바일에서 캔버스가 터치를 가져가도
+  // 위젯을 끌어 화면 위/아래로 옮길 수 있다. (LED 버튼은 드래그 제외)
+  const head = card.querySelector('.sim-card-head');
+  if (head) {
+    let dragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
+    head.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.sim-led-btn')) return; // 버튼 탭은 드래그 아님
+      const r = card.getBoundingClientRect();
+      // 뷰포트 기준 고정 좌표로 전환(데스크톱 absolute / 모바일 centered 모두 대응)
+      card.style.position = 'fixed';
+      card.style.left = r.left + 'px';
+      card.style.top = r.top + 'px';
+      card.style.right = 'auto';
+      card.style.bottom = 'auto';
+      card.style.transform = 'none';
+      card.style.margin = '0';
+      dragging = true;
+      startX = e.clientX; startY = e.clientY; baseX = r.left; baseY = r.top;
+      try { head.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    });
+    head.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const w = card.offsetWidth;
+      let nx = baseX + (e.clientX - startX);
+      let ny = baseY + (e.clientY - startY);
+      // 헤더가 화면에 남도록 클램프
+      nx = Math.max(40 - w, Math.min(nx, innerWidth - 40));
+      ny = Math.max(0, Math.min(ny, innerHeight - 36));
+      card.style.left = nx + 'px';
+      card.style.top = ny + 'px';
+    });
+    const endDrag = (e) => { if (!dragging) return; dragging = false; try { head.releasePointerCapture(e.pointerId); } catch {} };
+    head.addEventListener('pointerup', endDrag);
+    head.addEventListener('pointercancel', endDrag);
+  }
+
   addEventListener('resize', () => { if (!card.hidden && sim) sim.resize(); });
-  simController = { close };
+  simController = { close, refresh };
 }
 
 // ============================================================
