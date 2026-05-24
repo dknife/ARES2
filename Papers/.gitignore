@@ -1,0 +1,16 @@
+# LaTeX 빌드 부산물 (원본 .tex 와 결과물 .pdf 만 추적)
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+_minted*/
