@@ -1520,6 +1520,9 @@
     if (elements.runButton) elements.runButton.disabled = !inMission || !ble;
     const panelToggle = document.getElementById("missionPanelToggle");
     if (panelToggle) panelToggle.hidden = !inMission;
+    const simToggle = document.getElementById("simToggle");
+    if (simToggle) simToggle.hidden = !inMission;
+    if (!inMission && simController) simController.close();
     if (inMission && workspace) {
       setTimeout(() => {
         try {
@@ -1848,6 +1851,175 @@
       writeOpened(nextOpened);
     });
   }
+  var simController = null;
+  function buildAlbiSim(THREE, A, stage, loadingEl) {
+    const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
+    const EYE = { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] };
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    scene.add(new THREE.HemisphereLight(14674687, 3293231, 0.55));
+    const key = new THREE.DirectionalLight(16774374, 2);
+    key.position.set(3, 6, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.bias = -3e-4;
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(10469616, 0.5);
+    fill.position.set(-4, 2, 4);
+    scene.add(fill);
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    const gc = document.createElement("canvas");
+    gc.width = gc.height = 128;
+    const gx = gc.getContext("2d");
+    const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gg.addColorStop(0, "rgba(180,255,210,1)");
+    gg.addColorStop(0.25, "rgba(40,255,120,0.65)");
+    gg.addColorStop(1, "rgba(0,255,90,0)");
+    gx.fillStyle = gg;
+    gx.fillRect(0, 0, 128, 128);
+    const glowTex = new THREE.CanvasTexture(gc);
+    glowTex.colorSpace = THREE.SRGBColorSpace;
+    function makeEye(pos) {
+      const grp = new THREE.Group();
+      grp.position.fromArray(pos);
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(EYE.radius, 28, 28),
+        new THREE.MeshStandardMaterial({ color: 797208, emissive: 65382, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
+      );
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 5635993, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
+      glow.scale.setScalar(EYE.radius * 3.3);
+      glow.visible = false;
+      const light = new THREE.PointLight(3407735, 0, EYE.radius * 22, 2);
+      grp.add(sphere, glow, light);
+      return { group: grp, sphere, glow, light, on: false };
+    }
+    const eyeL = makeEye(EYE.left), eyeR = makeEye(EYE.right);
+    function setEye(side, on) {
+      const e = side === "L" ? eyeL : eyeR;
+      e.on = on;
+      e.sphere.material.emissiveIntensity = on ? 3.2 : 0;
+      e.sphere.material.opacity = on ? 0.92 : 0.4;
+      e.glow.visible = on;
+      e.light.intensity = on ? 1.8 : 0;
+    }
+    let modelH = 1.9;
+    new GLTFLoader().load("Mesh/AlbiStaticLow.glb", (gltf) => {
+      const root = gltf.scene;
+      root.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+          o.frustumCulled = false;
+        }
+      });
+      const box = new THREE.Box3().setFromObject(root);
+      const sz = box.getSize(new THREE.Vector3());
+      const c = box.getCenter(new THREE.Vector3());
+      root.position.x -= c.x;
+      root.position.z -= c.z;
+      root.position.y -= box.min.y;
+      modelH = sz.y;
+      root.add(eyeL.group, eyeR.group);
+      scene.add(root);
+      const maxDim = Math.max(sz.x, sz.y, sz.z);
+      const fov = camera.fov * Math.PI / 180;
+      const dist = maxDim / 2 / Math.tan(fov / 2) * 1.9;
+      const cy = modelH * 0.55;
+      camera.position.set(0, cy, dist);
+      camera.near = dist / 100;
+      camera.far = dist * 100;
+      camera.updateProjectionMatrix();
+      controls.target.set(0, cy, 0);
+      controls.update();
+      if (loadingEl) loadingEl.style.display = "none";
+    }, void 0, (err) => {
+      console.error("\uC54C\uBE44 \uBAA8\uB378 \uB85C\uB4DC \uC2E4\uD328:", err);
+      if (loadingEl) loadingEl.textContent = "\uB85C\uBD07\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 (HTTP \uC11C\uBC84\uC5D0\uC11C \uC2E4\uD589\uD574\uC57C \uD569\uB2C8\uB2E4)";
+    });
+    function resize() {
+      const w = stage.clientWidth || 360, h = stage.clientHeight || 300;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    function render2() {
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    return { render: render2, resize, setEye, get eyeL() {
+      return eyeL;
+    }, get eyeR() {
+      return eyeR;
+    } };
+  }
+  function setupSimulation() {
+    const btn = document.getElementById("simToggle");
+    const card = document.getElementById("simCard");
+    const stage = document.getElementById("simStage");
+    const loadingEl = document.getElementById("simLoading");
+    if (!btn || !card || !stage) return;
+    const THREE = window.THREE, A = window.ARES3;
+    if (!THREE || !A || !A.GLTFLoader) {
+      btn.disabled = true;
+      btn.title = "3D \uB77C\uC774\uBE0C\uB7EC\uB9AC(three.js)\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4";
+      return;
+    }
+    let sim = null, raf = 0;
+    const loop = () => {
+      sim.render();
+      raf = requestAnimationFrame(loop);
+    };
+    const open = () => {
+      card.hidden = false;
+      if (!sim) sim = buildAlbiSim(THREE, A, stage, loadingEl);
+      sim.resize();
+      cancelAnimationFrame(raf);
+      loop();
+      btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uB2EB\uAE30";
+      btn.setAttribute("aria-pressed", "true");
+    };
+    const close = () => {
+      if (card.hidden) return;
+      card.hidden = true;
+      cancelAnimationFrame(raf);
+      raf = 0;
+      btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uC5F4\uAE30";
+      btn.setAttribute("aria-pressed", "false");
+    };
+    btn.addEventListener("click", () => {
+      card.hidden ? open() : close();
+    });
+    card.querySelectorAll(".sim-led-btn").forEach((b) => {
+      b.addEventListener("click", () => {
+        if (!sim) return;
+        const side = b.dataset.side;
+        const cur = side === "L" ? sim.eyeL.on : sim.eyeR.on;
+        sim.setEye(side, !cur);
+        b.classList.toggle("on", !cur);
+      });
+    });
+    addEventListener("resize", () => {
+      if (!card.hidden && sim) sim.resize();
+    });
+    simController = { close };
+  }
   var _toggleBtnOpened = true;
   function placeToolboxToggleBtn() {
     const btn = document.getElementById("toolboxToggleBtn");
@@ -2108,6 +2280,7 @@
     setupLogToggle();
     setupLogVisibilityButton();
     setupMissionPanelToggle();
+    setupSimulation();
     BluetoothManager.updateConnectionStatus(false);
     Logger.add("[\uC2DC\uC791] ARES \uC900\uBE44 \uC644\uB8CC - BLE \uC5F0\uACB0\uC744 \uC2DC\uC791\uD558\uC138\uC694", "info");
     Logger.refresh();

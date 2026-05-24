@@ -3,495 +3,303 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARES 화성탐사로봇 메시 뷰어</title>
+<title>ARES 알비 로봇 — 눈 LED 제어</title>
 <style>
   :root {
-    --bg0: #0a0e1a;
-    --bg1: #131a2e;
-    --panel: rgba(18, 24, 42, 0.82);
-    --border: rgba(120, 150, 210, 0.22);
-    --copper: #d98a4a;
-    --sky: #5fa8e6;
-    --text: #e7ecf5;
-    --muted: #9aa6bf;
+    --bg0:#0a0e1a; --bg1:#131a2e; --panel:rgba(18,24,42,0.82);
+    --border:rgba(120,150,210,0.22); --copper:#d98a4a; --sky:#5fa8e6;
+    --green:#22ff7a; --text:#e7ecf5; --muted:#9aa6bf;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; overflow:hidden; }
   body {
-    font-family: "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-    color: var(--text);
-    background: radial-gradient(circle at 70% 15%, #2a1c14 0%, var(--bg1) 40%, var(--bg0) 100%);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    color:var(--text);
+    background:radial-gradient(circle at 70% 15%, #1c2a22 0%, var(--bg1) 42%, var(--bg0) 100%);
   }
-  #canvas-wrap { position: fixed; inset: 0; }
-  canvas { display: block; }
+  #canvas-wrap { position:fixed; inset:0; }
+  canvas { display:block; cursor:grab; }
+  canvas:active { cursor:grabbing; }
 
-  /* ---- 헤더 ---- */
   header {
-    position: fixed; top: 0; left: 0; right: 0;
-    padding: 14px 20px;
-    display: flex; align-items: baseline; gap: 12px;
-    background: linear-gradient(180deg, rgba(8,11,20,0.75), transparent);
-    pointer-events: none;
-    z-index: 10;
+    position:fixed; top:0; left:0; right:0; padding:14px 20px;
+    display:flex; align-items:baseline; gap:12px;
+    background:linear-gradient(180deg, rgba(8,11,20,0.75), transparent);
+    pointer-events:none; z-index:10;
   }
-  header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-  header h1 .accent { color: var(--copper); }
-  header .sub { font-size: 12px; color: var(--muted); }
+  header h1 { font-size:17px; font-weight:700; letter-spacing:-0.3px; }
+  header h1 .accent { color:var(--green); }
+  header .sub { font-size:12px; color:var(--muted); }
 
-  /* ---- 패널 공통 ---- */
   .panel {
-    position: fixed; z-index: 10;
-    background: var(--panel);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
+    position:fixed; z-index:10; background:var(--panel); backdrop-filter:blur(10px);
+    border:1px solid var(--border); border-radius:12px; padding:14px;
   }
   .panel h2 {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 1px; color: var(--muted); margin-bottom: 10px;
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+    color:var(--muted); margin-bottom:10px;
   }
 
-  /* ---- 컨트롤 패널 (좌하단) ---- */
-  #controls { left: 16px; bottom: 16px; width: 230px; }
-  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .anim-btn {
-    font: inherit; font-size: 13px; color: var(--text);
-    background: rgba(95, 168, 230, 0.10);
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 9px 6px; cursor: pointer; transition: all 0.15s;
-    text-align: center; line-height: 1.25;
+  /* LED 제어 패널 */
+  #controls { left:16px; bottom:16px; width:240px; }
+  .led-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .led-btn {
+    font:inherit; font-size:14px; font-weight:600; color:var(--text);
+    background:rgba(95,168,230,0.10); border:1px solid var(--border);
+    border-radius:10px; padding:12px 6px; cursor:pointer; transition:all 0.15s;
+    text-align:center; line-height:1.3;
   }
-  .anim-btn:hover { background: rgba(95, 168, 230, 0.22); border-color: var(--sky); }
-  .anim-btn.active {
-    background: var(--copper); border-color: var(--copper);
-    color: #1a1206; font-weight: 700;
+  .led-btn small { display:block; font-size:10px; opacity:0.7; font-weight:400; margin-top:2px; }
+  .led-btn .dot {
+    display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px;
+    background:#2a3550; vertical-align:middle; transition:all 0.15s;
   }
-  .anim-btn small { display: block; font-size: 10px; opacity: 0.75; font-weight: 400; }
-  .anim-btn.disabled, .anim-btn:disabled {
-    opacity: 0.38; cursor: not-allowed;
-    background: rgba(95, 168, 230, 0.06); border-style: dashed;
+  .led-btn:hover { border-color:var(--sky); }
+  .led-btn.on {
+    background:rgba(34,255,122,0.16); border-color:var(--green); color:#dfffe9;
   }
-  .anim-btn.disabled:hover, .anim-btn:disabled:hover {
-    background: rgba(95, 168, 230, 0.06); border-color: var(--border);
-  }
+  .led-btn.on .dot { background:var(--green); box-shadow:0 0 8px 2px rgba(34,255,122,0.8); }
 
-  .toggles { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .toggle {
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 13px; cursor: pointer; user-select: none;
-  }
-  .toggle input { display: none; }
-  .switch {
-    width: 38px; height: 21px; border-radius: 11px;
-    background: rgba(120,140,180,0.25); position: relative; transition: 0.18s;
-    border: 1px solid var(--border);
-  }
-  .switch::after {
-    content: ""; position: absolute; top: 2px; left: 2px;
-    width: 15px; height: 15px; border-radius: 50%; background: #cfd8ea; transition: 0.18s;
-  }
-  .toggle input:checked + .switch { background: var(--copper); }
-  .toggle input:checked + .switch::after { left: 19px; background: #fff; }
+  .toggles { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .toggle { display:flex; align-items:center; justify-content:space-between; font-size:13px; cursor:pointer; user-select:none; }
+  .toggle input { display:none; }
+  .switch { width:38px; height:21px; border-radius:11px; background:rgba(120,140,180,0.25); position:relative; transition:0.18s; border:1px solid var(--border); }
+  .switch::after { content:""; position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%; background:#cfd8ea; transition:0.18s; }
+  .toggle input:checked + .switch { background:var(--green); }
+  .toggle input:checked + .switch::after { left:19px; background:#06140c; }
+  #reset-btn { margin-top:12px; width:100%; font:inherit; font-size:12px; color:var(--muted); background:transparent; border:1px solid var(--border); border-radius:8px; padding:8px; cursor:pointer; transition:0.15s; }
+  #reset-btn:hover { color:var(--text); border-color:var(--sky); }
 
-  #reset-btn {
-    margin-top: 12px; width: 100%;
-    font: inherit; font-size: 12px; color: var(--muted);
-    background: transparent; border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px; cursor: pointer; transition: 0.15s;
-  }
-  #reset-btn:hover { color: var(--text); border-color: var(--sky); }
+  #info { right:16px; top:56px; width:200px; }
+  .stat { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+  .stat .k { color:var(--muted); } .stat .v { font-variant-numeric:tabular-nums; font-weight:600; }
 
-  /* ---- 정보 패널 (우상단) ---- */
-  #info { right: 16px; top: 56px; width: 210px; }
-  .stat { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
-  .stat .k { color: var(--muted); }
-  .stat .v { font-variant-numeric: tabular-nums; font-weight: 600; }
-  #info .name { font-size: 13px; color: var(--copper); font-weight: 600; margin-bottom: 8px;
-                word-break: keep-all; }
+  #hint { right:16px; bottom:16px; font-size:11px; color:var(--muted); background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:8px 11px; z-index:10; }
 
-  /* ---- 도움말 (우하단) ---- */
-  #hint { right: 16px; bottom: 16px; font-size: 11px; color: var(--muted);
-          background: var(--panel); border: 1px solid var(--border);
-          border-radius: 8px; padding: 8px 11px; z-index: 10; }
-
-  /* ---- 로딩 / 오류 오버레이 ---- */
-  #overlay {
-    position: fixed; inset: 0; z-index: 20;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 16px; background: rgba(8, 11, 20, 0.78); backdrop-filter: blur(4px);
-    transition: opacity 0.3s; text-align: center; padding: 24px;
-  }
-  #overlay.hidden { opacity: 0; pointer-events: none; }
-  .spinner {
-    width: 46px; height: 46px; border-radius: 50%;
-    border: 3px solid rgba(120,150,210,0.2); border-top-color: var(--copper);
-    animation: spin 0.9s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #overlay .msg { font-size: 14px; color: var(--text); }
-  #overlay .pct { font-size: 13px; color: var(--copper); font-variant-numeric: tabular-nums; }
-  #overlay.error .spinner { display: none; }
-  #overlay .err-detail {
-    font-size: 12px; color: var(--muted); max-width: 460px; line-height: 1.6;
-    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px 14px; text-align: left;
-  }
-  code { font-family: "D2Coding", Menlo, monospace; color: var(--sky); }
+  #overlay { position:fixed; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:rgba(8,11,20,0.78); backdrop-filter:blur(4px); transition:opacity 0.3s; text-align:center; padding:24px; }
+  #overlay.hidden { opacity:0; pointer-events:none; }
+  .spinner { width:46px; height:46px; border-radius:50%; border:3px solid rgba(120,150,210,0.2); border-top-color:var(--green); animation:spin 0.9s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #overlay .msg { font-size:14px; } #overlay .pct { font-size:13px; color:var(--green); }
+  #overlay.error .spinner { display:none; }
+  #overlay .err-detail { font-size:12px; color:var(--muted); max-width:460px; line-height:1.6; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:12px 14px; text-align:left; }
+  code { font-family:"D2Coding",Menlo,monospace; color:var(--sky); }
 </style>
+<script src="vendor/three-bundle.min.js"></script>
+<script src="../vendor/inline_assets.js"></script>
 </head>
 <body>
   <div id="canvas-wrap"></div>
 
   <header>
-    <h1>ARES <span class="accent">화성탐사로봇</span> 메시 뷰어</h1>
-    <span class="sub">glTF 2.0 · WebGL · three.js · 오프라인(file://) 지원</span>
+    <h1>ARES <span class="accent">알비</span> 로봇 — 눈 LED 제어</h1>
+    <span class="sub">AlbiStaticLow.glb · WebGL · three.js</span>
   </header>
 
   <div id="controls" class="panel">
-    <h2>애니메이션</h2>
-    <div class="btn-grid" id="anim-buttons"></div>
+    <h2>눈 LED</h2>
+    <div class="led-grid">
+      <button class="led-btn" data-side="L"><span class="dot"></span>LED 1<small>왼쪽 눈</small></button>
+      <button class="led-btn" data-side="R"><span class="dot"></span>LED 2<small>오른쪽 눈</small></button>
+    </div>
     <div class="toggles">
-      <label class="toggle">와이어프레임
-        <input type="checkbox" id="t-wire"><span class="switch"></span>
-      </label>
-      <label class="toggle">자동 회전
-        <input type="checkbox" id="t-rotate" checked><span class="switch"></span>
-      </label>
-      <label class="toggle">바닥 격자
-        <input type="checkbox" id="t-grid" checked><span class="switch"></span>
-      </label>
+      <label class="toggle">자동 회전<input type="checkbox" id="t-rotate"><span class="switch"></span></label>
+      <label class="toggle">바닥 격자<input type="checkbox" id="t-grid" checked><span class="switch"></span></label>
     </div>
     <button id="reset-btn">시점 초기화</button>
   </div>
 
   <div id="info" class="panel">
     <h2>메시 정보</h2>
-    <div class="name" id="i-name">—</div>
-    <div class="stat"><span class="k">정점 (Vertices)</span><span class="v" id="i-verts">—</span></div>
-    <div class="stat"><span class="k">삼각형 (Tris)</span><span class="v" id="i-tris">—</span></div>
-    <div class="stat"><span class="k">메시 / 머티리얼</span><span class="v" id="i-meshes">—</span></div>
-    <div class="stat"><span class="k">애니메이션</span><span class="v" id="i-anim">—</span></div>
+    <div class="stat"><span class="k">모델</span><span class="v">알비 (Static)</span></div>
+    <div class="stat"><span class="k">정점</span><span class="v" id="i-verts">—</span></div>
+    <div class="stat"><span class="k">삼각형</span><span class="v" id="i-tris">—</span></div>
   </div>
 
   <div id="hint">마우스: 회전(좌클릭) · 확대(휠) · 이동(우클릭)</div>
 
   <div id="overlay">
     <div class="spinner"></div>
-    <div class="msg" id="ov-msg">모델을 불러오는 중…</div>
+    <div class="msg" id="ov-msg">알비를 불러오는 중…</div>
     <div class="pct" id="ov-pct"></div>
     <div class="err-detail" id="ov-err" style="display:none"></div>
   </div>
 
-  <!-- 오프라인 동작을 위한 로컬 클래식 스크립트 (CDN/ES모듈 미사용) -->
-  <!-- three.js 코어+애드온 IIFE 번들 → window.THREE, window.ARES3 -->
-  <script src="vendor/three-bundle.min.js"></script>
-  <!-- Idle 모델 GLB(base64) → window.ARES_EMBEDDED -->
-  <script src="models-embedded.js"></script>
-
 <script>
 'use strict';
-// three.js와 애드온은 클래식 번들이 전역으로 노출 (file://에서 ES모듈 import가
-// CORS로 차단되는 문제를 회피)
-const { GLTFLoader, OrbitControls, RoomEnvironment } = window.ARES3;
+(function () {
+  const THREE = window.THREE;
+  const { GLTFLoader, OrbitControls, RoomEnvironment } = window.ARES3;
 
-// ============================================================
-// 모델 목록 — Idle은 임베드(file:// 가능), 나머지는 http에서 fetch
-// ============================================================
-const BASE = 'Resources/Meshy_AI_Rainbow_Robo_biped/';
-const MODELS = [
-  { key: 'idle',  ko: '대기',      en: 'Idle',       file: 'Meshy_AI_Rainbow_Robo_biped_Animation_Idle_15_withSkin.glb' },
-  { key: 'walk',  ko: '걷기',      en: 'Walking',    file: 'Meshy_AI_Rainbow_Robo_biped_Animation_Walking_withSkin.glb' },
-  { key: 'run',   ko: '달리기',    en: 'Running',    file: 'Meshy_AI_Rainbow_Robo_biped_Animation_Running_withSkin.glb' },
-  { key: 'stage', ko: '무대 걷기', en: 'Stage Walk', file: 'Meshy_AI_Rainbow_Robo_biped_Animation_Stage_Walk_withSkin.glb' },
-];
-const EMBEDDED = window.ARES_EMBEDDED || {};
-const IS_FILE = location.protocol === 'file:';
+  // ===== 눈 LED 위치(모델 로컬 좌표) — 화면 보며 튜닝 =====
+  const EYE = {
+    radius: 0.11,
+    left:  [-0.145, 0.425, 0.12],   // LED 1 (로봇의 왼쪽 눈) — 뒤로 지름만큼, 위로 반지름만큼
+    right: [ 0.145, 0.425, 0.12],   // LED 2 (로봇의 오른쪽 눈)
+  };
+  const GLB_URL = 'Resources/AlbiStaticLow.glb';
 
-// base64 → ArrayBuffer (GLTFLoader.parse 입력용)
-function b64ToBuffer(b64) {
-  const bin = atob(b64), u8 = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-  return u8.buffer;
-}
+  const wrap = document.getElementById('canvas-wrap');
+  const $ = (id) => document.getElementById(id);
+  const overlay = $('overlay');
 
-// ============================================================
-// 씬 · 카메라 · 렌더러
-// ============================================================
-const wrap = document.getElementById('canvas-wrap');
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-wrap.appendChild(renderer.domElement);
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  wrap.appendChild(renderer.domElement);
 
-const scene = new THREE.Scene();
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-// PBR 머티리얼이 자연스럽게 보이도록 실내 환경맵을 적용
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.01, 100);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
-camera.position.set(3, 2, 4);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.autoRotate = false;
+  controls.autoRotateSpeed = 1.0;
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 1.2;
+  // 조명
+  scene.add(new THREE.HemisphereLight(0xdfeaff, 0x32402f, 0.55));
+  const key = new THREE.DirectionalLight(0xfff4e6, 2.0);
+  key.position.set(3, 6, 5); key.castShadow = true;
+  key.shadow.mapSize.set(2048,2048); key.shadow.bias = -0.0003;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0x9fc0f0, 0.5);
+  fill.position.set(-4, 2, 4); scene.add(fill);
 
-// ---- 조명 ----
-const hemi = new THREE.HemisphereLight(0xcfe2ff, 0x4a3322, 0.55);
-scene.add(hemi);
-const key = new THREE.DirectionalLight(0xfff2e0, 2.0);
-key.position.set(4, 7, 5);
-key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-key.shadow.camera.near = 0.5;
-key.shadow.camera.far = 40;
-key.shadow.camera.left = -6; key.shadow.camera.right = 6;
-key.shadow.camera.top = 6; key.shadow.camera.bottom = -6;
-key.shadow.bias = -0.0002;
-scene.add(key);
-const fill = new THREE.DirectionalLight(0x6f9fe0, 0.5);
-fill.position.set(-5, 3, -4);
-scene.add(fill);
+  // 바닥 + 격자
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(5,48), new THREE.ShadowMaterial({opacity:0.28}));
+  ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+  const grid = new THREE.GridHelper(10, 20, 0x33ff7a, 0x2a3550);
+  grid.material.opacity = 0.3; grid.material.transparent = true; scene.add(grid);
 
-// ---- 바닥 (그림자 받이) + 격자 ----
-const ground = new THREE.Mesh(
-  new THREE.CircleGeometry(8, 64),
-  new THREE.ShadowMaterial({ opacity: 0.32 })
-);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
+  // 발광 구용 라디얼 글로우 텍스처
+  function makeGlowTexture() {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(64,64,0, 64,64,64);
+    g.addColorStop(0.0, 'rgba(180,255,210,1)');
+    g.addColorStop(0.25,'rgba(40,255,120,0.65)');
+    g.addColorStop(1.0, 'rgba(0,255,90,0)');
+    x.fillStyle = g; x.fillRect(0,0,128,128);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  const glowTex = makeGlowTexture();
 
-const grid = new THREE.GridHelper(16, 32, 0x5fa8e6, 0x2a3550);
-grid.material.opacity = 0.35;
-grid.material.transparent = true;
-scene.add(grid);
+  // 눈 하나 만들기: 투명한 구 + 글로우 스프라이트 + 점광원
+  function makeEye(localPos) {
+    const grp = new THREE.Group();
+    grp.position.fromArray(localPos);
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(EYE.radius, 28, 28),
+      new THREE.MeshStandardMaterial({
+        color:0x0c2a18, emissive:0x00ff66, emissiveIntensity:0,
+        transparent:true, opacity:0.4, roughness:0.2, metalness:0,
+      })
+    );
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:glowTex, color:0x55ff99, transparent:true,
+      blending:THREE.AdditiveBlending, depthWrite:false, opacity:0.95,
+    }));
+    glow.scale.setScalar(EYE.radius*3.3); glow.visible = false;
+    const light = new THREE.PointLight(0x33ff77, 0, EYE.radius*22, 2);
+    grp.add(sphere, glow, light);
+    return { group:grp, sphere, glow, light, on:false };
+  }
+  const eyeL = makeEye(EYE.left);
+  const eyeR = makeEye(EYE.right);
 
-// ============================================================
-// 모델 로딩
-// ============================================================
-const loader = new GLTFLoader();
-let current = null;      // { root, mixer }
-let activeKey = null;
+  function setEye(side, on) {
+    const e = (side === 'L') ? eyeL : eyeR;
+    e.on = on;
+    e.sphere.material.emissiveIntensity = on ? 3.2 : 0.0;
+    e.sphere.material.opacity = on ? 0.92 : 0.4;
+    e.glow.visible = on;
+    e.light.intensity = on ? 1.8 : 0.0;
+    const btn = document.querySelector(`.led-btn[data-side="${side}"]`);
+    if (btn) btn.classList.toggle('on', on);
+  }
 
-const $ = (id) => document.getElementById(id);
-const overlay = $('overlay');
-
-function showOverlay(msg) {
-  overlay.className = '';
-  $('ov-msg').textContent = msg;
-  $('ov-pct').textContent = '';
-  $('ov-err').style.display = 'none';
-}
-function hideOverlay() { overlay.classList.add('hidden'); }
-function showError(title, detail) {
-  overlay.className = 'error';
-  $('ov-msg').textContent = title;
-  $('ov-pct').textContent = '';
-  const el = $('ov-err');
-  el.style.display = 'block';
-  el.innerHTML = detail;
-}
-
-function disposeCurrent() {
-  if (!current) return;
-  current.mixer?.stopAllAction();
-  scene.remove(current.root);
-  current.root.traverse((o) => {
-    if (o.isMesh) {
-      o.geometry?.dispose();
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
-      mats.forEach((m) => {
-        for (const k in m) { if (m[k]?.isTexture) m[k].dispose(); }
-        m.dispose();
-      });
-    }
-  });
-  current = null;
-}
-
-function loadModel(model) {
-  showOverlay(`${model.ko} 모델을 불러오는 중…`);
-
-  const onLoad = (gltf) => {
-    disposeCurrent();
+  // ===== 모델 로드 =====
+  let modelH = 1.9;
+  const loader = new GLTFLoader();
+  loader.load(GLB_URL, (gltf) => {
     const root = gltf.scene;
-    root.traverse((o) => {
-      if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; }
-    });
+    root.traverse((o) => { if (o.isMesh){ o.castShadow=true; o.receiveShadow=true; o.frustumCulled=false; } });
 
-    let mixer = null, animName = '없음';
-    if (gltf.animations?.length) {
-      mixer = new THREE.AnimationMixer(root);
-      mixer.clipAction(gltf.animations[0]).play();
-      animName = `${model.en} (${gltf.animations.length})`;
-    }
+    // 중앙·바닥 정렬
+    const box = new THREE.Box3().setFromObject(root);
+    const sz = box.getSize(new THREE.Vector3());
+    const c = box.getCenter(new THREE.Vector3());
+    root.position.x -= c.x; root.position.z -= c.z; root.position.y -= box.min.y;
+    modelH = sz.y;
+
+    // 눈(발광 구)을 모델에 부착 → 모델과 함께 움직임
+    root.add(eyeL.group, eyeR.group);
 
     scene.add(root);
-    current = { root, mixer };
-    frameModel(root);
-    applyWireframe($('t-wire').checked);
-    updateInfo(model, gltf, animName);
+    frameModel(sz);
+    updateInfo(gltf);
     hideOverlay();
-  };
-
-  const onProgress = (e) => {
-    if (e.lengthComputable) $('ov-pct').textContent = Math.round((e.loaded / e.total) * 100) + '%';
-    else $('ov-pct').textContent = (e.loaded / 1e6).toFixed(1) + ' MB';
-  };
-
-  const onErr = (err) => {
+  }, (e) => {
+    if (e.lengthComputable) $('ov-pct').textContent = Math.round(e.loaded/e.total*100)+'%';
+    else $('ov-pct').textContent = (e.loaded/1e6).toFixed(1)+' MB';
+  }, (err) => {
     console.error(err);
-    const embedHint = IS_FILE
-      ? `이 애니메이션은 임베드되어 있지 않습니다. <code>file://</code>에서는 임베드된 ` +
-        `<b>대기(Idle)</b> 모델만 볼 수 있습니다. 4종 전부 보려면 HTTP 서버로 실행하세요:<br>` +
-        `<code>cd WebGL &amp;&amp; python3 -m http.server 8000</code>`
-      : `파일을 불러오지 못했습니다: <code>${BASE + model.file}</code>`;
-    showError('모델을 불러오지 못했습니다', `${embedHint}<br><br>오류: ${err.message || err}`);
-  };
-
-  const b64 = EMBEDDED[model.key];
-  if (b64) {
-    // 임베드된 모델 → fetch 없이 직접 파싱 (file:// 포함 어디서나 동작)
-    try { loader.parse(b64ToBuffer(b64), '', onLoad, onErr); }
-    catch (e) { onErr(e); }
-  } else {
-    // 비임베드 모델 → HTTP 서버에서 fetch (file://에서는 버튼이 비활성화됨)
-    loader.load(BASE + model.file, onLoad, onProgress, onErr);
-  }
-}
-
-// 모델을 원점 중앙·바닥 위에 배치하고 카메라를 맞춤
-function frameModel(root) {
-  const box = new THREE.Box3().setFromObject(root);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-
-  root.position.x -= center.x;
-  root.position.z -= center.z;
-  root.position.y -= box.min.y;          // 발이 바닥(y=0)에 닿도록
-
-  const maxDim = Math.max(size.x, size.y, size.z);
-  const fov = camera.fov * Math.PI / 180;
-  let dist = (maxDim / 2) / Math.tan(fov / 2);
-  dist *= 1.7;
-
-  camera.near = dist / 100;
-  camera.far = dist * 100;
-  camera.updateProjectionMatrix();
-
-  resetView.dist = dist;
-  resetView.height = size.y * 0.55;
-  applyResetView();
-
-  // 그림자 카메라 범위를 모델 크기에 맞춤
-  const r = maxDim;
-  key.shadow.camera.left = -r; key.shadow.camera.right = r;
-  key.shadow.camera.top = r; key.shadow.camera.bottom = -r;
-  key.shadow.camera.far = dist * 4;
-  key.shadow.camera.updateProjectionMatrix();
-}
-
-const resetView = { dist: 4, height: 1 };
-function applyResetView() {
-  const d = resetView.dist;
-  camera.position.set(d * 0.55, resetView.height + d * 0.25, d * 0.85);
-  controls.target.set(0, resetView.height, 0);
-  controls.update();
-}
-
-function updateInfo(model, gltf, animName) {
-  let verts = 0, tris = 0, meshes = 0;
-  const matSet = new Set();
-  gltf.scene.traverse((o) => {
-    if (o.isMesh && o.geometry) {
-      meshes++;
-      const pos = o.geometry.attributes.position;
-      if (pos) verts += pos.count;
-      const idx = o.geometry.index;
-      tris += idx ? idx.count / 3 : (pos ? pos.count / 3 : 0);
-      (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => matSet.add(m.uuid));
-    }
+    overlay.className = 'error'; $('ov-msg').textContent = '모델을 불러오지 못했습니다';
+    $('ov-pct').textContent = '';
+    const el = $('ov-err'); el.style.display='block';
+    el.innerHTML = `경로: <code>${GLB_URL}</code><br><br>이 페이지는 <b>HTTP 서버</b>에서 실행해야 합니다(file://에서는 GLB fetch가 막힘):<br><code>cd WebGL &amp;&amp; python3 -m http.server 8000</code><br>→ <code>http://localhost:8000/</code><br><br>오류: ${err.message||err}`;
   });
-  $('i-name').textContent = `${model.ko} · ${model.en}`;
-  $('i-verts').textContent = verts.toLocaleString();
-  $('i-tris').textContent = Math.round(tris).toLocaleString();
-  $('i-meshes').textContent = `${meshes} / ${matSet.size}`;
-  $('i-anim').textContent = animName;
-}
 
-function applyWireframe(on) {
-  current?.root.traverse((o) => {
-    if (o.isMesh) {
-      (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { m.wireframe = on; });
-    }
-  });
-}
-
-// ============================================================
-// UI 구성
-// ============================================================
-const btnWrap = $('anim-buttons');
-MODELS.forEach((m) => {
-  const b = document.createElement('button');
-  b.className = 'anim-btn';
-  b.dataset.key = m.key;
-  b.innerHTML = `${m.ko}<small>${m.en}</small>`;
-
-  // 임베드 모델은 항상 가능, 비임베드 모델은 http에서만 가능
-  const available = !!EMBEDDED[m.key] || !IS_FILE;
-  if (!available) {
-    b.disabled = true;
-    b.classList.add('disabled');
-    b.title = 'HTTP 서버 환경에서만 사용 가능 (이 모델은 임베드되지 않음)';
-  } else {
-    b.addEventListener('click', () => selectModel(m.key));
+  const view = { dist:4, cy:1 };
+  function frameModel(sz) {
+    const maxDim = Math.max(sz.x, sz.y, sz.z);
+    const fov = camera.fov * Math.PI/180;
+    view.dist = (maxDim/2)/Math.tan(fov/2) * 1.8;
+    view.cy = modelH * 0.55;
+    camera.near = view.dist/100; camera.far = view.dist*100;
+    camera.updateProjectionMatrix();
+    applyView();
   }
-  btnWrap.appendChild(b);
-});
+  function applyView() {
+    // 정면(+Z)에서 약간 위쪽
+    camera.position.set(0, view.cy, view.dist);
+    controls.target.set(0, view.cy, 0);
+    controls.update();
+  }
 
-function selectModel(key) {
-  if (key === activeKey) return;
-  activeKey = key;
-  document.querySelectorAll('.anim-btn').forEach((b) =>
-    b.classList.toggle('active', b.dataset.key === key));
-  loadModel(MODELS.find((m) => m.key === key));
-}
+  function updateInfo(gltf) {
+    let v=0, t=0;
+    gltf.scene.traverse((o)=>{ if(o.isMesh && o.geometry){ const p=o.geometry.attributes.position; if(p)v+=p.count; const idx=o.geometry.index; t += idx? idx.count/3 : (p?p.count/3:0); } });
+    $('i-verts').textContent = v.toLocaleString();
+    $('i-tris').textContent = Math.round(t).toLocaleString();
+  }
 
-$('t-wire').addEventListener('change', (e) => applyWireframe(e.target.checked));
-$('t-rotate').addEventListener('change', (e) => { controls.autoRotate = e.target.checked; });
-$('t-grid').addEventListener('change', (e) => { grid.visible = e.target.checked; });
-$('reset-btn').addEventListener('click', applyResetView);
+  function hideOverlay(){ overlay.classList.add('hidden'); }
 
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+  // UI
+  document.querySelectorAll('.led-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const side = btn.dataset.side;
+      const e = (side==='L')?eyeL:eyeR;
+      setEye(side, !e.on);
+    });
+  });
+  $('t-rotate').addEventListener('change', (e)=>{ controls.autoRotate = e.target.checked; });
+  $('t-grid').addEventListener('change', (e)=>{ grid.visible = e.target.checked; });
+  $('reset-btn').addEventListener('click', applyView);
+  addEventListener('resize', ()=>{ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
-// ============================================================
-// 렌더 루프
-// ============================================================
-const clock = new THREE.Clock();
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta();
-  current?.mixer?.update(dt);
-  controls.update();
-  renderer.render(scene, camera);
-}
-animate();
-
-// 첫 모델 로드 (임베드된 Idle — file://에서도 동작)
-selectModel('idle');
+  (function tick(){ requestAnimationFrame(tick); controls.update(); renderer.render(scene, camera); })();
+})();
 </script>
 </body>
 </html>

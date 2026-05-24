@@ -87,6 +87,21 @@ build.bat
 
 `build.ps1`의 마지막 단계는 패치 결과를 `Select-String`으로 다시 검증하여 `main.bundle.js`가 포함되고 `type="module"`이 사라졌는지 확인합니다. 한 줄이라도 빠지면 `throw`로 실패합니다.
 
+### 자동화 — `build.sh` (macOS / Linux)
+
+macOS·Linux에서는 프로젝트 루트의 `./build.sh`를 실행하세요. `build.ps1`과 **동일한 `Build/` 산출물**을 생성합니다(bash 오케스트레이션 + `python3`로 텍스트/바이너리 인라인 처리). 요구사항: `node`(npx), `curl`, `python3`.
+
+```bash
+./build.sh        # Build/ 생성 → Build/index.html 더블클릭으로 확인
+```
+
+### 3D 자산의 file:// 지원 (시뮬레이션 포함)
+
+`file://`는 로컬 GLB를 `fetch`할 수 없으므로(CORS, `origin: null`), 빌드는 GLB를 다음과 같이 인라인합니다.
+
+- **랜딩 로봇**(`index.html`): `Mesh/ares_robot.embed.js`(base64)를 동적 로드 후 `GLTFLoader.parse()`.
+- **미션 시뮬레이션**(`main.html`) + **뷰어**(`viewer/`): `AlbiStaticLow.glb`를 base64로 `vendor/inline_assets.js`의 `BIN`에 인라인하고, `window.fetch` shim이 이를 **바이너리 `Response`로 반환**한다. 키를 파일명(`AlbiStaticLow.glb`)으로 두어 `Mesh/...`·`Resources/...` 양쪽 경로의 fetch를 모두 가로챈다. 따라서 `main.js`(번들) 코드는 일반 `fetch`를 그대로 쓰고, 빌드 산출물만 file://에서 동작한다.
+
 ## 4. 빌드 절차
 
 ### 4.1 ES 모듈 번들링
