@@ -84,14 +84,14 @@ if (Test-Path 'Web\Mesh\ares_robot.glb') {
     Copy-Item 'Web\Mesh\ares_robot.glb'    'Build\Mesh\ares_robot.glb'        -Force
 }
 
-# WebGL 로봇 뷰어(4종 애니메이션)도 함께 배포 → Build\viewer\.
-# 자체적으로 three 번들 + Idle 임베드를 포함하므로 file:// + 오프라인 동작.
+# WebGL 로봇 뷰어(알비 + 눈 LED)도 함께 배포 → Build\viewer\.
+# 뷰어는 Resources\AlbiStaticLow.glb 를 fetch 하는데, file:// 에서는 막히므로
+# 아래 7단계에서 GLB 를 inline_assets 에 인라인하고 뷰어에 shim 을 주입한다.
 # WebGL\ 은 개인 개발 폴더라 저장소에 없을 수 있으므로 존재할 때만 복사한다.
 if (Test-Path 'WebGL\index.html') {
     Write-Host '        + WebGL robot viewer -> Build\viewer\ (offline file://)'
     New-Item -ItemType Directory -Force -Path 'Build\viewer\vendor' | Out-Null
     Copy-Item 'WebGL\index.html'                 'Build\viewer\index.html'                 -Force
-    Copy-Item 'WebGL\models-embedded.js'         'Build\viewer\models-embedded.js'         -Force
     Copy-Item 'WebGL\vendor\three-bundle.min.js' 'Build\viewer\vendor\three-bundle.min.js' -Force
 } else {
     Write-Host '        (WebGL\ 없음 -- viewer 복사 건너뜀)'
@@ -150,6 +150,7 @@ $sb = New-Object System.Text.StringBuilder
 [void]$sb.AppendLine('  if (window.__ARES_INLINE_INSTALLED__) return;')
 [void]$sb.AppendLine('  window.__ARES_INLINE_INSTALLED__ = true;')
 [void]$sb.AppendLine('  var DATA = {};')
+[void]$sb.AppendLine('  var BIN = {};')
 
 # overview.html
 $overview = Read-Utf8 'Web\overview.html'
@@ -177,35 +178,31 @@ if (Test-Path $exampleDir) {
     }
 }
 
+# 시뮬레이션 모델(AlbiStaticLow.glb): file:// 에서 fetch 불가 → base64 로 BIN 에 인라인.
+# 파일명만 키로 사용해 main.html(Mesh/...)과 viewer(Resources/...) 양쪽 fetch 모두 매칭한다.
+$albi = 'Web\Mesh\AlbiStaticLow.glb'
+if (Test-Path $albi) {
+    $albiB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Resolve-Path $albi).Path))
+    [void]$sb.AppendLine("  BIN['AlbiStaticLow.glb'] = `"$albiB64`";")
+    Write-Host ("        inlined GLB: AlbiStaticLow.glb ({0:N1} MB base64)" -f ($albiB64.Length / 1MB))
+} else {
+    Write-Warning 'Web\Mesh\AlbiStaticLow.glb 없음 -- 시뮬레이션 GLB 미인라인'
+}
+
 [void]$sb.AppendLine(@'
+  function b64ToU8(b64){ var s=atob(b64), n=s.length, u=new Uint8Array(n); for(var i=0;i<n;i++)u[i]=s.charCodeAt(i); return u; }
   var origFetch = window.fetch ? window.fetch.bind(window) : null;
-  function lookup(input) {
-    var url = (typeof input === 'string') ? input : (input && input.url) || '';
-    url = String(url).split('?')[0].split('#')[0];
-    for (var key in DATA) {
-      if (!Object.prototype.hasOwnProperty.call(DATA, key)) continue;
-      if (url === key) return key;
-      if (url.endsWith('/' + key)) return key;
-      if (url.endsWith(key)) return key;
-    }
-    return null;
-  }
-  function mimeFor(key) {
-    if (key.endsWith('.json')) return 'application/json';
-    if (key.endsWith('.xml'))  return 'application/xml';
-    return 'text/html; charset=utf-8';
-  }
+  function norm(input){ var url=(typeof input==='string')?input:(input&&input.url)||''; return String(url).split('?')[0].split('#')[0]; }
+  function find(obj, url){ for(var k in obj){ if(!Object.prototype.hasOwnProperty.call(obj,k))continue; if(url===k||url.endsWith('/'+k)||url.endsWith(k))return k; } return null; }
+  function mimeFor(key){ if(key.endsWith('.json'))return 'application/json'; if(key.endsWith('.xml'))return 'application/xml'; return 'text/html; charset=utf-8'; }
   window.fetch = function (input, init) {
-    var key = lookup(input);
-    if (key !== null) {
-      var body = DATA[key];
-      return Promise.resolve(new Response(body, {
-        status: 200,
-        headers: { 'Content-Type': mimeFor(key) }
-      }));
-    }
+    var url = norm(input);
+    var bk = find(BIN, url);
+    if (bk !== null) return Promise.resolve(new Response(b64ToU8(BIN[bk]), { status:200, headers:{ 'Content-Type':'application/octet-stream' } }));
+    var tk = find(DATA, url);
+    if (tk !== null) return Promise.resolve(new Response(DATA[tk], { status:200, headers:{ 'Content-Type':mimeFor(tk) } }));
     if (origFetch) return origFetch(input, init);
-    return Promise.reject(new Error('fetch unsupported (no inline match)'));
+    return Promise.reject(new Error('fetch unsupported (no inline match): '+url));
   };
 })();
 '@)
@@ -219,6 +216,18 @@ if ($inlineKeys -lt 13) {
     throw "inline_assets.js: expected >= 13 entries (overview + 12 lessons), got $inlineKeys"
 }
 Write-Host ''
+
+# 뷰어도 file:// 에서 GLB를 fetch shim 으로 받도록 inline_assets 주입
+$vp = 'Build\viewer\index.html'
+if (Test-Path $vp) {
+    $v = Read-Utf8 $vp
+    if ($v -notmatch 'inline_assets\.js') {
+        $v = $v.Replace('<script src="vendor/three-bundle.min.js"></script>', "<script src=`"vendor/three-bundle.min.js`"></script>`n<script src=`"../vendor/inline_assets.js`"></script>")
+        Write-Utf8 $vp $v
+        Write-Host '        patched viewer\index.html -> inline_assets shim'
+        Write-Host ''
+    }
+}
 
 Write-Host '=== Build complete ==='
 Write-Host ''
