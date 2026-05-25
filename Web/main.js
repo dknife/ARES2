@@ -231,11 +231,10 @@ function showView(view) {
   const panelToggle = document.getElementById('missionPanelToggle');
   if (panelToggle) panelToggle.hidden = !inMission;
 
-  // 시뮬레이션 버튼도 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기,
-  // 미션이 바뀌면 열려 있는 시뮬레이션을 해당 미션 것으로 교체
+  // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
   const simToggle = document.getElementById('simToggle');
   if (simToggle) simToggle.hidden = !inMission;
-  if (simController) { if (inMission) simController.refresh(); else simController.close(); }
+  if (!inMission && simController) simController.close();
 
   // 미션 뷰에 진입할 때만 Blockly 리사이즈
   if (inMission && workspace) {
@@ -609,29 +608,31 @@ function setupMissionPanelToggle() {
 
 // ============================================================
 // 3D 시뮬레이션 — "시뮬레이션 열기" 버튼으로 카드 토글
-//   - 미션별로 다른 시뮬레이션을 띄울 수 있도록 레지스트리 구조를 둔다.
-//     현재는 모든 미션이 DEFAULT_SIM(알비 + 눈 LED)을 사용한다.
+//   - 주제(로딩 대상 하드웨어)를 드롭다운에서 선택하면 해당 객체가 로딩된다.
+//     "알비와 함께"가 기본이며, 나머지 주제는 아직 빈 객체(준비 중)다.
 //   - three.js 는 vendor/three-bundle.min.js 가 window.THREE / window.ARES3 로 노출
 // ============================================================
 let simController = null;
 
-// 시뮬레이션 정의: model(GLB 경로), title, eyes(눈 LED 설정 또는 null)
-const DEFAULT_SIM = {
-  model: 'Mesh/AlbiStaticLow.glb',
-  title: '🤖 알비 시뮬레이션',
-  eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] },
+// 시뮬레이션 "주제"(로딩 대상). model 이 null 이면 빈 객체(준비 중)를 표시한다.
+//   새 객체를 붙이려면 model 에 GLB 경로를, 눈 LED가 있으면 eyes 설정을 채운다.
+const TOPICS = {
+  albi:      { label: '알비와 함께',   model: 'Mesh/AlbiStaticLow.glb', eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] } },
+  traffic:   { label: '우주 신호등',   model: null, eyes: null },
+  launchpad: { label: '탐사선 발사대', model: null, eyes: null },
 };
-// 미션별 시뮬레이션 매핑. 키는 'L{차시}M{미션}'. 비어 있으면 DEFAULT_SIM 사용.
-//   예) SIM_REGISTRY['L7M2'] = { model:'Mesh/Roulette.glb', title:'룰렛', eyes:null };
-const SIM_REGISTRY = {};
-function getCurrentSim() {
+const TOPIC_ORDER = ['albi', 'traffic', 'launchpad'];
+const DEFAULT_TOPIC = 'albi';
+// 미션별 기본 주제(현재는 모두 기본값 사용). 'L{차시}M{미션}' → topic key
+const MISSION_TOPIC = {};
+function defaultTopicForMission() {
   const l = document.getElementById('lessonSelect')?.value || '';
   const m = document.getElementById('missionSelect')?.value || '';
-  return SIM_REGISTRY[`L${l}M${m}`] || DEFAULT_SIM;
+  return MISSION_TOPIC[`L${l}M${m}`] || DEFAULT_TOPIC;
 }
 
 // 카드 안에 3D 씬을 구성해 { render, resize, setEye, dispose, hasEyes, eyeL, eyeR } 반환
-function buildAlbiSim(THREE, A, stage, loadingEl, cfg) {
+function buildSim(THREE, A, stage, loadingEl, cfg) {
   const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
   const EYE = cfg.eyes || null;   // 눈 LED 설정 (없으면 null)
 
@@ -698,29 +699,42 @@ function buildAlbiSim(THREE, A, stage, loadingEl, cfg) {
     e.light.intensity = on ? 1.8 : 0.0;
   }
 
-  let modelH = 1.9;
-  new GLTFLoader().load(cfg.model, (gltf) => {
-    const root = gltf.scene;
-    root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-    const box = new THREE.Box3().setFromObject(root);
-    const sz = box.getSize(new THREE.Vector3());
-    const c = box.getCenter(new THREE.Vector3());
-    root.position.x -= c.x; root.position.z -= c.z; root.position.y -= box.min.y;
-    modelH = sz.y;
-    if (EYE) root.add(eyeL.group, eyeR.group);
-    scene.add(root);
-    const maxDim = Math.max(sz.x, sz.y, sz.z);
-    const fov = camera.fov * Math.PI / 180;
-    const dist = (maxDim / 2) / Math.tan(fov / 2) * 1.9;
-    const cy = modelH * 0.55;
+  const frame = (cy, dist) => {
     camera.position.set(0, cy, dist);
     camera.near = dist / 100; camera.far = dist * 100; camera.updateProjectionMatrix();
     controls.target.set(0, cy, 0); controls.update();
-    if (loadingEl) loadingEl.style.display = 'none';
-  }, undefined, (err) => {
-    console.error('시뮬레이션 모델 로드 실패:', err);
-    if (loadingEl) loadingEl.textContent = '모델을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
-  });
+  };
+
+  if (cfg.model) {
+    new GLTFLoader().load(cfg.model, (gltf) => {
+      const root = gltf.scene;
+      root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+      const box = new THREE.Box3().setFromObject(root);
+      const sz = box.getSize(new THREE.Vector3());
+      const c = box.getCenter(new THREE.Vector3());
+      root.position.x -= c.x; root.position.z -= c.z; root.position.y -= box.min.y;
+      const modelH = sz.y;
+      if (EYE) root.add(eyeL.group, eyeR.group);
+      scene.add(root);
+      const maxDim = Math.max(sz.x, sz.y, sz.z);
+      const fov = camera.fov * Math.PI / 180;
+      frame(modelH * 0.55, (maxDim / 2) / Math.tan(fov / 2) * 1.9);
+      if (loadingEl) loadingEl.style.display = 'none';
+    }, undefined, (err) => {
+      console.error('시뮬레이션 모델 로드 실패:', err);
+      if (loadingEl) loadingEl.textContent = '모델을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
+    });
+  } else {
+    // 빈 객체(준비 중): 플레이스홀더 와이어프레임 + 안내 텍스트
+    const ph = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 0.9, 0.9),
+      new THREE.MeshBasicMaterial({ color: 0x5fa8e6, wireframe: true, transparent: true, opacity: 0.35 })
+    );
+    ph.position.y = 0.5;
+    scene.add(ph);
+    frame(0.5, 2.6);
+    if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '🚧 준비 중인 시뮬레이션입니다 (빈 객체)'; }
+  }
 
   function resize() {
     const w = stage.clientWidth || 360, h = stage.clientHeight || 300;
@@ -748,8 +762,8 @@ function setupSimulation() {
   const card = document.getElementById('simCard');
   const stage = document.getElementById('simStage');
   const loadingEl = document.getElementById('simLoading');
-  const titleEl = document.getElementById('simTitle');
   const ledWrap = card ? card.querySelector('.sim-led-buttons') : null;
+  const sel = document.getElementById('simTopic');
   if (!btn || !card || !stage) return;
 
   const THREE = window.THREE, A = window.ARES3;
@@ -759,25 +773,36 @@ function setupSimulation() {
     return;
   }
 
-  let sim = null, raf = 0, builtCfg = null;
+  // 주제 드롭다운 채우기 ("알비와 함께"가 기본)
+  if (sel && !sel.options.length) {
+    TOPIC_ORDER.forEach((k) => {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = TOPICS[k].label;
+      sel.appendChild(o);
+    });
+    sel.value = DEFAULT_TOPIC;
+  }
+
+  let sim = null, raf = 0, builtTopic = null;
   const loop = () => { sim.render(); raf = requestAnimationFrame(loop); };
 
-  // 현재 미션 설정으로 (재)빌드. 이전 씬은 dispose.
-  const build = (cfg) => {
+  // 선택한 주제의 객체를 (재)빌드. 이전 씬은 dispose.
+  const build = (topicKey) => {
     cancelAnimationFrame(raf); raf = 0;
     if (sim) { sim.dispose(); sim = null; }
+    const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
     if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
     card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
-    if (titleEl) titleEl.textContent = cfg.title || '🤖 시뮬레이션';
     if (ledWrap) ledWrap.style.display = cfg.eyes ? '' : 'none';
-    sim = buildAlbiSim(THREE, A, stage, loadingEl, cfg);
-    builtCfg = cfg;
+    sim = buildSim(THREE, A, stage, loadingEl, cfg);
+    builtTopic = topicKey;
   };
 
   const open = () => {
     card.hidden = false;
-    const cfg = getCurrentSim();
-    if (!sim || builtCfg !== cfg) build(cfg);
+    if (!sim && sel) sel.value = defaultTopicForMission();  // 첫 오픈: 미션 기본 주제
+    const t = (sel && sel.value) || DEFAULT_TOPIC;
+    if (!sim || builtTopic !== t) build(t);
     sim.resize();
     cancelAnimationFrame(raf); loop();
     btn.textContent = '🤖 시뮬레이션 닫기';
@@ -790,12 +815,13 @@ function setupSimulation() {
     btn.textContent = '🤖 시뮬레이션 열기';
     btn.setAttribute('aria-pressed', 'false');
   };
-  // 미션이 바뀌면 열려 있는 시뮬레이션을 해당 미션 것으로 교체
-  const refresh = () => {
-    if (card.hidden) return;
-    const cfg = getCurrentSim();
-    if (cfg !== builtCfg) { build(cfg); sim.resize(); cancelAnimationFrame(raf); loop(); }
-  };
+
+  // 주제를 바꾸면 해당 객체로 교체
+  if (sel) sel.addEventListener('change', () => {
+    build(sel.value);
+    sim.resize();
+    cancelAnimationFrame(raf); loop();
+  });
 
   btn.addEventListener('click', () => { card.hidden ? open() : close(); });
 
@@ -809,13 +835,55 @@ function setupSimulation() {
     });
   });
 
+  // ── 블록 명령 시뮬레이션 로그 ──
+  // "시뮬레이션 해보기" → 미션 전송(BLE) 대신, 피코로 갈 명령을 로그로 출력.
+  // 회신 가정: Ack 명령(응답 대기) 100ms, 비Ack 명령(fire-and-forget) 20ms.
+  const simLog = document.getElementById('simLog');
+  const simRunBtn = document.getElementById('simRun');
+  const simClearBtn = document.getElementById('simLogClear');
+  const logLine = (text, cls) => {
+    if (!simLog) return;
+    const d = document.createElement('div');
+    d.className = 'sim-log-line' + (cls ? ' ' + cls : '');
+    d.textContent = text;
+    simLog.appendChild(d);
+    simLog.scrollTop = simLog.scrollHeight;
+  };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const simSink = async (command, waitForResponse) => {
+    const delay = waitForResponse ? 100 : 20;     // Ack 100ms / 비Ack 20ms
+    logLine(`→ ${command}`, waitForResponse ? 'tx-ack' : 'tx');
+    await wait(delay);
+    let reply = '1';
+    if (command.startsWith('DISTANCE')) reply = 'DIST:30';
+    else if (command.startsWith('MAGNET')) reply = 'MAG:0';
+    logLine(`     ↩ ${reply}  (+${delay}ms, ${waitForResponse ? 'Ack' : '비Ack'})`, 'rx');
+    return reply;
+  };
+  let simRunning = false;
+  if (simRunBtn) simRunBtn.addEventListener('click', async () => {
+    if (simRunning) return;
+    if (!workspace) { logLine('워크스페이스가 준비되지 않았습니다', 'err'); return; }
+    simRunning = true; simRunBtn.disabled = true;
+    logLine('──── 시뮬레이션 시작 ────', 'sys');
+    try {
+      await CommandExecutor.simulateWorkspace(workspace, simSink);
+      logLine('──── 시뮬레이션 종료 ────', 'sys');
+    } catch (e) {
+      logLine('오류: ' + (e && e.message ? e.message : e), 'err');
+    } finally {
+      simRunning = false; simRunBtn.disabled = false;
+    }
+  });
+  if (simClearBtn) simClearBtn.addEventListener('click', () => { if (simLog) simLog.textContent = ''; });
+
   // 헤더(제목 영역)를 잡아 카드를 이동 — 모바일에서 캔버스가 터치를 가져가도
   // 위젯을 끌어 화면 위/아래로 옮길 수 있다. (LED 버튼은 드래그 제외)
   const head = card.querySelector('.sim-card-head');
   if (head) {
     let dragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
     head.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.sim-led-btn')) return; // 버튼 탭은 드래그 아님
+      if (e.target.closest('.sim-led-btn') || e.target.closest('.sim-topic')) return; // 버튼/드롭다운은 드래그 아님
       const r = card.getBoundingClientRect();
       // 뷰포트 기준 고정 좌표로 전환(데스크톱 absolute / 모바일 centered 모두 대응)
       card.style.position = 'fixed';
@@ -847,7 +915,7 @@ function setupSimulation() {
   }
 
   addEventListener('resize', () => { if (!card.hidden && sim) sim.resize(); });
-  simController = { close, refresh };
+  simController = { close };
 }
 
 // ============================================================

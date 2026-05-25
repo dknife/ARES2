@@ -1012,7 +1012,14 @@ iframe, #dashboardFrame {
     touch-action: none;           /* 모바일에서 헤더 드래그가 배경 스크롤로 새지 않도록 */
     user-select: none;
 }
-.sim-card-head h3 { cursor: move; }
+.sim-drag { cursor: move; color: var(--text-secondary); font-size: 15px; line-height: 1; opacity: 0.55; padding: 0 2px; flex: 0 0 auto; }
+.sim-topic {
+    flex: 1 1 auto; min-width: 96px; max-width: 200px;
+    font-family: 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-white);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 8px; cursor: pointer; touch-action: auto;
+}
 .sim-card-head h3 { margin: 0; font-size: 0.98em; }
 .sim-led-buttons { display: flex; gap: 6px; }
 .sim-led-btn {
@@ -1044,6 +1051,29 @@ iframe, #dashboardFrame {
     margin: 0; padding: 7px 12px; font-size: 0.74em;
     color: var(--text-secondary); border-top: 1px solid var(--border-color);
 }
+
+/* 블록 명령 시뮬레이션 실행/로그 */
+.sim-runbar { display: flex; gap: 6px; padding: 8px 12px 0; }
+.sim-runbar button {
+    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+#simRun { flex: 1 1 auto; background: #2a3550; color: #fff; border-color: #2a3550; }
+#simRun:hover:not(:disabled) { background: #38507a; }
+#simRun:disabled { opacity: 0.6; cursor: not-allowed; }
+#simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
+.sim-log {
+    margin: 8px 12px 0; height: 112px; overflow-y: auto;
+    background: #0d1422; border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 8px; font-family: 'D2Coding', Menlo, monospace; font-size: 11px; line-height: 1.5;
+    color: #cfe0f5; -webkit-overflow-scrolling: touch;
+}
+.sim-log-line { white-space: pre-wrap; word-break: break-all; }
+.sim-log-line.tx-ack { color: #ffd089; }   /* Ack 명령 송신 */
+.sim-log-line.tx     { color: #9fd0ff; }   /* 비Ack 명령 송신 */
+.sim-log-line.rx     { color: #8af0a8; }   /* 회신 */
+.sim-log-line.sys    { color: #9aa6bf; }
+.sim-log-line.err    { color: #ff8a8a; }
 
 /* 모바일: 카드가 잘리지 않도록 화면 중앙 고정 + (필요 시) 내부 스크롤.
    본문(body)이 overflow:hidden 이라 페이지 스크롤이 안 되므로, 카드 자체를

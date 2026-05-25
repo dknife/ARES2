@@ -25,6 +25,16 @@ export const CommandExecutor = {
     return this.FIRE_AND_FORGET_HEADS.has(head);
   },
 
+  // 전송 경로 추상화: 시뮬레이션 중(simSink 설정)에는 실제 BLE 대신
+  // sink 로 명령을 흘려보낸다. sink(command, waitForResponse) 는 회신을
+  // 흉내내고 가짜 응답을 반환한다. 평소(simSink=null)에는 실제 BLE 송신.
+  simSink: null,
+  _dispatch(command, waitForResponse) {
+    return this.simSink
+      ? this.simSink(command, waitForResponse)
+      : BluetoothManager.sendData(command, waitForResponse);
+  },
+
   evaluateValueBlock(block) {
     if (!block) return '0';
     if (block.type === 'math_number') {
@@ -146,9 +156,9 @@ export const CommandExecutor = {
 
     // BATCH;cmd1|cmd2|cmd3 형태로 한 번에 송신. 응답 대기 유지 (마지막 1/0 ACK).
     const payload = `BATCH;${commands.join('|')}`;
-    BluetoothManager.updateStatus('묶음 실행 중...', STATUS_COLORS.ORANGE);
+    if (!this.simSink) BluetoothManager.updateStatus('묶음 실행 중...', STATUS_COLORS.ORANGE);
     try {
-      await BluetoothManager.sendData(payload, true);
+      await this._dispatch(payload, true);
       if (DEBUG) Logger.add(`[묶음 완료] ${commands.length}개 명령`, 'info');
     } catch (error) {
       Logger.add(`[오류] 묶음 실행 실패: ${error.message}`, 'error');
@@ -261,12 +271,12 @@ export const CommandExecutor = {
       return;
     }
 
-    BluetoothManager.updateStatus('명령 실행 중...', STATUS_COLORS.ORANGE);
+    if (!this.simSink) BluetoothManager.updateStatus('명령 실행 중...', STATUS_COLORS.ORANGE);
 
     const fireAndForget = this._isFireAndForget(command);
 
     try {
-      await BluetoothManager.sendData(command, !fireAndForget);
+      await this._dispatch(command, !fireAndForget);
       if (DEBUG) Logger.add(`[완료] ${command}`, 'info');
     } catch (error) {
       if (error.message.includes('시간 초과')) {
@@ -449,5 +459,25 @@ export const CommandExecutor = {
     setTimeout(() => {
       BluetoothManager.updateConnectionStatus(isConnected);
     }, 1500);
+  },
+
+  // 시뮬레이션 실행: 실제 BLE 없이 sink(로그)로 명령을 흘려보낸다.
+  // executeWorkspace 와 동일한 블록 처리 로직을 재사용하되, 전송은 _dispatch →
+  // simSink 로 라우팅된다. (runButton/BLE 상태는 건드리지 않는다)
+  async simulateWorkspace(workspace, sink) {
+    if (state.isExecuting) return;
+    this.simSink = sink;
+    state.isExecuting = true;
+    try {
+      const topBlocks = workspace.getTopBlocks(true);
+      for (const block of topBlocks) {
+        if (!state.isExecuting) break;
+        if (block.type === 'procedures_defnoreturn' || block.type === 'procedures_defreturn') continue;
+        await this.processBlock(block);
+      }
+    } finally {
+      state.isExecuting = false;
+      this.simSink = null;
+    }
   }
 };
