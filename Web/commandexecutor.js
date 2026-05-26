@@ -12,7 +12,6 @@ export const CommandExecutor = {
   // 보장된다.
   FIRE_AND_FORGET_HEADS: new Set([
     'LED_ON', 'LED_OFF',
-    'MAIN_LED_ON', 'MAIN_LED_OFF',
     'MSG', 'CLEAR_DISPLAY',
     'SERVO_FORWARD', 'SERVO_BACKWARD', 'SERVO_LEFT', 'SERVO_RIGHT', 'SERVO_STOP',
     'DC_FORWARD', 'DC_BACKWARD', 'DC_STOP',
@@ -20,7 +19,7 @@ export const CommandExecutor = {
   ]),
 
   _isFireAndForget(command) {
-    if (command.startsWith('[')) return true;     // LED 패턴 [v0 v1 v2 v3 v4]
+    if (command.startsWith('[')) return true;     // LED 패턴 [v0 v1 v2 v3 v4 v5]
     const head = command.split(',')[0];
     return this.FIRE_AND_FORGET_HEADS.has(head);
   },
@@ -173,30 +172,22 @@ export const CommandExecutor = {
   generateCommand(block) {
     switch (block.type) {
       case 'set_lamp': {
-        const lamps = [0, 1, 2, 3, 4].map(i =>
+        const lamps = [0, 1, 2, 3, 4, 5].map(i =>
           (parseFloat(this.evaluateValueBlock(block.getInputTargetBlock(`LAMP${i}`)) || '0')).toFixed(1)
         );
         return `[${lamps.join(' ')}]`;
       }
       case 'led_on': {
-        const ledNumRaw = this.evaluateValueBlock(block.getInputTargetBlock('LED_NUM'));
-        const ledNumInput = parseInt(ledNumRaw, 10);
-        const ledNum = isNaN(ledNumInput) ? 0 : Math.max(0, Math.min(4, ledNumInput - 1));
+        const ledNumStr = block.getFieldValue('LED_NUM') || '0';
+        const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
         const brightness = this.evaluateValueBlock(block.getInputTargetBlock('BRIGHTNESS')) || '1';
         return `LED_ON,${ledNum},${brightness}`;
       }
       case 'led_off': {
-        const ledNumStr = block.getFieldValue('LED_NUM') || '1';
+        const ledNumStr = block.getFieldValue('LED_NUM') || '0';
         if (ledNumStr === 'ALL') return 'LED_OFF,ALL';
-        const ledNum = Math.max(0, Math.min(4, parseInt(ledNumStr) - 1));
+        const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
         return `LED_OFF,${ledNum}`;
-      }
-      case 'main_led_on': {
-        const brightness = this.evaluateValueBlock(block.getInputTargetBlock('BRIGHTNESS')) || '1';
-        return `MAIN_LED_ON,${brightness}`;
-      }
-      case 'main_led_off': {
-        return 'MAIN_LED_OFF';
       }
       case 'send_message': {
         const str = String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello');
