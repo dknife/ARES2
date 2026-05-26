@@ -4,7 +4,7 @@
 from machine import Pin, PWM
 from time import sleep
 from utime import sleep_ms
-from pins import LED_PINS, MAIN_LED_PIN
+from pins import LED_PINS
 
 # ==========================
 # [클래스 정의]
@@ -21,11 +21,7 @@ class KSLeds:
         for led in self.leds:
             # 깜빡임 방지를 위해 주파수를 20kHz로 설정
             led.freq(20000)
-            
-        # 메인 LED 초기화
-        self.main_led = PWM(Pin(MAIN_LED_PIN, Pin.OUT))
-        self.main_led.freq(20000)
-        
+
         # 초기에 모든 LED 끄기
         self.leds_off()
 
@@ -36,26 +32,14 @@ class KSLeds:
         # 모든 LED 끄기
         for led in self.leds:
             led.duty_u16(0)
-        # 메인 LED 끄기
-        self.main_led.duty_u16(0)
-
-    def main_led_on(self, brightness=1.0):
-        # 메인 LED 켜기 (밝기 조절)
-        if brightness < 0: brightness = 0
-        if brightness > 1: brightness = 1
-        duty = int(65535 * brightness)
-        self.main_led.duty_u16(duty)
-
-    def main_led_off(self):
-        # 메인 LED 끄기
-        self.main_led.duty_u16(0)
 
     # ==========================
     # [효과]
     # ==========================
     def swipe_effect(self):
-        # 1-2-3-4-5-4-3-2-1 시퀀스 (인덱스)
-        sequence = [0, 1, 2, 3, 4, 3, 2, 1, 0]
+        # 인덱스 시퀀스 (앞→뒤→앞)
+        last = len(self.leds) - 1
+        sequence = list(range(last + 1)) + list(range(last - 1, -1, -1))
         for idx in sequence:
             # 모든 LED 순회
             for i, led in enumerate(self.leds):
@@ -71,20 +55,16 @@ class KSLeds:
     
     def check(self):
         # 시작 체크 패턴 실행
+        n = len(self.leds)
         for i in range(3):
             # 강도 단계 계산
             intensity = (3 - i)/3
-            # 순차적 패턴
-            self.set_led_pattern([0,0,0,0,intensity])
-            sleep(0.1)
-            self.set_led_pattern([0,0,0,intensity,0])
-            sleep(0.1)
-            self.set_led_pattern([0,0,intensity,0,0])
-            sleep(0.1)
-            self.set_led_pattern([0,intensity,0,0,0])
-            sleep(0.1)
-            self.set_led_pattern([intensity,0,0,0,0])
-            sleep(0.1)
+            # 끝 → 처음으로 순차 점등
+            for pos in range(n - 1, -1, -1):
+                pattern = [0] * n
+                pattern[pos] = intensity
+                self.set_led_pattern(pattern)
+                sleep(0.1)
         self.leds_off()
 
     # ==========================
@@ -93,7 +73,7 @@ class KSLeds:
     def set_led_pattern(self, pattern):
         # 패턴 길이 유효성 검사
         if len(pattern) != len(self.leds):
-            print("패턴 길이는 LED 수(5)와 일치해야 합니다")
+            print("패턴 길이는 LED 수({})와 일치해야 합니다".format(len(self.leds)))
             return
         
         # 패턴 적용

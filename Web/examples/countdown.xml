@@ -5,6 +5,7 @@
     <value name="LAMP2"><block type="math_number"><field name="NUM">1</field></block></value>
     <value name="LAMP3"><block type="math_number"><field name="NUM">1</field></block></value>
     <value name="LAMP4"><block type="math_number"><field name="NUM">1</field></block></value>
+    <value name="LAMP5"><block type="math_number"><field name="NUM">0</field></block></value>
     <next>
       <block type="buzzer_on">
         <value name="FREQ"><block type="math_number"><field name="NUM">262</field></block></value>
@@ -19,6 +20,7 @@
                 <value name="LAMP2"><block type="math_number"><field name="NUM">1</field></block></value>
                 <value name="LAMP3"><block type="math_number"><field name="NUM">1</field></block></value>
                 <value name="LAMP4"><block type="math_number"><field name="NUM">0</field></block></value>
+                <value name="LAMP5"><block type="math_number"><field name="NUM">0</field></block></value>
                 <next>
                   <block type="buzzer_on">
                     <value name="FREQ"><block type="math_number"><field name="NUM">262</field></block></value>
@@ -33,6 +35,7 @@
                             <value name="LAMP2"><block type="math_number"><field name="NUM">1</field></block></value>
                             <value name="LAMP3"><block type="math_number"><field name="NUM">0</field></block></value>
                             <value name="LAMP4"><block type="math_number"><field name="NUM">0</field></block></value>
+                            <value name="LAMP5"><block type="math_number"><field name="NUM">0</field></block></value>
                             <next>
                               <block type="buzzer_on">
                                 <value name="FREQ"><block type="math_number"><field name="NUM">262</field></block></value>
@@ -47,6 +50,7 @@
                                         <value name="LAMP2"><block type="math_number"><field name="NUM">0</field></block></value>
                                         <value name="LAMP3"><block type="math_number"><field name="NUM">0</field></block></value>
                                         <value name="LAMP4"><block type="math_number"><field name="NUM">0</field></block></value>
+                                        <value name="LAMP5"><block type="math_number"><field name="NUM">0</field></block></value>
                                         <next>
                                           <block type="buzzer_on">
                                             <value name="FREQ"><block type="math_number"><field name="NUM">262</field></block></value>
@@ -61,6 +65,7 @@
                                                     <value name="LAMP2"><block type="math_number"><field name="NUM">0</field></block></value>
                                                     <value name="LAMP3"><block type="math_number"><field name="NUM">0</field></block></value>
                                                     <value name="LAMP4"><block type="math_number"><field name="NUM">0</field></block></value>
+                                                    <value name="LAMP5"><block type="math_number"><field name="NUM">0</field></block></value>
                                                     <next>
                                                       <block type="buzzer_on">
                                                         <value name="FREQ"><block type="math_number"><field name="NUM">262</field></block></value>

@@ -145,10 +145,6 @@ class CommandProcessor:
         elif data == "LED_PATTERN":
             robot.leds.swipe_effect()
             return 1
-        elif data.startswith("MAIN_LED_ON"):
-            return self._handle_main_led_on(data)
-        elif data == "MAIN_LED_OFF":
-            return self._handle_main_led_off(data)
         elif data.startswith("LED_ON"):
             return self._handle_led_on(data)
         elif data.startswith("LED_OFF"):
@@ -467,30 +463,6 @@ class CommandProcessor:
             print(f"CALIB_SET 오류: {e}")
             return 0
 
-    def _handle_main_led_on(self, data):
-        """메인 LED 켜기"""
-        if not robot.leds:
-            return 0
-        try:
-            parts = data.split(',')
-            brightness = float(parts[1]) if len(parts) > 1 else 1.0
-            robot.leds.main_led_on(brightness)
-            return 1
-        except Exception as e:
-            print(f"MAIN_LED_ON 오류: {e}")
-            return 0
-
-    def _handle_main_led_off(self, data):
-        """메인 LED 끄기"""
-        if not robot.leds:
-            return 0
-        try:
-            robot.leds.main_led_off()
-            return 1
-        except Exception as e:
-            print(f"MAIN_LED_OFF 오류: {e}")
-            return 0
-    
     # LED 핸들러
     def _handle_led_on(self, data):
         """LED 켜기"""
@@ -502,14 +474,14 @@ class CommandProcessor:
             brightness = float(parts[2]) if len(parts) > 2 else 1.0
             brightness = max(0.0, min(1.0, brightness))
             
-            if 0 <= led_num <= 4:
+            if 0 <= led_num < len(robot.leds.leds):
                 duty = int(65535 * brightness)
                 robot.leds.leds[led_num].duty_u16(duty)
             return 1
         except Exception as e:
             print(f"LED_ON 오류: {e}")
             return 0
-    
+
     def _handle_led_off(self, data):
         """LED 끄기"""
         if not robot.leds:
@@ -517,12 +489,12 @@ class CommandProcessor:
         try:
             parts = data.split(',')
             led_num = parts[1] if len(parts) > 1 else '0'
-            
+
             if led_num == 'ALL':
                 robot.leds.leds_off()
             else:
                 num = int(led_num)
-                if 0 <= num <= 4:
+                if 0 <= num < len(robot.leds.leds):
                     robot.leds.leds[num].duty_u16(0)
             return 1
         except Exception as e:
@@ -538,7 +510,7 @@ class CommandProcessor:
             values = pattern.split()
             
             for i, val in enumerate(values):
-                if i >= 5:
+                if i >= len(robot.leds.leds):
                     break
                 brightness = float(val)
                 brightness = max(0.0, min(1.0, brightness))

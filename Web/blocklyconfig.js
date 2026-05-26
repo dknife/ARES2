@@ -143,62 +143,46 @@ export const BlocklyConfig = {
     // LED 블록 (빨강색 #FF5555)
     {
       type: "set_lamp",
-      message0: "💡 LED 전체 설정 [ %1 %2 %3 %4 %5 ]",
+      message0: "💡 LED 전체 설정 [ %1 %2 %3 %4 %5 %6 ]",
       args0: [
         { type: "input_value", name: "LAMP0", check: "Number" },
         { type: "input_value", name: "LAMP1", check: "Number" },
         { type: "input_value", name: "LAMP2", check: "Number" },
         { type: "input_value", name: "LAMP3", check: "Number" },
-        { type: "input_value", name: "LAMP4", check: "Number" }
+        { type: "input_value", name: "LAMP4", check: "Number" },
+        { type: "input_value", name: "LAMP5", check: "Number" }
       ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF5555",
-      tooltip: "5개 LED 밝기를 한번에 설정합니다. 값: 0(끔)~1(최대 밝기)"
+      tooltip: "6개 LED 밝기를 한번에 설정합니다. 값: 0(끔)~1(최대 밝기)"
     },
     {
       type: "led_on",
       message0: "💡 LED %1 번 켜기 (밝기 %2 )",
       args0: [
-        { type: "input_value", name: "LED_NUM", check: "Number" },
+        { type: "field_dropdown", name: "LED_NUM", options: [
+          ["0번", "0"], ["1번", "1"], ["2번", "2"], ["3번", "3"], ["4번", "4"], ["5번", "5"]
+        ]},
         { type: "input_value", name: "BRIGHTNESS", check: "Number" }
       ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF5555",
-      tooltip: "특정 LED(1~5번)를 지정한 밝기로 켭니다. 밝기: 0~1"
+      tooltip: "특정 LED(0~5번)를 지정한 밝기로 켭니다. 밝기: 0~1"
     },
     {
       type: "led_off",
       message0: "💡 LED %1 끄기",
       args0: [
         { type: "field_dropdown", name: "LED_NUM", options: [
-          ["1번", "1"], ["2번", "2"], ["3번", "3"], ["4번", "4"], ["5번", "5"], ["전체", "ALL"]
+          ["0번", "0"], ["1번", "1"], ["2번", "2"], ["3번", "3"], ["4번", "4"], ["5번", "5"], ["전체", "ALL"]
         ]}
       ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF5555",
       tooltip: "특정 LED 또는 전체 LED를 끕니다."
-    },
-
-    // 메인 LED 블록 (진분홍색 #FF33CC)
-    {
-      type: "main_led_on",
-      message0: "💡 메인 LED 켜기 (밝기 %1 )",
-      args0: [{ type: "input_value", name: "BRIGHTNESS", check: "Number" }],
-      previousStatement: null,
-      nextStatement: null,
-      colour: "#FF33CC",
-      tooltip: "메인 LED를 지정한 밝기로 켭니다. 밝기: 0 (끔) ~ 1 (최대)"
-    },
-    {
-      type: "main_led_off",
-      message0: "💡 메인 LED 끄기",
-      previousStatement: null,
-      nextStatement: null,
-      colour: "#FF33CC",
-      tooltip: "메인 LED를 끕니다."
     },
 
     // 디스플레이 블록 (보라색 #9966FF)

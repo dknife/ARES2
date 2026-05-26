@@ -30,17 +30,14 @@ SERVO_LEFT_PIN = 13
 # 부저
 BUZZER_PIN = 15
 
-# LED 배열 (5개): LED0(왼쪽) ~ LED4(오른쪽)
-LED_PINS = [20, 19, 18, 17, 16]
+# LED 배열 (6개): LED0(메인) ~ LED5(오른쪽 끝)
+LED_PINS = [21, 20, 19, 18, 17, 16]
 
 # BB탄 발사기
 GUN_PIN = 22
 
 # 자기장 센서
 MAGSENSOR_PIN = 26
-
-# 메인 LED (추가)
-MAIN_LED_PIN = 21
 
 # 예비 핀 (미사용)
 RESERVED_PINS = [10, 11, 14, 27, 28]

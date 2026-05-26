@@ -26,7 +26,7 @@ class AresRover:
     # 즉시 완료되는 출력 명령은 응답 라운드트립을 생략하여 처리량을 높이고,
     # 응답 매칭 어긋남(LED_ON 응답이 다음 명령 슬롯에 잘못 들어가는 현상)을 차단한다.
     NO_RESPONSE_CMDS = (
-        "LED_ON", "LED_OFF", "MAIN_LED_ON", "MAIN_LED_OFF",
+        "LED_ON", "LED_OFF",
         "MSG", "CLEAR_DISPLAY",
         "SERVO_FORWARD", "SERVO_BACKWARD", "SERVO_LEFT", "SERVO_RIGHT", "SERVO_STOP",
         "DC_FORWARD", "DC_BACKWARD", "DC_STOP",
