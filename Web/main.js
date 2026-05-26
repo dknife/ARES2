@@ -619,7 +619,7 @@ let simController = null;
 const TOPICS = {
   albi:      { label: '알비와 함께',   model: 'Mesh/AlbiStaticLow.glb', eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] } },
   traffic:   { label: '우주 신호등',   model: null, eyes: null },
-  launchpad: { label: '탐사선 발사대', model: null, eyes: null },
+  launchpad: { label: '탐사선 발사대', model: 'Mesh/LaunchStation.glb', eyes: null },
 };
 const TOPIC_ORDER = ['albi', 'traffic', 'launchpad'];
 const DEFAULT_TOPIC = 'albi';
