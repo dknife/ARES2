@@ -127,6 +127,10 @@
                             <button class="sim-led-btn" data-side="L" type="button"><span class="dot"></span>LED 1<small>왼쪽 눈</small></button>
                             <button class="sim-led-btn" data-side="R" type="button"><span class="dot"></span>LED 2<small>오른쪽 눈</small></button>
                         </div>
+                        <div class="sim-traffic-buttons" style="display:none">
+                            <button class="sim-traffic-btn" data-action="lamps" type="button"><span class="dot"></span>신호등<small>램프 배치</small></button>
+                            <button class="sim-traffic-btn" data-action="hand"  type="button"><span class="dot"></span>가위바위보<small>손 바꾸기</small></button>
+                        </div>
                     </div>
                     <div id="simStage" class="sim-stage">
                         <div class="sim-loading" id="simLoading">알비를 불러오는 중…</div>
@@ -136,7 +140,7 @@
                         <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
                     </div>
                     <div id="simLog" class="sim-log" aria-live="polite"></div>
-                    <p class="sim-hint">로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈 켜고 끄기</p>
+                    <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈 켜고 끄기</p>
                 </div>
             </section>
 
