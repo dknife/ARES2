@@ -618,7 +618,7 @@ let simController = null;
 //   새 객체를 붙이려면 model 에 GLB 경로를, 눈 LED가 있으면 eyes 설정을 채운다.
 const TOPICS = {
   albi:      { label: '알비와 함께',   model: 'Mesh/AlbiStaticLow.glb', eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] } },
-  traffic:   { label: '우주 신호등',   model: null, eyes: null },
+  traffic:   { label: '우주 신호등',   model: 'Mesh/LampBox.glb',       eyes: null, traffic: { lamp: 'Mesh/LampGeneral.glb', hands: ['Mesh/LampHand1.glb', 'Mesh/LampHand2.glb', 'Mesh/LampHand3.glb'], count: 3 } },
   launchpad: { label: '탐사선 발사대', model: 'Mesh/LaunchStation.glb', eyes: null },
 };
 const TOPIC_ORDER = ['albi', 'traffic', 'launchpad'];
@@ -631,10 +631,12 @@ function defaultTopicForMission() {
   return MISSION_TOPIC[`L${l}M${m}`] || DEFAULT_TOPIC;
 }
 
-// 카드 안에 3D 씬을 구성해 { render, resize, setEye, dispose, hasEyes, eyeL, eyeR } 반환
+// 카드 안에 3D 씬을 구성해 { render, resize, setEye, dispose, hasEyes, eyeL, eyeR,
+//   hasTraffic, placeLamps, placeHands, resetTraffic } 반환
 function buildSim(THREE, A, stage, loadingEl, cfg) {
   const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
   const EYE = cfg.eyes || null;   // 눈 LED 설정 (없으면 null)
+  const TRAFFIC = cfg.traffic || null; // 우주 신호등 설정 (LampBox 위 LampGeneral / LampHandN)
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -705,6 +707,19 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     controls.target.set(0, cy, 0); controls.update();
   };
 
+  // 우주 신호등용 상태: 슬롯(박스 윗면의 등간격 X 위치)을 미리 계산하고,
+  // 각 슬롯에 LampGeneral(신호등 모드) 또는 LampHand1/2/3(가위바위보 모드)을 1:1 로 배치한다.
+  let trafficRoot  = null;        // LampBox 루트 (모델 로딩 완료 여부 판정용)
+  let trafficBox   = null;        // LampBox 의 월드 Box3
+  let trafficSlots = null;        // [{ x, z, width }] — 박스 윗면의 N 개 슬롯 (월드 좌표)
+  let trafficTopY  = 0;           // 박스 윗면 y (월드)
+  const trafficSlotState = [];    // 슬롯별 { kind, inst, light, color, materials, on } — 1/2/3 키 토글 대상
+  let   trafficMode  = null;      // 'lamps' | 'hands' — 비동기 로드 도중 모드가 바뀌면 결과 무시
+  // 신호등 색: 왼쪽 빨강 · 가운데 노랑 · 오른쪽 초록 / 가위바위보 색: 모두 노랑
+  // (채도를 살리기 위해 순수에 가까운 색으로 사용 — 발광 강도가 높으면 흰색으로 날아간다)
+  const TRAFFIC_LAMP_COLORS = [0xff0000, 0xffcc00, 0x00c030];
+  const TRAFFIC_HAND_COLOR  = 0xffcc00;
+
   if (cfg.model) {
     new GLTFLoader().load(cfg.model, (gltf) => {
       const root = gltf.scene;
@@ -716,6 +731,23 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       const modelH = sz.y;
       if (EYE) root.add(eyeL.group, eyeR.group);
       scene.add(root);
+      if (TRAFFIC) {
+        trafficRoot = root;
+        // 보정된 root 기준으로 박스를 다시 계산 → 위에 객체를 얹을 좌표 확정
+        trafficBox = new THREE.Box3().setFromObject(root);
+        const tsz = trafficBox.getSize(new THREE.Vector3());
+        const tcn = trafficBox.getCenter(new THREE.Vector3());
+        trafficTopY = trafficBox.max.y;
+        const n = Math.max(1, TRAFFIC.count || 3);
+        const span  = tsz.x * 0.8;                          // 박스 X 폭의 80% 안쪽
+        const start = tcn.x - span / 2;
+        const step  = n === 1 ? 0 : span / (n - 1);
+        const slotW = span / n;
+        trafficSlots = [];
+        for (let i = 0; i < n; i++) trafficSlots.push({ x: start + step * i, z: tcn.z, width: slotW });
+        // 디폴트: 신호등 모드로 LampGeneral 자동 배치
+        placeLamps();
+      }
       const maxDim = Math.max(sz.x, sz.y, sz.z);
       const fov = camera.fov * Math.PI / 180;
       frame(modelH * 0.55, (maxDim / 2) / Math.tan(fov / 2) * 1.9);
@@ -743,6 +775,142 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   }
   resize();
   function render() { controls.update(); renderer.render(scene, camera); }
+
+  // ── 우주 신호등 동작 ──
+  // 신호등 모드: 슬롯마다 LampGeneral(X축 90° 회전: 넓은 면이 전면)
+  // 가위바위보 모드: 슬롯마다 Hand1/Hand2/Hand3 이 1:1 로 자리 차지
+  // trafficBox 는 월드 좌표 기준이므로, 인스턴스는 scene 에 직접 붙인다.
+  const TRAFFIC_LAMP_ROT_X = Math.PI / 2;
+  function disposeSubtree(obj) {
+    obj.traverse((o) => {
+      if (o.isMesh) {
+        o.geometry?.dispose?.();
+        const m = o.material; (Array.isArray(m) ? m : [m]).forEach((mm) => mm?.dispose?.());
+      }
+    });
+    if (obj.parent) obj.parent.remove(obj);
+  }
+  // 슬롯 단위 정리: 인스턴스/라이트 dispose 후 상태 항목 비움
+  function clearSlot(i) {
+    const s = trafficSlotState[i];
+    if (!s) return;
+    if (s.inst) disposeSubtree(s.inst);
+    if (s.light && s.light.parent) s.light.parent.remove(s.light);
+    trafficSlotState[i] = null;
+  }
+  function clearAllSlots() { for (let i = 0; i < trafficSlotState.length; i++) clearSlot(i); }
+  // 인스턴스를 슬롯 위에 안착(슬롯 폭의 widthRatio 만큼 X폭에 맞춰 스케일).
+  // 회전을 먼저 적용한 뒤 bbox 를 측정해야 회전 후의 X폭에 맞춰 정확히 들어맞는다.
+  function fitOnSlot(inst, slot, widthRatio, rotX) {
+    if (rotX) inst.rotation.x = rotX;
+    inst.updateMatrixWorld(true);
+    const tb = new THREE.Box3().setFromObject(inst);
+    const ts = tb.getSize(new THREE.Vector3());
+    const s = ts.x > 0 ? (slot.width * widthRatio) / ts.x : 1;
+    inst.scale.setScalar(s);
+    inst.updateMatrixWorld(true);
+    const ib = new THREE.Box3().setFromObject(inst);
+    const ic = ib.getCenter(new THREE.Vector3());
+    inst.position.set(slot.x - ic.x, trafficTopY - ib.min.y, slot.z - ic.z);
+  }
+  // 클론된 인스턴스끼리 머티리얼을 공유하지 않도록 각 mesh 의 material 을 복제
+  function cloneInstanceMaterials(obj) {
+    obj.traverse((o) => {
+      if (o.isMesh && o.material) {
+        o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone();
+      }
+    });
+  }
+  // 인스턴스의 모든 머티리얼을 수집(베이스 컬러/이미시브 모두 토글 대상)
+  function collectMaterials(obj) {
+    const arr = [];
+    obj.traverse((o) => {
+      if (!o.isMesh || !o.material) return;
+      const ms = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of ms) if (m) arr.push(m);
+    });
+    return arr;
+  }
+  function makeSlotLight(slot, colorHex) {
+    const l = new THREE.PointLight(colorHex, 0, slot.width * 6, 2);
+    l.position.set(slot.x, trafficTopY + slot.width * 0.5, slot.z);
+    return l;
+  }
+  // 켜짐: 베이스 컬러 = 슬롯 색, emissive 도 같은 색을 약하게(>1 은 ACES 톤매핑이 흰색으로 날린다)
+  // 꺼짐: 모든 슬롯 공통으로 중간 회색
+  const TRAFFIC_OFF_COLOR = new THREE.Color(0x666666);
+  function setSlotOn(i, on) {
+    const s = trafficSlotState[i];
+    if (!s) return;
+    s.on = !!on;
+    const onCol = new THREE.Color(s.color);
+    for (const m of s.materials) {
+      if (m.color    !== undefined) m.color.copy(s.on ? onCol : TRAFFIC_OFF_COLOR);
+      if (m.emissive !== undefined) {
+        m.emissive.copy(s.on ? onCol : new THREE.Color(0x000000));
+        m.emissiveIntensity = s.on ? 0.7 : 0;          // 채도 유지(낮을수록 색이 진하게 남음)
+      }
+      // 베이스 컬러가 또렷이 보이도록 금속질을 줄이고 거칠기는 살짝 높임
+      if (m.metalness !== undefined) m.metalness = Math.min(m.metalness, 0.1);
+      if (m.roughness !== undefined) m.roughness = Math.max(m.roughness, 0.55);
+      // 항상 반투명 — 꺼졌을 때는 뒤쪽이 잘 보이고, 켜졌을 때도 살짝 비치도록
+      m.transparent = true;
+      m.opacity     = s.on ? 0.8 : 0.55;
+      m.depthWrite  = false;                            // 정렬보다 비침을 우선
+      m.needsUpdate = true;
+    }
+    if (s.light) s.light.intensity = s.on ? 1.3 : 0;   // 주변에 색조만 옅게 묻히는 정도
+  }
+  function toggleSlot(i) {
+    const s = trafficSlotState[i];
+    if (!s) return;
+    setSlotOn(i, !s.on);
+  }
+  function placeLamps() {
+    if (!TRAFFIC || !trafficRoot || !trafficSlots) return;
+    clearAllSlots();
+    trafficMode = 'lamps';
+    const myMode = trafficMode;
+    new GLTFLoader().load(TRAFFIC.lamp, (gltf) => {
+      if (trafficMode !== myMode) return;       // 도중에 다른 모드로 바뀌었으면 결과 무시
+      const template = gltf.scene;
+      template.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+      for (let i = 0; i < trafficSlots.length; i++) {
+        const inst = template.clone(true);
+        cloneInstanceMaterials(inst);
+        fitOnSlot(inst, trafficSlots[i], 0.7, TRAFFIC_LAMP_ROT_X);
+        scene.add(inst);
+        const color = TRAFFIC_LAMP_COLORS[i] !== undefined ? TRAFFIC_LAMP_COLORS[i] : 0xffffff;
+        const light = makeSlotLight(trafficSlots[i], color); scene.add(light);
+        trafficSlotState[i] = { kind: 'lamp', inst, light, color, materials: collectMaterials(inst), on: false };
+        setSlotOn(i, false);   // 초기 OFF 룩(슬롯 색의 짙은 톤) 즉시 적용
+      }
+    }, undefined, (err) => console.error('LampGeneral 로드 실패:', err));
+  }
+  function placeHands() {
+    if (!TRAFFIC || !trafficRoot || !trafficSlots) return;
+    clearAllSlots();
+    trafficMode = 'hands';
+    const myMode = trafficMode;
+    const n = Math.min(trafficSlots.length, TRAFFIC.hands.length);
+    for (let i = 0; i < n; i++) {
+      const slot = trafficSlots[i], url = TRAFFIC.hands[i], idx = i;
+      new GLTFLoader().load(url, (gltf) => {
+        if (trafficMode !== myMode) return;
+        const inst = gltf.scene;
+        inst.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+        cloneInstanceMaterials(inst);
+        fitOnSlot(inst, slot, 0.85, 0);
+        scene.add(inst);
+        const color = TRAFFIC_HAND_COLOR;
+        const light = makeSlotLight(slot, color); scene.add(light);
+        trafficSlotState[idx] = { kind: 'hand', inst, light, color, materials: collectMaterials(inst), on: false };
+        setSlotOn(idx, false); // 초기 OFF 룩 즉시 적용
+      }, undefined, (err) => console.error('LampHand 로드 실패:', err));
+    }
+  }
+  function resetTraffic() { clearAllSlots(); trafficMode = null; }
+
   function dispose() {
     try { controls.dispose(); } catch {}
     scene.traverse((o) => {
@@ -754,7 +922,11 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     try { renderer.dispose(); } catch {}
     if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
   }
-  return { render, resize, setEye, dispose, hasEyes: !!EYE, get eyeL() { return eyeL; }, get eyeR() { return eyeR; } };
+  return {
+    render, resize, setEye, dispose,
+    hasEyes: !!EYE, get eyeL() { return eyeL; }, get eyeR() { return eyeR; },
+    hasTraffic: !!TRAFFIC, placeLamps, placeHands, resetTraffic, toggleSlot,
+  };
 }
 
 function setupSimulation() {
@@ -763,6 +935,10 @@ function setupSimulation() {
   const stage = document.getElementById('simStage');
   const loadingEl = document.getElementById('simLoading');
   const ledWrap = card ? card.querySelector('.sim-led-buttons') : null;
+  const trafficWrap = card ? card.querySelector('.sim-traffic-buttons') : null;
+  const simHint = document.getElementById('simHint');
+  const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈 켜고 끄기';
+  const HINT_TRAFFIC = '1, 2, 3번 키를 눌러 램프를 켜고 끄기';
   const sel = document.getElementById('simTopic');
   if (!btn || !card || !stage) return;
 
@@ -793,7 +969,13 @@ function setupSimulation() {
     const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
     if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
     card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
+    card.querySelectorAll('.sim-traffic-btn').forEach((b) => {
+      // 우주 신호등은 디폴트가 "신호등(램프 배치)" 상태이므로 lamps 버튼을 on 으로 표시
+      b.classList.toggle('on', !!cfg.traffic && b.dataset.action === 'lamps');
+    });
     if (ledWrap) ledWrap.style.display = cfg.eyes ? '' : 'none';
+    if (trafficWrap) trafficWrap.style.display = cfg.traffic ? '' : 'none';
+    if (simHint) simHint.textContent = cfg.traffic ? HINT_TRAFFIC : HINT_DEFAULT;
     sim = buildSim(THREE, A, stage, loadingEl, cfg);
     builtTopic = topicKey;
   };
@@ -832,6 +1014,21 @@ function setupSimulation() {
       const cur = (side === 'L') ? sim.eyeL.on : sim.eyeR.on;
       sim.setEye(side, !cur);
       b.classList.toggle('on', !cur);
+    });
+  });
+
+  // 우주 신호등 액션 — 라디오처럼 동작: 신호등(LampGeneral 3개) ↔ 가위바위보(Hand1/2/3가 슬롯 대체)
+  const setTrafficBtn = (which) => {
+    card.querySelectorAll('.sim-traffic-btn').forEach((b) => {
+      b.classList.toggle('on', b.dataset.action === which);
+    });
+  };
+  card.querySelectorAll('.sim-traffic-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (!sim || !sim.hasTraffic) return;
+      const action = b.dataset.action;
+      if (action === 'lamps')      { sim.placeLamps(); setTrafficBtn('lamps'); }
+      else if (action === 'hand')  { sim.placeHands(); setTrafficBtn('hand');  }
     });
   });
 
@@ -883,7 +1080,7 @@ function setupSimulation() {
   if (head) {
     let dragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
     head.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.sim-led-btn') || e.target.closest('.sim-topic')) return; // 버튼/드롭다운은 드래그 아님
+      if (e.target.closest('.sim-led-btn') || e.target.closest('.sim-traffic-btn') || e.target.closest('.sim-topic')) return; // 버튼/드롭다운은 드래그 아님
       const r = card.getBoundingClientRect();
       // 뷰포트 기준 고정 좌표로 전환(데스크톱 absolute / 모바일 centered 모두 대응)
       card.style.position = 'fixed';
@@ -915,6 +1112,22 @@ function setupSimulation() {
   }
 
   addEventListener('resize', () => { if (!card.hidden && sim) sim.resize(); });
+
+  // 우주 신호등: 1/2/3 키로 슬롯 토글 (시뮬레이션이 열려 있고, 입력 필드에 포커스가 없을 때)
+  addEventListener('keydown', (e) => {
+    if (card.hidden || !sim || !sim.hasTraffic) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target;
+    const tag = (t && t.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+    let idx = -1;
+    if (e.key === '1') idx = 0;
+    else if (e.key === '2') idx = 1;
+    else if (e.key === '3') idx = 2;
+    if (idx < 0) return;
+    sim.toggleSlot(idx);
+    e.preventDefault();
+  });
   simController = { close };
 }
 
