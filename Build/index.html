@@ -191,10 +191,10 @@
         return new Promise((res, rej) => {
           if (window.ARES_ROBOT_GLB_B64) return res(window.ARES_ROBOT_GLB_B64);
           const s = document.createElement('script');
-          s.src = 'Mesh/ares_robot.embed.js';
+          s.src = 'ares_robot.embed.js';
           s.onload = () => window.ARES_ROBOT_GLB_B64
             ? res(window.ARES_ROBOT_GLB_B64) : rej(new Error('임베드 데이터 없음'));
-          s.onerror = () => rej(new Error('Mesh/ares_robot.embed.js 로드 실패'));
+          s.onerror = () => rej(new Error('ares_robot.embed.js 로드 실패'));
           document.head.appendChild(s);
         });
       }
@@ -205,7 +205,7 @@
           .then((b64) => loader.parse(b64ToBuffer(b64), '', onModelLoad, onModelErr))
           .catch(onModelErr);
       } else {
-        loader.load('Mesh/ares_robot.glb', onModelLoad, undefined, onModelErr);
+        loader.load('ares_robot.glb', onModelLoad, undefined, onModelErr);
       }
 
       // 등장 애니메이션 (easeOutBack 팝인)

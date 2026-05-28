@@ -1540,9 +1540,18 @@ build.bat              (cmd 진입점, 메시지 갱신)
 05-22 & \texttt{build.ps1} (root) & 5단계 $\to$ 7단계 확장. \texttt{Web/index.html} $\to$ \texttt{Build/index.html}(랜딩, 백링크 제거), \texttt{Web/main.html} $\to$ \texttt{Build/main.html} 패치(Blockly vendor + \texttt{inline\_assets.js} + \texttt{main.bundle.js}, 둘 다 defer), 7단계로 \texttt{vendor/inline\_assets.js} 생성(overview + 12 lesson + 예제 + fetch shim). \texttt{[Environment]::CurrentDirectory} 동기화로 셸 cwd 비의존. \texttt{ConvertTo-Json} 결과의 \texttt{<\/} $\to$ \texttt{<\textbackslash{}/} 후처리. \\
 05-22 & \texttt{build.bat} (root) & 헤더 주석을 새 산출물 구조(랜딩 \texttt{index.html} + 관제실 \texttt{main.html} + \texttt{vendor/inline\_assets.js})에 맞춰 갱신. 빌드 성공 메시지 변경. \\
 05-22 & \texttt{Build/index.html}, \texttt{Build/main.html}, \texttt{Build/vendor/inline\_assets.js} & 새 자족 배포본의 진입/관제실/인라인 shim 산출물. \\
+\midrule
+05-28 & \texttt{Web/simulation.js} (신규) & \texttt{Web/main.js} 의 3D 시뮬레이션 파트(약 520줄: \texttt{TOPICS}, \texttt{buildSim}, \texttt{setupSimulation})를 ES 모듈로 분리. \texttt{CommandExecutor} 만 직접 import 하고 \texttt{workspace} 는 인자로 주입. \\
+05-28 & \texttt{Web/main.js} & 시뮬 코드 제거 후 \texttt{setupSimulation(\{ workspace \})} 호출과 \texttt{simController} 보관만 유지(1455 $\to$ 937 라인, $-$518). \\
+05-28 & \texttt{Web/main.html} & 시뮬 카드 헤더에 \texttt{.sim-launch-buttons} 그룹 추가 — \texttt{\#simRadar}(레이더 토글), \texttt{\#simRocket}(로켓 발사 토글). \\
+05-28 & \texttt{Web/styles.css} & \texttt{.sim-launch-btn} 외관 등록(우주 신호등 버튼과 동일 형태, 활성색만 청록 \texttt{\#3cbfbf}). \\
+05-28 & \texttt{Web/simulation.js} (LaunchStation 후처리) & 단일 mesh \texttt{LaunchStation.glb} 에서 bbox 휴리스틱으로 안테나(fx 0.78\textendash 0.92, fy>0.70)와 로켓(fx 0.28\textendash 0.46, fy>0.68)을 정점 단위로 분리. 안테나: 회색 + y축 \texttt{rotation} pivot(centroid - 0.01 x 보정). 로켓: 노란색 + 하단 화염 sprite(additive) + \texttt{PointLight}. \\
+05-28 & \texttt{Web/simulation.js} (애니메이션) & 레이더 가동 시 \texttt{rotation.y += 0.15}(${\approx}500^{\circ}$/s). 로켓 발사 시 \texttt{rocketGroup.position.y} 를 \texttt{ROCKET\_RISE=10} 까지 비대칭 ease 로 이동 — 발사 ease-out, 중지 ease-in(t$^2$). 카메라 \texttt{controls.target} 을 로켓 world centroid 로 직접 락온하고 \texttt{camera.position.y} 도 동일 상승. 중지 후 saved 상태로 스냅 복귀. 속도 \texttt{ROCKET\_SPEED=0.00267}(${\approx}6$초 완주). \\
+05-28 & \texttt{build.ps1} & 시뮬 GLB 7종(\texttt{AlbiStaticLow}, \texttt{LampBox}, \texttt{LampGeneral}, \texttt{LampHand1\textendash 3}, \texttt{LaunchStation}) base64 BIN 일괄 인라인. \texttt{Build/Mesh/} 폴더 폐기, \texttt{ares\_robot.embed.js} 를 \texttt{Build/} 루트로 복사하고 \texttt{ares\_robot.glb} fallback 제거. 랜딩 \texttt{index.html} 의 \texttt{Mesh/ares\_robot.*} 경로를 루트로 치환. \\
+05-28 & \texttt{Document/FinalBuild.md} & 폴더 트리에서 \texttt{Mesh/} 항목 제거, \texttt{ares\_robot.embed.js} 를 루트로 옮기고 시뮬 GLB 가 fetch shim 으로 처리됨을 명시. \\
 \bottomrule
 \end{tabularx}
-\caption{2026-05-19 \textendash{} 05-22 변경 범위 (롤링).}
+\caption{2026-05-19 \textendash{} 05-28 변경 범위 (롤링).}
 \end{table}
 
 \begin{table}[h]
@@ -1575,9 +1584,12 @@ build.bat              (cmd 진입점, 메시지 갱신)
 \midrule
 05-22 & \textit{(pending)} & Rebuild offline package for restructured Web/: inline\_assets.js fetch shim, two-stage entry (index.html landing $\to$ main.html), 7-step build.ps1, build.bat header refresh \\
 05-22 & \textit{(pending)} & Rename CodeChange20260520 $\to$ CodeChangeHistory and append 05-21 / 05-22 chapters \\
+\midrule
+05-28 & \textit{(pending)} & Split simulation out of Web/main.js into Web/simulation.js and bundle launchpad scene (antenna recolor + radar spin, rocket recolor + launch animation with camera tracking and flame) \\
+05-28 & \textit{(pending)} & Inline all simulation GLBs into vendor/inline\_assets.js, drop Build/Mesh/ and move ares\_robot.embed.js to Build/ root, refresh FinalBuild.md tree \\
 \bottomrule
 \end{tabularx}
-\caption{관련 커밋 (\texttt{main} 브랜치). 05-22 행은 본 문서 갱신 시점에 아직 커밋되지 않은 작업.}
+\caption{관련 커밋 (\texttt{main} 브랜치). 05-22 / 05-28 행은 본 문서 갱신 시점에 아직 커밋되지 않은 작업.}
 \end{table}
 
 \end{document}
