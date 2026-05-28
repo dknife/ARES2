@@ -121,16 +121,30 @@
                 <!-- 3D 시뮬레이션 카드 (시뮬레이션 열기 버튼으로 토글) -->
                 <div id="simCard" class="sim-card" hidden>
                     <div class="sim-card-head">
-                        <h3>🤖 알비 시뮬레이션</h3>
+                        <span class="sim-drag" title="끌어서 창 이동" aria-hidden="true">⠿</span>
+                        <select id="simTopic" class="sim-topic" title="시뮬레이션 주제 선택"></select>
                         <div class="sim-led-buttons">
                             <button class="sim-led-btn" data-side="L" type="button"><span class="dot"></span>LED 1<small>왼쪽 눈</small></button>
                             <button class="sim-led-btn" data-side="R" type="button"><span class="dot"></span>LED 2<small>오른쪽 눈</small></button>
+                        </div>
+                        <div class="sim-traffic-buttons" style="display:none">
+                            <button class="sim-traffic-btn" data-action="lamps" type="button"><span class="dot"></span>신호등<small>램프 배치</small></button>
+                            <button class="sim-traffic-btn" data-action="hand"  type="button"><span class="dot"></span>가위바위보<small>손 바꾸기</small></button>
+                        </div>
+                        <div class="sim-launch-buttons" style="display:none">
+                            <button id="simRadar"  class="sim-launch-btn" data-action="radar"  type="button"><span class="dot"></span>🛰️ 레이더<small>안테나 회전</small></button>
+                            <button id="simRocket" class="sim-launch-btn" data-action="rocket" type="button"><span class="dot"></span>🚀 로켓 발사<small>위로 상승</small></button>
                         </div>
                     </div>
                     <div id="simStage" class="sim-stage">
                         <div class="sim-loading" id="simLoading">알비를 불러오는 중…</div>
                     </div>
-                    <p class="sim-hint">마우스: 회전(좌클릭) · 휠: 확대 · LED 버튼으로 눈을 켜고 끄세요</p>
+                    <div class="sim-runbar">
+                        <button id="simRun" type="button" title="블록 명령을 피코로 보내는 과정을 시뮬레이션">▶ 시뮬레이션 해보기</button>
+                        <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
+                    </div>
+                    <div id="simLog" class="sim-log" aria-live="polite"></div>
+                    <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈 켜고 끄기</p>
                 </div>
             </section>
 
@@ -184,7 +198,6 @@
         <!-- ========== 💡 LED ========== -->
         <category name="💡 LED" colour="#FF5555">
             <block type="led_on">
-                <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
                 <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
             <block type="led_off"></block>
@@ -194,15 +207,8 @@
                 <value name="LAMP2"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
                 <value name="LAMP3"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
                 <value name="LAMP4"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP5"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
             </block>
-        </category>
-
-        <!-- ========== 💡 메인 LED ========== -->
-        <category name="💡 메인 LED" colour="#FF33CC">
-            <block type="main_led_on">
-                <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
-            </block>
-            <block type="main_led_off"></block>
         </category>
 
         <!-- ========== 🖥️ 디스플레이 ========== -->

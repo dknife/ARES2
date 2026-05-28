@@ -1008,6 +1008,17 @@ iframe, #dashboardFrame {
     display: flex; align-items: center; justify-content: space-between;
     gap: 10px; padding: 10px 12px; flex-wrap: wrap;
     border-bottom: 1px solid var(--border-color);
+    cursor: move;                 /* 헤더를 끌어 카드 이동 */
+    touch-action: none;           /* 모바일에서 헤더 드래그가 배경 스크롤로 새지 않도록 */
+    user-select: none;
+}
+.sim-drag { cursor: move; color: var(--text-secondary); font-size: 15px; line-height: 1; opacity: 0.55; padding: 0 2px; flex: 0 0 auto; }
+.sim-topic {
+    flex: 1 1 auto; min-width: 96px; max-width: 200px;
+    font-family: 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-white);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 8px; cursor: pointer; touch-action: auto;
 }
 .sim-card-head h3 { margin: 0; font-size: 0.98em; }
 .sim-led-buttons { display: flex; gap: 6px; }
@@ -1026,9 +1037,45 @@ iframe, #dashboardFrame {
 .sim-led-btn:hover { border-color: var(--primary-color, #4682c8); }
 .sim-led-btn.on { background: rgba(34, 200, 100, 0.16); border-color: #22c864; color: #0a7a3a; }
 .sim-led-btn.on .dot { background: #22e070; box-shadow: 0 0 7px 2px rgba(34, 255, 122, 0.75); }
+/* 우주 신호등 액션 버튼 — LED 버튼과 동일한 룩, 활성 색만 주황(신호등 느낌) */
+.sim-traffic-buttons { display: flex; gap: 6px; }
+.sim-traffic-btn {
+    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-traffic-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-traffic-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-traffic-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-traffic-btn.on { background: rgba(255, 165, 0, 0.18); border-color: #ff9a3c; color: #8a4d00; }
+.sim-traffic-btn.on .dot { background: #ffa726; box-shadow: 0 0 7px 2px rgba(255, 167, 38, 0.75); }
+
+/* 탐사선 발사대 액션 버튼(레이더) — 신호등 버튼과 동일한 룩, 활성 색만 청록(레이더 느낌) */
+.sim-launch-buttons { display: flex; gap: 6px; }
+.sim-launch-btn {
+    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-launch-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-launch-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-launch-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-launch-btn.on { background: rgba(0, 200, 200, 0.18); border-color: #3cbfbf; color: #0a5c5c; }
+.sim-launch-btn.on .dot { background: #2dd4d4; box-shadow: 0 0 7px 2px rgba(45, 212, 212, 0.75); }
 .sim-stage {
     position: relative; width: 100%; height: 300px;
-    background: radial-gradient(circle at 60% 25%, #1c2a22 0%, #0d1422 70%, #0a0e1a 100%);
+    /* 우주 느낌의 어둡지만 채도 있는 배경: 보라 → 인디고 → 짙은 네이비 */
+    background: radial-gradient(circle at 60% 25%, #3a1d6e 0%, #1b1e58 45%, #0c0d2a 100%);
 }
 .sim-stage canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
 .sim-stage canvas:active { cursor: grabbing; }
@@ -1039,6 +1086,48 @@ iframe, #dashboardFrame {
 .sim-hint {
     margin: 0; padding: 7px 12px; font-size: 0.74em;
     color: var(--text-secondary); border-top: 1px solid var(--border-color);
+}
+
+/* 블록 명령 시뮬레이션 실행/로그 */
+.sim-runbar { display: flex; gap: 6px; padding: 8px 12px 0; }
+.sim-runbar button {
+    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+#simRun { flex: 1 1 auto; background: #2a3550; color: #fff; border-color: #2a3550; }
+#simRun:hover:not(:disabled) { background: #38507a; }
+#simRun:disabled { opacity: 0.6; cursor: not-allowed; }
+#simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
+.sim-log {
+    margin: 8px 12px 0; height: 112px; overflow-y: auto;
+    background: #0d1422; border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 8px; font-family: 'D2Coding', Menlo, monospace; font-size: 11px; line-height: 1.5;
+    color: #cfe0f5; -webkit-overflow-scrolling: touch;
+}
+.sim-log-line { white-space: pre-wrap; word-break: break-all; }
+.sim-log-line.tx-ack { color: #ffd089; }   /* Ack 명령 송신 */
+.sim-log-line.tx     { color: #9fd0ff; }   /* 비Ack 명령 송신 */
+.sim-log-line.rx     { color: #8af0a8; }   /* 회신 */
+.sim-log-line.sys    { color: #9aa6bf; }
+.sim-log-line.err    { color: #ff8a8a; }
+
+/* 모바일: 카드가 잘리지 않도록 화면 중앙 고정 + (필요 시) 내부 스크롤.
+   본문(body)이 overflow:hidden 이라 페이지 스크롤이 안 되므로, 카드 자체를
+   뷰포트 기준 fixed 로 중앙에 띄우고 화면보다 길면 카드 안에서 스크롤한다. */
+@media (max-width: 600px) {
+    .sim-card {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+        width: calc(100vw - 20px);
+        max-width: 440px;
+        max-height: calc(100dvh - 20px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .sim-stage { height: 240px; }
 }
 
 #missionView .mission-panel {

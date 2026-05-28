@@ -654,36 +654,45 @@
       // LED 블록 (빨강색 #FF5555)
       {
         type: "set_lamp",
-        message0: "\u{1F4A1} LED \uC804\uCCB4 \uC124\uC815 [ %1 %2 %3 %4 %5 ]",
+        message0: "\u{1F4A1} LED \uC804\uCCB4 \uC124\uC815 [ %1 %2 %3 %4 %5 %6 ]",
         args0: [
           { type: "input_value", name: "LAMP0", check: "Number" },
           { type: "input_value", name: "LAMP1", check: "Number" },
           { type: "input_value", name: "LAMP2", check: "Number" },
           { type: "input_value", name: "LAMP3", check: "Number" },
-          { type: "input_value", name: "LAMP4", check: "Number" }
+          { type: "input_value", name: "LAMP4", check: "Number" },
+          { type: "input_value", name: "LAMP5", check: "Number" }
         ],
         previousStatement: null,
         nextStatement: null,
         colour: "#FF5555",
-        tooltip: "5\uAC1C LED \uBC1D\uAE30\uB97C \uD55C\uBC88\uC5D0 \uC124\uC815\uD569\uB2C8\uB2E4. \uAC12: 0(\uB054)~1(\uCD5C\uB300 \uBC1D\uAE30)"
+        tooltip: "6\uAC1C LED \uBC1D\uAE30\uB97C \uD55C\uBC88\uC5D0 \uC124\uC815\uD569\uB2C8\uB2E4. \uAC12: 0(\uB054)~1(\uCD5C\uB300 \uBC1D\uAE30)"
       },
       {
         type: "led_on",
         message0: "\u{1F4A1} LED %1 \uBC88 \uCF1C\uAE30 (\uBC1D\uAE30 %2 )",
         args0: [
-          { type: "input_value", name: "LED_NUM", check: "Number" },
+          { type: "field_dropdown", name: "LED_NUM", options: [
+            ["0\uBC88", "0"],
+            ["1\uBC88", "1"],
+            ["2\uBC88", "2"],
+            ["3\uBC88", "3"],
+            ["4\uBC88", "4"],
+            ["5\uBC88", "5"]
+          ] },
           { type: "input_value", name: "BRIGHTNESS", check: "Number" }
         ],
         previousStatement: null,
         nextStatement: null,
         colour: "#FF5555",
-        tooltip: "\uD2B9\uC815 LED(1~5\uBC88)\uB97C \uC9C0\uC815\uD55C \uBC1D\uAE30\uB85C \uCF2D\uB2C8\uB2E4. \uBC1D\uAE30: 0~1"
+        tooltip: "\uD2B9\uC815 LED(0~5\uBC88)\uB97C \uC9C0\uC815\uD55C \uBC1D\uAE30\uB85C \uCF2D\uB2C8\uB2E4. \uBC1D\uAE30: 0~1"
       },
       {
         type: "led_off",
         message0: "\u{1F4A1} LED %1 \uB044\uAE30",
         args0: [
           { type: "field_dropdown", name: "LED_NUM", options: [
+            ["0\uBC88", "0"],
             ["1\uBC88", "1"],
             ["2\uBC88", "2"],
             ["3\uBC88", "3"],
@@ -696,24 +705,6 @@
         nextStatement: null,
         colour: "#FF5555",
         tooltip: "\uD2B9\uC815 LED \uB610\uB294 \uC804\uCCB4 LED\uB97C \uB055\uB2C8\uB2E4."
-      },
-      // 메인 LED 블록 (진분홍색 #FF33CC)
-      {
-        type: "main_led_on",
-        message0: "\u{1F4A1} \uBA54\uC778 LED \uCF1C\uAE30 (\uBC1D\uAE30 %1 )",
-        args0: [{ type: "input_value", name: "BRIGHTNESS", check: "Number" }],
-        previousStatement: null,
-        nextStatement: null,
-        colour: "#FF33CC",
-        tooltip: "\uBA54\uC778 LED\uB97C \uC9C0\uC815\uD55C \uBC1D\uAE30\uB85C \uCF2D\uB2C8\uB2E4. \uBC1D\uAE30: 0 (\uB054) ~ 1 (\uCD5C\uB300)"
-      },
-      {
-        type: "main_led_off",
-        message0: "\u{1F4A1} \uBA54\uC778 LED \uB044\uAE30",
-        previousStatement: null,
-        nextStatement: null,
-        colour: "#FF33CC",
-        tooltip: "\uBA54\uC778 LED\uB97C \uB055\uB2C8\uB2E4."
       },
       // 디스플레이 블록 (보라색 #9966FF)
       {
@@ -906,8 +897,6 @@
     FIRE_AND_FORGET_HEADS: /* @__PURE__ */ new Set([
       "LED_ON",
       "LED_OFF",
-      "MAIN_LED_ON",
-      "MAIN_LED_OFF",
       "MSG",
       "CLEAR_DISPLAY",
       "SERVO_FORWARD",
@@ -924,6 +913,13 @@
       if (command.startsWith("[")) return true;
       const head = command.split(",")[0];
       return this.FIRE_AND_FORGET_HEADS.has(head);
+    },
+    // 전송 경로 추상화: 시뮬레이션 중(simSink 설정)에는 실제 BLE 대신
+    // sink 로 명령을 흘려보낸다. sink(command, waitForResponse) 는 회신을
+    // 흉내내고 가짜 응답을 반환한다. 평소(simSink=null)에는 실제 BLE 송신.
+    simSink: null,
+    _dispatch(command, waitForResponse) {
+      return this.simSink ? this.simSink(command, waitForResponse) : BluetoothManager.sendData(command, waitForResponse);
     },
     evaluateValueBlock(block) {
       var _a;
@@ -1056,9 +1052,9 @@
         return;
       }
       const payload = `BATCH;${commands.join("|")}`;
-      BluetoothManager.updateStatus("\uBB36\uC74C \uC2E4\uD589 \uC911...", STATUS_COLORS.ORANGE);
+      if (!this.simSink) BluetoothManager.updateStatus("\uBB36\uC74C \uC2E4\uD589 \uC911...", STATUS_COLORS.ORANGE);
       try {
-        await BluetoothManager.sendData(payload, true);
+        await this._dispatch(payload, true);
         if (DEBUG) Logger.add(`[\uBB36\uC74C \uC644\uB8CC] ${commands.length}\uAC1C \uBA85\uB839`, "info");
       } catch (error) {
         Logger.add(`[\uC624\uB958] \uBB36\uC74C \uC2E4\uD589 \uC2E4\uD328: ${error.message}`, "error");
@@ -1072,30 +1068,22 @@
     generateCommand(block) {
       switch (block.type) {
         case "set_lamp": {
-          const lamps = [0, 1, 2, 3, 4].map(
+          const lamps = [0, 1, 2, 3, 4, 5].map(
             (i) => parseFloat(this.evaluateValueBlock(block.getInputTargetBlock(`LAMP${i}`)) || "0").toFixed(1)
           );
           return `[${lamps.join(" ")}]`;
         }
         case "led_on": {
-          const ledNumRaw = this.evaluateValueBlock(block.getInputTargetBlock("LED_NUM"));
-          const ledNumInput = parseInt(ledNumRaw, 10);
-          const ledNum = isNaN(ledNumInput) ? 0 : Math.max(0, Math.min(4, ledNumInput - 1));
+          const ledNumStr = block.getFieldValue("LED_NUM") || "0";
+          const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
           const brightness = this.evaluateValueBlock(block.getInputTargetBlock("BRIGHTNESS")) || "1";
           return `LED_ON,${ledNum},${brightness}`;
         }
         case "led_off": {
-          const ledNumStr = block.getFieldValue("LED_NUM") || "1";
+          const ledNumStr = block.getFieldValue("LED_NUM") || "0";
           if (ledNumStr === "ALL") return "LED_OFF,ALL";
-          const ledNum = Math.max(0, Math.min(4, parseInt(ledNumStr) - 1));
+          const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
           return `LED_OFF,${ledNum}`;
-        }
-        case "main_led_on": {
-          const brightness = this.evaluateValueBlock(block.getInputTargetBlock("BRIGHTNESS")) || "1";
-          return `MAIN_LED_ON,${brightness}`;
-        }
-        case "main_led_off": {
-          return "MAIN_LED_OFF";
         }
         case "send_message": {
           const str = String(this.evaluateValueBlock(block.getInputTargetBlock("Msg")) || "Hello");
@@ -1178,10 +1166,10 @@
         Logger.add("[\uC911\uB2E8] \uC2E4\uD589\uC774 \uC911\uB2E8\uB418\uC5C8\uC2B5\uB2C8\uB2E4", "warning");
         return;
       }
-      BluetoothManager.updateStatus("\uBA85\uB839 \uC2E4\uD589 \uC911...", STATUS_COLORS.ORANGE);
+      if (!this.simSink) BluetoothManager.updateStatus("\uBA85\uB839 \uC2E4\uD589 \uC911...", STATUS_COLORS.ORANGE);
       const fireAndForget = this._isFireAndForget(command);
       try {
-        await BluetoothManager.sendData(command, !fireAndForget);
+        await this._dispatch(command, !fireAndForget);
         if (DEBUG) Logger.add(`[\uC644\uB8CC] ${command}`, "info");
       } catch (error) {
         if (error.message.includes("\uC2DC\uAC04 \uCD08\uACFC")) {
@@ -1331,8 +1319,883 @@
       setTimeout(() => {
         BluetoothManager.updateConnectionStatus(isConnected);
       }, 1500);
+    },
+    // 시뮬레이션 실행: 실제 BLE 없이 sink(로그)로 명령을 흘려보낸다.
+    // executeWorkspace 와 동일한 블록 처리 로직을 재사용하되, 전송은 _dispatch →
+    // simSink 로 라우팅된다. (runButton/BLE 상태는 건드리지 않는다)
+    async simulateWorkspace(workspace2, sink) {
+      if (state.isExecuting) return;
+      this.simSink = sink;
+      state.isExecuting = true;
+      try {
+        const topBlocks = workspace2.getTopBlocks(true);
+        for (const block of topBlocks) {
+          if (!state.isExecuting) break;
+          if (block.type === "procedures_defnoreturn" || block.type === "procedures_defreturn") continue;
+          await this.processBlock(block);
+        }
+      } finally {
+        state.isExecuting = false;
+        this.simSink = null;
+      }
     }
   };
+
+  // simulation.js
+  function recolorLaunchpadAntenna(root, THREE) {
+    const meshes = [];
+    root.traverse((o) => {
+      var _a;
+      if (o.isMesh && ((_a = o.geometry) == null ? void 0 : _a.getAttribute("position"))) meshes.push(o);
+    });
+    if (!meshes.length) return;
+    function splitTris(idxArr, pos, isInRegion) {
+      const insideTris = [], outsideTris = [];
+      const triCount = idxArr.length / 3;
+      for (let t = 0; t < triCount; t++) {
+        const a = idxArr[t * 3], b = idxArr[t * 3 + 1], c = idxArr[t * 3 + 2];
+        const allIn = isInRegion(pos[a * 3], pos[a * 3 + 1]) && isInRegion(pos[b * 3], pos[b * 3 + 1]) && isInRegion(pos[c * 3], pos[c * 3 + 1]);
+        (allIn ? insideTris : outsideTris).push(a, b, c);
+      }
+      if (!insideTris.length) return null;
+      let cx = 0, cy = 0, cz = 0, n = 0;
+      const used = new Set(insideTris);
+      for (const v of used) {
+        cx += pos[v * 3];
+        cy += pos[v * 3 + 1];
+        cz += pos[v * 3 + 2];
+        n++;
+      }
+      return { insideTris, outsideTris, centroid: { x: cx / n, y: cy / n, z: cz / n } };
+    }
+    for (const mesh of meshes) {
+      const geom = mesh.geometry;
+      const posAttr = geom.getAttribute("position");
+      if (!geom.getIndex() || !posAttr) continue;
+      const pos = posAttr.array;
+      geom.computeBoundingBox();
+      const bb = geom.boundingBox;
+      const sx = bb.max.x - bb.min.x;
+      const sy = bb.max.y - bb.min.y;
+      const isAntenna = (x, y) => {
+        const fx = (x - bb.min.x) / sx;
+        const fy = (y - bb.min.y) / sy;
+        return fx > 0.78 && fx < 0.92 && fy > 0.7;
+      };
+      let split = splitTris(geom.getIndex().array, pos, isAntenna);
+      if (!split) {
+        console.warn("[LaunchStation] \uC548\uD14C\uB098 \uC815\uC810 \uAC10\uC9C0 \uC2E4\uD328");
+      } else {
+        const { insideTris, outsideTris, centroid } = split;
+        const pivotOffsetX = -0.01;
+        const pivotX = centroid.x + pivotOffsetX;
+        const antennaGeom = geom.clone();
+        antennaGeom.setIndex(insideTris);
+        const grayMat = new THREE.MeshStandardMaterial({
+          color: 10133670,
+          metalness: 0.1,
+          roughness: 0.7,
+          side: THREE.DoubleSide,
+          emissive: 4210752,
+          emissiveIntensity: 0.6
+        });
+        const pivot = new THREE.Group();
+        pivot.position.set(pivotX, centroid.y, centroid.z);
+        const antennaMesh = new THREE.Mesh(antennaGeom, grayMat);
+        antennaMesh.position.set(-pivotX, -centroid.y, -centroid.z);
+        antennaMesh.castShadow = true;
+        antennaMesh.receiveShadow = true;
+        antennaMesh.frustumCulled = false;
+        pivot.add(antennaMesh);
+        mesh.add(pivot);
+        root.userData.antennaPivot = pivot;
+        geom.setIndex(outsideTris);
+        console.log(`[LaunchStation] \uC548\uD14C\uB098 \uC815\uC810 \uBD84\uB9AC: ${insideTris.length / 3}\uAC1C \uC0BC\uAC01\uD615`);
+      }
+      const isRocket = (x, y) => {
+        const fx = (x - bb.min.x) / sx;
+        const fy = (y - bb.min.y) / sy;
+        return fx > 0.28 && fx < 0.46 && fy > 0.68;
+      };
+      split = splitTris(geom.getIndex().array, pos, isRocket);
+      if (!split) {
+        console.warn("[LaunchStation] \uB85C\uCF13 \uC815\uC810 \uAC10\uC9C0 \uC2E4\uD328");
+      } else {
+        const { insideTris, outsideTris } = split;
+        const rocketGeom = geom.clone();
+        rocketGeom.setIndex(insideTris);
+        let rxMin = Infinity, rxMax = -Infinity;
+        let ryMin = Infinity, ryMax = -Infinity;
+        let rzMin = Infinity, rzMax = -Infinity;
+        const usedR = new Set(insideTris);
+        for (const v of usedR) {
+          const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
+          if (x < rxMin) rxMin = x;
+          if (x > rxMax) rxMax = x;
+          if (y < ryMin) ryMin = y;
+          if (y > ryMax) ryMax = y;
+          if (z < rzMin) rzMin = z;
+          if (z > rzMax) rzMax = z;
+        }
+        const rcx = (rxMin + rxMax) / 2;
+        const rcz = (rzMin + rzMax) / 2;
+        const rby = ryMin;
+        const yellowMat = new THREE.MeshStandardMaterial({
+          color: 16110138,
+          metalness: 0.05,
+          roughness: 0.55,
+          side: THREE.DoubleSide,
+          emissive: 4864520,
+          emissiveIntensity: 0.45
+        });
+        const rocketGroup = new THREE.Group();
+        const rocketMesh = new THREE.Mesh(rocketGeom, yellowMat);
+        rocketMesh.castShadow = true;
+        rocketMesh.receiveShadow = true;
+        rocketMesh.frustumCulled = false;
+        rocketGroup.add(rocketMesh);
+        const fc = document.createElement("canvas");
+        fc.width = fc.height = 128;
+        const fcx = fc.getContext("2d");
+        const fg = fcx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        fg.addColorStop(0, "rgba(255,250,200,1)");
+        fg.addColorStop(0.3, "rgba(255,150,40,0.9)");
+        fg.addColorStop(0.7, "rgba(255,60,0,0.4)");
+        fg.addColorStop(1, "rgba(255,0,0,0)");
+        fcx.fillStyle = fg;
+        fcx.fillRect(0, 0, 128, 128);
+        const flameTex = new THREE.CanvasTexture(fc);
+        flameTex.colorSpace = THREE.SRGBColorSpace;
+        const flameSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: flameTex,
+          color: 16755251,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          opacity: 0
+        }));
+        flameSprite.position.set(rcx, rby - 0.1, rcz);
+        flameSprite.scale.set(0.22, 0.5, 1);
+        flameSprite.visible = false;
+        rocketGroup.add(flameSprite);
+        const flameLight = new THREE.PointLight(16748576, 0, 1.8, 2);
+        flameLight.position.set(rcx, rby - 0.05, rcz);
+        rocketGroup.add(flameLight);
+        mesh.add(rocketGroup);
+        geom.setIndex(outsideTris);
+        root.userData.rocketGroup = rocketGroup;
+        root.userData.rocketFlameSprite = flameSprite;
+        root.userData.rocketFlameLight = flameLight;
+        root.userData.rocketCentroidLocal = new THREE.Vector3(rcx, (ryMin + ryMax) / 2, rcz);
+        root.userData.rocketMeshRef = mesh;
+        console.log(`[LaunchStation] \uB85C\uCF13 \uC815\uC810 \uBD84\uB9AC: ${insideTris.length / 3}\uAC1C \uC0BC\uAC01\uD615`);
+      }
+    }
+  }
+  var TOPICS = {
+    albi: { label: "\uC54C\uBE44\uC640 \uD568\uAED8", model: "Mesh/AlbiStaticLow.glb", eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] } },
+    traffic: { label: "\uC6B0\uC8FC \uC2E0\uD638\uB4F1", model: "Mesh/LampBox.glb", eyes: null, traffic: { lamp: "Mesh/LampGeneral.glb", hands: ["Mesh/LampHand1.glb", "Mesh/LampHand2.glb", "Mesh/LampHand3.glb"], count: 3 } },
+    launchpad: { label: "\uBC1C\uC0AC\uB300", model: "Mesh/LaunchStation.glb", eyes: null, postProcess: recolorLaunchpadAntenna, radar: true }
+  };
+  var TOPIC_ORDER = ["albi", "traffic", "launchpad"];
+  var DEFAULT_TOPIC = "albi";
+  var MISSION_TOPIC = {};
+  function defaultTopicForMission() {
+    var _a, _b;
+    const l = ((_a = document.getElementById("lessonSelect")) == null ? void 0 : _a.value) || "";
+    const m = ((_b = document.getElementById("missionSelect")) == null ? void 0 : _b.value) || "";
+    return MISSION_TOPIC[`L${l}M${m}`] || DEFAULT_TOPIC;
+  }
+  function buildSim(THREE, A, stage, loadingEl, cfg) {
+    const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
+    const EYE = cfg.eyes || null;
+    const TRAFFIC = cfg.traffic || null;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    scene.add(new THREE.HemisphereLight(14674687, 3293231, 0.55));
+    const key = new THREE.DirectionalLight(16774374, 2);
+    key.position.set(3, 6, 5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.bias = -3e-4;
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(10469616, 0.5);
+    fill.position.set(-4, 2, 4);
+    scene.add(fill);
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    let eyeL = null, eyeR = null, glowTex = null;
+    if (EYE) {
+      const gc = document.createElement("canvas");
+      gc.width = gc.height = 128;
+      const gx = gc.getContext("2d");
+      const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gg.addColorStop(0, "rgba(180,255,210,1)");
+      gg.addColorStop(0.25, "rgba(40,255,120,0.65)");
+      gg.addColorStop(1, "rgba(0,255,90,0)");
+      gx.fillStyle = gg;
+      gx.fillRect(0, 0, 128, 128);
+      glowTex = new THREE.CanvasTexture(gc);
+      glowTex.colorSpace = THREE.SRGBColorSpace;
+      const makeEye = (pos) => {
+        const grp = new THREE.Group();
+        grp.position.fromArray(pos);
+        const sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(EYE.radius, 28, 28),
+          new THREE.MeshStandardMaterial({ color: 797208, emissive: 65382, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
+        );
+        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 5635993, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
+        glow.scale.setScalar(EYE.radius * 3.3);
+        glow.visible = false;
+        const light = new THREE.PointLight(3407735, 0, EYE.radius * 22, 2);
+        grp.add(sphere, glow, light);
+        return { group: grp, sphere, glow, light, on: false };
+      };
+      eyeL = makeEye(EYE.left);
+      eyeR = makeEye(EYE.right);
+    }
+    function setEye(side, on) {
+      if (!EYE) return;
+      const e = side === "L" ? eyeL : eyeR;
+      e.on = on;
+      e.sphere.material.emissiveIntensity = on ? 3.2 : 0;
+      e.sphere.material.opacity = on ? 0.92 : 0.4;
+      e.glow.visible = on;
+      e.light.intensity = on ? 1.8 : 0;
+    }
+    const frame = (cy, dist) => {
+      camera.position.set(0, cy, dist);
+      camera.near = dist / 100;
+      camera.far = dist * 100;
+      camera.updateProjectionMatrix();
+      controls.target.set(0, cy, 0);
+      controls.update();
+    };
+    let trafficRoot = null;
+    let trafficBox = null;
+    let trafficSlots = null;
+    let trafficTopY = 0;
+    const trafficSlotState = [];
+    let trafficMode = null;
+    const TRAFFIC_LAMP_COLORS = [16711680, 16763904, 49200];
+    const TRAFFIC_HAND_COLOR = 16763904;
+    if (cfg.model) {
+      new GLTFLoader().load(cfg.model, (gltf) => {
+        var _a;
+        const root = gltf.scene;
+        root.traverse((o) => {
+          if (o.isMesh) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+            o.frustumCulled = false;
+          }
+        });
+        const box = new THREE.Box3().setFromObject(root);
+        const sz = box.getSize(new THREE.Vector3());
+        const c = box.getCenter(new THREE.Vector3());
+        root.position.x -= c.x;
+        root.position.z -= c.z;
+        root.position.y -= box.min.y;
+        const modelH = sz.y;
+        if (EYE) root.add(eyeL.group, eyeR.group);
+        try {
+          (_a = cfg.postProcess) == null ? void 0 : _a.call(cfg, root, THREE);
+        } catch (e) {
+          console.warn("postProcess \uC2E4\uD328:", e);
+        }
+        antennaPivot = root.userData.antennaPivot || null;
+        rocketGroup = root.userData.rocketGroup || null;
+        rocketFlameSprite = root.userData.rocketFlameSprite || null;
+        rocketFlameLight = root.userData.rocketFlameLight || null;
+        rocketCentroidLocal = root.userData.rocketCentroidLocal || null;
+        rocketMeshRef = root.userData.rocketMeshRef || null;
+        scene.add(root);
+        if (TRAFFIC) {
+          trafficRoot = root;
+          trafficBox = new THREE.Box3().setFromObject(root);
+          const tsz = trafficBox.getSize(new THREE.Vector3());
+          const tcn = trafficBox.getCenter(new THREE.Vector3());
+          trafficTopY = trafficBox.max.y;
+          const n = Math.max(1, TRAFFIC.count || 3);
+          const span = tsz.x * 0.8;
+          const start = tcn.x - span / 2;
+          const step = n === 1 ? 0 : span / (n - 1);
+          const slotW = span / n;
+          trafficSlots = [];
+          for (let i = 0; i < n; i++) trafficSlots.push({ x: start + step * i, z: tcn.z, width: slotW });
+          placeLamps();
+        }
+        const maxDim = Math.max(sz.x, sz.y, sz.z);
+        const fov = camera.fov * Math.PI / 180;
+        frame(modelH * 0.55, maxDim / 2 / Math.tan(fov / 2) * 1.9);
+        if (loadingEl) loadingEl.style.display = "none";
+      }, void 0, (err) => {
+        console.error("\uC2DC\uBBAC\uB808\uC774\uC158 \uBAA8\uB378 \uB85C\uB4DC \uC2E4\uD328:", err);
+        if (loadingEl) loadingEl.textContent = "\uBAA8\uB378\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 (HTTP \uC11C\uBC84\uC5D0\uC11C \uC2E4\uD589\uD574\uC57C \uD569\uB2C8\uB2E4)";
+      });
+    } else {
+      const ph = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.9, 0.9),
+        new THREE.MeshBasicMaterial({ color: 6269158, wireframe: true, transparent: true, opacity: 0.35 })
+      );
+      ph.position.y = 0.5;
+      scene.add(ph);
+      frame(0.5, 2.6);
+      if (loadingEl) {
+        loadingEl.style.display = "";
+        loadingEl.textContent = "\u{1F6A7} \uC900\uBE44 \uC911\uC778 \uC2DC\uBBAC\uB808\uC774\uC158\uC785\uB2C8\uB2E4 (\uBE48 \uAC1D\uCCB4)";
+      }
+    }
+    function resize() {
+      const w = stage.clientWidth || 360, h = stage.clientHeight || 300;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    let radarOn = false;
+    let antennaPivot = null;
+    function setRadar(on) {
+      radarOn = !!on;
+    }
+    let rocketGroup = null, rocketFlameSprite = null, rocketFlameLight = null;
+    let rocketCentroidLocal = null, rocketMeshRef = null;
+    let rocketLaunchOn = false;
+    let rocketAnimT = 0;
+    let savedCamPos = null, savedTarget = null, rocketCentroidWorld = null;
+    const ROCKET_RISE = 10;
+    const ROCKET_SPEED = 267e-5;
+    function setRocketLaunch(on) {
+      rocketLaunchOn = !!on;
+      if (rocketLaunchOn && !savedCamPos) {
+        savedCamPos = camera.position.clone();
+        savedTarget = controls.target.clone();
+        if (rocketCentroidLocal && rocketMeshRef) {
+          rocketMeshRef.updateMatrixWorld(true);
+          rocketCentroidWorld = rocketCentroidLocal.clone().applyMatrix4(rocketMeshRef.matrixWorld);
+        }
+      }
+    }
+    function render2() {
+      controls.update();
+      if (radarOn && antennaPivot) antennaPivot.rotation.y += 0.15;
+      if (rocketGroup) {
+        const targetT = rocketLaunchOn ? 1 : 0;
+        if (rocketAnimT !== targetT) {
+          const dir = Math.sign(targetT - rocketAnimT);
+          rocketAnimT = Math.max(0, Math.min(1, rocketAnimT + dir * ROCKET_SPEED));
+        }
+        const eased = rocketLaunchOn ? 1 - (1 - rocketAnimT) * (1 - rocketAnimT) : rocketAnimT * rocketAnimT;
+        rocketGroup.position.y = ROCKET_RISE * eased;
+        const showFlame = rocketLaunchOn || rocketAnimT > 0.01;
+        if (rocketFlameSprite) {
+          rocketFlameSprite.visible = showFlame;
+          if (showFlame) {
+            const wob = 1 + 0.25 * Math.sin(performance.now() * 0.025);
+            rocketFlameSprite.scale.set(0.22 * wob, 0.5 * wob, 1);
+            rocketFlameSprite.material.opacity = Math.min(1, rocketAnimT * 4) * 0.95;
+          }
+        }
+        if (rocketFlameLight) {
+          rocketFlameLight.intensity = showFlame ? Math.min(1, rocketAnimT * 4) * 1.8 : 0;
+        }
+        if (savedCamPos && savedTarget && rocketCentroidWorld) {
+          const rocketYNow = rocketCentroidWorld.y + ROCKET_RISE * eased;
+          if (rocketLaunchOn) {
+            controls.target.x = rocketCentroidWorld.x;
+            controls.target.y = rocketYNow;
+            controls.target.z = rocketCentroidWorld.z;
+          } else {
+            controls.target.x = savedTarget.x + (rocketCentroidWorld.x - savedTarget.x) * eased;
+            controls.target.y = savedTarget.y + (rocketYNow - savedTarget.y) * eased;
+            controls.target.z = savedTarget.z + (rocketCentroidWorld.z - savedTarget.z) * eased;
+          }
+          camera.position.y = savedCamPos.y + ROCKET_RISE * eased;
+        }
+        if (!rocketLaunchOn && rocketAnimT === 0 && savedCamPos) {
+          camera.position.copy(savedCamPos);
+          controls.target.copy(savedTarget);
+          savedCamPos = null;
+          savedTarget = null;
+          rocketCentroidWorld = null;
+        }
+      }
+      renderer.render(scene, camera);
+    }
+    const TRAFFIC_LAMP_ROT_X = Math.PI / 2;
+    function disposeSubtree(obj) {
+      obj.traverse((o) => {
+        var _a, _b;
+        if (o.isMesh) {
+          (_b = (_a = o.geometry) == null ? void 0 : _a.dispose) == null ? void 0 : _b.call(_a);
+          const m = o.material;
+          (Array.isArray(m) ? m : [m]).forEach((mm) => {
+            var _a2;
+            return (_a2 = mm == null ? void 0 : mm.dispose) == null ? void 0 : _a2.call(mm);
+          });
+        }
+      });
+      if (obj.parent) obj.parent.remove(obj);
+    }
+    function clearSlot(i) {
+      const s = trafficSlotState[i];
+      if (!s) return;
+      if (s.inst) disposeSubtree(s.inst);
+      if (s.light && s.light.parent) s.light.parent.remove(s.light);
+      trafficSlotState[i] = null;
+    }
+    function clearAllSlots() {
+      for (let i = 0; i < trafficSlotState.length; i++) clearSlot(i);
+    }
+    function fitOnSlot(inst, slot, widthRatio, rotX) {
+      if (rotX) inst.rotation.x = rotX;
+      inst.updateMatrixWorld(true);
+      const tb = new THREE.Box3().setFromObject(inst);
+      const ts = tb.getSize(new THREE.Vector3());
+      const s = ts.x > 0 ? slot.width * widthRatio / ts.x : 1;
+      inst.scale.setScalar(s);
+      inst.updateMatrixWorld(true);
+      const ib = new THREE.Box3().setFromObject(inst);
+      const ic = ib.getCenter(new THREE.Vector3());
+      inst.position.set(slot.x - ic.x, trafficTopY - ib.min.y, slot.z - ic.z);
+    }
+    function cloneInstanceMaterials(obj) {
+      obj.traverse((o) => {
+        if (o.isMesh && o.material) {
+          o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone();
+        }
+      });
+    }
+    function collectMaterials(obj) {
+      const arr = [];
+      obj.traverse((o) => {
+        if (!o.isMesh || !o.material) return;
+        const ms = Array.isArray(o.material) ? o.material : [o.material];
+        for (const m of ms) if (m) arr.push(m);
+      });
+      return arr;
+    }
+    function makeSlotLight(slot, colorHex) {
+      const l = new THREE.PointLight(colorHex, 0, slot.width * 6, 2);
+      l.position.set(slot.x, trafficTopY + slot.width * 0.5, slot.z);
+      return l;
+    }
+    const TRAFFIC_OFF_COLOR = new THREE.Color(6710886);
+    function setSlotOn(i, on) {
+      const s = trafficSlotState[i];
+      if (!s) return;
+      s.on = !!on;
+      const onCol = new THREE.Color(s.color);
+      for (const m of s.materials) {
+        if (m.color !== void 0) m.color.copy(s.on ? onCol : TRAFFIC_OFF_COLOR);
+        if (m.emissive !== void 0) {
+          m.emissive.copy(s.on ? onCol : new THREE.Color(0));
+          m.emissiveIntensity = s.on ? 0.7 : 0;
+        }
+        if (m.metalness !== void 0) m.metalness = Math.min(m.metalness, 0.1);
+        if (m.roughness !== void 0) m.roughness = Math.max(m.roughness, 0.55);
+        m.transparent = true;
+        m.opacity = s.on ? 0.8 : 0.55;
+        m.depthWrite = false;
+        m.needsUpdate = true;
+      }
+      if (s.light) s.light.intensity = s.on ? 1.3 : 0;
+    }
+    function toggleSlot(i) {
+      const s = trafficSlotState[i];
+      if (!s) return;
+      setSlotOn(i, !s.on);
+    }
+    function placeLamps() {
+      if (!TRAFFIC || !trafficRoot || !trafficSlots) return;
+      clearAllSlots();
+      trafficMode = "lamps";
+      const myMode = trafficMode;
+      new GLTFLoader().load(TRAFFIC.lamp, (gltf) => {
+        if (trafficMode !== myMode) return;
+        const template = gltf.scene;
+        template.traverse((o) => {
+          if (o.isMesh) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+            o.frustumCulled = false;
+          }
+        });
+        for (let i = 0; i < trafficSlots.length; i++) {
+          const inst = template.clone(true);
+          cloneInstanceMaterials(inst);
+          fitOnSlot(inst, trafficSlots[i], 0.7, TRAFFIC_LAMP_ROT_X);
+          scene.add(inst);
+          const color = TRAFFIC_LAMP_COLORS[i] !== void 0 ? TRAFFIC_LAMP_COLORS[i] : 16777215;
+          const light = makeSlotLight(trafficSlots[i], color);
+          scene.add(light);
+          trafficSlotState[i] = { kind: "lamp", inst, light, color, materials: collectMaterials(inst), on: false };
+          setSlotOn(i, false);
+        }
+      }, void 0, (err) => console.error("LampGeneral \uB85C\uB4DC \uC2E4\uD328:", err));
+    }
+    function placeHands() {
+      if (!TRAFFIC || !trafficRoot || !trafficSlots) return;
+      clearAllSlots();
+      trafficMode = "hands";
+      const myMode = trafficMode;
+      const n = Math.min(trafficSlots.length, TRAFFIC.hands.length);
+      for (let i = 0; i < n; i++) {
+        const slot = trafficSlots[i], url = TRAFFIC.hands[i], idx = i;
+        new GLTFLoader().load(url, (gltf) => {
+          if (trafficMode !== myMode) return;
+          const inst = gltf.scene;
+          inst.traverse((o) => {
+            if (o.isMesh) {
+              o.castShadow = true;
+              o.receiveShadow = true;
+              o.frustumCulled = false;
+            }
+          });
+          cloneInstanceMaterials(inst);
+          fitOnSlot(inst, slot, 0.85, 0);
+          scene.add(inst);
+          const color = TRAFFIC_HAND_COLOR;
+          const light = makeSlotLight(slot, color);
+          scene.add(light);
+          trafficSlotState[idx] = { kind: "hand", inst, light, color, materials: collectMaterials(inst), on: false };
+          setSlotOn(idx, false);
+        }, void 0, (err) => console.error("LampHand \uB85C\uB4DC \uC2E4\uD328:", err));
+      }
+    }
+    function resetTraffic() {
+      clearAllSlots();
+      trafficMode = null;
+    }
+    function dispose() {
+      try {
+        controls.dispose();
+      } catch (e) {
+      }
+      scene.traverse((o) => {
+        var _a, _b;
+        if (o.isMesh) {
+          (_b = (_a = o.geometry) == null ? void 0 : _a.dispose) == null ? void 0 : _b.call(_a);
+          const m = o.material;
+          (Array.isArray(m) ? m : [m]).forEach((mm) => {
+            var _a2;
+            return (_a2 = mm == null ? void 0 : mm.dispose) == null ? void 0 : _a2.call(mm);
+          });
+        }
+      });
+      try {
+        renderer.dispose();
+      } catch (e) {
+      }
+      if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
+    return {
+      render: render2,
+      resize,
+      setEye,
+      dispose,
+      hasEyes: !!EYE,
+      get eyeL() {
+        return eyeL;
+      },
+      get eyeR() {
+        return eyeR;
+      },
+      hasTraffic: !!TRAFFIC,
+      placeLamps,
+      placeHands,
+      resetTraffic,
+      toggleSlot,
+      get hasRadar() {
+        return !!antennaPivot;
+      },
+      setRadar,
+      get radarOn() {
+        return radarOn;
+      },
+      get hasRocket() {
+        return !!rocketGroup;
+      },
+      setRocketLaunch,
+      get rocketLaunchOn() {
+        return rocketLaunchOn;
+      }
+    };
+  }
+  function setupSimulation({ workspace: workspace2 }) {
+    const btn = document.getElementById("simToggle");
+    const card = document.getElementById("simCard");
+    const stage = document.getElementById("simStage");
+    const loadingEl = document.getElementById("simLoading");
+    const ledWrap = card ? card.querySelector(".sim-led-buttons") : null;
+    const trafficWrap = card ? card.querySelector(".sim-traffic-buttons") : null;
+    const launchWrap = card ? card.querySelector(".sim-launch-buttons") : null;
+    const radarBtn = document.getElementById("simRadar");
+    const rocketBtn = document.getElementById("simRocket");
+    const simHint = document.getElementById("simHint");
+    const HINT_DEFAULT = "\uB85C\uBD07: \uB04C\uC5B4\uC11C \uD68C\uC804 \xB7 \uD720: \uD655\uB300 \xB7 \uC81C\uBAA9\uC904\uC744 \uB04C\uBA74 \uCC3D \uC774\uB3D9 \xB7 LED \uBC84\uD2BC\uC73C\uB85C \uB208 \uCF1C\uACE0 \uB044\uAE30";
+    const HINT_TRAFFIC = "1, 2, 3\uBC88 \uD0A4\uB97C \uB20C\uB7EC \uB7A8\uD504\uB97C \uCF1C\uACE0 \uB044\uAE30";
+    const HINT_LAUNCH = "\uB808\uC774\uB354 \uAC00\uB3D9 \xB7 \uB85C\uCF13 \uBC1C\uC0AC \uBC84\uD2BC\uC744 \uB20C\uB7EC \uBC1C\uC0AC\uB300\uB97C \uC791\uB3D9\uC2DC\uCF1C \uBCF4\uC138\uC694";
+    const RADAR_LABEL_ON = '<span class="dot"></span>\u{1F6F0}\uFE0F \uB808\uC774\uB354<small>\uD68C\uC804 \uBA48\uCDA4</small>';
+    const RADAR_LABEL_OFF = '<span class="dot"></span>\u{1F6F0}\uFE0F \uB808\uC774\uB354<small>\uC548\uD14C\uB098 \uD68C\uC804</small>';
+    const ROCKET_LABEL_ON = '<span class="dot"></span>\u{1F680} \uBC1C\uC0AC \uC911\uC9C0<small>\uC6D0\uC704\uCE58\uB85C</small>';
+    const ROCKET_LABEL_OFF = '<span class="dot"></span>\u{1F680} \uB85C\uCF13 \uBC1C\uC0AC<small>\uC704\uB85C \uC0C1\uC2B9</small>';
+    const sel = document.getElementById("simTopic");
+    if (!btn || !card || !stage) return null;
+    const THREE = window.THREE, A = window.ARES3;
+    if (!THREE || !A || !A.GLTFLoader) {
+      btn.disabled = true;
+      btn.title = "3D \uB77C\uC774\uBE0C\uB7EC\uB9AC(three.js)\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4";
+      return null;
+    }
+    if (sel && !sel.options.length) {
+      TOPIC_ORDER.forEach((k) => {
+        const o = document.createElement("option");
+        o.value = k;
+        o.textContent = TOPICS[k].label;
+        sel.appendChild(o);
+      });
+      sel.value = DEFAULT_TOPIC;
+    }
+    let sim = null, raf = 0, builtTopic = null;
+    const loop = () => {
+      sim.render();
+      raf = requestAnimationFrame(loop);
+    };
+    const build = (topicKey) => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (sim) {
+        sim.dispose();
+        sim = null;
+      }
+      const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
+      if (loadingEl) {
+        loadingEl.style.display = "";
+        loadingEl.textContent = "\uBD88\uB7EC\uC624\uB294 \uC911\u2026";
+      }
+      card.querySelectorAll(".sim-led-btn").forEach((b) => b.classList.remove("on"));
+      card.querySelectorAll(".sim-traffic-btn").forEach((b) => {
+        b.classList.toggle("on", !!cfg.traffic && b.dataset.action === "lamps");
+      });
+      if (ledWrap) ledWrap.style.display = cfg.eyes ? "" : "none";
+      if (trafficWrap) trafficWrap.style.display = cfg.traffic ? "" : "none";
+      if (launchWrap) launchWrap.style.display = cfg.radar ? "" : "none";
+      if (radarBtn) {
+        radarBtn.classList.remove("on");
+        radarBtn.innerHTML = RADAR_LABEL_OFF;
+        radarBtn.setAttribute("aria-pressed", "false");
+      }
+      if (rocketBtn) {
+        rocketBtn.classList.remove("on");
+        rocketBtn.innerHTML = ROCKET_LABEL_OFF;
+        rocketBtn.setAttribute("aria-pressed", "false");
+      }
+      if (simHint) {
+        simHint.textContent = cfg.traffic ? HINT_TRAFFIC : cfg.radar ? HINT_LAUNCH : HINT_DEFAULT;
+      }
+      sim = buildSim(THREE, A, stage, loadingEl, cfg);
+      builtTopic = topicKey;
+    };
+    const open = () => {
+      card.hidden = false;
+      if (!sim && sel) sel.value = defaultTopicForMission();
+      const t = sel && sel.value || DEFAULT_TOPIC;
+      if (!sim || builtTopic !== t) build(t);
+      sim.resize();
+      cancelAnimationFrame(raf);
+      loop();
+      btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uB2EB\uAE30";
+      btn.setAttribute("aria-pressed", "true");
+    };
+    const close = () => {
+      if (card.hidden) return;
+      card.hidden = true;
+      cancelAnimationFrame(raf);
+      raf = 0;
+      btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uC5F4\uAE30";
+      btn.setAttribute("aria-pressed", "false");
+    };
+    if (sel) sel.addEventListener("change", () => {
+      build(sel.value);
+      sim.resize();
+      cancelAnimationFrame(raf);
+      loop();
+    });
+    btn.addEventListener("click", () => {
+      card.hidden ? open() : close();
+    });
+    card.querySelectorAll(".sim-led-btn").forEach((b) => {
+      b.addEventListener("click", () => {
+        if (!sim || !sim.hasEyes) return;
+        const side = b.dataset.side;
+        const cur = side === "L" ? sim.eyeL.on : sim.eyeR.on;
+        sim.setEye(side, !cur);
+        b.classList.toggle("on", !cur);
+      });
+    });
+    const setTrafficBtn = (which) => {
+      card.querySelectorAll(".sim-traffic-btn").forEach((b) => {
+        b.classList.toggle("on", b.dataset.action === which);
+      });
+    };
+    card.querySelectorAll(".sim-traffic-btn").forEach((b) => {
+      b.addEventListener("click", () => {
+        if (!sim || !sim.hasTraffic) return;
+        const action = b.dataset.action;
+        if (action === "lamps") {
+          sim.placeLamps();
+          setTrafficBtn("lamps");
+        } else if (action === "hand") {
+          sim.placeHands();
+          setTrafficBtn("hand");
+        }
+      });
+    });
+    if (radarBtn) {
+      radarBtn.addEventListener("click", () => {
+        if (!sim || !sim.hasRadar) return;
+        const next = !sim.radarOn;
+        sim.setRadar(next);
+        radarBtn.classList.toggle("on", next);
+        radarBtn.innerHTML = next ? RADAR_LABEL_ON : RADAR_LABEL_OFF;
+        radarBtn.setAttribute("aria-pressed", String(next));
+      });
+    }
+    if (rocketBtn) {
+      rocketBtn.addEventListener("click", () => {
+        if (!sim || !sim.hasRocket) return;
+        const next = !sim.rocketLaunchOn;
+        sim.setRocketLaunch(next);
+        rocketBtn.classList.toggle("on", next);
+        rocketBtn.innerHTML = next ? ROCKET_LABEL_ON : ROCKET_LABEL_OFF;
+        rocketBtn.setAttribute("aria-pressed", String(next));
+      });
+    }
+    const simLog = document.getElementById("simLog");
+    const simRunBtn = document.getElementById("simRun");
+    const simClearBtn = document.getElementById("simLogClear");
+    const logLine = (text, cls) => {
+      if (!simLog) return;
+      const d = document.createElement("div");
+      d.className = "sim-log-line" + (cls ? " " + cls : "");
+      d.textContent = text;
+      simLog.appendChild(d);
+      simLog.scrollTop = simLog.scrollHeight;
+    };
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const simSink = async (command, waitForResponse) => {
+      const delay = waitForResponse ? 100 : 20;
+      logLine(`\u2192 ${command}`, waitForResponse ? "tx-ack" : "tx");
+      await wait(delay);
+      let reply = "1";
+      if (command.startsWith("DISTANCE")) reply = "DIST:30";
+      else if (command.startsWith("MAGNET")) reply = "MAG:0";
+      logLine(`     \u21A9 ${reply}  (+${delay}ms, ${waitForResponse ? "Ack" : "\uBE44Ack"})`, "rx");
+      return reply;
+    };
+    let simRunning = false;
+    if (simRunBtn) simRunBtn.addEventListener("click", async () => {
+      if (simRunning) return;
+      if (!workspace2) {
+        logLine("\uC6CC\uD06C\uC2A4\uD398\uC774\uC2A4\uAC00 \uC900\uBE44\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4", "err");
+        return;
+      }
+      simRunning = true;
+      simRunBtn.disabled = true;
+      logLine("\u2500\u2500\u2500\u2500 \uC2DC\uBBAC\uB808\uC774\uC158 \uC2DC\uC791 \u2500\u2500\u2500\u2500", "sys");
+      try {
+        await CommandExecutor.simulateWorkspace(workspace2, simSink);
+        logLine("\u2500\u2500\u2500\u2500 \uC2DC\uBBAC\uB808\uC774\uC158 \uC885\uB8CC \u2500\u2500\u2500\u2500", "sys");
+      } catch (e) {
+        logLine("\uC624\uB958: " + (e && e.message ? e.message : e), "err");
+      } finally {
+        simRunning = false;
+        simRunBtn.disabled = false;
+      }
+    });
+    if (simClearBtn) simClearBtn.addEventListener("click", () => {
+      if (simLog) simLog.textContent = "";
+    });
+    const head = card.querySelector(".sim-card-head");
+    if (head) {
+      let dragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
+      head.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".sim-led-btn") || e.target.closest(".sim-traffic-btn") || e.target.closest(".sim-launch-btn") || e.target.closest(".sim-topic")) return;
+        const r = card.getBoundingClientRect();
+        card.style.position = "fixed";
+        card.style.left = r.left + "px";
+        card.style.top = r.top + "px";
+        card.style.right = "auto";
+        card.style.bottom = "auto";
+        card.style.transform = "none";
+        card.style.margin = "0";
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        baseX = r.left;
+        baseY = r.top;
+        try {
+          head.setPointerCapture(e.pointerId);
+        } catch (e2) {
+        }
+        e.preventDefault();
+      });
+      head.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        const w = card.offsetWidth;
+        let nx = baseX + (e.clientX - startX);
+        let ny = baseY + (e.clientY - startY);
+        nx = Math.max(40 - w, Math.min(nx, innerWidth - 40));
+        ny = Math.max(0, Math.min(ny, innerHeight - 36));
+        card.style.left = nx + "px";
+        card.style.top = ny + "px";
+      });
+      const endDrag = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        try {
+          head.releasePointerCapture(e.pointerId);
+        } catch (e2) {
+        }
+      };
+      head.addEventListener("pointerup", endDrag);
+      head.addEventListener("pointercancel", endDrag);
+    }
+    addEventListener("resize", () => {
+      if (!card.hidden && sim) sim.resize();
+    });
+    addEventListener("keydown", (e) => {
+      if (card.hidden || !sim || !sim.hasTraffic) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target;
+      const tag = t && t.tagName || "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t && t.isContentEditable) return;
+      let idx = -1;
+      if (e.key === "1") idx = 0;
+      else if (e.key === "2") idx = 1;
+      else if (e.key === "3") idx = 2;
+      if (idx < 0) return;
+      sim.toggleSlot(idx);
+      e.preventDefault();
+    });
+    return { close };
+  }
 
   // main.js
   var LESSON_CATALOG = [
@@ -1852,174 +2715,6 @@
     });
   }
   var simController = null;
-  function buildAlbiSim(THREE, A, stage, loadingEl) {
-    const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
-    const EYE = { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] };
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    stage.appendChild(renderer.domElement);
-    const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    scene.add(new THREE.HemisphereLight(14674687, 3293231, 0.55));
-    const key = new THREE.DirectionalLight(16774374, 2);
-    key.position.set(3, 6, 5);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
-    key.shadow.bias = -3e-4;
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(10469616, 0.5);
-    fill.position.set(-4, 2, 4);
-    scene.add(fill);
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-    const gc = document.createElement("canvas");
-    gc.width = gc.height = 128;
-    const gx = gc.getContext("2d");
-    const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    gg.addColorStop(0, "rgba(180,255,210,1)");
-    gg.addColorStop(0.25, "rgba(40,255,120,0.65)");
-    gg.addColorStop(1, "rgba(0,255,90,0)");
-    gx.fillStyle = gg;
-    gx.fillRect(0, 0, 128, 128);
-    const glowTex = new THREE.CanvasTexture(gc);
-    glowTex.colorSpace = THREE.SRGBColorSpace;
-    function makeEye(pos) {
-      const grp = new THREE.Group();
-      grp.position.fromArray(pos);
-      const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(EYE.radius, 28, 28),
-        new THREE.MeshStandardMaterial({ color: 797208, emissive: 65382, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
-      );
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 5635993, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
-      glow.scale.setScalar(EYE.radius * 3.3);
-      glow.visible = false;
-      const light = new THREE.PointLight(3407735, 0, EYE.radius * 22, 2);
-      grp.add(sphere, glow, light);
-      return { group: grp, sphere, glow, light, on: false };
-    }
-    const eyeL = makeEye(EYE.left), eyeR = makeEye(EYE.right);
-    function setEye(side, on) {
-      const e = side === "L" ? eyeL : eyeR;
-      e.on = on;
-      e.sphere.material.emissiveIntensity = on ? 3.2 : 0;
-      e.sphere.material.opacity = on ? 0.92 : 0.4;
-      e.glow.visible = on;
-      e.light.intensity = on ? 1.8 : 0;
-    }
-    let modelH = 1.9;
-    new GLTFLoader().load("Mesh/AlbiStaticLow.glb", (gltf) => {
-      const root = gltf.scene;
-      root.traverse((o) => {
-        if (o.isMesh) {
-          o.castShadow = true;
-          o.receiveShadow = true;
-          o.frustumCulled = false;
-        }
-      });
-      const box = new THREE.Box3().setFromObject(root);
-      const sz = box.getSize(new THREE.Vector3());
-      const c = box.getCenter(new THREE.Vector3());
-      root.position.x -= c.x;
-      root.position.z -= c.z;
-      root.position.y -= box.min.y;
-      modelH = sz.y;
-      root.add(eyeL.group, eyeR.group);
-      scene.add(root);
-      const maxDim = Math.max(sz.x, sz.y, sz.z);
-      const fov = camera.fov * Math.PI / 180;
-      const dist = maxDim / 2 / Math.tan(fov / 2) * 1.9;
-      const cy = modelH * 0.55;
-      camera.position.set(0, cy, dist);
-      camera.near = dist / 100;
-      camera.far = dist * 100;
-      camera.updateProjectionMatrix();
-      controls.target.set(0, cy, 0);
-      controls.update();
-      if (loadingEl) loadingEl.style.display = "none";
-    }, void 0, (err) => {
-      console.error("\uC54C\uBE44 \uBAA8\uB378 \uB85C\uB4DC \uC2E4\uD328:", err);
-      if (loadingEl) loadingEl.textContent = "\uB85C\uBD07\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC5B4\uC694 (HTTP \uC11C\uBC84\uC5D0\uC11C \uC2E4\uD589\uD574\uC57C \uD569\uB2C8\uB2E4)";
-    });
-    function resize() {
-      const w = stage.clientWidth || 360, h = stage.clientHeight || 300;
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    }
-    resize();
-    function render2() {
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    return { render: render2, resize, setEye, get eyeL() {
-      return eyeL;
-    }, get eyeR() {
-      return eyeR;
-    } };
-  }
-  function setupSimulation() {
-    const btn = document.getElementById("simToggle");
-    const card = document.getElementById("simCard");
-    const stage = document.getElementById("simStage");
-    const loadingEl = document.getElementById("simLoading");
-    if (!btn || !card || !stage) return;
-    const THREE = window.THREE, A = window.ARES3;
-    if (!THREE || !A || !A.GLTFLoader) {
-      btn.disabled = true;
-      btn.title = "3D \uB77C\uC774\uBE0C\uB7EC\uB9AC(three.js)\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4";
-      return;
-    }
-    let sim = null, raf = 0;
-    const loop = () => {
-      sim.render();
-      raf = requestAnimationFrame(loop);
-    };
-    const open = () => {
-      card.hidden = false;
-      if (!sim) sim = buildAlbiSim(THREE, A, stage, loadingEl);
-      sim.resize();
-      cancelAnimationFrame(raf);
-      loop();
-      btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uB2EB\uAE30";
-      btn.setAttribute("aria-pressed", "true");
-    };
-    const close = () => {
-      if (card.hidden) return;
-      card.hidden = true;
-      cancelAnimationFrame(raf);
-      raf = 0;
-      btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uC5F4\uAE30";
-      btn.setAttribute("aria-pressed", "false");
-    };
-    btn.addEventListener("click", () => {
-      card.hidden ? open() : close();
-    });
-    card.querySelectorAll(".sim-led-btn").forEach((b) => {
-      b.addEventListener("click", () => {
-        if (!sim) return;
-        const side = b.dataset.side;
-        const cur = side === "L" ? sim.eyeL.on : sim.eyeR.on;
-        sim.setEye(side, !cur);
-        b.classList.toggle("on", !cur);
-      });
-    });
-    addEventListener("resize", () => {
-      if (!card.hidden && sim) sim.resize();
-    });
-    simController = { close };
-  }
   var _toggleBtnOpened = true;
   function placeToolboxToggleBtn() {
     const btn = document.getElementById("toolboxToggleBtn");
@@ -2280,7 +2975,7 @@
     setupLogToggle();
     setupLogVisibilityButton();
     setupMissionPanelToggle();
-    setupSimulation();
+    simController = setupSimulation({ workspace });
     BluetoothManager.updateConnectionStatus(false);
     Logger.add("[\uC2DC\uC791] ARES \uC900\uBE44 \uC644\uB8CC - BLE \uC5F0\uACB0\uC744 \uC2DC\uC791\uD558\uC138\uC694", "info");
     Logger.refresh();
