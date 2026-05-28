@@ -74,15 +74,12 @@ Copy-Item 'Web\index.css'      'Build\index.css'      -Force
 
 # 랜딩 페이지의 3D 로봇 히어로 에셋.
 # three.js 로컬 번들 + 로봇 GLB를 base64 로 임베드한 클래식 스크립트.
-# Build\index.html 은 file:// 로 열리므로(아래 5단계) index.html 은
-# Mesh\ares_robot.embed.js 를 동적 로드해 fetch 없이 parse 한다.
-Write-Host '        + robot 3D assets (three bundle + embedded GLB)'
+# Build\index.html 은 file:// 로 열리므로(§5) ares_robot.embed.js 를 동적 로드해
+# fetch 없이 parse 한다. file:// 전용 배포라 ares_robot.glb 는 빌드에 포함하지 않고,
+# embed.js 한 파일만 Build\ 루트에 둔다(이전의 Build\Mesh\ 폴더는 폐기).
+Write-Host '        + robot 3D embed (three bundle + ares_robot.embed.js)'
 Copy-Item 'Web\vendor\three-bundle.min.js' 'Build\vendor\three-bundle.min.js' -Force
-New-Item -ItemType Directory -Force -Path 'Build\Mesh' | Out-Null
-Copy-Item 'Web\Mesh\ares_robot.embed.js'   'Build\Mesh\ares_robot.embed.js'   -Force
-if (Test-Path 'Web\Mesh\ares_robot.glb') {
-    Copy-Item 'Web\Mesh\ares_robot.glb'    'Build\Mesh\ares_robot.glb'        -Force
-}
+Copy-Item 'Web\Mesh\ares_robot.embed.js'   'Build\ares_robot.embed.js'        -Force
 
 # WebGL 로봇 뷰어(알비 + 눈 LED)도 함께 배포 → Build\viewer\.
 # 뷰어는 Resources\AlbiStaticLow.glb 를 fetch 하는데, file:// 에서는 막히므로
@@ -105,6 +102,11 @@ Write-Host ''
 Write-Host '[5/7] generating index.html (landing page)'
 $landing = Read-Utf8 'Web\index.html'
 $landing = $landing -replace '\s*<a href="\.\./index\.html"[^>]*>[^<]*</a>\s*', ''
+# Build 산출물은 Mesh\ 폴더 없이 ares_robot.embed.js 만 루트에 둔다(§4 마지막).
+# Web\index.html 의 'Mesh/ares_robot.embed.js' / 'Mesh/ares_robot.glb' 경로를
+# 루트 기준으로 치환한다(후자는 file:// 분기에선 안 쓰이는 dead path 지만 정합성 유지).
+$landing = $landing -replace 'Mesh/ares_robot\.embed\.js', 'ares_robot.embed.js'
+$landing = $landing -replace 'Mesh/ares_robot\.glb',       'ares_robot.glb'
 Write-Utf8 'Build\index.html' $landing
 Write-Host ''
 
@@ -178,15 +180,28 @@ if (Test-Path $exampleDir) {
     }
 }
 
-# 시뮬레이션 모델(AlbiStaticLow.glb): file:// 에서 fetch 불가 → base64 로 BIN 에 인라인.
+# 시뮬레이션 모델 GLB: file:// 에서 fetch 불가 → base64 로 BIN 에 인라인.
 # 파일명만 키로 사용해 main.html(Mesh/...)과 viewer(Resources/...) 양쪽 fetch 모두 매칭한다.
-$albi = 'Web\Mesh\AlbiStaticLow.glb'
-if (Test-Path $albi) {
-    $albiB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Resolve-Path $albi).Path))
-    [void]$sb.AppendLine("  BIN['AlbiStaticLow.glb'] = `"$albiB64`";")
-    Write-Host ("        inlined GLB: AlbiStaticLow.glb ({0:N1} MB base64)" -f ($albiB64.Length / 1MB))
-} else {
-    Write-Warning 'Web\Mesh\AlbiStaticLow.glb 없음 -- 시뮬레이션 GLB 미인라인'
+# 알비(주제 1) 외에 우주 신호등(LampBox/LampGeneral/LampHand1~3)과 탐사선 발사대(LaunchStation)도
+# file:// 오프라인에서 동작하도록 모두 인라인한다.
+$simGlbs = @(
+    'AlbiStaticLow.glb',
+    'LampBox.glb',
+    'LampGeneral.glb',
+    'LampHand1.glb',
+    'LampHand2.glb',
+    'LampHand3.glb',
+    'LaunchStation.glb'
+)
+foreach ($name in $simGlbs) {
+    $p = "Web\Mesh\$name"
+    if (Test-Path $p) {
+        $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Resolve-Path $p).Path))
+        [void]$sb.AppendLine("  BIN['$name'] = `"$b64`";")
+        Write-Host ("        inlined GLB: $name ({0:N1} MB base64)" -f ($b64.Length / 1MB))
+    } else {
+        Write-Warning "Web\Mesh\$name 없음 -- 시뮬레이션 GLB 미인라인"
+    }
 }
 
 [void]$sb.AppendLine(@'

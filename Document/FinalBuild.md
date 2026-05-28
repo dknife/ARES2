@@ -26,20 +26,22 @@ ARES_Project/
     ├── main.bundle.js              ← esbuild로 묶은 단일 JS (8개 모듈 통합)
     ├── styles.css                  ← main.html이 참조하는 스타일시트
     ├── dashboard.html              ← 대시보드 (iframe 자식, ES module 사용 안 함)
-    ├── Mesh/
-    │   ├── ares_robot.embed.js     ← 로봇 GLB(base64) — file:// 오프라인 렌더용
-    │   └── ares_robot.glb          ← http 서빙 시 fetch용(선택)
+    ├── ares_robot.embed.js         ← 랜딩 로봇 GLB(base64) — file:// 오프라인 렌더용
     ├── vendor/
     │   ├── blockly_compressed.js
     │   ├── blocks_compressed.js
     │   ├── python_compressed.js
-    │   ├── inline_assets.js        ← fetch shim (overview/lesson/examples)
-    │   └── three-bundle.min.js     ← three.js (랜딩 로봇 렌더링)
+    │   ├── inline_assets.js        ← fetch shim (overview/lesson/examples + 시뮬 GLB 7종)
+    │   └── three-bundle.min.js     ← three.js (랜딩 로봇 + 시뮬레이션 렌더링)
     └── viewer/                     ← WebGL 3D 로봇 뷰어 (file:// 오프라인 동작)
         ├── index.html
         ├── models-embedded.js      ← Idle 모델 GLB(base64)
         └── vendor/three-bundle.min.js
 ```
+
+> 시뮬레이션 GLB(`AlbiStaticLow`, `LampBox`, `LampGeneral`, `LampHand1~3`, `LaunchStation`)는 모두
+> `vendor/inline_assets.js` 의 `BIN` 에 base64 로 임베드되어 있고, `window.fetch` shim 이
+> `Mesh/…` 요청을 가로채 즉시 응답한다. 따라서 `Build/Mesh/` 폴더는 더 이상 존재하지 않는다.
 
 > **3D 로봇 오프라인 동작.** 랜딩 페이지(`index.html`)의 손 흔드는 로봇과 `viewer/`의
 > 3D 뷰어는 모두 three.js 로컬 번들 + GLB base64 임베드로 구성되어, **인터넷 없이
