@@ -1549,6 +1549,7 @@ build.bat              (cmd 진입점, 메시지 갱신)
 05-28 & \texttt{Web/simulation.js} (애니메이션) & 레이더 가동 시 \texttt{rotation.y += 0.15}(${\approx}500^{\circ}$/s). 로켓 발사 시 \texttt{rocketGroup.position.y} 를 \texttt{ROCKET\_RISE=10} 까지 비대칭 ease 로 이동 — 발사 ease-out, 중지 ease-in(t$^2$). 카메라 \texttt{controls.target} 을 로켓 world centroid 로 직접 락온하고 \texttt{camera.position.y} 도 동일 상승. 중지 후 saved 상태로 스냅 복귀. 속도 \texttt{ROCKET\_SPEED=0.00267}(${\approx}6$초 완주). \\
 05-28 & \texttt{build.ps1} & 시뮬 GLB 7종(\texttt{AlbiStaticLow}, \texttt{LampBox}, \texttt{LampGeneral}, \texttt{LampHand1\textendash 3}, \texttt{LaunchStation}) base64 BIN 일괄 인라인. \texttt{Build/Mesh/} 폴더 폐기, \texttt{ares\_robot.embed.js} 를 \texttt{Build/} 루트로 복사하고 \texttt{ares\_robot.glb} fallback 제거. 랜딩 \texttt{index.html} 의 \texttt{Mesh/ares\_robot.*} 경로를 루트로 치환. \\
 05-28 & \texttt{Document/FinalBuild.md} & 폴더 트리에서 \texttt{Mesh/} 항목 제거, \texttt{ares\_robot.embed.js} 를 루트로 옮기고 시뮬 GLB 가 fetch shim 으로 처리됨을 명시. \\
+05-28 & \texttt{Document/CodeChangeHistory.tex} & 05-28 커밋 해시(\texttt{110acf1}, \texttt{9e04b2b})를 반영해 (pending) 행 치환. ``우선 할 일 (Backlog)'' 섹션 신설 — \texttt{Build/vendor/inline\_assets.js} 50.54\,MB(GitHub 권장 한도 50\,MB 초과)에 대한 GLB 최적화 항목 등록(Meshopt/Draco 압축, 텍스처 축소, \texttt{Build/} \texttt{.gitignore} 처리 옵션 등). \\
 \bottomrule
 \end{tabularx}
 \caption{2026-05-19 \textendash{} 05-28 변경 범위 (롤링).}
@@ -1586,10 +1587,28 @@ build.bat              (cmd 진입점, 메시지 갱신)
 05-22 & \textit{(pending)} & Rename CodeChange20260520 $\to$ CodeChangeHistory and append 05-21 / 05-22 chapters \\
 \midrule
 05-28 & \textit{(pending)} & Split simulation out of Web/main.js into Web/simulation.js and bundle launchpad scene (antenna recolor + radar spin, rocket recolor + launch animation with camera tracking and flame) \\
-05-28 & \textit{(pending)} & Inline all simulation GLBs into vendor/inline\_assets.js, drop Build/Mesh/ and move ares\_robot.embed.js to Build/ root, refresh FinalBuild.md tree \\
+05-28 & \texttt{110acf1} & Sim: simulation.js 분리 + 발사대 안테나/로켓 액션 추가 \\
+05-28 & \texttt{9e04b2b} & Build: 시뮬 GLB 7종 inline\_assets 통합, Build/Mesh 폴더 폐기 \\
 \bottomrule
 \end{tabularx}
-\caption{관련 커밋 (\texttt{main} 브랜치). 05-22 / 05-28 행은 본 문서 갱신 시점에 아직 커밋되지 않은 작업.}
+\caption{관련 커밋 (\texttt{main} 브랜치). 05-22 행만 본 문서 갱신 시점에 아직 커밋되지 않은 작업.}
+\end{table}
+
+\section*{우선 할 일 (Backlog)}
+
+다음 작업은 아직 착수 전이며, 다음 세션의 우선 처리 대상이다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}llX@{}}
+\toprule
+등록일 & 항목 & 내용 \\
+\midrule
+05-28 & GLB 최적화 & \texttt{Build/vendor/inline\_assets.js} 가 50.54\,MB 로 GitHub 권장 한도 50\,MB 초과(푸시는 성공, 절대 한도 100\,MB 미만). 원인: 시뮬 GLB 7종 base64 인라인. 주범 \texttt{AlbiStaticLow.glb}(14.6\,MB), \texttt{LaunchStation.glb}(14.8\,MB), \texttt{LampBox.glb}(9.6\,MB). 해법 후보: (1) \texttt{gltfpack -cc -tc} (Meshopt) 또는 Draco 압축으로 GLB 자체 경량화 — 목표 합산 $\le$10\,MB, (2) 각 모델에서 카메라가 보지 않는 디테일/큰 텍스처 정리(예: 발사대 박스 내부), (3) 정책 변경으로 \texttt{Build/} 를 \texttt{.gitignore} 처리하고 GitHub Releases 로 배포(현재 추적 중인 운영을 같이 바꿔야 함). 경량화 후 \texttt{build.bat} 재실행 $\to$ \texttt{inline\_assets.js} 크기 재확인. \\
+\bottomrule
+\end{tabularx}
+\caption{우선 할 일 목록 — 완료 시 위쪽 변경 행으로 이동.}
 \end{table}
 
 \end{document}
