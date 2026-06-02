@@ -170,7 +170,7 @@ function recolorLaunchpadAntenna(root, THREE) {
 // 시뮬레이션 "주제"(로딩 대상). model 이 null 이면 빈 객체(준비 중)를 표시한다.
 //   새 객체를 붙이려면 model 에 GLB 경로를, 눈 LED가 있으면 eyes 설정을 채운다.
 const TOPICS = {
-  albi:      { label: '알비와 함께',   model: 'Mesh/AlbiStaticLow.glb', eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] } },
+  albi:      { label: '알비와 함께',   model: 'Mesh/AlbiStaticLow.glb', eyes: { radius: 0.11, left: [0.145, 0.375, 0.12], right: [-0.145, 0.375, 0.12] }, chest: { radius: 0.07, pos: [0, -0.10, 0.135] } },
   traffic:   { label: '우주 신호등',   model: 'Mesh/LampBox.glb',       eyes: null, traffic: { lamp: 'Mesh/LampGeneral.glb', hands: ['Mesh/LampHand1.glb', 'Mesh/LampHand2.glb', 'Mesh/LampHand3.glb'], count: 3 } },
   launchpad: { label: '발사대', model: 'Mesh/LaunchStation.glb', eyes: null, postProcess: recolorLaunchpadAntenna, radar: true },
 };
@@ -188,7 +188,8 @@ function defaultTopicForMission() {
 //   hasTraffic, placeLamps, placeHands, resetTraffic } 반환
 function buildSim(THREE, A, stage, loadingEl, cfg) {
   const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
-  const EYE = cfg.eyes || null;   // 눈 LED 설정 (없으면 null)
+  const EYE   = cfg.eyes  || null;   // 눈 LED 설정 (없으면 null)
+  const CHEST = cfg.chest || null;   // 가슴 LED 설정 (없으면 null)
   const TRAFFIC = cfg.traffic || null; // 우주 신호등 설정 (LampBox 위 LampGeneral / LampHandN)
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -219,9 +220,10 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 
-  // 눈 LED(발광 구) — eyes 설정이 있을 때만 구성
-  let eyeL = null, eyeR = null, glowTex = null;
-  if (EYE) {
+  // LED(발광 구) — eyes/chest 설정이 있을 때만 구성. 눈·가슴 모두 동일한 룩.
+  // 눈은 좌우 한 쌍(L/R), 가슴은 중앙 단일 LED.
+  let eyeL = null, eyeR = null, chestLed = null, glowTex = null;
+  if (EYE || CHEST) {
     const gc = document.createElement('canvas'); gc.width = gc.height = 128;
     const gx = gc.getContext('2d');
     const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
@@ -230,29 +232,33 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     gg.addColorStop(1.0, 'rgba(0,255,90,0)');
     gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
     glowTex = new THREE.CanvasTexture(gc); glowTex.colorSpace = THREE.SRGBColorSpace;
-    const makeEye = (pos) => {
-      const grp = new THREE.Group(); grp.position.fromArray(pos);
-      const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(EYE.radius, 28, 28),
-        new THREE.MeshStandardMaterial({ color: 0x0c2a18, emissive: 0x00ff66, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
-      );
-      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x55ff99, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
-      glow.scale.setScalar(EYE.radius * 3.3); glow.visible = false;
-      const light = new THREE.PointLight(0x33ff77, 0, EYE.radius * 22, 2);
-      grp.add(sphere, glow, light);
-      return { group: grp, sphere, glow, light, on: false };
-    };
-    eyeL = makeEye(EYE.left); eyeR = makeEye(EYE.right);
   }
-  function setEye(side, on) {
-    if (!EYE) return;
-    const e = (side === 'L') ? eyeL : eyeR;
-    e.on = on;
-    e.sphere.material.emissiveIntensity = on ? 3.2 : 0.0;
-    e.sphere.material.opacity = on ? 0.92 : 0.4;
-    e.glow.visible = on;
-    e.light.intensity = on ? 1.8 : 0.0;
+  const makeLed = (radius, pos) => {
+    const grp = new THREE.Group(); grp.position.fromArray(pos);
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 28, 28),
+      new THREE.MeshStandardMaterial({ color: 0x0c2a18, emissive: 0x00ff66, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
+    );
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x55ff99, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
+    glow.scale.setScalar(radius * 3.3); glow.visible = false;
+    const light = new THREE.PointLight(0x33ff77, 0, radius * 22, 2);
+    grp.add(sphere, glow, light);
+    return { group: grp, sphere, glow, light, on: false };
+  };
+  if (EYE)   { eyeL = makeLed(EYE.radius, EYE.left); eyeR = makeLed(EYE.radius, EYE.right); }
+  if (CHEST) { chestLed = makeLed(CHEST.radius, CHEST.pos); }
+  // value: boolean(true=full on) 또는 0..1 강도. 0이면 OFF, >0이면 강도에 비례한 ON 룩.
+  function applyLed(e, value) {
+    const v = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : (value ? 1 : 0);
+    e.on = v > 0;
+    e.sphere.material.emissiveIntensity = 3.2 * v;
+    e.sphere.material.opacity = v > 0 ? 0.4 + 0.52 * v : 0.4;
+    e.glow.visible = v > 0;
+    if (e.glow.material) e.glow.material.opacity = 0.95 * v;
+    e.light.intensity = 1.8 * v;
   }
+  function setEye(side, value) { if (!EYE)   return; applyLed(side === 'L' ? eyeL : eyeR, value); }
+  function setChest(value)     { if (!CHEST) return; applyLed(chestLed, value); }
 
   const frame = (cy, dist) => {
     camera.position.set(0, cy, dist);
@@ -282,7 +288,8 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       const c = box.getCenter(new THREE.Vector3());
       root.position.x -= c.x; root.position.z -= c.z; root.position.y -= box.min.y;
       const modelH = sz.y;
-      if (EYE) root.add(eyeL.group, eyeR.group);
+      if (EYE)   root.add(eyeL.group, eyeR.group);
+      if (CHEST) root.add(chestLed.group);
       // 주제별 후처리(예: 탐사선 발사대의 안테나 회색화). root 변환은 위에서 이미 끝났다.
       try { cfg.postProcess?.(root, THREE); } catch (e) { console.warn('postProcess 실패:', e); }
       // postProcess 가 심어둔 핸들을 render 루프 변수에 캐싱.
@@ -576,8 +583,9 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
   }
   return {
-    render, resize, setEye, dispose,
+    render, resize, setEye, setChest, dispose,
     hasEyes: !!EYE, get eyeL() { return eyeL; }, get eyeR() { return eyeR; },
+    hasChest: !!CHEST, get chestLed() { return chestLed; },
     hasTraffic: !!TRAFFIC, placeLamps, placeHands, resetTraffic, toggleSlot,
     get hasRadar() { return !!antennaPivot; }, setRadar,
     get radarOn() { return radarOn; },
@@ -599,7 +607,7 @@ export function setupSimulation({ workspace }) {
   const radarBtn  = document.getElementById('simRadar');
   const rocketBtn = document.getElementById('simRocket');
   const simHint = document.getElementById('simHint');
-  const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈 켜고 끄기';
+  const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈·가슴 켜고 끄기';
   const HINT_TRAFFIC = '1, 2, 3번 키를 눌러 램프를 켜고 끄기';
   const HINT_LAUNCH  = '레이더 가동 · 로켓 발사 버튼을 눌러 발사대를 작동시켜 보세요';
   const RADAR_LABEL_ON   = '<span class="dot"></span>🛰️ 레이더<small>회전 멈춤</small>';
@@ -640,7 +648,14 @@ export function setupSimulation({ workspace }) {
       // 우주 신호등은 디폴트가 "신호등(램프 배치)" 상태이므로 lamps 버튼을 on 으로 표시
       b.classList.toggle('on', !!cfg.traffic && b.dataset.action === 'lamps');
     });
-    if (ledWrap) ledWrap.style.display = cfg.eyes ? '' : 'none';
+    if (ledWrap) {
+      ledWrap.style.display = (cfg.eyes || cfg.chest) ? '' : 'none';
+      // 버튼 단위 표시 — 눈/가슴 중 설정된 쪽만 보이게.
+      ledWrap.querySelectorAll('.sim-led-btn').forEach((b) => {
+        const part = b.dataset.part || 'eye';
+        b.style.display = (part === 'chest' ? !!cfg.chest : !!cfg.eyes) ? '' : 'none';
+      });
+    }
     if (trafficWrap) trafficWrap.style.display = cfg.traffic ? '' : 'none';
     if (launchWrap) launchWrap.style.display = cfg.radar ? '' : 'none';
     if (radarBtn)  { radarBtn.classList.remove('on');  radarBtn.innerHTML  = RADAR_LABEL_OFF;  radarBtn.setAttribute('aria-pressed', 'false'); }
@@ -681,11 +696,20 @@ export function setupSimulation({ workspace }) {
 
   card.querySelectorAll('.sim-led-btn').forEach((b) => {
     b.addEventListener('click', () => {
-      if (!sim || !sim.hasEyes) return;
-      const side = b.dataset.side;
-      const cur = (side === 'L') ? sim.eyeL.on : sim.eyeR.on;
-      sim.setEye(side, !cur);
-      b.classList.toggle('on', !cur);
+      if (!sim) return;
+      const part = b.dataset.part || 'eye';
+      if (part === 'chest') {
+        if (!sim.hasChest) return;
+        const cur = sim.chestLed.on;
+        sim.setChest(!cur);
+        b.classList.toggle('on', !cur);
+      } else {
+        if (!sim.hasEyes) return;
+        const side = b.dataset.side;
+        const cur = (side === 'L') ? sim.eyeL.on : sim.eyeR.on;
+        sim.setEye(side, !cur);
+        b.classList.toggle('on', !cur);
+      }
     });
   });
 
@@ -745,14 +769,96 @@ export function setupSimulation({ workspace }) {
     simLog.scrollTop = simLog.scrollHeight;
   };
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // 부저 비프 — 사용자가 시뮬레이션 버튼을 클릭한 직후 호출되므로 AudioContext가 허용됨.
+  // square파로 부저 같은 음색을 내고, 끝에 짧은 페이드로 클릭 노이즈 제거.
+  let audioCtx = null;
+  const playBeep = (hz, sec) => {
+    if (!hz || sec <= 0) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.frequency.value = hz;
+      o.connect(g); g.connect(audioCtx.destination);
+      const t0 = audioCtx.currentTime;
+      const t1 = t0 + sec;
+      const VOL = 0.06;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(VOL, t0 + 0.005);
+      g.gain.setValueAtTime(VOL, Math.max(t0 + 0.006, t1 - 0.01));
+      g.gain.linearRampToValueAtTime(0, t1);
+      o.start(t0); o.stop(t1 + 0.02);
+    } catch (e) { console.warn('beep 실패:', e); }
+  };
+  // 알비 시각/소리 효과를 명령 시작 시점에 적용. BUZZER_ON처럼 동작이 끝났을 때
+  // 원복해야 하는 효과는 정리 콜백을 돌려줘서 simSink가 wait 직후 실행하게 한다.
+  // LED 번호 매핑은 알비 자신의 입장: LED1=오른쪽 눈(eyeR), LED2=왼쪽 눈(eyeL).
+  const applyAlbiEffect = (cmd) => {
+    if (!sim) return null;
+    if (cmd.startsWith('BATCH;')) {
+      const cleanups = cmd.slice('BATCH;'.length).split('|').map(applyAlbiEffect).filter(Boolean);
+      return cleanups.length ? () => cleanups.forEach((fn) => fn()) : null;
+    }
+    if (cmd.startsWith('LED_ON,')) {
+      if (!sim.hasEyes) return null;
+      const parts = cmd.split(',');
+      const num = parseInt(parts[1], 10);
+      const intensity = Math.max(0, Math.min(1, parseFloat(parts[2])));
+      if (num === 1) sim.setEye('R', intensity);
+      else if (num === 2) sim.setEye('L', intensity);
+      return null;
+    }
+    if (cmd.startsWith('LED_OFF,')) {
+      const arg = cmd.split(',')[1];
+      if (arg === 'ALL') {
+        if (sim.hasEyes)  { sim.setEye('R', 0); sim.setEye('L', 0); }
+        if (sim.hasChest) sim.setChest(0);
+      } else if (sim.hasEyes) {
+        const num = parseInt(arg, 10);
+        if (num === 1) sim.setEye('R', 0);
+        else if (num === 2) sim.setEye('L', 0);
+      }
+      return null;
+    }
+    if (cmd.startsWith('BUZZER_ON,')) {
+      const parts = cmd.split(',');
+      const hz  = parseFloat(parts[1]) || 0;
+      const sec = parseFloat(parts[2]) || 0;
+      if (sim.hasChest) sim.setChest(1);
+      playBeep(hz, sec);
+      return () => { if (sim?.hasChest) sim.setChest(0); };
+    }
+    return null;
+  };
+  // 명령에 포함된 동작 시간을 초 단위로 돌려준다. 시뮬레이션이 Pico처럼 그 시간만큼
+  // 실제로 멈춰서 블록의 타이밍 감각을 재현하게 만든다. 인자가 없는 명령(LED, MSG 등)은 0.
+  const commandHoldSeconds = (c) => {
+    const head = c.split(',')[0];
+    const parts = c.split(',');
+    if (c.startsWith('BATCH;')) {
+      return c.slice('BATCH;'.length).split('|').reduce((s, sub) => s + commandHoldSeconds(sub), 0);
+    }
+    if (head === 'SLEEP')                          return parseFloat(parts[1]) || 0;
+    if (head === 'BUZZER_ON')                      return parseFloat(parts[2]) || 0;
+    if (head === 'SERVO_tFORWARD'  || head === 'SERVO_tBACKWARD' ||
+        head === 'SERVO_tLEFT'     || head === 'SERVO_tRIGHT')   return parseFloat(parts[1]) || 0;
+    if (head === 'DC_tFORWARD'     || head === 'DC_tBACKWARD')   return parseFloat(parts[1]) || 0;
+    return 0;
+  };
   const simSink = async (command, waitForResponse) => {
-    const delay = waitForResponse ? 100 : 20;     // Ack 100ms / 비Ack 20ms
+    const ackMs  = waitForResponse ? 100 : 20;           // Ack 100ms / 비Ack 20ms
+    const holdMs = Math.round(commandHoldSeconds(command) * 1000);
+    const total  = ackMs + holdMs;
     logLine(`→ ${command}`, waitForResponse ? 'tx-ack' : 'tx');
-    await wait(delay);
+    const cleanup = applyAlbiEffect(command);             // 시작 효과 적용 (LED/부저)
+    await wait(total);
+    cleanup?.();                                          // 동작 시간 종료 처리 (예: 가슴 LED 끔)
     let reply = '1';
     if (command.startsWith('DISTANCE')) reply = 'DIST:30';
     else if (command.startsWith('MAGNET')) reply = 'MAG:0';
-    logLine(`     ↩ ${reply}  (+${delay}ms, ${waitForResponse ? 'Ack' : '비Ack'})`, 'rx');
+    const holdNote = holdMs > 0 ? ` + 대기 ${holdMs}ms` : '';
+    logLine(`     ↩ ${reply}  (+${total}ms, ${waitForResponse ? 'Ack' : '비Ack'}${holdNote})`, 'rx');
     return reply;
   };
   let simRunning = false;
