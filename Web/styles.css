@@ -1072,6 +1072,24 @@ iframe, #dashboardFrame {
 .sim-launch-btn:hover { border-color: var(--primary-color, #4682c8); }
 .sim-launch-btn.on { background: rgba(0, 200, 200, 0.18); border-color: #3cbfbf; color: #0a5c5c; }
 .sim-launch-btn.on .dot { background: #2dd4d4; box-shadow: 0 0 7px 2px rgba(45, 212, 212, 0.75); }
+
+/* 발사대 LED 버튼(LED0=도넛, LED1..LED5=세로 줄) — 활성 색은 LED 발광색(붉은색) */
+.sim-launch-led-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.sim-launch-led-btn {
+    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-launch-led-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-launch-led-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-launch-led-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-launch-led-btn.on { background: rgba(255, 60, 60, 0.16); border-color: #e54f4f; color: #a01818; }
+.sim-launch-led-btn.on .dot { background: #ff3030; box-shadow: 0 0 7px 2px rgba(255, 60, 60, 0.78); }
 .sim-stage {
     position: relative; width: 100%; height: 300px;
     /* 우주 느낌의 어둡지만 채도 있는 배경: 보라 → 인디고 → 짙은 네이비 */
