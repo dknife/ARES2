@@ -1069,6 +1069,7 @@ export function setupSimulation({ workspace }) {
       if (!sim || !sim.hasRocket) return;
       const next = !sim.rocketLaunchOn;
       sim.setRocketLaunch(next);
+      if (next) playRocketLaunch();          // 발사 시작 시 발사음 재생
       rocketBtn.classList.toggle('on', next);
       rocketBtn.innerHTML = next ? ROCKET_LABEL_ON : ROCKET_LABEL_OFF;
       rocketBtn.setAttribute('aria-pressed', String(next));
@@ -1111,6 +1112,54 @@ export function setupSimulation({ workspace }) {
       g.gain.linearRampToValueAtTime(0, t1);
       o.start(t0); o.stop(t1 + 0.02);
     } catch (e) { console.warn('beep 실패:', e); }
+  };
+  // 로켓 발사음 — 필터링한 화이트노이즈로 만든 절차적 굉음.
+  //   · 저역 럼블(lowpass): 점점 묵직해지는 우르릉.
+  //   · 중역 로어(bandpass): 점화 직후 솟구쳤다 가라앉는 분사 쉭소리.
+  //   엔벨로프: 빠른 점화 폭발 → 서서히 감쇠(약 3.6초).
+  const playRocketLaunch = () => {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const t0 = ctx.currentTime;
+      const DUR = 3.6;
+      // 2초 길이 화이트노이즈 버퍼를 루프로 재생 — 럼블/로어 공통 소스.
+      const bufLen = Math.floor(ctx.sampleRate * 2);
+      const buffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+      // 저역 럼블
+      const rumbleSrc = ctx.createBufferSource(); rumbleSrc.buffer = buffer; rumbleSrc.loop = true;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(900, t0);
+      lp.frequency.exponentialRampToValueAtTime(250, t0 + DUR);   // 점점 더 묵직하게
+      const rumbleGain = ctx.createGain();
+      rumbleSrc.connect(lp); lp.connect(rumbleGain); rumbleGain.connect(ctx.destination);
+
+      // 중역 로어(분사 쉭소리)
+      const roarSrc = ctx.createBufferSource(); roarSrc.buffer = buffer; roarSrc.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.7;
+      bp.frequency.setValueAtTime(500, t0);
+      bp.frequency.linearRampToValueAtTime(1400, t0 + 0.6);       // 점화 직후 솟구침
+      bp.frequency.exponentialRampToValueAtTime(700, t0 + DUR);
+      const roarGain = ctx.createGain();
+      roarSrc.connect(bp); bp.connect(roarGain); roarGain.connect(ctx.destination);
+
+      // 엔벨로프 — 빠른 점화 후 감쇠.
+      const VOL = 0.16;
+      rumbleGain.gain.setValueAtTime(0, t0);
+      rumbleGain.gain.linearRampToValueAtTime(VOL, t0 + 0.15);    // 점화 폭발
+      rumbleGain.gain.setValueAtTime(VOL, t0 + DUR * 0.5);
+      rumbleGain.gain.linearRampToValueAtTime(0, t0 + DUR);
+      roarGain.gain.setValueAtTime(0, t0);
+      roarGain.gain.linearRampToValueAtTime(VOL * 0.7, t0 + 0.1);
+      roarGain.gain.linearRampToValueAtTime(0, t0 + DUR);
+
+      rumbleSrc.start(t0); rumbleSrc.stop(t0 + DUR + 0.05);
+      roarSrc.start(t0);   roarSrc.stop(t0 + DUR + 0.05);
+    } catch (e) { console.warn('rocket launch sound 실패:', e); }
   };
   // 현재 주제(알비 / 우주 신호등 …)에 따라 명령 시작 시점에 시각·소리 효과를 적용한다.
   // BUZZER_ON처럼 동작 종료 시 원복이 필요한 효과는 정리 콜백을 돌려주고,
@@ -1193,7 +1242,7 @@ export function setupSimulation({ workspace }) {
     if (cmd === 'DC_STOP'     || cmd.startsWith('DC_STOP,'))     { if (sim.hasRadar) sim.setRadar(false);    return null; }
     // GUN_FIRE — 로켓 발사. 시뮬레이션 경로에서는 카메라가 따라가지 않는다(=followCamera:false).
     if (cmd === 'GUN_FIRE' || cmd.startsWith('GUN_FIRE,')) {
-      if (sim.hasRocket) sim.setRocketLaunch(true, false);
+      if (sim.hasRocket) { sim.setRocketLaunch(true, false); playRocketLaunch(); }
       return null;
     }
     return null;
