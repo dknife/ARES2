@@ -253,15 +253,23 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     glowStops: ['rgba(255,210,200,1)', 'rgba(255,60,40,0.65)', 'rgba(255,0,0,0)'],
     glowTint: 0xff5566, lightColor: 0xff3344,
   };
-  // 발사대 LED1..LED5 전용 — EYE_PALETTE 보다 채도를 높여 더 또렷한 초록.
-  // 글로우 가운데를 흰빛 섞인 옅은 톤(rgba 180,255,210) 대신 진한 순수 초록(60,255,110)으로.
-  // intensityScale: 1보다 작으면 발광량을 낮춰 ACES 톤매핑에서 흰빛으로 날아가는 걸 막고
-  // 본래 색조를 또렷이 보여준다(채도 보존).
+  // 발사대 LED1..LED5 전용 — 흰빛 안 섞인 진한 순수 초록으로 채도를 높였다.
+  // 채도 보존 3종 튜닝(눈/가슴 LED 는 기본값이라 영향 없음):
+  //   intensityScale: 발광량(emissive/glow/light) 배율 — 낮출수록 ACES 톤매핑의 흰빛 날림↓ → 채도↑
+  //   opacityOn:      완전 점등 시 구체 불투명도(1에 가까울수록 본래 색이 또렷·불투명)
+  //   glowScale:      가산(Additive) 글로우 비율 — 낮출수록 흰빛 가산이 줄어 색이 진하게 보인다
   const LAUNCH_STRIP_PALETTE = {
-    sphereBase: 0x052c12, emissive: 0x00ff40,
-    glowStops: ['rgba(60,255,110,1)', 'rgba(0,255,70,0.80)', 'rgba(0,255,40,0)'],
-    glowTint: 0x00ff55, lightColor: 0x00ff55,
-    intensityScale: 0.45,
+    sphereBase: 0x031a0a, emissive: 0x00ff33,
+    glowStops: ['rgba(20,255,80,1)', 'rgba(0,230,50,0.78)', 'rgba(0,255,40,0)'],
+    glowTint: 0x00ff44, lightColor: 0x00ff44,
+    intensityScale: 0.4, opacityOn: 0.99, glowScale: 0.55,
+  };
+  // 발사대 LED0(로켓 바닥 도넛) 전용 빨강 — 가슴 LED(CHEST)와 분리해 채도를 더 높게 튜닝.
+  const LAUNCH_TORUS_PALETTE = {
+    sphereBase: 0x1f0204, emissive: 0xff0a1e,
+    glowStops: ['rgba(255,80,70,1)', 'rgba(255,20,25,0.78)', 'rgba(255,0,0,0)'],
+    glowTint: 0xff1828, lightColor: 0xff1422,
+    intensityScale: 0.45, opacityOn: 0.99, glowScale: 0.55,
   };
   const makeGlowTex = (stops) => {
     const gc = document.createElement('canvas'); gc.width = gc.height = 128;
@@ -277,7 +285,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   const eyeGlowTex    = EYE    ? makeGlowTex(EYE_PALETTE.glowStops)   : null;
   const chestGlowTex  = CHEST  ? makeGlowTex(CHEST_PALETTE.glowStops) : null;
   // 발사대: 도넛(LED0)은 붉은색, 세로 줄(LED1..5)은 초록색. 두 종류 텍스처 따로 베이크.
-  const launchGlowTex      = LAUNCH ? makeGlowTex(CHEST_PALETTE.glowStops) : null;
+  const launchGlowTex      = LAUNCH ? makeGlowTex(LAUNCH_TORUS_PALETTE.glowStops) : null;
   const launchStripGlowTex = LAUNCH ? makeGlowTex(LAUNCH_STRIP_PALETTE.glowStops) : null;
   // geometry 인자가 주어지면 그 지오메트리를 사용(예: 도넛 LED), 아니면 기본 구체.
   // 글로우 스프라이트 스케일·라이트 거리는 radius 기준으로 산정한다.
@@ -291,7 +299,10 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     glow.scale.setScalar(radius * 3.3); glow.visible = false;
     const light = new THREE.PointLight(palette.lightColor, 0, radius * 22, 2);
     grp.add(sphere, glow, light);
-    return { group: grp, sphere, glow, light, on: false, intensityScale: palette.intensityScale ?? 1 };
+    return { group: grp, sphere, glow, light, on: false,
+             intensityScale: palette.intensityScale ?? 1,
+             opacityOn: palette.opacityOn ?? 0.92,   // 기본값 = 기존 눈/가슴 LED 동작 보존
+             glowScale: palette.glowScale ?? 1 };
   };
   if (EYE)   { eyeL = makeLed(EYE.radius, EYE.left, EYE_PALETTE, eyeGlowTex); eyeR = makeLed(EYE.radius, EYE.right, EYE_PALETTE, eyeGlowTex); }
   if (CHEST) { chestLed = makeLed(CHEST.radius, CHEST.pos, CHEST_PALETTE, chestGlowTex); }
@@ -300,11 +311,13 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   function applyLed(e, value) {
     const v = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : (value ? 1 : 0);
     const s = e.intensityScale ?? 1;
+    const opOn  = e.opacityOn ?? 0.92;      // 완전 점등 시 구체 불투명도(높을수록 색이 또렷)
+    const glowS = e.glowScale ?? 1;         // 가산 글로우 비율(낮을수록 흰빛 날림↓ → 채도↑)
     e.on = v > 0;
-    e.sphere.material.emissiveIntensity = 3.2 * v * s;
-    e.sphere.material.opacity = v > 0 ? 0.4 + 0.52 * v : 0.4;
+    e.sphere.material.emissiveIntensity = 3.2 * v * s;       // s 를 낮추면 밝기↓ → 색 보존
+    e.sphere.material.opacity = v > 0 ? 0.4 + (opOn - 0.4) * v : 0.4;
     e.glow.visible = v > 0;
-    if (e.glow.material) e.glow.material.opacity = 0.95 * v * s;
+    if (e.glow.material) e.glow.material.opacity = 0.95 * v * s * glowS;
     e.light.intensity = 1.8 * v * s;
   }
   function setEye(side, value) { if (!EYE)   return; applyLed(side === 'L' ? eyeL : eyeR, value); }
@@ -354,6 +367,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       rocketFlameLight    = root.userData.rocketFlameLight    || null;
       rocketCentroidLocal = root.userData.rocketCentroidLocal || null;
       rocketMeshRef       = root.userData.rocketMeshRef       || null;
+      rocketBottomLocal   = root.userData.rocketBottomLocal   || null;
       // 발사대 LED 6개 — bbox 비율로 LED1..LED5(전면 세로 줄), 로켓 바닥에 LED0(도넛).
       // box/sz/c 는 root.position 보정 전 좌표계이므로 root에 그 값을 그대로 local로 넘기면
       // 보정된 위치에 자동으로 놓인다.
@@ -378,7 +392,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
         if (rb && rmesh) {
           const torusGeom = new THREE.TorusGeometry(LAUNCH.torusRadius, LAUNCH.torusTube, 16, 48);
           torusGeom.rotateX(Math.PI / 2);                // 눕혀서 평면 링으로
-          const led0 = makeLed(LAUNCH.torusRadius, [rb.x, rb.y + LAUNCH.torusYOffset, rb.z], CHEST_PALETTE, launchGlowTex, torusGeom);
+          const led0 = makeLed(LAUNCH.torusRadius, [rb.x, rb.y + LAUNCH.torusYOffset, rb.z], LAUNCH_TORUS_PALETTE, launchGlowTex, torusGeom);
           rmesh.add(led0.group);                          // mesh-local 좌표 사용했으므로 mesh에 붙임
           launchLeds[0] = led0;
         }
@@ -441,13 +455,21 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
 
   // 로켓 발사 — rocketGroup 을 위로 점진 상승, 카메라가 로켓을 따라가며 쳐다본다.
   let rocketGroup = null, rocketFlameSprite = null, rocketFlameLight = null;
-  let rocketCentroidLocal = null, rocketMeshRef = null;
+  let rocketCentroidLocal = null, rocketMeshRef = null, rocketBottomLocal = null;
   let rocketLaunchOn = false;
   let rocketAnimT = 0;                  // 0(원위치) ~ 1(완전 발사)
   // 발사 시작 시점의 카메라/타깃 백업 — 중지하면 정확히 이 상태로 복귀한다.
   let savedCamPos = null, savedTarget = null, rocketCentroidWorld = null;
   const ROCKET_RISE  = 10;              // local 단위로 로켓이 위로 올라가는 거리(=카메라 추적량)
   const ROCKET_SPEED = 0.00267;         // 프레임당 rocketAnimT 변화 (≈ 6초에 1회 완주, 이전의 1/3 속도)
+  // 로켓 발사 연기/구름 — 엔진에서 큰 회백색 puff 를 분출. 연기는 로켓과 달리 mesh-local
+  // 공간에 머물러(같이 솟지 않음) 발사대 바닥에 큰 구름이 쌓이고 위로 기둥 trail 이 생긴다.
+  let smokeGroup = null;                // rocketMeshRef 에 붙는 puff 컨테이너
+  let smokeTex = null;                  // 뭉게구름 텍스처(CanvasTexture)
+  const smokePool = [];                 // { sprite, active, age, life, vel, scale0, scaleMax, rot, rotSpeed }
+  let smokeSpawnAcc = 0;                // 분당 puff 생성 누적치
+  const SMOKE_POOL  = 80;               // 재사용 sprite 풀 크기
+  const SMOKE_RATE  = 42;               // 초당 기본 puff 생성 수(발사 초반엔 ×2 까지)
   function setRocketLaunch(on, followCamera) {
     // followCamera 가 false 면 시점 추적 없이 발사만 — 시뮬레이션 명령(GUN_FIRE) 경로용.
     // 버튼(UI) 토글은 인자 생략 → 기존대로 카메라가 로켓을 따라간다.
@@ -521,6 +543,97 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
     }
   }
+
+  // ── 로켓 발사 연기/구름 ──
+  // 뭉게구름 텍스처: 부드러운 원을 여러 개 겹쳐 얼룩진(billowy) 알파를 만든다.
+  const makeSmokeTex = () => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const cx = cv.getContext('2d');
+    const blob = (px, py, r, a) => {
+      const g = cx.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0.0, `rgba(255,255,255,${a})`);
+      g.addColorStop(0.5, `rgba(244,246,250,${a * 0.55})`);
+      g.addColorStop(1.0, 'rgba(232,236,244,0)');
+      cx.fillStyle = g; cx.beginPath(); cx.arc(px, py, r, 0, Math.PI * 2); cx.fill();
+    };
+    blob(64, 64, 46, 0.92);
+    blob(44, 54, 30, 0.7); blob(82, 56, 28, 0.7);
+    blob(54, 82, 26, 0.62); blob(82, 82, 24, 0.62);
+    const t = new THREE.CanvasTexture(cv);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  };
+  // 로켓 참조가 준비된 뒤(모델 로딩 완료) 한 번만 풀을 생성해 mesh 에 붙인다.
+  function ensureSmoke() {
+    if (smokeGroup || !rocketMeshRef || !rocketBottomLocal) return;
+    smokeTex = makeSmokeTex();
+    smokeGroup = new THREE.Group();
+    rocketMeshRef.add(smokeGroup);
+    for (let i = 0; i < SMOKE_POOL; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: smokeTex, color: 0xeef1f6, transparent: true,
+        depthWrite: false, opacity: 0, // 일반 블렌딩 → 불투명한 구름 느낌
+      }));
+      sp.visible = false;
+      smokeGroup.add(sp);
+      smokePool.push({ sprite: sp, active: false, age: 0, life: 1, vel: new THREE.Vector3(),
+                       scale0: 0.18, scaleMax: 1.4, rot: 0, rotSpeed: 0 });
+    }
+  }
+  // 로켓 바닥(현재 상승 높이 반영)에서 puff 한 개 분출 — 주로 바깥으로 퍼지며 천천히 떠오른다.
+  function spawnSmoke(baseY) {
+    const p = smokePool.find((q) => !q.active);
+    if (!p) return;
+    const ang = Math.random() * Math.PI * 2;
+    const rad = Math.random() * 0.12;
+    p.active = true; p.age = 0;
+    p.life = 1.6 + Math.random() * 1.3;                 // 1.6~2.9초 동안 살아있음
+    p.sprite.position.set(
+      rocketBottomLocal.x + Math.cos(ang) * rad,
+      baseY - 0.05 - Math.random() * 0.06,              // 엔진 바로 아래에서 시작
+      rocketBottomLocal.z + Math.sin(ang) * rad,
+    );
+    const spd = 0.5 + Math.random() * 0.8;
+    p.vel.set(Math.cos(ang) * spd, -0.15 - Math.random() * 0.25, Math.sin(ang) * spd);
+    p.scale0  = 0.16 + Math.random() * 0.12;            // 작게 시작
+    p.scaleMax = 1.0 + Math.random() * 1.0;             // 큰 구름으로 팽창
+    p.rot = Math.random() * Math.PI * 2;
+    p.rotSpeed = (Math.random() - 0.5) * 0.8;
+    p.sprite.material.opacity = 0;
+    p.sprite.material.rotation = p.rot;
+    p.sprite.scale.set(p.scale0, p.scale0, 1);
+    p.sprite.visible = true;
+  }
+  function updateSmoke(dt) {
+    ensureSmoke();
+    if (!smokeGroup) return;
+    // 분출 — 추진 중(rocketLaunchOn)일 때만. 발사 초반(바닥 근처)일수록 더 많이 뿜어 큰 구름.
+    if (rocketLaunchOn) {
+      const rate = SMOKE_RATE * (1 + (1 - rocketAnimT));   // 초반 ×2 → 정점 ×1
+      smokeSpawnAcc += dt * rate;
+      const baseY = rocketBottomLocal.y + rocketGroup.position.y;
+      while (smokeSpawnAcc >= 1) { smokeSpawnAcc -= 1; spawnSmoke(baseY); }
+    } else {
+      smokeSpawnAcc = 0;
+    }
+    // 갱신 — 팽창·이동·페이드. 중지해도 남은 puff 는 자연히 사라진다.
+    for (const p of smokePool) {
+      if (!p.active) continue;
+      p.age += dt;
+      const t = p.age / p.life;
+      if (t >= 1) { p.active = false; p.sprite.visible = false; continue; }
+      p.sprite.position.addScaledVector(p.vel, dt);
+      p.vel.multiplyScalar(Math.max(0, 1 - 2.0 * dt));    // 공기 저항(프레임레이트 무관) — 점점 퍼지다 멈춤
+      p.vel.y += 0.3 * dt;                                // 연기는 천천히 위로 떠오름
+      const grow = 1 - (1 - t) * (1 - t);                 // ease-out 팽창
+      const s = p.scale0 + (p.scaleMax - p.scale0) * grow;
+      p.sprite.scale.set(s, s, 1);
+      p.sprite.material.opacity = Math.min(1, t * 6) * (1 - t) * 0.8; // 빠르게 차고 천천히 사라짐
+      p.rot += p.rotSpeed * dt;
+      p.sprite.material.rotation = p.rot;
+    }
+  }
+
   let lastRenderTime = 0;
   function render() {
     const nowSec = performance.now() * 0.001;
@@ -558,6 +671,9 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       if (rocketFlameLight) {
         rocketFlameLight.intensity = showFlame ? Math.min(1, rocketAnimT * 4) * 1.8 : 0;
       }
+
+      // 발사 연기/구름 — 엔진에서 큰 회백색 puff 분출(추진 중 생성, 이후 자연 소멸).
+      updateSmoke(dt);
 
       // 카메라 추적 — 발사 중에는 매 프레임 target 을 로켓의 현재 world 위치로 직접 set.
       // (즉시 정조준 — saved → 로켓 사이 보간 없음.) 중지 후 복귀 단계에서만 saved 쪽으로
@@ -729,6 +845,11 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
 
   function dispose() {
     try { controls.dispose(); } catch {}
+    // 연기 puff(Sprite)는 traverse(isMesh)에 안 잡히므로 재료/텍스처를 직접 정리.
+    try {
+      smokePool.forEach((p) => p.sprite?.material?.dispose?.());
+      smokeTex?.dispose?.();
+    } catch {}
     scene.traverse((o) => {
       if (o.isMesh) {
         o.geometry?.dispose?.();
@@ -750,6 +871,8 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     get radarOn() { return radarOn; },
     get hasRocket() { return !!rocketGroup; }, setRocketLaunch,
     get rocketLaunchOn() { return rocketLaunchOn; },
+    // 로켓이 완전히 원위치에 있는지(발사 중도 아니고 복귀 애니메이션도 끝남).
+    get rocketAtRest() { return !rocketLaunchOn && rocketAnimT === 0; },
   };
 }
 
@@ -839,12 +962,36 @@ export function setupSimulation({ workspace }) {
     btn.textContent = '🤖 시뮬레이션 닫기';
     btn.setAttribute('aria-pressed', 'true');
   };
-  const close = () => {
-    if (card.hidden) return;
+  // 실제로 카드를 숨기고 렌더 루프를 멈추는 마무리 단계.
+  const finalizeClose = () => {
     card.hidden = true;
     cancelAnimationFrame(raf); raf = 0;
     btn.textContent = '🤖 시뮬레이션 열기';
     btn.setAttribute('aria-pressed', 'false');
+  };
+  let closing = false;                 // 로켓 복귀 재생 중 중복 close 방지
+  const close = () => {
+    if (card.hidden || closing) return;
+    // 로켓이 떠 있으면(발사 중이거나 복귀 도중) '발사 중지' 버튼과 동일하게
+    // 원위치로 내려오는 과정을 끝까지 재생한 뒤에 카드를 닫는다.
+    if (sim && sim.hasRocket && !sim.rocketAtRest) {
+      closing = true;
+      sim.setRocketLaunch(false);
+      // 로켓 버튼 UI 도 중지 상태로 되돌린다.
+      if (rocketBtn) {
+        rocketBtn.classList.remove('on');
+        rocketBtn.innerHTML = ROCKET_LABEL_OFF;
+        rocketBtn.setAttribute('aria-pressed', 'false');
+      }
+      // 렌더 루프(raf)는 계속 돌며 로켓을 내려보낸다. 복귀가 끝나면 마무리.
+      const waitDescend = () => {
+        if (!sim || sim.rocketAtRest) { closing = false; finalizeClose(); return; }
+        requestAnimationFrame(waitDescend);
+      };
+      waitDescend();
+      return;
+    }
+    finalizeClose();
   };
 
   // 주제를 바꾸면 해당 객체로 교체
@@ -1109,6 +1256,16 @@ export function setupSimulation({ workspace }) {
       logLine('오류: ' + (e && e.message ? e.message : e), 'err');
     } finally {
       simRunning = false; simRunBtn.disabled = false;
+      // 시뮬레이션 종료 시, GUN_FIRE 로 떠오른 로켓을 '발사 중지'와 동일하게 원위치로 복귀.
+      // 렌더 루프가 돌고 있으므로 setRocketLaunch(false) 만으로 하강 애니메이션이 재생된다.
+      if (sim && sim.hasRocket && !sim.rocketAtRest) {
+        sim.setRocketLaunch(false);
+        if (rocketBtn) {
+          rocketBtn.classList.remove('on');
+          rocketBtn.innerHTML = ROCKET_LABEL_OFF;
+          rocketBtn.setAttribute('aria-pressed', 'false');
+        }
+      }
     }
   });
   if (simClearBtn) simClearBtn.addEventListener('click', () => { if (simLog) simLog.textContent = ''; });
