@@ -74,8 +74,7 @@
                                                           <block type="time_sleep">
                                                             <value name="SECONDS"><block type="math_number"><field name="NUM">0.8</field></block></value>
                                                             <next>
-                                                              <block type="led_off">
-                                                                <field name="LED_NUM">ALL</field>
+                                                              <block type="led_off_all">
                                                                 <next>
                                                                   <block type="buzzer_on">
                                                                     <value name="FREQ"><block type="math_number"><field name="NUM">784</field></block></value>

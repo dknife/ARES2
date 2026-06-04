@@ -20,35 +20,35 @@
                         <value name="SECONDS"><block type="math_number"><field name="NUM">1</field></block></value>
                         <next>
                           <block type="led_on">
-                            <field name="LED_NUM">1</field>
+                            <value name="LED_NUM"><block type="math_number"><field name="NUM">1</field></block></value>
                             <value name="BRIGHTNESS"><block type="math_number"><field name="NUM">1</field></block></value>
                             <next>
                               <block type="time_sleep">
                                 <value name="SECONDS"><block type="math_number"><field name="NUM">0.3</field></block></value>
                                 <next>
                                   <block type="led_on">
-                                    <field name="LED_NUM">2</field>
+                                    <value name="LED_NUM"><block type="math_number"><field name="NUM">2</field></block></value>
                                     <value name="BRIGHTNESS"><block type="math_number"><field name="NUM">1</field></block></value>
                                     <next>
                                       <block type="time_sleep">
                                         <value name="SECONDS"><block type="math_number"><field name="NUM">0.3</field></block></value>
                                         <next>
                                           <block type="led_on">
-                                            <field name="LED_NUM">3</field>
+                                            <value name="LED_NUM"><block type="math_number"><field name="NUM">3</field></block></value>
                                             <value name="BRIGHTNESS"><block type="math_number"><field name="NUM">1</field></block></value>
                                             <next>
                                               <block type="time_sleep">
                                                 <value name="SECONDS"><block type="math_number"><field name="NUM">0.3</field></block></value>
                                                 <next>
                                                   <block type="led_on">
-                                                    <field name="LED_NUM">4</field>
+                                                    <value name="LED_NUM"><block type="math_number"><field name="NUM">4</field></block></value>
                                                     <value name="BRIGHTNESS"><block type="math_number"><field name="NUM">1</field></block></value>
                                                     <next>
                                                       <block type="time_sleep">
                                                         <value name="SECONDS"><block type="math_number"><field name="NUM">0.3</field></block></value>
                                                         <next>
                                                           <block type="led_on">
-                                                            <field name="LED_NUM">5</field>
+                                                            <value name="LED_NUM"><block type="math_number"><field name="NUM">5</field></block></value>
                                                             <value name="BRIGHTNESS"><block type="math_number"><field name="NUM">1</field></block></value>
                                                             <next>
                                                               <block type="time_sleep">
@@ -92,8 +92,7 @@
                                                                               </block>
                                                                             </statement>
                                                                             <next>
-                                                                              <block type="led_off">
-                                                                                <field name="LED_NUM">ALL</field>
+                                                                              <block type="led_off_all">
                                                                                 <next>
                                                                                   <block type="buzzer_on">
                                                                                     <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>

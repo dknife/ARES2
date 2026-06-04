@@ -10,6 +10,8 @@
     notificationsEnabled: false,
     readIntervalId: null,
     isConnecting: false,
+    connectFailed: false,
+    // 마지막 연결 시도가 실패했는지 (재연결 라벨용)
     lastCommand: null,
     // 실행 상태
     isExecuting: false,
@@ -23,12 +25,8 @@
 
   // elements.js
   var elements = {
-    // 상태 표시
-    status: document.getElementById("status"),
-    deviceInfo: document.getElementById("deviceInfo"),
-    // 제어 버튼
+    // 제어 버튼 — connectButton 은 연결/끊기/재연결 4-state 통합 버튼
     connectButton: document.getElementById("connectButton"),
-    disconnectButton: document.getElementById("disconnectButton"),
     runButton: document.getElementById("runButton"),
     saveButton: document.getElementById("saveButton"),
     loadButton: document.getElementById("loadButton"),
@@ -152,8 +150,8 @@
         return;
       }
       state.isConnecting = true;
-      elements.connectButton.disabled = true;
-      this.updateStatus("\uC544\uB808\uC2A4 \uD0D0\uC0C9 \uC911...", STATUS_COLORS.ORANGE);
+      state.connectFailed = false;
+      this.updateConnectionStatus(false);
       try {
         Logger.add("[BLE] \uC7A5\uCE58 \uAC80\uC0C9 \uC911...", "info");
         state.bluetoothDevice = await navigator.bluetooth.requestDevice({
@@ -164,7 +162,6 @@
           ],
           optionalServices: [BLUETOOTH_CONFIG.UART_SERVICE_UUID]
         });
-        this.updateStatus("\uC544\uB808\uC2A4\uC5D0 \uC5F0\uACB0 \uC911...", STATUS_COLORS.ORANGE);
         Logger.add(`[BLE] \uC7A5\uCE58 \uBC1C\uACAC: ${state.bluetoothDevice.name || "Unknown"}`, "info");
         state.bluetoothDevice.addEventListener(
           "gattserverdisconnected",
@@ -172,7 +169,6 @@
         );
         state.bluetoothServer = await state.bluetoothDevice.gatt.connect();
         await this.delay(2e3);
-        this.updateStatus("UART \uC11C\uBE44\uC2A4 \uC5F0\uACB0 \uC911...", STATUS_COLORS.ORANGE);
         state.uartService = await state.bluetoothServer.getPrimaryService(
           BLUETOOTH_CONFIG.UART_SERVICE_UUID
         );
@@ -192,17 +188,17 @@
           Logger.add(`[BLE] \uD3F4\uB9C1 \uBAA8\uB4DC\uB85C \uC804\uD658`, "info");
           this.startPeriodicReads();
         }
+        state.isConnecting = false;
+        state.connectFailed = false;
         this.updateConnectionStatus(true);
         Logger.add(`[\uC5F0\uACB0] ${state.bluetoothDevice.name || "Unknown"} \uC5F0\uACB0 \uC644\uB8CC`, "success");
-        state.isConnecting = false;
-        elements.connectButton.disabled = false;
       } catch (error) {
         console.error("BLE \uC5F0\uACB0 \uC624\uB958:", error);
         Logger.add(`[\uC624\uB958] \uC5F0\uACB0 \uC2E4\uD328: ${error.message}`, "error");
         await this.cleanup();
         state.isConnecting = false;
-        elements.connectButton.disabled = false;
-        this.updateStatus(`\u274C \uC5F0\uACB0 \uC2E4\uD328: ${error.message}`, STATUS_COLORS.RED);
+        state.connectFailed = true;
+        this.updateConnectionStatus(false);
       }
     },
     // 연결 해제
@@ -223,6 +219,7 @@
           await state.bluetoothDevice.gatt.disconnect();
         }
         await this.cleanup();
+        state.connectFailed = false;
         this.updateConnectionStatus(false);
         Logger.add("[\uC5F0\uACB0] \uD574\uC81C \uC644\uB8CC", "info");
       } catch (error) {
@@ -414,19 +411,33 @@
         );
       }
     },
-    // 연결 상태 UI 업데이트
+    // 연결 상태 UI 업데이트 — connectButton 4-state 라벨/색을 갱신.
+    // runButton 상태는 main.js 의 updateRunButtonUI 에 위임(이벤트로 통지).
     updateConnectionStatus(connected) {
-      elements.connectButton.disabled = connected || state.isConnecting;
-      elements.disconnectButton.disabled = !connected;
-      const dashboardFrame = document.getElementById("dashboardFrame");
-      const isDashboardMode = dashboardFrame && dashboardFrame.style.display !== "none" && dashboardFrame.style.display !== "";
-      if (!isDashboardMode) {
-        elements.runButton.disabled = !connected;
+      const btn = elements.connectButton;
+      if (btn) {
+        btn.classList.remove("btn-connected", "btn-failed");
+        if (connected) {
+          btn.textContent = "\u{1F50C} \uC5F0\uACB0 - \uC2E0\uD638 \uB04A\uAE30";
+          btn.classList.add("btn-connected");
+          btn.disabled = false;
+          btn.title = "\uC5F0\uACB0\uC744 \uB04A\uC73C\uB824\uBA74 \uD074\uB9AD";
+        } else if (state.isConnecting) {
+          btn.textContent = "\u{1F517} \uC5F0\uACB0 \uC911...";
+          btn.disabled = true;
+          btn.title = "\uC5F0\uACB0 \uC2DC\uB3C4 \uC911";
+        } else if (state.connectFailed) {
+          btn.textContent = "\u274C \uC5F0\uACB0\uC2E4\uD328 - \uC7AC\uC5F0\uACB0";
+          btn.classList.add("btn-failed");
+          btn.disabled = false;
+          btn.title = "\uB2E4\uC2DC \uC5F0\uACB0\uC744 \uC2DC\uB3C4\uD569\uB2C8\uB2E4";
+        } else {
+          btn.textContent = "\u{1F517} \uC2E0\uD638 \uC5F0\uACB0";
+          btn.disabled = false;
+          btn.title = "\uC544\uB808\uC2A4 \uD0D0\uC0AC\uC120\uACFC \uC5F0\uACB0";
+        }
       }
-      const emergencyStopButton = document.getElementById("emergencyStopButton");
-      if (emergencyStopButton) {
-        emergencyStopButton.disabled = false;
-      }
+      window.dispatchEvent(new CustomEvent("ares:connection", { detail: { connected } }));
       const iframe = document.getElementById("dashboardFrame");
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage({
@@ -434,22 +445,12 @@
           connected
         }, "*");
       }
-      if (connected) {
-        elements.status.textContent = "\u2705 \uC544\uB808\uC2A4 \uC5F0\uACB0\uB428";
-        elements.status.style.color = STATUS_COLORS.GREEN;
-        if (state.bluetoothDevice) {
-          elements.deviceInfo.textContent = `\uC7A5\uCE58: ${state.bluetoothDevice.name || "Unknown"}`;
-        }
-      } else {
-        elements.status.textContent = state.isConnecting ? "\uC5F0\uACB0 \uC911..." : "\u274C \uC5F0\uACB0 \uB04A\uAE40";
-        elements.status.style.color = state.isConnecting ? STATUS_COLORS.ORANGE : STATUS_COLORS.RED;
-        elements.deviceInfo.textContent = "";
-      }
     },
-    // 상태 메시지 업데이트
-    updateStatus(message, color) {
-      elements.status.textContent = message;
-      elements.status.style.color = color;
+    // 상태 메시지 업데이트 — #status 요소가 사라졌으므로 Logger 로만 흘려보낸다.
+    updateStatus(message, _color) {
+      if (typeof message === "string" && message.trim()) {
+        Logger.add(`[\uC0C1\uD0DC] ${message}`, "info");
+      }
     },
     // 데이터 전송
     async sendData(data, waitForResponse = false) {
@@ -672,39 +673,32 @@
         type: "led_on",
         message0: "\u{1F4A1} LED %1 \uBC88 \uCF1C\uAE30 (\uBC1D\uAE30 %2 )",
         args0: [
-          { type: "field_dropdown", name: "LED_NUM", options: [
-            ["0\uBC88", "0"],
-            ["1\uBC88", "1"],
-            ["2\uBC88", "2"],
-            ["3\uBC88", "3"],
-            ["4\uBC88", "4"],
-            ["5\uBC88", "5"]
-          ] },
+          { type: "input_value", name: "LED_NUM", check: "Number" },
           { type: "input_value", name: "BRIGHTNESS", check: "Number" }
         ],
         previousStatement: null,
         nextStatement: null,
         colour: "#FF5555",
-        tooltip: "\uD2B9\uC815 LED(0~5\uBC88)\uB97C \uC9C0\uC815\uD55C \uBC1D\uAE30\uB85C \uCF2D\uB2C8\uB2E4. \uBC1D\uAE30: 0~1"
+        tooltip: "\uD2B9\uC815 LED(0~5\uBC88)\uB97C \uC9C0\uC815\uD55C \uBC1D\uAE30\uB85C \uCF2D\uB2C8\uB2E4. \uBC88\uD638\uC5D0 \uC22B\uC790\xB7\uBCC0\uC218\xB7\uACC4\uC0B0\uC2DD\uC744 \uAF42\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBC1D\uAE30: 0~1"
       },
       {
         type: "led_off",
-        message0: "\u{1F4A1} LED %1 \uB044\uAE30",
+        message0: "\u{1F4A1} LED %1 \uBC88 \uB044\uAE30",
         args0: [
-          { type: "field_dropdown", name: "LED_NUM", options: [
-            ["0\uBC88", "0"],
-            ["1\uBC88", "1"],
-            ["2\uBC88", "2"],
-            ["3\uBC88", "3"],
-            ["4\uBC88", "4"],
-            ["5\uBC88", "5"],
-            ["\uC804\uCCB4", "ALL"]
-          ] }
+          { type: "input_value", name: "LED_NUM", check: "Number" }
         ],
         previousStatement: null,
         nextStatement: null,
         colour: "#FF5555",
-        tooltip: "\uD2B9\uC815 LED \uB610\uB294 \uC804\uCCB4 LED\uB97C \uB055\uB2C8\uB2E4."
+        tooltip: "\uD2B9\uC815 LED(0~5\uBC88)\uB97C \uB055\uB2C8\uB2E4. \uBC88\uD638\uC5D0 \uC22B\uC790\xB7\uBCC0\uC218\xB7\uACC4\uC0B0\uC2DD\uC744 \uAF42\uC744 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+      },
+      {
+        type: "led_off_all",
+        message0: "\u{1F4A1} LED \uC804\uCCB4 \uB044\uAE30",
+        previousStatement: null,
+        nextStatement: null,
+        colour: "#FF5555",
+        tooltip: "\uBAA8\uB4E0 LED\uB97C \uD55C\uBC88\uC5D0 \uB055\uB2C8\uB2E4."
       },
       // 디스플레이 블록 (보라색 #9966FF)
       {
@@ -1074,17 +1068,16 @@
           return `[${lamps.join(" ")}]`;
         }
         case "led_on": {
-          const ledNumStr = block.getFieldValue("LED_NUM") || "0";
-          const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
+          const ledNum = Math.max(0, Math.min(5, parseInt(this.evaluateValueBlock(block.getInputTargetBlock("LED_NUM")), 10) || 0));
           const brightness = this.evaluateValueBlock(block.getInputTargetBlock("BRIGHTNESS")) || "1";
           return `LED_ON,${ledNum},${brightness}`;
         }
         case "led_off": {
-          const ledNumStr = block.getFieldValue("LED_NUM") || "0";
-          if (ledNumStr === "ALL") return "LED_OFF,ALL";
-          const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
+          const ledNum = Math.max(0, Math.min(5, parseInt(this.evaluateValueBlock(block.getInputTargetBlock("LED_NUM")), 10) || 0));
           return `LED_OFF,${ledNum}`;
         }
+        case "led_off_all":
+          return "LED_OFF,ALL";
         case "send_message": {
           const str = String(this.evaluateValueBlock(block.getInputTargetBlock("Msg")) || "Hello");
           return `MSG,${str}`;
@@ -1288,10 +1281,8 @@
       }
     },
     async executeWorkspace(workspace2) {
-      var _a, _b;
       state.isExecuting = true;
-      elements.runButton.disabled = true;
-      BluetoothManager.updateStatus("\uD504\uB85C\uADF8\uB7A8 \uC2E4\uD589 \uC911...", STATUS_COLORS.ORANGE);
+      window.dispatchEvent(new CustomEvent("ares:execution", { detail: { executing: true } }));
       Logger.add("[\uC2E4\uD589] \uD504\uB85C\uADF8\uB7A8 \uC2DC\uC791", "info");
       try {
         const topBlocks = workspace2.getTopBlocks(true);
@@ -1306,19 +1297,13 @@
           await this.processBlock(block);
         }
         if (state.isExecuting) {
-          BluetoothManager.updateStatus("\u2705 \uD504\uB85C\uADF8\uB7A8 \uC2E4\uD589 \uC644\uB8CC!", STATUS_COLORS.GREEN);
           Logger.add("[\uC2E4\uD589] \uC644\uB8CC", "info");
         }
       } catch (error) {
-        BluetoothManager.updateStatus(`\u274C \uD504\uB85C\uADF8\uB7A8 \uC2E4\uD589 \uC2E4\uD328: ${error.message}`, STATUS_COLORS.RED);
         Logger.add(`[\uC624\uB958] \uD504\uB85C\uADF8\uB7A8 \uC2E4\uD589 \uC2E4\uD328: ${error.message}`, "error");
       }
       state.isExecuting = false;
-      const isConnected = ((_b = (_a = state.bluetoothDevice) == null ? void 0 : _a.gatt) == null ? void 0 : _b.connected) && state.characteristic;
-      elements.runButton.disabled = !isConnected;
-      setTimeout(() => {
-        BluetoothManager.updateConnectionStatus(isConnected);
-      }, 1500);
+      window.dispatchEvent(new CustomEvent("ares:execution", { detail: { executing: false } }));
     },
     // 시뮬레이션 실행: 실제 BLE 없이 sink(로그)로 명령을 흘려보낸다.
     // executeWorkspace 와 동일한 블록 처리 로직을 재사용하되, 전송은 _dispatch →
@@ -1487,15 +1472,43 @@
         root.userData.rocketFlameSprite = flameSprite;
         root.userData.rocketFlameLight = flameLight;
         root.userData.rocketCentroidLocal = new THREE.Vector3(rcx, (ryMin + ryMax) / 2, rcz);
+        root.userData.rocketBottomLocal = new THREE.Vector3(rcx, ryMin, rcz);
         root.userData.rocketMeshRef = mesh;
         console.log(`[LaunchStation] \uB85C\uCF13 \uC815\uC810 \uBD84\uB9AC: ${insideTris.length / 3}\uAC1C \uC0BC\uAC01\uD615`);
       }
     }
   }
   var TOPICS = {
-    albi: { label: "\uC54C\uBE44\uC640 \uD568\uAED8", model: "Mesh/AlbiStaticLow.glb", eyes: { radius: 0.11, left: [-0.145, 0.425, 0.12], right: [0.145, 0.425, 0.12] } },
+    albi: { label: "\uC54C\uBE44\uC640 \uD568\uAED8", model: "Mesh/AlbiStaticLow.glb", eyes: { radius: 0.11, left: [0.145, 0.375, 0.12], right: [-0.145, 0.375, 0.12] }, chest: { radius: 0.07, pos: [0, -0.1, 0.135] } },
     traffic: { label: "\uC6B0\uC8FC \uC2E0\uD638\uB4F1", model: "Mesh/LampBox.glb", eyes: null, traffic: { lamp: "Mesh/LampGeneral.glb", hands: ["Mesh/LampHand1.glb", "Mesh/LampHand2.glb", "Mesh/LampHand3.glb"], count: 3 } },
-    launchpad: { label: "\uBC1C\uC0AC\uB300", model: "Mesh/LaunchStation.glb", eyes: null, postProcess: recolorLaunchpadAntenna, radar: true }
+    launchpad: {
+      label: "\uBC1C\uC0AC\uB300",
+      model: "Mesh/LaunchStation.glb",
+      eyes: null,
+      postProcess: recolorLaunchpadAntenna,
+      radar: true,
+      // 발사대 LED 6개 — 모두 붉은색 발광.
+      //   LED1..LED5: 건물 전면(+z) 세로 줄에 위→아래로 등간격(구체).
+      //   LED0:       로켓 바닥에 도넛(토러스).
+      launch: {
+        stripCount: 5,
+        // LED1..LED5
+        stripRadius: 0.04,
+        // 구체 반지름
+        stripXFrac: 0.5,
+        // 모델 bbox X 중심 비율
+        stripYRange: [0.4275, 0.09068625],
+        // [위, 아래] — bbox Y 비율 (LED1 고정, 간격 ×1.05 → 폭 0.33681375)
+        stripZFrac: 0.8,
+        // 모델 +z 면에 살짝 묻히도록
+        torusRadius: 0.09,
+        // LED0 도넛 외경(굵게)
+        torusTube: 0.03,
+        // LED0 도넛 두께(굵게)
+        torusYOffset: -0.08
+        // 로켓 바닥에서 내려 발사대 상단에 살짝 닿도록
+      }
+    }
   };
   var TOPIC_ORDER = ["albi", "traffic", "launchpad"];
   var DEFAULT_TOPIC = "albi";
@@ -1509,6 +1522,8 @@
   function buildSim(THREE, A, stage, loadingEl, cfg) {
     const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
     const EYE = cfg.eyes || null;
+    const CHEST = cfg.chest || null;
+    const LAUNCH = cfg.launch || null;
     const TRAFFIC = cfg.traffic || null;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -1539,44 +1554,118 @@
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     scene.add(ground);
-    let eyeL = null, eyeR = null, glowTex = null;
-    if (EYE) {
+    let eyeL = null, eyeR = null, chestLed = null;
+    let launchLeds = null;
+    const EYE_PALETTE = {
+      sphereBase: 797208,
+      emissive: 65382,
+      glowStops: ["rgba(180,255,210,1)", "rgba(40,255,120,0.65)", "rgba(0,255,90,0)"],
+      glowTint: 5635993,
+      lightColor: 3407735
+    };
+    const CHEST_PALETTE = {
+      sphereBase: 2755596,
+      emissive: 16719920,
+      glowStops: ["rgba(255,210,200,1)", "rgba(255,60,40,0.65)", "rgba(255,0,0,0)"],
+      glowTint: 16733542,
+      lightColor: 16724804
+    };
+    const LAUNCH_STRIP_PALETTE = {
+      sphereBase: 203274,
+      emissive: 65331,
+      glowStops: ["rgba(20,255,80,1)", "rgba(0,230,50,0.78)", "rgba(0,255,40,0)"],
+      glowTint: 65348,
+      lightColor: 65348,
+      // 입력 v=1 일 때 시각적 밝기를 기존의 약 30% 수준으로 (0.4 → 0.12).
+      // opacity 는 v 에만 의존하므로 색의 또렷함은 그대로, 발광량만 줄어든다.
+      intensityScale: 0.12,
+      opacityOn: 0.99,
+      glowScale: 0.55
+    };
+    const LAUNCH_TORUS_PALETTE = {
+      sphereBase: 2032132,
+      emissive: 16714270,
+      glowStops: ["rgba(255,80,70,1)", "rgba(255,20,25,0.78)", "rgba(255,0,0,0)"],
+      glowTint: 16717864,
+      lightColor: 16716834,
+      intensityScale: 0.45,
+      opacityOn: 0.99,
+      glowScale: 0.55
+    };
+    const makeGlowTex = (stops) => {
       const gc = document.createElement("canvas");
       gc.width = gc.height = 128;
       const gx = gc.getContext("2d");
       const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
-      gg.addColorStop(0, "rgba(180,255,210,1)");
-      gg.addColorStop(0.25, "rgba(40,255,120,0.65)");
-      gg.addColorStop(1, "rgba(0,255,90,0)");
+      gg.addColorStop(0, stops[0]);
+      gg.addColorStop(0.25, stops[1]);
+      gg.addColorStop(1, stops[2]);
       gx.fillStyle = gg;
       gx.fillRect(0, 0, 128, 128);
-      glowTex = new THREE.CanvasTexture(gc);
-      glowTex.colorSpace = THREE.SRGBColorSpace;
-      const makeEye = (pos) => {
-        const grp = new THREE.Group();
-        grp.position.fromArray(pos);
-        const sphere = new THREE.Mesh(
-          new THREE.SphereGeometry(EYE.radius, 28, 28),
-          new THREE.MeshStandardMaterial({ color: 797208, emissive: 65382, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
-        );
-        const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 5635993, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
-        glow.scale.setScalar(EYE.radius * 3.3);
-        glow.visible = false;
-        const light = new THREE.PointLight(3407735, 0, EYE.radius * 22, 2);
-        grp.add(sphere, glow, light);
-        return { group: grp, sphere, glow, light, on: false };
+      const tex = new THREE.CanvasTexture(gc);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    };
+    const eyeGlowTex = EYE ? makeGlowTex(EYE_PALETTE.glowStops) : null;
+    const chestGlowTex = CHEST ? makeGlowTex(CHEST_PALETTE.glowStops) : null;
+    const launchGlowTex = LAUNCH ? makeGlowTex(LAUNCH_TORUS_PALETTE.glowStops) : null;
+    const launchStripGlowTex = LAUNCH ? makeGlowTex(LAUNCH_STRIP_PALETTE.glowStops) : null;
+    const makeLed = (radius, pos, palette, glowTex, geometry) => {
+      var _a, _b, _c;
+      const grp = new THREE.Group();
+      grp.position.fromArray(pos);
+      const sphere = new THREE.Mesh(
+        geometry || new THREE.SphereGeometry(radius, 28, 28),
+        new THREE.MeshStandardMaterial({ color: palette.sphereBase, emissive: palette.emissive, emissiveIntensity: 0, transparent: true, opacity: 0.4, roughness: 0.2, metalness: 0 })
+      );
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: palette.glowTint, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.95 }));
+      glow.scale.setScalar(radius * 3.3);
+      glow.visible = false;
+      const light = new THREE.PointLight(palette.lightColor, 0, radius * 22, 2);
+      grp.add(sphere, glow, light);
+      return {
+        group: grp,
+        sphere,
+        glow,
+        light,
+        on: false,
+        intensityScale: (_a = palette.intensityScale) != null ? _a : 1,
+        opacityOn: (_b = palette.opacityOn) != null ? _b : 0.92,
+        // 기본값 = 기존 눈/가슴 LED 동작 보존
+        glowScale: (_c = palette.glowScale) != null ? _c : 1
       };
-      eyeL = makeEye(EYE.left);
-      eyeR = makeEye(EYE.right);
+    };
+    if (EYE) {
+      eyeL = makeLed(EYE.radius, EYE.left, EYE_PALETTE, eyeGlowTex);
+      eyeR = makeLed(EYE.radius, EYE.right, EYE_PALETTE, eyeGlowTex);
     }
-    function setEye(side, on) {
+    if (CHEST) {
+      chestLed = makeLed(CHEST.radius, CHEST.pos, CHEST_PALETTE, chestGlowTex);
+    }
+    function applyLed(e, value) {
+      var _a, _b, _c;
+      const v = typeof value === "number" ? Math.max(0, Math.min(1, value)) : value ? 1 : 0;
+      const s = (_a = e.intensityScale) != null ? _a : 1;
+      const opOn = (_b = e.opacityOn) != null ? _b : 0.92;
+      const glowS = (_c = e.glowScale) != null ? _c : 1;
+      e.on = v > 0;
+      e.sphere.material.emissiveIntensity = 3.2 * v * s;
+      e.sphere.material.opacity = v > 0 ? 0.4 + (opOn - 0.4) * v : 0.4;
+      e.glow.visible = v > 0;
+      if (e.glow.material) e.glow.material.opacity = 0.95 * v * s * glowS;
+      e.light.intensity = 1.8 * v * s;
+    }
+    function setEye(side, value) {
       if (!EYE) return;
-      const e = side === "L" ? eyeL : eyeR;
-      e.on = on;
-      e.sphere.material.emissiveIntensity = on ? 3.2 : 0;
-      e.sphere.material.opacity = on ? 0.92 : 0.4;
-      e.glow.visible = on;
-      e.light.intensity = on ? 1.8 : 0;
+      applyLed(side === "L" ? eyeL : eyeR, value);
+    }
+    function setChest(value) {
+      if (!CHEST) return;
+      applyLed(chestLed, value);
+    }
+    function setLaunchLed(i, value) {
+      if (!LAUNCH || !launchLeds || !launchLeds[i]) return;
+      applyLed(launchLeds[i], value);
     }
     const frame = (cy, dist) => {
       camera.position.set(0, cy, dist);
@@ -1613,6 +1702,7 @@
         root.position.y -= box.min.y;
         const modelH = sz.y;
         if (EYE) root.add(eyeL.group, eyeR.group);
+        if (CHEST) root.add(chestLed.group);
         try {
           (_a = cfg.postProcess) == null ? void 0 : _a.call(cfg, root, THREE);
         } catch (e) {
@@ -1624,6 +1714,32 @@
         rocketFlameLight = root.userData.rocketFlameLight || null;
         rocketCentroidLocal = root.userData.rocketCentroidLocal || null;
         rocketMeshRef = root.userData.rocketMeshRef || null;
+        rocketBottomLocal = root.userData.rocketBottomLocal || null;
+        if (LAUNCH) {
+          launchLeds = new Array(6).fill(null);
+          launchFootprintSize = Math.max(sz.x, sz.z);
+          const lx = box.min.x + sz.x * LAUNCH.stripXFrac;
+          const lz = box.min.z + sz.z * LAUNCH.stripZFrac;
+          const yTop = box.min.y + sz.y * LAUNCH.stripYRange[0];
+          const yBot = box.min.y + sz.y * LAUNCH.stripYRange[1];
+          const n = LAUNCH.stripCount;
+          for (let i = 0; i < n; i++) {
+            const t = n === 1 ? 0 : i / (n - 1);
+            const ly = yTop + (yBot - yTop) * t;
+            const led = makeLed(LAUNCH.stripRadius, [lx, ly, lz], LAUNCH_STRIP_PALETTE, launchStripGlowTex);
+            root.add(led.group);
+            launchLeds[i + 1] = led;
+          }
+          const rb = root.userData.rocketBottomLocal;
+          const rmesh = root.userData.rocketMeshRef;
+          if (rb && rmesh) {
+            const torusGeom = new THREE.TorusGeometry(LAUNCH.torusRadius, LAUNCH.torusTube, 16, 48);
+            torusGeom.rotateX(Math.PI / 2);
+            const led0 = makeLed(LAUNCH.torusRadius, [rb.x, rb.y + LAUNCH.torusYOffset, rb.z], LAUNCH_TORUS_PALETTE, launchGlowTex, torusGeom);
+            rmesh.add(led0.group);
+            launchLeds[0] = led0;
+          }
+        }
         scene.add(root);
         if (TRAFFIC) {
           trafficRoot = root;
@@ -1669,20 +1785,29 @@
     }
     resize();
     let radarOn = false;
+    let radarDir = 1;
     let antennaPivot = null;
-    function setRadar(on) {
+    function setRadar(on, dir) {
       radarOn = !!on;
+      if (dir !== void 0 && dir !== null) radarDir = dir < 0 ? -1 : 1;
     }
     let rocketGroup = null, rocketFlameSprite = null, rocketFlameLight = null;
-    let rocketCentroidLocal = null, rocketMeshRef = null;
+    let rocketCentroidLocal = null, rocketMeshRef = null, rocketBottomLocal = null;
     let rocketLaunchOn = false;
     let rocketAnimT = 0;
     let savedCamPos = null, savedTarget = null, rocketCentroidWorld = null;
     const ROCKET_RISE = 10;
     const ROCKET_SPEED = 267e-5;
-    function setRocketLaunch(on) {
+    let smokeGroup = null;
+    let smokeTex = null;
+    const smokePool = [];
+    let smokeSpawnAcc = 0;
+    const SMOKE_POOL = 80;
+    const SMOKE_RATE = 42;
+    function setRocketLaunch(on, followCamera) {
+      const follow = followCamera !== false;
       rocketLaunchOn = !!on;
-      if (rocketLaunchOn && !savedCamPos) {
+      if (rocketLaunchOn && !savedCamPos && follow) {
         savedCamPos = camera.position.clone();
         savedTarget = controls.target.clone();
         if (rocketCentroidLocal && rocketMeshRef) {
@@ -1691,9 +1816,180 @@
         }
       }
     }
+    let launchWaveOn = false;
+    let launchWaveSpawnTimer = 0;
+    let launchFootprintSize = 1;
+    const launchWaveRings = [];
+    const WAVE_SPAWN_INTERVAL = 0.18;
+    const WAVE_LIFETIME = 1.4;
+    const WAVE_MAX_SCALE = 7;
+    const WAVE_COLOR = 8969727;
+    const WAVE_OPACITY = 0.5;
+    function setLaunchWave(on) {
+      if (!LAUNCH) return;
+      launchWaveOn = !!on;
+      if (!launchWaveOn) launchWaveSpawnTimer = 0;
+    }
+    function spawnWaveRing() {
+      const innerR = launchFootprintSize * 0.42;
+      const outerR = launchFootprintSize * 0.5;
+      const geom = new THREE.RingGeometry(innerR, outerR, 64);
+      const mat = new THREE.MeshBasicMaterial({
+        color: WAVE_COLOR,
+        transparent: true,
+        opacity: WAVE_OPACITY,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.y = launchFootprintSize * 0.2;
+      scene.add(mesh);
+      launchWaveRings.push({ mesh, age: 0 });
+    }
+    function updateLaunchWaves(dt) {
+      if (launchWaveOn) {
+        launchWaveSpawnTimer += dt;
+        while (launchWaveSpawnTimer >= WAVE_SPAWN_INTERVAL) {
+          launchWaveSpawnTimer -= WAVE_SPAWN_INTERVAL;
+          spawnWaveRing();
+        }
+      }
+      for (let i = launchWaveRings.length - 1; i >= 0; i--) {
+        const r = launchWaveRings[i];
+        r.age += dt;
+        const t = r.age / WAVE_LIFETIME;
+        if (t >= 1) {
+          r.mesh.geometry.dispose();
+          r.mesh.material.dispose();
+          scene.remove(r.mesh);
+          launchWaveRings.splice(i, 1);
+          continue;
+        }
+        const scale = 1 + t * (WAVE_MAX_SCALE - 1);
+        r.mesh.scale.set(scale, scale, 1);
+        r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
+      }
+    }
+    const makeSmokeTex = () => {
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = 128;
+      const cx = cv.getContext("2d");
+      const blob = (px, py, r, a) => {
+        const g = cx.createRadialGradient(px, py, 0, px, py, r);
+        g.addColorStop(0, `rgba(255,255,255,${a})`);
+        g.addColorStop(0.5, `rgba(244,246,250,${a * 0.55})`);
+        g.addColorStop(1, "rgba(232,236,244,0)");
+        cx.fillStyle = g;
+        cx.beginPath();
+        cx.arc(px, py, r, 0, Math.PI * 2);
+        cx.fill();
+      };
+      blob(64, 64, 46, 0.92);
+      blob(44, 54, 30, 0.7);
+      blob(82, 56, 28, 0.7);
+      blob(54, 82, 26, 0.62);
+      blob(82, 82, 24, 0.62);
+      const t = new THREE.CanvasTexture(cv);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    };
+    function ensureSmoke() {
+      if (smokeGroup || !rocketMeshRef || !rocketBottomLocal) return;
+      smokeTex = makeSmokeTex();
+      smokeGroup = new THREE.Group();
+      rocketMeshRef.add(smokeGroup);
+      for (let i = 0; i < SMOKE_POOL; i++) {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: smokeTex,
+          color: 15659510,
+          transparent: true,
+          depthWrite: false,
+          opacity: 0
+          // 일반 블렌딩 → 불투명한 구름 느낌
+        }));
+        sp.visible = false;
+        smokeGroup.add(sp);
+        smokePool.push({
+          sprite: sp,
+          active: false,
+          age: 0,
+          life: 1,
+          vel: new THREE.Vector3(),
+          scale0: 0.18,
+          scaleMax: 1.4,
+          rot: 0,
+          rotSpeed: 0
+        });
+      }
+    }
+    function spawnSmoke(baseY) {
+      const p = smokePool.find((q) => !q.active);
+      if (!p) return;
+      const ang = Math.random() * Math.PI * 2;
+      const rad = Math.random() * 0.12;
+      p.active = true;
+      p.age = 0;
+      p.life = 1.6 + Math.random() * 1.3;
+      p.sprite.position.set(
+        rocketBottomLocal.x + Math.cos(ang) * rad,
+        baseY - 0.05 - Math.random() * 0.06,
+        // 엔진 바로 아래에서 시작
+        rocketBottomLocal.z + Math.sin(ang) * rad
+      );
+      const spd = 0.5 + Math.random() * 0.8;
+      p.vel.set(Math.cos(ang) * spd, -0.15 - Math.random() * 0.25, Math.sin(ang) * spd);
+      p.scale0 = 0.16 + Math.random() * 0.12;
+      p.scaleMax = 1 + Math.random() * 1;
+      p.rot = Math.random() * Math.PI * 2;
+      p.rotSpeed = (Math.random() - 0.5) * 0.8;
+      p.sprite.material.opacity = 0;
+      p.sprite.material.rotation = p.rot;
+      p.sprite.scale.set(p.scale0, p.scale0, 1);
+      p.sprite.visible = true;
+    }
+    function updateSmoke(dt) {
+      ensureSmoke();
+      if (!smokeGroup) return;
+      if (rocketLaunchOn) {
+        const rate = SMOKE_RATE * (1 + (1 - rocketAnimT));
+        smokeSpawnAcc += dt * rate;
+        const baseY = rocketBottomLocal.y + rocketGroup.position.y;
+        while (smokeSpawnAcc >= 1) {
+          smokeSpawnAcc -= 1;
+          spawnSmoke(baseY);
+        }
+      } else {
+        smokeSpawnAcc = 0;
+      }
+      for (const p of smokePool) {
+        if (!p.active) continue;
+        p.age += dt;
+        const t = p.age / p.life;
+        if (t >= 1) {
+          p.active = false;
+          p.sprite.visible = false;
+          continue;
+        }
+        p.sprite.position.addScaledVector(p.vel, dt);
+        p.vel.multiplyScalar(Math.max(0, 1 - 2 * dt));
+        p.vel.y += 0.3 * dt;
+        const grow = 1 - (1 - t) * (1 - t);
+        const s = p.scale0 + (p.scaleMax - p.scale0) * grow;
+        p.sprite.scale.set(s, s, 1);
+        p.sprite.material.opacity = Math.min(1, t * 6) * (1 - t) * 0.8;
+        p.rot += p.rotSpeed * dt;
+        p.sprite.material.rotation = p.rot;
+      }
+    }
+    let lastRenderTime = 0;
     function render2() {
+      const nowSec = performance.now() * 1e-3;
+      const dt = lastRenderTime > 0 ? Math.min(0.1, nowSec - lastRenderTime) : 0.016;
+      lastRenderTime = nowSec;
       controls.update();
-      if (radarOn && antennaPivot) antennaPivot.rotation.y += 0.15;
+      if (radarOn && antennaPivot) antennaPivot.rotation.y += 0.15 * radarDir;
+      if (LAUNCH) updateLaunchWaves(dt);
       if (rocketGroup) {
         const targetT = rocketLaunchOn ? 1 : 0;
         if (rocketAnimT !== targetT) {
@@ -1714,6 +2010,7 @@
         if (rocketFlameLight) {
           rocketFlameLight.intensity = showFlame ? Math.min(1, rocketAnimT * 4) * 1.8 : 0;
         }
+        updateSmoke(dt);
         if (savedCamPos && savedTarget && rocketCentroidWorld) {
           const rocketYNow = rocketCentroidWorld.y + ROCKET_RISE * eased;
           if (rocketLaunchOn) {
@@ -1796,25 +2093,26 @@
       return l;
     }
     const TRAFFIC_OFF_COLOR = new THREE.Color(6710886);
-    function setSlotOn(i, on) {
+    function setSlotOn(i, value) {
       const s = trafficSlotState[i];
       if (!s) return;
-      s.on = !!on;
+      const v = typeof value === "number" ? Math.max(0, Math.min(1, value)) : value ? 1 : 0;
+      s.on = v > 0;
       const onCol = new THREE.Color(s.color);
       for (const m of s.materials) {
         if (m.color !== void 0) m.color.copy(s.on ? onCol : TRAFFIC_OFF_COLOR);
         if (m.emissive !== void 0) {
           m.emissive.copy(s.on ? onCol : new THREE.Color(0));
-          m.emissiveIntensity = s.on ? 0.7 : 0;
+          m.emissiveIntensity = 0.7 * v;
         }
         if (m.metalness !== void 0) m.metalness = Math.min(m.metalness, 0.1);
         if (m.roughness !== void 0) m.roughness = Math.max(m.roughness, 0.55);
         m.transparent = true;
-        m.opacity = s.on ? 0.8 : 0.55;
+        m.opacity = s.on ? 0.55 + 0.25 * v : 0.55;
         m.depthWrite = false;
         m.needsUpdate = true;
       }
-      if (s.light) s.light.intensity = s.on ? 1.3 : 0;
+      if (s.light) s.light.intensity = 1.3 * v;
     }
     function toggleSlot(i) {
       const s = trafficSlotState[i];
@@ -1883,18 +2181,27 @@
       trafficMode = null;
     }
     function dispose() {
+      var _a;
       try {
         controls.dispose();
       } catch (e) {
       }
+      try {
+        smokePool.forEach((p) => {
+          var _a2, _b, _c;
+          return (_c = (_b = (_a2 = p.sprite) == null ? void 0 : _a2.material) == null ? void 0 : _b.dispose) == null ? void 0 : _c.call(_b);
+        });
+        (_a = smokeTex == null ? void 0 : smokeTex.dispose) == null ? void 0 : _a.call(smokeTex);
+      } catch (e) {
+      }
       scene.traverse((o) => {
-        var _a, _b;
+        var _a2, _b;
         if (o.isMesh) {
-          (_b = (_a = o.geometry) == null ? void 0 : _a.dispose) == null ? void 0 : _b.call(_a);
+          (_b = (_a2 = o.geometry) == null ? void 0 : _a2.dispose) == null ? void 0 : _b.call(_a2);
           const m = o.material;
           (Array.isArray(m) ? m : [m]).forEach((mm) => {
-            var _a2;
-            return (_a2 = mm == null ? void 0 : mm.dispose) == null ? void 0 : _a2.call(mm);
+            var _a3;
+            return (_a3 = mm == null ? void 0 : mm.dispose) == null ? void 0 : _a3.call(mm);
           });
         }
       });
@@ -1908,6 +2215,7 @@
       render: render2,
       resize,
       setEye,
+      setChest,
       dispose,
       hasEyes: !!EYE,
       get eyeL() {
@@ -1916,11 +2224,27 @@
       get eyeR() {
         return eyeR;
       },
+      hasChest: !!CHEST,
+      get chestLed() {
+        return chestLed;
+      },
+      get hasLaunchLeds() {
+        return !!LAUNCH && !!launchLeds;
+      },
+      setLaunchLed,
+      get launchLeds() {
+        return launchLeds;
+      },
+      get hasLaunchWave() {
+        return !!LAUNCH;
+      },
+      setLaunchWave,
       hasTraffic: !!TRAFFIC,
       placeLamps,
       placeHands,
       resetTraffic,
       toggleSlot,
+      setSlot: setSlotOn,
       get hasRadar() {
         return !!antennaPivot;
       },
@@ -1934,10 +2258,14 @@
       setRocketLaunch,
       get rocketLaunchOn() {
         return rocketLaunchOn;
+      },
+      // 로켓이 완전히 원위치에 있는지(발사 중도 아니고 복귀 애니메이션도 끝남).
+      get rocketAtRest() {
+        return !rocketLaunchOn && rocketAnimT === 0;
       }
     };
   }
-  function setupSimulation({ workspace: workspace2 }) {
+  function setupSimulation({ workspace: workspace2, onOpen, onClose }) {
     const btn = document.getElementById("simToggle");
     const card = document.getElementById("simCard");
     const stage = document.getElementById("simStage");
@@ -1945,10 +2273,11 @@
     const ledWrap = card ? card.querySelector(".sim-led-buttons") : null;
     const trafficWrap = card ? card.querySelector(".sim-traffic-buttons") : null;
     const launchWrap = card ? card.querySelector(".sim-launch-buttons") : null;
+    const launchLedWrap = card ? card.querySelector(".sim-launch-led-buttons") : null;
     const radarBtn = document.getElementById("simRadar");
     const rocketBtn = document.getElementById("simRocket");
     const simHint = document.getElementById("simHint");
-    const HINT_DEFAULT = "\uB85C\uBD07: \uB04C\uC5B4\uC11C \uD68C\uC804 \xB7 \uD720: \uD655\uB300 \xB7 \uC81C\uBAA9\uC904\uC744 \uB04C\uBA74 \uCC3D \uC774\uB3D9 \xB7 LED \uBC84\uD2BC\uC73C\uB85C \uB208 \uCF1C\uACE0 \uB044\uAE30";
+    const HINT_DEFAULT = "\uB85C\uBD07: \uB04C\uC5B4\uC11C \uD68C\uC804 \xB7 \uD720: \uD655\uB300 \xB7 \uC81C\uBAA9\uC904\uC744 \uB04C\uBA74 \uCC3D \uC774\uB3D9 \xB7 LED \uBC84\uD2BC\uC73C\uB85C \uB208\xB7\uAC00\uC2B4 \uCF1C\uACE0 \uB044\uAE30";
     const HINT_TRAFFIC = "1, 2, 3\uBC88 \uD0A4\uB97C \uB20C\uB7EC \uB7A8\uD504\uB97C \uCF1C\uACE0 \uB044\uAE30";
     const HINT_LAUNCH = "\uB808\uC774\uB354 \uAC00\uB3D9 \xB7 \uB85C\uCF13 \uBC1C\uC0AC \uBC84\uD2BC\uC744 \uB20C\uB7EC \uBC1C\uC0AC\uB300\uB97C \uC791\uB3D9\uC2DC\uCF1C \uBCF4\uC138\uC694";
     const RADAR_LABEL_ON = '<span class="dot"></span>\u{1F6F0}\uFE0F \uB808\uC774\uB354<small>\uD68C\uC804 \uBA48\uCDA4</small>';
@@ -1990,12 +2319,20 @@
         loadingEl.textContent = "\uBD88\uB7EC\uC624\uB294 \uC911\u2026";
       }
       card.querySelectorAll(".sim-led-btn").forEach((b) => b.classList.remove("on"));
+      card.querySelectorAll(".sim-launch-led-btn").forEach((b) => b.classList.remove("on"));
       card.querySelectorAll(".sim-traffic-btn").forEach((b) => {
         b.classList.toggle("on", !!cfg.traffic && b.dataset.action === "lamps");
       });
-      if (ledWrap) ledWrap.style.display = cfg.eyes ? "" : "none";
+      if (ledWrap) {
+        ledWrap.style.display = cfg.eyes || cfg.chest ? "" : "none";
+        ledWrap.querySelectorAll(".sim-led-btn").forEach((b) => {
+          const part = b.dataset.part || "eye";
+          b.style.display = (part === "chest" ? !!cfg.chest : !!cfg.eyes) ? "" : "none";
+        });
+      }
       if (trafficWrap) trafficWrap.style.display = cfg.traffic ? "" : "none";
       if (launchWrap) launchWrap.style.display = cfg.radar ? "" : "none";
+      if (launchLedWrap) launchLedWrap.style.display = cfg.launch ? "" : "none";
       if (radarBtn) {
         radarBtn.classList.remove("on");
         radarBtn.innerHTML = RADAR_LABEL_OFF;
@@ -2014,6 +2351,12 @@
     };
     const open = () => {
       card.hidden = false;
+      if (typeof onOpen === "function") {
+        try {
+          onOpen();
+        } catch (e) {
+        }
+      }
       if (!sim && sel) sel.value = defaultTopicForMission();
       const t = sel && sel.value || DEFAULT_TOPIC;
       if (!sim || builtTopic !== t) build(t);
@@ -2023,13 +2366,42 @@
       btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uB2EB\uAE30";
       btn.setAttribute("aria-pressed", "true");
     };
-    const close = () => {
-      if (card.hidden) return;
+    const finalizeClose = () => {
       card.hidden = true;
       cancelAnimationFrame(raf);
       raf = 0;
       btn.textContent = "\u{1F916} \uC2DC\uBBAC\uB808\uC774\uC158 \uC5F4\uAE30";
       btn.setAttribute("aria-pressed", "false");
+      if (typeof onClose === "function") {
+        try {
+          onClose();
+        } catch (e) {
+        }
+      }
+    };
+    let closing = false;
+    const close = () => {
+      if (card.hidden || closing) return;
+      if (sim && sim.hasRocket && !sim.rocketAtRest) {
+        closing = true;
+        sim.setRocketLaunch(false);
+        if (rocketBtn) {
+          rocketBtn.classList.remove("on");
+          rocketBtn.innerHTML = ROCKET_LABEL_OFF;
+          rocketBtn.setAttribute("aria-pressed", "false");
+        }
+        const waitDescend = () => {
+          if (!sim || sim.rocketAtRest) {
+            closing = false;
+            finalizeClose();
+            return;
+          }
+          requestAnimationFrame(waitDescend);
+        };
+        waitDescend();
+        return;
+      }
+      finalizeClose();
     };
     if (sel) sel.addEventListener("change", () => {
       build(sel.value);
@@ -2042,13 +2414,31 @@
     });
     card.querySelectorAll(".sim-led-btn").forEach((b) => {
       b.addEventListener("click", () => {
-        if (!sim || !sim.hasEyes) return;
-        const side = b.dataset.side;
-        const cur = side === "L" ? sim.eyeL.on : sim.eyeR.on;
-        sim.setEye(side, !cur);
-        b.classList.toggle("on", !cur);
+        if (!sim) return;
+        const part = b.dataset.part || "eye";
+        if (part === "chest") {
+          if (!sim.hasChest) return;
+          const cur = sim.chestLed.on;
+          sim.setChest(!cur);
+          b.classList.toggle("on", !cur);
+        } else {
+          if (!sim.hasEyes) return;
+          const side = b.dataset.side;
+          const cur = side === "L" ? sim.eyeL.on : sim.eyeR.on;
+          sim.setEye(side, !cur);
+          b.classList.toggle("on", !cur);
+        }
       });
     });
+    const launchLedsBtn = document.getElementById("simLaunchLeds");
+    if (launchLedsBtn) {
+      launchLedsBtn.addEventListener("click", () => {
+        if (!sim || !sim.hasLaunchLeds) return;
+        const next = !launchLedsBtn.classList.contains("on");
+        for (let i = 0; i <= 5; i++) sim.setLaunchLed(i, next ? 1 : 0);
+        launchLedsBtn.classList.toggle("on", next);
+      });
+    }
     const setTrafficBtn = (which) => {
       card.querySelectorAll(".sim-traffic-btn").forEach((b) => {
         b.classList.toggle("on", b.dataset.action === which);
@@ -2082,6 +2472,7 @@
         if (!sim || !sim.hasRocket) return;
         const next = !sim.rocketLaunchOn;
         sim.setRocketLaunch(next);
+        if (next) playRocketLaunch();
         rocketBtn.classList.toggle("on", next);
         rocketBtn.innerHTML = next ? ROCKET_LABEL_ON : ROCKET_LABEL_OFF;
         rocketBtn.setAttribute("aria-pressed", String(next));
@@ -2099,14 +2490,217 @@
       simLog.scrollTop = simLog.scrollHeight;
     };
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    let audioCtx = null;
+    const playBeep = (hz, sec) => {
+      if (!hz || sec <= 0) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "square";
+        o.frequency.value = hz;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        const t0 = audioCtx.currentTime;
+        const t1 = t0 + sec;
+        const VOL = 0.06;
+        g.gain.setValueAtTime(0, t0);
+        g.gain.linearRampToValueAtTime(VOL, t0 + 5e-3);
+        g.gain.setValueAtTime(VOL, Math.max(t0 + 6e-3, t1 - 0.01));
+        g.gain.linearRampToValueAtTime(0, t1);
+        o.start(t0);
+        o.stop(t1 + 0.02);
+      } catch (e) {
+        console.warn("beep \uC2E4\uD328:", e);
+      }
+    };
+    const playRocketLaunch = () => {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = audioCtx;
+        if (ctx.state === "suspended") ctx.resume();
+        const t0 = ctx.currentTime;
+        const DUR = 3.6;
+        const bufLen = Math.floor(ctx.sampleRate * 2);
+        const buffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+        const rumbleSrc = ctx.createBufferSource();
+        rumbleSrc.buffer = buffer;
+        rumbleSrc.loop = true;
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass";
+        lp.frequency.setValueAtTime(900, t0);
+        lp.frequency.exponentialRampToValueAtTime(250, t0 + DUR);
+        const rumbleGain = ctx.createGain();
+        rumbleSrc.connect(lp);
+        lp.connect(rumbleGain);
+        rumbleGain.connect(ctx.destination);
+        const roarSrc = ctx.createBufferSource();
+        roarSrc.buffer = buffer;
+        roarSrc.loop = true;
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.Q.value = 0.7;
+        bp.frequency.setValueAtTime(500, t0);
+        bp.frequency.linearRampToValueAtTime(1400, t0 + 0.6);
+        bp.frequency.exponentialRampToValueAtTime(700, t0 + DUR);
+        const roarGain = ctx.createGain();
+        roarSrc.connect(bp);
+        bp.connect(roarGain);
+        roarGain.connect(ctx.destination);
+        const VOL = 0.16;
+        rumbleGain.gain.setValueAtTime(0, t0);
+        rumbleGain.gain.linearRampToValueAtTime(VOL, t0 + 0.15);
+        rumbleGain.gain.setValueAtTime(VOL, t0 + DUR * 0.5);
+        rumbleGain.gain.linearRampToValueAtTime(0, t0 + DUR);
+        roarGain.gain.setValueAtTime(0, t0);
+        roarGain.gain.linearRampToValueAtTime(VOL * 0.7, t0 + 0.1);
+        roarGain.gain.linearRampToValueAtTime(0, t0 + DUR);
+        rumbleSrc.start(t0);
+        rumbleSrc.stop(t0 + DUR + 0.05);
+        roarSrc.start(t0);
+        roarSrc.stop(t0 + DUR + 0.05);
+      } catch (e) {
+        console.warn("rocket launch sound \uC2E4\uD328:", e);
+      }
+    };
+    const setLedByNum = (num, intensity) => {
+      if (sim.hasEyes) {
+        if (num === 1) sim.setEye("R", intensity);
+        else if (num === 2) sim.setEye("L", intensity);
+      } else if (sim.hasTraffic) {
+        if (num >= 1 && num <= 3) sim.setSlot(num - 1, intensity);
+      } else if (sim.hasLaunchLeds) {
+        if (num >= 0 && num <= 5) sim.setLaunchLed(num, intensity);
+      }
+    };
+    const setAllLedsOff = () => {
+      if (sim.hasEyes) {
+        sim.setEye("R", 0);
+        sim.setEye("L", 0);
+      }
+      if (sim.hasChest) sim.setChest(0);
+      if (sim.hasTraffic) {
+        sim.setSlot(0, 0);
+        sim.setSlot(1, 0);
+        sim.setSlot(2, 0);
+      }
+      if (sim.hasLaunchLeds) {
+        for (let i = 0; i <= 5; i++) sim.setLaunchLed(i, 0);
+      }
+    };
+    const applyTopicEffect = (cmd) => {
+      if (!sim) return null;
+      if (cmd.startsWith("LED_ON,")) {
+        const parts = cmd.split(",");
+        const num = parseInt(parts[1], 10);
+        const intensity = Math.max(0, Math.min(1, parseFloat(parts[2])));
+        setLedByNum(num, intensity);
+        return null;
+      }
+      if (cmd.startsWith("[") && cmd.endsWith("]")) {
+        const values = cmd.slice(1, -1).trim().split(/\s+/);
+        const toI = (v) => Math.max(0, Math.min(1, parseFloat(v) || 0));
+        for (let i = 0; i <= 5; i++) {
+          if (values.length > i) setLedByNum(i, toI(values[i]));
+        }
+        return null;
+      }
+      if (cmd.startsWith("LED_OFF,")) {
+        const arg = cmd.split(",")[1];
+        if (arg === "ALL") setAllLedsOff();
+        else setLedByNum(parseInt(arg, 10), 0);
+        return null;
+      }
+      if (cmd.startsWith("BUZZER_ON,")) {
+        const cleanups = [];
+        if (sim.hasChest) {
+          sim.setChest(1);
+          cleanups.push(() => {
+            if (sim == null ? void 0 : sim.hasChest) sim.setChest(0);
+          });
+        }
+        if (sim.hasLaunchWave) {
+          sim.setLaunchWave(true);
+          cleanups.push(() => {
+            if (sim == null ? void 0 : sim.hasLaunchWave) sim.setLaunchWave(false);
+          });
+        }
+        if (cleanups.length === 0) return null;
+        const parts = cmd.split(",");
+        const hz = parseFloat(parts[1]) || 0;
+        const sec = parseFloat(parts[2]) || 0;
+        playBeep(hz, sec);
+        return () => cleanups.forEach((fn) => fn());
+      }
+      if (cmd.startsWith("DC_tFORWARD,") || cmd.startsWith("DC_tBACKWARD,")) {
+        if (!sim.hasRadar) return null;
+        const dir = cmd.startsWith("DC_tFORWARD,") ? 1 : -1;
+        sim.setRadar(true, dir);
+        return () => {
+          if (sim) sim.setRadar(false);
+        };
+      }
+      if (cmd === "DC_FORWARD" || cmd.startsWith("DC_FORWARD,")) {
+        if (sim.hasRadar) sim.setRadar(true, 1);
+        return null;
+      }
+      if (cmd === "DC_BACKWARD" || cmd.startsWith("DC_BACKWARD,")) {
+        if (sim.hasRadar) sim.setRadar(true, -1);
+        return null;
+      }
+      if (cmd === "DC_STOP" || cmd.startsWith("DC_STOP,")) {
+        if (sim.hasRadar) sim.setRadar(false);
+        return null;
+      }
+      if (cmd === "GUN_FIRE" || cmd.startsWith("GUN_FIRE,")) {
+        if (sim.hasRocket) {
+          sim.setRocketLaunch(true, false);
+          playRocketLaunch();
+        }
+        return null;
+      }
+      return null;
+    };
+    const commandHoldSeconds = (c) => {
+      const head = c.split(",")[0];
+      const parts = c.split(",");
+      if (c.startsWith("BATCH;")) {
+        return c.slice("BATCH;".length).split("|").reduce((s, sub) => s + commandHoldSeconds(sub), 0);
+      }
+      if (head === "SLEEP") return parseFloat(parts[1]) || 0;
+      if (head === "BUZZER_ON") return parseFloat(parts[2]) || 0;
+      if (head === "SERVO_tFORWARD" || head === "SERVO_tBACKWARD" || head === "SERVO_tLEFT" || head === "SERVO_tRIGHT") return parseFloat(parts[1]) || 0;
+      if (head === "DC_tFORWARD" || head === "DC_tBACKWARD") return parseFloat(parts[1]) || 0;
+      return 0;
+    };
     const simSink = async (command, waitForResponse) => {
-      const delay = waitForResponse ? 100 : 20;
+      const ackMs = waitForResponse ? 100 : 20;
       logLine(`\u2192 ${command}`, waitForResponse ? "tx-ack" : "tx");
-      await wait(delay);
+      let holdMs = 0;
+      if (command.startsWith("BATCH;")) {
+        await wait(ackMs);
+        const subs = command.slice("BATCH;".length).split("|").filter((s) => s.length > 0);
+        for (const sub of subs) {
+          const subHoldMs = Math.round(commandHoldSeconds(sub) * 1e3);
+          const cleanup = applyTopicEffect(sub);
+          if (subHoldMs > 0) await wait(subHoldMs);
+          cleanup == null ? void 0 : cleanup();
+          holdMs += subHoldMs;
+        }
+      } else {
+        holdMs = Math.round(commandHoldSeconds(command) * 1e3);
+        const cleanup = applyTopicEffect(command);
+        await wait(ackMs + holdMs);
+        cleanup == null ? void 0 : cleanup();
+      }
+      const total = ackMs + holdMs;
       let reply = "1";
       if (command.startsWith("DISTANCE")) reply = "DIST:30";
       else if (command.startsWith("MAGNET")) reply = "MAG:0";
-      logLine(`     \u21A9 ${reply}  (+${delay}ms, ${waitForResponse ? "Ack" : "\uBE44Ack"})`, "rx");
+      const holdNote = holdMs > 0 ? ` + \uB300\uAE30 ${holdMs}ms` : "";
+      logLine(`     \u21A9 ${reply}  (+${total}ms, ${waitForResponse ? "Ack" : "\uBE44Ack"}${holdNote})`, "rx");
       return reply;
     };
     let simRunning = false;
@@ -2127,59 +2721,28 @@
       } finally {
         simRunning = false;
         simRunBtn.disabled = false;
+        if (sim && sim.hasRocket && !sim.rocketAtRest) {
+          sim.setRocketLaunch(false);
+          if (rocketBtn) {
+            rocketBtn.classList.remove("on");
+            rocketBtn.innerHTML = ROCKET_LABEL_OFF;
+            rocketBtn.setAttribute("aria-pressed", "false");
+          }
+        }
       }
     });
     if (simClearBtn) simClearBtn.addEventListener("click", () => {
       if (simLog) simLog.textContent = "";
     });
-    const head = card.querySelector(".sim-card-head");
-    if (head) {
-      let dragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
-      head.addEventListener("pointerdown", (e) => {
-        if (e.target.closest(".sim-led-btn") || e.target.closest(".sim-traffic-btn") || e.target.closest(".sim-launch-btn") || e.target.closest(".sim-topic")) return;
-        const r = card.getBoundingClientRect();
-        card.style.position = "fixed";
-        card.style.left = r.left + "px";
-        card.style.top = r.top + "px";
-        card.style.right = "auto";
-        card.style.bottom = "auto";
-        card.style.transform = "none";
-        card.style.margin = "0";
-        dragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        baseX = r.left;
-        baseY = r.top;
-        try {
-          head.setPointerCapture(e.pointerId);
-        } catch (e2) {
-        }
-        e.preventDefault();
-      });
-      head.addEventListener("pointermove", (e) => {
-        if (!dragging) return;
-        const w = card.offsetWidth;
-        let nx = baseX + (e.clientX - startX);
-        let ny = baseY + (e.clientY - startY);
-        nx = Math.max(40 - w, Math.min(nx, innerWidth - 40));
-        ny = Math.max(0, Math.min(ny, innerHeight - 36));
-        card.style.left = nx + "px";
-        card.style.top = ny + "px";
-      });
-      const endDrag = (e) => {
-        if (!dragging) return;
-        dragging = false;
-        try {
-          head.releasePointerCapture(e.pointerId);
-        } catch (e2) {
-        }
-      };
-      head.addEventListener("pointerup", endDrag);
-      head.addEventListener("pointercancel", endDrag);
-    }
     addEventListener("resize", () => {
       if (!card.hidden && sim) sim.resize();
     });
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(() => {
+        if (!card.hidden && sim) sim.resize();
+      });
+      ro.observe(stage);
+    }
     addEventListener("keydown", (e) => {
       if (card.hidden || !sim || !sim.hasTraffic) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -2194,7 +2757,7 @@
       sim.toggleSlot(idx);
       e.preventDefault();
     });
-    return { close };
+    return { open, close };
   }
 
   // main.js
@@ -2215,6 +2778,9 @@
   var lessonCache = /* @__PURE__ */ new Map();
   var workspace = null;
   var currentView = "overview";
+  var _contentMode = "description";
+  var _preSimMode = "description";
+  var setContentMode = null;
   function initializeBlockly() {
     if (!navigator.bluetooth) {
       alert("\uC774 \uBE0C\uB77C\uC6B0\uC800\uB294 Web Bluetooth API\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Chrome 56+ \uB610\uB294 Edge 79+\uB97C \uC0AC\uC6A9\uD574\uC8FC\uC138\uC694.");
@@ -2223,6 +2789,14 @@
     Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
     attachBatchBlockValidator(Blockly);
     applyKoreanMessages();
+    const toolboxEl = document.getElementById("toolbox");
+    if (toolboxEl && window.matchMedia("(max-width: 768px)").matches) {
+      toolboxEl.querySelectorAll("category").forEach((cat) => {
+        const name = cat.getAttribute("name") || "";
+        const firstToken = name.split(/\s+/)[0];
+        if (firstToken) cat.setAttribute("name", firstToken);
+      });
+    }
     workspace = Blockly.inject("blocklyDiv", {
       toolbox: document.getElementById("toolbox"),
       scrollbars: true,
@@ -2336,6 +2910,24 @@
     }
     return true;
   }
+  function updateRunButtonUI() {
+    const btn = elements.runButton;
+    if (!btn) return;
+    if (state.isExecuting) {
+      btn.textContent = "\u{1F6D1} \uBE44\uC0C1\uC815\uC9C0";
+      btn.title = "\uC2E4\uD589 \uC911\uC778 \uBBF8\uC158\uC744 \uC989\uC2DC \uBA48\uCDA5\uB2C8\uB2E4";
+      btn.classList.add("btn-stop");
+      btn.disabled = false;
+      return;
+    }
+    btn.textContent = "\u25B6\uFE0F \uBBF8\uC158 \uC804\uC1A1";
+    btn.title = "\uBE14\uB85D\uCF54\uB529 \uB0B4\uC6A9\uC744 \uD53C\uCF54\uB85C \uC804\uC1A1\uD574 \uC2E4\uD589";
+    btn.classList.remove("btn-stop");
+    const inMission = currentView === "mission";
+    const dashboardFrame = document.getElementById("dashboardFrame");
+    const inDashboard = dashboardFrame && dashboardFrame.style.display === "block";
+    btn.disabled = !inMission || inDashboard || !isBleConnected();
+  }
   function parseHash() {
     const hash = window.location.hash.replace(/^#/, "");
     const params = new URLSearchParams(hash);
@@ -2375,17 +2967,23 @@
     }
     currentView = view;
     const inMission = view === "mission";
-    const ble = isBleConnected();
     if (elements.saveButton) elements.saveButton.disabled = !inMission;
     if (elements.loadButton) elements.loadButton.disabled = !inMission;
     const exampleSelect = document.getElementById("exampleSelect");
-    if (exampleSelect) exampleSelect.disabled = !inMission;
-    if (elements.runButton) elements.runButton.disabled = !inMission || !ble;
-    const panelToggle = document.getElementById("missionPanelToggle");
-    if (panelToggle) panelToggle.hidden = !inMission;
+    if (exampleSelect) {
+      exampleSelect.disabled = !inMission;
+      exampleSelect.hidden = !inMission;
+    }
+    updateRunButtonUI();
+    const contentBtn = document.getElementById("contentToggleBtn");
+    if (contentBtn) contentBtn.hidden = !inMission;
     const simToggle = document.getElementById("simToggle");
     if (simToggle) simToggle.hidden = !inMission;
-    if (!inMission && simController) simController.close();
+    if (!inMission) {
+      if (simController) simController.close();
+      _preSimMode = "description";
+    }
+    if (inMission && setContentMode) setContentMode("description");
     if (inMission && workspace) {
       setTimeout(() => {
         try {
@@ -2508,7 +3106,6 @@
       else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
     };
     if (workspace) {
-      placeToolboxToggleBtn();
       setTimeout(() => {
         try {
           Blockly.svgResize(workspace);
@@ -2587,33 +3184,32 @@
     const blocklyDiv = document.getElementById("blocklyDiv");
     const dashboardFrame = document.getElementById("dashboardFrame");
     const dashboardButton = document.getElementById("dashboardButton");
-    const toolboxToggleBtn = document.getElementById("toolboxToggleBtn");
+    const contentToggleBtn = document.getElementById("contentToggleBtn");
     if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
     if (currentView !== "mission") {
       navigate({ lesson: 1, mission: 1 });
       setTimeout(() => toggleDashboard(), 100);
       return;
     }
+    if (setContentMode) setContentMode("coding");
     const isDashboardHidden = dashboardFrame.style.display === "none" || dashboardFrame.style.display === "";
     if (isDashboardHidden) {
       blocklyDiv.style.display = "none";
       dashboardFrame.style.display = "block";
-      if (toolboxToggleBtn) toolboxToggleBtn.style.display = "none";
+      if (contentToggleBtn) contentToggleBtn.style.display = "none";
       dashboardButton.textContent = "\u{1F9E9} \uCF54\uB529";
-      if (elements.runButton) elements.runButton.disabled = true;
       if (elements.saveButton) elements.saveButton.disabled = true;
       if (elements.loadButton) elements.loadButton.disabled = true;
-      BluetoothManager.updateConnectionStatus(isBleConnected());
+      updateRunButtonUI();
       Logger.add("[\uBAA8\uB4DC] \uB300\uC2DC\uBCF4\uB4DC \uC804\uD658", "info");
     } else {
       blocklyDiv.style.display = "block";
       dashboardFrame.style.display = "none";
-      if (toolboxToggleBtn) toolboxToggleBtn.style.display = "";
+      if (contentToggleBtn) contentToggleBtn.style.display = "";
       dashboardButton.textContent = "\u{1F50D} \uC810\uAC80";
       if (elements.saveButton) elements.saveButton.disabled = false;
       if (elements.loadButton) elements.loadButton.disabled = false;
-      if (elements.runButton) elements.runButton.disabled = !isBleConnected();
-      BluetoothManager.updateConnectionStatus(isBleConnected());
+      updateRunButtonUI();
       Logger.add("[\uBAA8\uB4DC] \uBE14\uB85D\uCF54\uB529 \uC804\uD658", "info");
     }
   }
@@ -2631,190 +3227,74 @@
       Logger.refresh();
     });
   }
-  function setupLogVisibilityButton() {
-    const btn = document.getElementById("logToggleButton");
-    const logContainer = document.getElementById("logContainer");
-    if (!btn || !logContainer) return;
-    const STORAGE_KEY = "ares.log.visible";
-    const readVisible = () => {
-      try {
-        const v = localStorage.getItem(STORAGE_KEY);
-        if (v === null) return true;
-        return v === "true";
-      } catch (e) {
-        return true;
-      }
-    };
-    const writeVisible = (visible) => {
-      try {
-        localStorage.setItem(STORAGE_KEY, String(visible));
-      } catch (e) {
-      }
-    };
-    const applyVisible = (visible) => {
-      document.body.classList.toggle("log-hidden", !visible);
-      btn.setAttribute("aria-pressed", String(visible));
-      btn.title = visible ? "\uD1B5\uC2E0 \uB85C\uADF8 \uC228\uAE30\uAE30" : "\uD1B5\uC2E0 \uB85C\uADF8 \uBCF4\uAE30";
-      btn.textContent = visible ? "\u{1F4DD} \uB85C\uADF8\uB044\uAE30" : "\u{1F4DD} \uB85C\uADF8\uCF1C\uAE30";
-      if (workspace) {
-        setTimeout(() => {
-          try {
-            Blockly.svgResize(workspace);
-          } catch (e) {
-          }
-        }, 0);
-      }
-    };
-    applyVisible(readVisible());
-    btn.addEventListener("click", () => {
-      const nextVisible = document.body.classList.contains("log-hidden");
-      applyVisible(nextVisible);
-      writeVisible(nextVisible);
-      Logger.refresh();
-    });
-  }
-  function setupMissionPanelToggle() {
-    const STORAGE_KEY = "ares.missionPanel.opened";
-    const btn = document.getElementById("missionPanelToggle");
-    const panel = document.getElementById("missionPanel");
-    if (!btn || !panel) return;
-    const readOpened = () => {
-      try {
-        const v = localStorage.getItem(STORAGE_KEY);
-        if (v === null) return true;
-        return v === "true";
-      } catch (e) {
-        return true;
-      }
-    };
-    const writeOpened = (v) => {
-      try {
-        localStorage.setItem(STORAGE_KEY, String(v));
-      } catch (e) {
-      }
-    };
-    const apply = (opened) => {
-      panel.classList.toggle("collapsed", !opened);
-      btn.setAttribute("aria-pressed", String(opened));
-      btn.textContent = opened ? "\u{1F4D6} \uBBF8\uC158 \uC124\uBA85 \uB2EB\uAE30" : "\u{1F4D6} \uBBF8\uC158 \uC124\uBA85 \uC5F4\uAE30";
-      btn.title = opened ? "\uBBF8\uC158 \uC124\uBA85 \uD328\uB110 \uC228\uAE30\uAE30" : "\uBBF8\uC158 \uC124\uBA85 \uD328\uB110 \uBCF4\uC774\uAE30";
-      if (workspace) {
-        setTimeout(() => {
-          try {
-            Blockly.svgResize(workspace);
-          } catch (e) {
-          }
-        }, 0);
-      }
-    };
-    apply(readOpened());
-    btn.addEventListener("click", () => {
-      const nextOpened = panel.classList.contains("collapsed");
-      apply(nextOpened);
-      writeOpened(nextOpened);
-    });
-  }
   var simController = null;
-  var _toggleBtnOpened = true;
-  function placeToolboxToggleBtn() {
-    const btn = document.getElementById("toolboxToggleBtn");
-    if (!btn) return;
-    const toolboxDiv = document.querySelector(".blocklyToolboxDiv");
-    const ws = document.querySelector(".mission-workspace");
-    if (_toggleBtnOpened && toolboxDiv && toolboxDiv.offsetWidth > 0 && toolboxDiv.offsetHeight > 0) {
-      if (btn.parentElement !== toolboxDiv) toolboxDiv.prepend(btn);
-      btn.classList.remove("toolbox-toggle--handle");
-      btn.classList.add("toolbox-toggle--inside");
-      return;
-    }
-    if (ws && btn.parentElement !== ws) ws.appendChild(btn);
-    btn.classList.remove("toolbox-toggle--inside");
-    btn.classList.add("toolbox-toggle--handle");
-  }
-  function setupToolboxToggle() {
-    var _a;
-    const STORAGE_KEY = "ares.toolbox.opened";
-    let btn = document.getElementById("toolboxToggleBtn");
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.id = "toolboxToggleBtn";
-      btn.type = "button";
-      btn.title = "\uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30/\uB2EB\uAE30";
-      btn.setAttribute("aria-pressed", "true");
-      const stop = (e) => e.stopPropagation();
-      btn.addEventListener("pointerdown", stop, true);
-      btn.addEventListener("mousedown", stop, true);
-      btn.addEventListener("touchstart", stop, true);
-      (_a = document.querySelector(".mission-workspace")) == null ? void 0 : _a.appendChild(btn);
-    }
-    const readOpened = () => {
-      try {
-        const v = localStorage.getItem(STORAGE_KEY);
-        if (v === null) return null;
-        return v === "true";
-      } catch (e) {
-        return null;
+  function setupContentToggle() {
+    const btn = document.getElementById("contentToggleBtn");
+    const view = document.getElementById("missionView");
+    if (!btn || !view) return;
+    const applyMode = (mode) => {
+      var _a, _b;
+      const wasSimulation = _contentMode === "simulation";
+      _contentMode = mode;
+      view.setAttribute("data-mode", mode);
+      if (wasSimulation && mode !== "simulation" && simController) {
+        simController.close();
       }
-    };
-    const writeOpened = (v) => {
-      try {
-        localStorage.setItem(STORAGE_KEY, String(v));
-      } catch (e) {
+      if (mode === "coding") {
+        const tb = (_a = workspace == null ? void 0 : workspace.getToolbox) == null ? void 0 : _a.call(workspace);
+        try {
+          (_b = tb == null ? void 0 : tb.show) == null ? void 0 : _b.call(tb);
+        } catch (e) {
+        }
+        setTimeout(() => {
+          try {
+            Blockly.svgResize(workspace);
+          } catch (e) {
+          }
+        }, 0);
       }
-    };
-    const updateToggleText = () => {
-      btn.textContent = _toggleBtnOpened ? "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uB2EB\uAE30" : "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30";
-      btn.setAttribute("aria-pressed", String(_toggleBtnOpened));
-      btn.title = _toggleBtnOpened ? "\uBE14\uB7ED\uCF54\uB529 \uC228\uAE30\uAE30" : "\uBE14\uB7ED\uCF54\uB529 \uBCF4\uAE30";
-    };
-    const applyToolboxVisibility = (nextOpened) => {
-      var _a2;
-      _toggleBtnOpened = nextOpened;
-      const tb = (_a2 = workspace == null ? void 0 : workspace.getToolbox) == null ? void 0 : _a2.call(workspace);
-      if ((tb == null ? void 0 : tb.show) && (tb == null ? void 0 : tb.hide)) {
-        _toggleBtnOpened ? tb.show() : tb.hide();
+      if (mode === "description") {
+        btn.textContent = "\u{1F9E9} \uBE14\uB7ED\uCF54\uB529 \uC5F4\uAE30";
+        btn.title = "\uBBF8\uC158 \uC124\uBA85\uC744 \uB2EB\uACE0 \uBE14\uB7ED\uCF54\uB529 \uD654\uBA74\uC73C\uB85C \uC804\uD658";
+        btn.disabled = false;
+      } else if (mode === "coding") {
+        btn.textContent = "\u{1F4D6} \uBBF8\uC158 \uC124\uBA85 \uBCF4\uAE30";
+        btn.title = "\uBE14\uB7ED\uCF54\uB529\uC744 \uB2EB\uACE0 \uBBF8\uC158 \uC124\uBA85\uC73C\uB85C \uC804\uD658";
+        btn.disabled = false;
       } else {
-        const toolboxDiv = document.querySelector(".blocklyToolboxDiv");
-        if (toolboxDiv) toolboxDiv.style.display = _toggleBtnOpened ? "" : "none";
+        btn.disabled = true;
+        btn.title = "\uC2DC\uBBAC\uB808\uC774\uC158\uC744 \uB2EB\uC73C\uBA74 \uC774\uC804 \uD654\uBA74\uC73C\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4";
       }
-      placeToolboxToggleBtn();
-      updateToggleText();
-      if (workspace) Blockly.svgResize(workspace);
     };
-    const defaultOpened = !window.matchMedia("(max-width: 768px)").matches;
-    const savedOpened = readOpened();
-    applyToolboxVisibility(savedOpened === null ? defaultOpened : savedOpened);
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      applyToolboxVisibility(!_toggleBtnOpened);
-      writeOpened(_toggleBtnOpened);
+    setContentMode = (mode) => {
+      if (!["description", "coding", "simulation"].includes(mode)) return;
+      if (_contentMode === mode) return;
+      applyMode(mode);
+    };
+    btn.addEventListener("click", () => {
+      if (_contentMode === "simulation") return;
+      applyMode(_contentMode === "description" ? "coding" : "description");
     });
+    applyMode("description");
   }
   function initializeAlwaysOnListeners() {
-    var _a, _b, _c, _d, _e, _f, _g;
-    (_a = elements.connectButton) == null ? void 0 : _a.addEventListener("click", () => BluetoothManager.connect());
-    (_b = elements.disconnectButton) == null ? void 0 : _b.addEventListener("click", () => BluetoothManager.disconnect());
-    (_c = elements.clearLogBtn) == null ? void 0 : _c.addEventListener("click", () => {
+    var _a, _b, _c, _d, _e;
+    (_a = elements.connectButton) == null ? void 0 : _a.addEventListener("click", () => {
+      if (isBleConnected()) {
+        BluetoothManager.disconnect();
+      } else {
+        BluetoothManager.connect();
+      }
+    });
+    (_b = elements.clearLogBtn) == null ? void 0 : _b.addEventListener("click", () => {
       Logger.clear();
       Logger.refresh();
     });
-    (_d = document.getElementById("dashboardButton")) == null ? void 0 : _d.addEventListener("click", toggleDashboard);
-    (_e = document.getElementById("emergencyStopButton")) == null ? void 0 : _e.addEventListener("click", async () => {
-      Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uC2E4\uD589\uB428", "error");
-      state.isExecuting = false;
-      if (isBleConnected()) {
-        try {
-          await BluetoothManager.sendData("STOP_ALL", false);
-          Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uBAA8\uB4E0 \uD558\uB4DC\uC6E8\uC5B4 \uC815\uC9C0 \uC644\uB8CC", "info");
-        } catch (error) {
-          Logger.add(`[\uC624\uB958] \uBE44\uC0C1 \uC815\uC9C0 \uC804\uC1A1 \uC2E4\uD328: ${error.message}`, "error");
-        }
-      } else {
-        Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uBE14\uB8E8\uD22C\uC2A4 \uBBF8\uC5F0\uACB0 - \uBE14\uB85D\uB9CC \uC911\uB2E8\uB428", "info");
-      }
-    });
-    (_f = document.getElementById("homeButton")) == null ? void 0 : _f.addEventListener("click", () => navigate({}));
-    (_g = document.getElementById("missionSelect")) == null ? void 0 : _g.addEventListener("change", (e) => {
+    (_c = document.getElementById("dashboardButton")) == null ? void 0 : _c.addEventListener("click", toggleDashboard);
+    window.addEventListener("ares:connection", updateRunButtonUI);
+    window.addEventListener("ares:execution", updateRunButtonUI);
+    (_d = document.getElementById("homeButton")) == null ? void 0 : _d.addEventListener("click", () => navigate({}));
+    (_e = document.getElementById("missionSelect")) == null ? void 0 : _e.addEventListener("change", (e) => {
       const m = parseInt(e.target.value, 10);
       const n = parseInt(document.getElementById("lessonSelect").value, 10);
       if (Number.isFinite(n) && Number.isFinite(m)) {
@@ -2832,11 +3312,23 @@
   function initializeMissionListeners(ws) {
     var _a, _b, _c, _d, _e;
     (_a = elements.runButton) == null ? void 0 : _a.addEventListener("click", async () => {
-      if (!validateConnection()) return;
       if (state.isExecuting) {
-        alert("\uC774\uBBF8 \uBA85\uB839\uC774 \uC2E4\uD589 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC\uB9CC \uAE30\uB2E4\uB824\uC8FC\uC138\uC694.");
+        Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uC2E4\uD589\uB428", "error");
+        state.isExecuting = false;
+        updateRunButtonUI();
+        if (isBleConnected()) {
+          try {
+            await BluetoothManager.sendData("STOP_ALL", false);
+            Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uBAA8\uB4E0 \uD558\uB4DC\uC6E8\uC5B4 \uC815\uC9C0 \uC644\uB8CC", "info");
+          } catch (error) {
+            Logger.add(`[\uC624\uB958] \uBE44\uC0C1 \uC815\uC9C0 \uC804\uC1A1 \uC2E4\uD328: ${error.message}`, "error");
+          }
+        } else {
+          Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uBE14\uB8E8\uD22C\uC2A4 \uBBF8\uC5F0\uACB0 - \uBE14\uB85D\uB9CC \uC911\uB2E8\uB428", "info");
+        }
         return;
       }
+      if (!validateConnection()) return;
       try {
         await CommandExecutor.executeWorkspace(ws);
       } catch (error) {
@@ -2890,6 +3382,7 @@
         const xml = Blockly.utils.xml.textToDom(xmlText);
         ws.clear();
         Blockly.Xml.domToWorkspace(xml, ws);
+        if (setContentMode) setContentMode("coding");
         const blocklyDiv = document.getElementById("blocklyDiv");
         const dashboardFrame = document.getElementById("dashboardFrame");
         if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === "block") {
@@ -2942,18 +3435,12 @@
       }
       if (data.type === "log_toggle") {
         const logContainer = document.getElementById("logContainer");
-        const btn = document.getElementById("logToggleButton");
         const STORAGE_KEY = "ares.log.visible";
         if (logContainer) {
           document.body.classList.toggle("log-hidden", !data.visible);
           try {
             localStorage.setItem(STORAGE_KEY, String(data.visible));
           } catch (e) {
-          }
-          if (btn) {
-            btn.setAttribute("aria-pressed", String(data.visible));
-            btn.title = data.visible ? "\uD1B5\uC2E0 \uB85C\uADF8 \uC228\uAE30\uAE30" : "\uD1B5\uC2E0 \uB85C\uADF8 \uBCF4\uAE30";
-            btn.textContent = data.visible ? "\u{1F4DD} \uB85C\uADF8\uB044\uAE30" : "\u{1F4DD} \uB85C\uADF8\uCF1C\uAE30";
           }
           try {
             Blockly.svgResize(ws);
@@ -2963,7 +3450,6 @@
         }
       }
     });
-    setupToolboxToggle();
   }
   function main() {
     workspace = initializeBlockly();
@@ -2973,9 +3459,18 @@
     const logContainer = document.getElementById("logContainer");
     if (logContainer) logContainer.classList.add("compact");
     setupLogToggle();
-    setupLogVisibilityButton();
-    setupMissionPanelToggle();
-    simController = setupSimulation({ workspace });
+    setupContentToggle();
+    simController = setupSimulation({
+      workspace,
+      onOpen: () => {
+        if (_contentMode !== "simulation") _preSimMode = _contentMode;
+        if (setContentMode) setContentMode("simulation");
+      },
+      onClose: () => {
+        if (_contentMode !== "simulation") return;
+        if (setContentMode) setContentMode(_preSimMode || "description");
+      }
+    });
     BluetoothManager.updateConnectionStatus(false);
     Logger.add("[\uC2DC\uC791] ARES \uC900\uBE44 \uC644\uB8CC - BLE \uC5F0\uACB0\uC744 \uC2DC\uC791\uD558\uC138\uC694", "info");
     Logger.refresh();

@@ -1,0 +1,49 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <!-- 변수 '번호'를 LED 번호 자리에 꽂아, 1→5번 LED를 차례로 켜는 예제.
+       핵심: led_on 의 번호 입력에 [math_number] 대신 [변수 번호]를 끼웠다.
+       반복 안에서 math_change 로 번호를 +1 하면 매번 다른 LED가 켜진다. -->
+  <variables>
+    <variable id="ledIdx">번호</variable>
+  </variables>
+  <block type="variables_set" x="40" y="40">
+    <field name="VAR" id="ledIdx">번호</field>
+    <value name="VALUE"><block type="math_number"><field name="NUM">1</field></block></value>
+    <next>
+      <block type="controls_repeat_ext">
+        <value name="TIMES"><block type="math_number"><field name="NUM">5</field></block></value>
+        <statement name="DO">
+          <block type="led_on">
+            <value name="LED_NUM"><block type="variables_get"><field name="VAR" id="ledIdx">번호</field></block></value>
+            <value name="BRIGHTNESS"><block type="math_number"><field name="NUM">1</field></block></value>
+            <next>
+              <block type="time_sleep">
+                <value name="SECONDS"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                <next>
+                  <block type="math_change">
+                    <field name="VAR" id="ledIdx">번호</field>
+                    <value name="DELTA"><block type="math_number"><field name="NUM">1</field></block></value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </statement>
+        <next>
+          <block type="time_sleep">
+            <value name="SECONDS"><block type="math_number"><field name="NUM">0.5</field></block></value>
+            <next>
+              <block type="led_off_all">
+                <next>
+                  <block type="buzzer_on">
+                    <value name="FREQ"><block type="math_number"><field name="NUM">784</field></block></value>
+                    <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>

@@ -54,6 +54,7 @@
                 <option value="countdown">⏰ 카운트다운</option>
                 <option value="radar_demo">📡 레이더 데모</option>
                 <option value="albi_song">🎵 알비의 노래</option>
+                <option value="led_variable">🔢 변수로 LED 켜기</option>
             </select>
             <span id="breadcrumb" aria-live="polite"></span>
         </nav>
@@ -195,9 +196,13 @@
         <!-- ========== 💡 LED ========== -->
         <category name="💡 LED" colour="#FF5555">
             <block type="led_on">
+                <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
                 <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
-            <block type="led_off"></block>
+            <block type="led_off">
+                <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="led_off_all"></block>
             <block type="set_lamp">
                 <value name="LAMP0"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
                 <value name="LAMP1"><shadow type="math_number"><field name="NUM">0</field></shadow></value>

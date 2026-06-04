@@ -66,19 +66,6 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     background: var(--background-secondary);
 }
 
-#emergencyStopButton {
-    background: #E74C3C;
-    color: #fff;
-}
-
-#emergencyStopButton:hover {
-    background: #c0392b;
-}
-
-#emergencyStopButton:active {
-    transform: scale(0.98);
-}
-
 /* 버튼 색상 정의 */
 #connectButton {
     background: #222;
@@ -88,12 +75,18 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     background: #383838;
 }
 
-#disconnectButton {
-    background: #999;
+/* 신호 연결 통합 버튼 상태 */
+#connectButton.btn-connected {
+    background: #2a9d6a;
 }
-
-#disconnectButton:hover {
-    background: #777;
+#connectButton.btn-connected:hover {
+    background: #237d55;
+}
+#connectButton.btn-failed {
+    background: #E74C3C;
+}
+#connectButton.btn-failed:hover {
+    background: #c0392b;
 }
 
 #runButton {
@@ -102,6 +95,14 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 
 #runButton:hover {
     background: #e04d1f;
+}
+
+/* 미션 전송 → 비상정지 모드 */
+#runButton.btn-stop {
+    background: #E74C3C;
+}
+#runButton.btn-stop:hover {
+    background: #c0392b;
 }
 
 #saveButton, #loadButton {
@@ -118,14 +119,6 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 
 #dashboardButton:hover {
     background: #484848;
-}
-
-#logToggleButton {
-    background: #999;
-}
-
-#logToggleButton:hover {
-    background: #777;
 }
 
 .container {
@@ -167,32 +160,6 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     color: var(--text-primary);
     white-space: nowrap;
     flex-shrink: 0;
-}
-
-.header-sub {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 4px 6px 0;
-    font-size: 0.85em;
-}
-
-.header-sub #exampleSelect {
-    font-family: 'Inter Tight', sans-serif;
-    font-size: 0.88em;
-    height: 32px;
-    padding: 0 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--background-white);
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-.header-sub #exampleSelect:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 .subtitle {
@@ -258,27 +225,6 @@ body.log-hidden .main-content {
     margin-bottom: 12px;
 }
 
-#status {
-    font-size: 0.9em;
-    font-weight: 600;
-    color: var(--info-color);
-    margin-left: 8px;
-}
-
-#status.connected {
-    color: var(--success-color);
-}
-
-#status.error {
-    color: var(--error-color);
-}
-
-#deviceInfo {
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin-top: 4px;
-}
-
 .main-content {
     flex-grow: 1;
     background: var(--background-white);
@@ -288,50 +234,6 @@ body.log-hidden .main-content {
     position: relative;
     min-height: 0;
     border: 1px solid var(--border-color);
-}
-
-/* ===== Blockly Toolbox Toggle ===== */
-#toolboxToggleBtn {
-    font-family: 'Inter Tight', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1;
-
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--background-white);
-    color: var(--text-primary);
-
-    padding: 10px 10px;
-    cursor: pointer;
-    user-select: none;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-
-#toolboxToggleBtn:hover {
-    background: var(--background-secondary);
-}
-
-#toolboxToggleBtn.toolbox-toggle--inside {
-    display: block;
-    width: calc(100% - 16px);
-    margin: 10px 8px 8px 8px;
-}
-
-#toolboxToggleBtn.toolbox-toggle--handle {
-    position: absolute;
-    top: 12px;
-    left: 10px;
-    z-index: 60;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    min-width: 120px;
-    height: 44px;
-    padding: 0 12px;
-    margin: 0;
-    border-radius: 8px;
 }
 
 #blocklyDiv {
@@ -503,8 +405,6 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
     border-radius: 8px;
   }
 
-  #status { font-size: 14px; }
-
   .main-content, #blocklyDiv {
     width: 100%;
     height: 100%;
@@ -582,17 +482,6 @@ iframe, #dashboardFrame {
       border-radius: 10px;
   }
 
-  #status {
-    display: block;
-    width: 100%;
-    margin-top: 6px;
-    font-size: 0.8em;
-  }
-
-  #deviceInfo {
-    display: block;
-    width: 100%;
-  }
 }
 
 /* ===== Log: compact by default, expand on click ===== */
@@ -718,9 +607,27 @@ iframe, #dashboardFrame {
 }
 
 #missionView {
-    display: flex;
-    flex-direction: row;
+    position: relative;
     overflow: hidden;
+}
+
+/* missionView는 description / coding / simulation 세 모드 중 하나만 표시 */
+#missionView > .mission-panel,
+#missionView > .mission-workspace,
+#missionView > .sim-card {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+#missionView[data-mode="description"]  > .mission-workspace,
+#missionView[data-mode="description"]  > .sim-card,
+#missionView[data-mode="coding"]       > .mission-panel,
+#missionView[data-mode="coding"]       > .sim-card,
+#missionView[data-mode="simulation"]   > .mission-panel,
+#missionView[data-mode="simulation"]   > .mission-workspace {
+    display: none !important;
 }
 
 /* ----- 태그 배지 ----- */
@@ -984,35 +891,22 @@ iframe, #dashboardFrame {
 .summary-notebox  { border-left-color: #7BDCB5; }
 .summary-caution  { border-left-color: #E74C3C; background:#FFF3F1; }
 
-/* ----- 미션 코딩 뷰 ----- */
-#missionView { position: relative; }
-
-/* ----- 3D 시뮬레이션 카드 ----- */
+/* ----- 3D 시뮬레이션 패널 (미션 뷰의 풀-페인 모드) ----- */
 .sim-card {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 30;
-    width: 380px;
-    max-width: calc(100% - 24px);
     background: var(--background-white);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.20);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 .sim-card[hidden] { display: none; }
 .sim-card-head {
     display: flex; align-items: center; justify-content: space-between;
     gap: 10px; padding: 10px 12px; flex-wrap: wrap;
     border-bottom: 1px solid var(--border-color);
-    cursor: move;                 /* 헤더를 끌어 카드 이동 */
-    touch-action: none;           /* 모바일에서 헤더 드래그가 배경 스크롤로 새지 않도록 */
     user-select: none;
 }
-.sim-drag { cursor: move; color: var(--text-secondary); font-size: 15px; line-height: 1; opacity: 0.55; padding: 0 2px; flex: 0 0 auto; }
+.sim-drag { display: none; }
 .sim-topic {
     flex: 1 1 auto; min-width: 96px; max-width: 200px;
     font-family: 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
@@ -1072,8 +966,27 @@ iframe, #dashboardFrame {
 .sim-launch-btn:hover { border-color: var(--primary-color, #4682c8); }
 .sim-launch-btn.on { background: rgba(0, 200, 200, 0.18); border-color: #3cbfbf; color: #0a5c5c; }
 .sim-launch-btn.on .dot { background: #2dd4d4; box-shadow: 0 0 7px 2px rgba(45, 212, 212, 0.75); }
+
+/* 발사대 LED 버튼(LED0=도넛, LED1..LED5=세로 줄) — 활성 색은 LED 발광색(붉은색) */
+.sim-launch-led-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.sim-launch-led-btn {
+    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-launch-led-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-launch-led-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-launch-led-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-launch-led-btn.on { background: rgba(255, 60, 60, 0.16); border-color: #e54f4f; color: #a01818; }
+.sim-launch-led-btn.on .dot { background: #ff3030; box-shadow: 0 0 7px 2px rgba(255, 60, 60, 0.78); }
 .sim-stage {
-    position: relative; width: 100%; height: 300px;
+    position: relative; width: 100%;
+    flex: 1 1 0; min-height: 240px;
     /* 우주 느낌의 어둡지만 채도 있는 배경: 보라 → 인디고 → 짙은 네이비 */
     background: radial-gradient(circle at 60% 25%, #3a1d6e 0%, #1b1e58 45%, #0c0d2a 100%);
 }
@@ -1111,37 +1024,11 @@ iframe, #dashboardFrame {
 .sim-log-line.sys    { color: #9aa6bf; }
 .sim-log-line.err    { color: #ff8a8a; }
 
-/* 모바일: 카드가 잘리지 않도록 화면 중앙 고정 + (필요 시) 내부 스크롤.
-   본문(body)이 overflow:hidden 이라 페이지 스크롤이 안 되므로, 카드 자체를
-   뷰포트 기준 fixed 로 중앙에 띄우고 화면보다 길면 카드 안에서 스크롤한다. */
-@media (max-width: 600px) {
-    .sim-card {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        right: auto;
-        transform: translate(-50%, -50%);
-        width: calc(100vw - 20px);
-        max-width: 440px;
-        max-height: calc(100dvh - 20px);
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .sim-stage { height: 240px; }
-}
-
 #missionView .mission-panel {
-    flex: 0 0 320px;
-    width: 320px;
     background: var(--background-main);
-    border-right: 1px solid var(--border-color);
-    padding: 16px 16px 12px;
+    padding: 16px 20px 16px;
     overflow-y: auto;
     box-sizing: border-box;
-}
-
-#missionView .mission-panel.collapsed {
-    display: none;
 }
 
 .mission-panel-head h3 {
@@ -1252,10 +1139,7 @@ details.mission-section summary {
 }
 
 #missionView .mission-workspace {
-    flex: 1;
-    position: relative;
     overflow: hidden;
-    min-width: 0;
 }
 
 #missionView #blocklyDiv {
@@ -1263,22 +1147,8 @@ details.mission-section summary {
     height: 100%;
 }
 
-/* ----- 반응형: 모바일에서는 미션 패널이 상단으로 ----- */
+/* ----- 반응형: 모바일에서 missionNav 폼 요소 줄바꿈 ----- */
 @media (max-width: 900px) {
-    #missionView {
-        flex-direction: column;
-    }
-    #missionView .mission-panel {
-        flex: 0 0 auto;
-        width: 100%;
-        max-height: 38vh;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-    }
-    #missionView .mission-workspace {
-        flex: 1;
-        min-height: 0;
-    }
     #missionNav select {
         min-width: 150px;
         flex: 1;
@@ -1300,5 +1170,108 @@ details.mission-section summary {
     }
     .mission-list {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   모바일: 페이지 전체 세로 스크롤 + 블록코딩 툴박스를 아이콘만 표시
+   - 데스크톱(>=769px) 은 기존 고정-뷰포트 레이아웃 유지
+   - 모바일에서는 한 화면에 모두 욱여넣지 않고 자연스러운 스크롤 흐름
+   ============================================================ */
+@media (max-width: 768px) {
+    body {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+        align-items: stretch;
+        padding: 8px;
+    }
+    .container {
+        height: auto;
+        max-height: none;
+        min-height: calc(100dvh - 16px);
+        max-width: 100%;
+        padding: 12px;
+        overflow: visible;
+    }
+    .main-content {
+        overflow: visible;
+        min-height: 0;
+    }
+    #overviewView,
+    #lessonView {
+        overflow-y: visible;
+    }
+
+    /* 미션 뷰: 절대 위치 풀-페인을 일반 흐름 + 모드별 충분한 높이로 전환 */
+    #missionView {
+        overflow: visible;
+    }
+    #missionView > .mission-panel,
+    #missionView > .mission-workspace,
+    #missionView > .sim-card {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: auto;
+    }
+    /* 미션 설명: 콘텐츠 자연 높이로 흐른다(페이지 스크롤로 본다) */
+    #missionView[data-mode="description"] > .mission-panel {
+        overflow: visible;
+    }
+    /* 블럭코딩: 고정 뷰포트 높이로 작업 공간 확보 */
+    #missionView[data-mode="coding"] > .mission-workspace {
+        height: 75dvh;
+        min-height: 480px;
+    }
+    /* 시뮬레이션: 캔버스 + 컨트롤 + 로그 모두 보이도록 충분한 높이 */
+    #missionView[data-mode="simulation"] > .sim-card {
+        height: auto;
+        min-height: 90dvh;
+    }
+    #missionView[data-mode="simulation"] .sim-stage {
+        min-height: 55dvh;
+    }
+
+    /* 로그 컨테이너: 페이지 스크롤로 끝부분에서 보이도록 */
+    #logContainer {
+        max-height: none;
+        height: auto;
+        min-height: 140px;
+    }
+    #logContent {
+        max-height: 220px;
+    }
+
+    /* Blockly 툴박스: 모바일에서는 카테고리 이름을 JS 에서 emoji 1자로 잘라 두므로
+       (initializeBlockly 참고) 라벨 자체에 별도 클립 처리가 필요 없다.
+       여기서는 폭만 좁히고 선택 시 가로 확장이 일어나지 않도록 row 폭을 고정한다. */
+    .blocklyToolboxDiv {
+        width: 30px !important;
+        min-width: 30px !important;
+        padding: 2px 0 !important;
+        overflow: hidden !important;
+    }
+    .blocklyTreeRow,
+    .blocklyTreeSelected {
+        width: 30px !important;
+        max-width: 30px !important;
+        padding: 5px 0 !important;
+        text-align: center;
+        box-sizing: border-box;
+    }
+    .blocklyTreeLabel {
+        font-size: 0.85em !important;
+        line-height: 1 !important;
+        display: inline-block !important;
+        white-space: nowrap !important;
+        vertical-align: middle;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    .blocklyTreeIcon {
+        display: none !important;
     }
 }

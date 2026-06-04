@@ -161,28 +161,32 @@ export const BlocklyConfig = {
       type: "led_on",
       message0: "💡 LED %1 번 켜기 (밝기 %2 )",
       args0: [
-        { type: "field_dropdown", name: "LED_NUM", options: [
-          ["0번", "0"], ["1번", "1"], ["2번", "2"], ["3번", "3"], ["4번", "4"], ["5번", "5"]
-        ]},
+        { type: "input_value", name: "LED_NUM", check: "Number" },
         { type: "input_value", name: "BRIGHTNESS", check: "Number" }
       ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF5555",
-      tooltip: "특정 LED(0~5번)를 지정한 밝기로 켭니다. 밝기: 0~1"
+      tooltip: "특정 LED(0~5번)를 지정한 밝기로 켭니다. 번호에 숫자·변수·계산식을 꽂을 수 있습니다. 밝기: 0~1"
     },
     {
       type: "led_off",
-      message0: "💡 LED %1 끄기",
+      message0: "💡 LED %1 번 끄기",
       args0: [
-        { type: "field_dropdown", name: "LED_NUM", options: [
-          ["0번", "0"], ["1번", "1"], ["2번", "2"], ["3번", "3"], ["4번", "4"], ["5번", "5"], ["전체", "ALL"]
-        ]}
+        { type: "input_value", name: "LED_NUM", check: "Number" }
       ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF5555",
-      tooltip: "특정 LED 또는 전체 LED를 끕니다."
+      tooltip: "특정 LED(0~5번)를 끕니다. 번호에 숫자·변수·계산식을 꽂을 수 있습니다."
+    },
+    {
+      type: "led_off_all",
+      message0: "💡 LED 전체 끄기",
+      previousStatement: null,
+      nextStatement: null,
+      colour: "#FF5555",
+      tooltip: "모든 LED를 한번에 끕니다."
     },
 
     // 디스플레이 블록 (보라색 #9966FF)
