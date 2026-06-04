@@ -47,6 +47,17 @@ function initializeBlockly() {
   attachBatchBlockValidator(Blockly);
   applyKoreanMessages();
 
+  // 모바일에서는 카테고리 이름을 emoji 1자로 줄여 글자가 절대 새어 나오지 않도록
+  // (Blockly 의 기본 선택 스타일이 텍스트 영역을 펼치는 케이스를 원천 차단)
+  const toolboxEl = document.getElementById('toolbox');
+  if (toolboxEl && window.matchMedia('(max-width: 768px)').matches) {
+    toolboxEl.querySelectorAll('category').forEach((cat) => {
+      const name = cat.getAttribute('name') || '';
+      const firstToken = name.split(/\s+/)[0];   // 예: "🚗 서보 모터" → "🚗"
+      if (firstToken) cat.setAttribute('name', firstToken);
+    });
+  }
+
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox'),
     scrollbars: true,
