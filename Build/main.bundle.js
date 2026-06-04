@@ -1833,18 +1833,27 @@
     const launchWaveRings = [];
     const WAVE_SPAWN_INTERVAL = 0.18;
     const WAVE_LIFETIME = 1.4;
-    const WAVE_MAX_SCALE = 7;
+    const WAVE_MAX_SCALE = 5;
     const WAVE_COLOR = 8969727;
-    const WAVE_OPACITY = 0.5;
+    const WAVE_OPACITY = 0.16;
     function setLaunchWave(on) {
       if (!LAUNCH) return;
       launchWaveOn = !!on;
       if (!launchWaveOn) launchWaveSpawnTimer = 0;
     }
     function spawnWaveRing() {
-      const innerR = launchFootprintSize * 0.42;
-      const outerR = launchFootprintSize * 0.5;
-      const geom = new THREE.RingGeometry(innerR, outerR, 64);
+      const baseR = launchFootprintSize * 0.5;
+      const geom = new THREE.SphereGeometry(
+        baseR,
+        48,
+        24,
+        0,
+        Math.PI * 2,
+        // phi: 전체 둘레
+        0,
+        Math.PI / 2
+        // theta: 상반구(꼭대기 → 적도)
+      );
       const mat = new THREE.MeshBasicMaterial({
         color: WAVE_COLOR,
         transparent: true,
@@ -1854,7 +1863,7 @@
         blending: THREE.AdditiveBlending
       });
       const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.y = launchFootprintSize * 0.2;
+      mesh.position.set(0, 0, 0);
       scene.add(mesh);
       launchWaveRings.push({ mesh, age: 0 });
     }
@@ -1878,7 +1887,7 @@
           continue;
         }
         const scale = 1 + t * (WAVE_MAX_SCALE - 1);
-        r.mesh.scale.set(scale, scale, 1);
+        r.mesh.scale.setScalar(scale);
         r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
       }
     }

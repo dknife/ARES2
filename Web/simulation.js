@@ -490,34 +490,38 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     }
   }
 
-  // 발사대 부저 웨이브 — BUZZER_ON 동안 발사대 주변으로 동심원(ring)이 퍼져나간다.
-  // 각 ring 은 일정 수명 동안 크기가 커지면서 페이드 아웃. 끄면 새 ring 은 안 생기고 기존 것만 마저 사라진다.
+  // 발사대 부저 웨이브 — BUZZER_ON 동안 발사대 바닥에서 반구(돔) 형태의 웨이브가
+  // 사방·상방으로 퍼져나간다. 각 돔은 일정 수명 동안 균등 확대되며 페이드 아웃.
+  // 끄면 새 돔은 안 생기고 기존 것만 마저 사라진다.
   let launchWaveOn = false;
   let launchWaveSpawnTimer = 0;
   let launchFootprintSize = 1;          // 모델 로딩 후 max(sz.x, sz.z)로 갱신
-  const launchWaveRings = [];           // { mesh, age }
-  const WAVE_SPAWN_INTERVAL = 0.18;     // 새 ring 생성 주기(초)
-  const WAVE_LIFETIME       = 1.4;      // 각 ring 수명(초)
-  const WAVE_MAX_SCALE      = 7;        // 최종 스케일(초기 → ×WAVE_MAX_SCALE)
+  const launchWaveRings = [];           // { mesh, age } — 반구 돔 메시
+  const WAVE_SPAWN_INTERVAL = 0.18;     // 새 돔 생성 주기(초)
+  const WAVE_LIFETIME       = 1.4;      // 각 돔 수명(초)
+  const WAVE_MAX_SCALE      = 5;        // 최종 스케일(초기 → ×WAVE_MAX_SCALE)
   const WAVE_COLOR          = 0x88ddff; // 사운드 웨이브 느낌의 시안
-  const WAVE_OPACITY        = 0.5;      // 초기 투명도
+  const WAVE_OPACITY        = 0.16;     // 초기 투명도(반구 셸 중첩 고려해 낮춤 — 더 은은하게)
   function setLaunchWave(on) {
     if (!LAUNCH) return;
     launchWaveOn = !!on;
     if (!launchWaveOn) launchWaveSpawnTimer = 0;
   }
   function spawnWaveRing() {
-    const innerR = launchFootprintSize * 0.42;
-    const outerR = launchFootprintSize * 0.50;
-    const geom = new THREE.RingGeometry(innerR, outerR, 64);
+    // 상반구(돔) 셸 — 적도를 지면(y=0)에 두고 위로 부풀어 오른다.
+    // SphereGeometry 의 theta(꼭대기→적도)를 0~π/2 로 잘라 상반구만 만든다.
+    const baseR = launchFootprintSize * 0.5;
+    const geom = new THREE.SphereGeometry(
+      baseR, 48, 24,
+      0, Math.PI * 2,      // phi: 전체 둘레
+      0, Math.PI / 2       // theta: 상반구(꼭대기 → 적도)
+    );
     const mat = new THREE.MeshBasicMaterial({
       color: WAVE_COLOR, transparent: true, opacity: WAVE_OPACITY,
       side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
     });
     const mesh = new THREE.Mesh(geom, mat);
-    // 정면에서 보이도록 XY 평면(수직)에 세움 — RingGeometry 기본 방향이 XY 면이라
-    // 회전 없이 그대로 두면 normal=+Z 가 되어 카메라(+Z 방향)에 정면으로 마주본다.
-    mesh.position.y = launchFootprintSize * 0.20;  // 발사대 하단 근처 높이
+    mesh.position.set(0, 0, 0);  // 발사대 바닥 중심 — 적도가 지면에 닿는다
     scene.add(mesh);
     launchWaveRings.push({ mesh, age: 0 });
   }
@@ -541,7 +545,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
         continue;
       }
       const scale = 1 + t * (WAVE_MAX_SCALE - 1);
-      r.mesh.scale.set(scale, scale, 1);  // XY 평면 → x·y로 확장, z는 두께(평면) 유지
+      r.mesh.scale.setScalar(scale);      // 반구를 x·y·z 균등 확대 → 돔이 사방·상방으로 퍼짐
       r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
     }
   }
