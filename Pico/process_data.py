@@ -259,6 +259,12 @@ class CommandProcessor:
                 if not cmd:
                     continue
                 self.process(cmd)
+                # 논블로킹 부저가 BATCH 안에서 시작됐다면, 다음 음이 덮어쓰지
+                # 않도록 끝날 때까지 대기한다(BATCH는 펌웨어가 순차 타이밍을 보장).
+                if robot.buzzer and robot.buzzer.is_playing:
+                    while robot.buzzer.is_playing:
+                        robot.buzzer.update()
+                        utime.sleep_ms(10)
             return 1
         except Exception as e:
             print(f"BATCH 오류: {e}")
@@ -282,17 +288,20 @@ class CommandProcessor:
     
     # 부저 핸들러
     def _handle_buzzer_on(self, data):
-        """부저 울리기"""
+        """부저 울리기 (논블로킹).
+        음을 '시작만' 하고 즉시 반환한다. 실제 정지는 메인 루프의
+        robot.buzzer.update()가 duration 경과 시 처리하므로, 긴 음을 울리는
+        동안에도 Pico가 다른 명령(긴급 정지 등)에 응답할 수 있다.
+        멜로디의 음 길이 페이싱은 웹(commandexecutor.js)이 로컬 타이머로
+        담당한다. 단, BATCH 안에서는 _handle_batch가 음이 끝날 때까지 드레인한다."""
         if not robot.buzzer:
             return 0
         try:
             argv = data.split(',')
             freq = int(float(argv[1]))
             duration = float(argv[2])
+            robot.buzzer.stop()                 # 직전 음 잔여 정리(페이싱상 이미 끝났어야 함)
             robot.buzzer.start(freq=freq, duration=duration, vol=50000)
-            while robot.buzzer.is_playing:
-                robot.buzzer.update()
-                utime.sleep_ms(10)
             return 1
         except Exception as e:
             print(f"BUZZER_ON 오류: {e}")
