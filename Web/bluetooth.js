@@ -15,14 +15,14 @@ export const BluetoothManager = {
             Logger.add('[경고] 이미 연결 시도 중입니다', 'error');
             return;
         }
-        
+
         state.isConnecting = true;
-        elements.connectButton.disabled = true;
-        this.updateStatus('아레스 탐색 중...', STATUS_COLORS.ORANGE);
+        state.connectFailed = false;
+        this.updateConnectionStatus(false);
 
         try {
             Logger.add('[BLE] 장치 검색 중...', 'info');
-            
+
             state.bluetoothDevice = await navigator.bluetooth.requestDevice({
                 filters: [
                     { name: 'PicoBLE' },
@@ -32,18 +32,16 @@ export const BluetoothManager = {
                 optionalServices: [BLUETOOTH_CONFIG.UART_SERVICE_UUID]
             });
 
-            this.updateStatus('아레스에 연결 중...', STATUS_COLORS.ORANGE);
             Logger.add(`[BLE] 장치 발견: ${state.bluetoothDevice.name || 'Unknown'}`, 'info');
 
             state.bluetoothDevice.addEventListener(
                 'gattserverdisconnected',
                 this.onDeviceDisconnected.bind(this)
             );
-            
+
             state.bluetoothServer = await state.bluetoothDevice.gatt.connect();
             await this.delay(2000);
 
-            this.updateStatus('UART 서비스 연결 중...', STATUS_COLORS.ORANGE);
             state.uartService = await state.bluetoothServer.getPrimaryService(
                 BLUETOOTH_CONFIG.UART_SERVICE_UUID
             );
@@ -66,18 +64,17 @@ export const BluetoothManager = {
                 this.startPeriodicReads();
             }
 
+            state.isConnecting = false;
+            state.connectFailed = false;
             this.updateConnectionStatus(true);
             Logger.add(`[연결] ${state.bluetoothDevice.name || 'Unknown'} 연결 완료`, 'success');
-
-            state.isConnecting = false;
-            elements.connectButton.disabled = false;
         } catch (error) {
             console.error('BLE 연결 오류:', error);
             Logger.add(`[오류] 연결 실패: ${error.message}`, 'error');
             await this.cleanup();
             state.isConnecting = false;
-            elements.connectButton.disabled = false;
-            this.updateStatus(`❌ 연결 실패: ${error.message}`, STATUS_COLORS.RED);
+            state.connectFailed = true;
+            this.updateConnectionStatus(false);
         }
     },
 
@@ -101,6 +98,7 @@ export const BluetoothManager = {
             }
 
             await this.cleanup();
+            state.connectFailed = false;
             this.updateConnectionStatus(false);
             Logger.add('[연결] 해제 완료', 'info');
         } catch (error) {
@@ -327,22 +325,35 @@ export const BluetoothManager = {
         }
     },
 
-    // 연결 상태 UI 업데이트
+    // 연결 상태 UI 업데이트 — connectButton 4-state 라벨/색을 갱신.
+    // runButton 상태는 main.js 의 updateRunButtonUI 에 위임(이벤트로 통지).
     updateConnectionStatus(connected) {
-        elements.connectButton.disabled = connected || state.isConnecting;
-        elements.disconnectButton.disabled = !connected;
-        
-        const dashboardFrame = document.getElementById('dashboardFrame');
-        const isDashboardMode = dashboardFrame && dashboardFrame.style.display !== 'none' && dashboardFrame.style.display !== '';
-        
-        if (!isDashboardMode) {
-            elements.runButton.disabled = !connected;
+        const btn = elements.connectButton;
+        if (btn) {
+            btn.classList.remove('btn-connected', 'btn-failed');
+            if (connected) {
+                btn.textContent = '🔌 연결 - 신호 끊기';
+                btn.classList.add('btn-connected');
+                btn.disabled = false;
+                btn.title = '연결을 끊으려면 클릭';
+            } else if (state.isConnecting) {
+                btn.textContent = '🔗 연결 중...';
+                btn.disabled = true;
+                btn.title = '연결 시도 중';
+            } else if (state.connectFailed) {
+                btn.textContent = '❌ 연결실패 - 재연결';
+                btn.classList.add('btn-failed');
+                btn.disabled = false;
+                btn.title = '다시 연결을 시도합니다';
+            } else {
+                btn.textContent = '🔗 신호 연결';
+                btn.disabled = false;
+                btn.title = '아레스 탐사선과 연결';
+            }
         }
-        
-        const emergencyStopButton = document.getElementById('emergencyStopButton');
-        if (emergencyStopButton) {
-            emergencyStopButton.disabled = false;
-        }
+
+        // main.js 가 runButton 라벨/활성을 갱신할 수 있도록 알림
+        window.dispatchEvent(new CustomEvent('ares:connection', { detail: { connected } }));
 
         const iframe = document.getElementById('dashboardFrame');
         if (iframe && iframe.contentWindow) {
@@ -351,24 +362,13 @@ export const BluetoothManager = {
                 connected: connected
             }, '*');
         }
-
-        if (connected) {
-            elements.status.textContent = '✅ 아레스 연결됨';
-            elements.status.style.color = STATUS_COLORS.GREEN;
-            if (state.bluetoothDevice) {
-                elements.deviceInfo.textContent = `장치: ${state.bluetoothDevice.name || 'Unknown'}`;
-            }
-        } else {
-            elements.status.textContent = state.isConnecting ? '연결 중...' : '❌ 연결 끊김';
-            elements.status.style.color = state.isConnecting ? STATUS_COLORS.ORANGE : STATUS_COLORS.RED;
-            elements.deviceInfo.textContent = '';
-        }
     },
 
-    // 상태 메시지 업데이트
-    updateStatus(message, color) {
-        elements.status.textContent = message;
-        elements.status.style.color = color;
+    // 상태 메시지 업데이트 — #status 요소가 사라졌으므로 Logger 로만 흘려보낸다.
+    updateStatus(message, _color) {
+        if (typeof message === 'string' && message.trim()) {
+            Logger.add(`[상태] ${message}`, 'info');
+        }
     },
 
     // 데이터 전송

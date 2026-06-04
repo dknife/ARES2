@@ -1,13 +1,8 @@
 // DOM 요소 참조
 
 export const elements = {
-    // 상태 표시
-    status: document.getElementById('status'),
-    deviceInfo: document.getElementById('deviceInfo'),
-
-    // 제어 버튼
+    // 제어 버튼 — connectButton 은 연결/끊기/재연결 4-state 통합 버튼
     connectButton: document.getElementById('connectButton'),
-    disconnectButton: document.getElementById('disconnectButton'),
     runButton: document.getElementById('runButton'),
     saveButton: document.getElementById('saveButton'),
     loadButton: document.getElementById('loadButton'),

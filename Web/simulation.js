@@ -262,7 +262,9 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     sphereBase: 0x031a0a, emissive: 0x00ff33,
     glowStops: ['rgba(20,255,80,1)', 'rgba(0,230,50,0.78)', 'rgba(0,255,40,0)'],
     glowTint: 0x00ff44, lightColor: 0x00ff44,
-    intensityScale: 0.4, opacityOn: 0.99, glowScale: 0.55,
+    // 입력 v=1 일 때 시각적 밝기를 기존의 약 30% 수준으로 (0.4 → 0.12).
+    // opacity 는 v 에만 의존하므로 색의 또렷함은 그대로, 발광량만 줄어든다.
+    intensityScale: 0.12, opacityOn: 0.99, glowScale: 0.55,
   };
   // 발사대 LED0(로켓 바닥 도넛) 전용 빨강 — 가슴 LED(CHEST)와 분리해 채도를 더 높게 튜닝.
   const LAUNCH_TORUS_PALETTE = {

@@ -28,26 +28,12 @@
                 <h1>ARES 관제실</h1>
                 <div id="controls">
                     <button id="connectButton">🔗 신호 연결</button>
-                    <button id="disconnectButton" disabled>⛔ 신호 중단</button>
                     <button id="runButton" disabled>▶️ 미션 전송</button>
                     <button id="saveButton" disabled>💾 미션 저장</button>
                     <button id="loadButton" disabled>📂 미션 읽기</button>
                     <button id="dashboardButton">🔍 점검</button>
-                    <button id="emergencyStopButton">🛑 비상정지</button>
-                    <button id="logToggleButton">📝 로그끄기</button>
                     <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
                 </div>
-            </div>
-            <div class="header-sub">
-                <select id="exampleSelect" title="예제 불러오기" disabled>
-                    <option value="">📦 예제 선택</option>
-                    <option value="greeting">👋 인사하기</option>
-                    <option value="countdown">⏰ 카운트다운</option>
-                    <option value="radar_demo">📡 레이더 데모</option>
-                    <option value="albi_song">🎵 알비의 노래</option>
-                </select>
-                <span id="status">탐사선 연결 대기 중</span>
-                <div id="deviceInfo"></div>
             </div>
         </header>
 
@@ -62,6 +48,13 @@
             </select>
             <button id="contentToggleBtn" class="nav-btn" type="button" hidden title="미션 설명 ↔ 블럭코딩 전환">🧩 블럭코딩 열기</button>
             <button id="simToggle" class="nav-btn" type="button" hidden aria-pressed="false" title="3D 시뮬레이션 열기/닫기">🤖 시뮬레이션 열기</button>
+            <select id="exampleSelect" title="예제 불러오기" disabled>
+                <option value="">📦 예제 선택</option>
+                <option value="greeting">👋 인사하기</option>
+                <option value="countdown">⏰ 카운트다운</option>
+                <option value="radar_demo">📡 레이더 데모</option>
+                <option value="albi_song">🎵 알비의 노래</option>
+            </select>
             <span id="breadcrumb" aria-live="polite"></span>
         </nav>
 

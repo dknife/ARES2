@@ -13,6 +13,7 @@ export const state = {
     notificationsEnabled: false,
     readIntervalId: null,
     isConnecting: false,
+    connectFailed: false,           // 마지막 연결 시도가 실패했는지 (재연결 라벨용)
     lastCommand: null,
 
     // 실행 상태
