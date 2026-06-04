@@ -66,19 +66,6 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     background: var(--background-secondary);
 }
 
-#emergencyStopButton {
-    background: #E74C3C;
-    color: #fff;
-}
-
-#emergencyStopButton:hover {
-    background: #c0392b;
-}
-
-#emergencyStopButton:active {
-    transform: scale(0.98);
-}
-
 /* 버튼 색상 정의 */
 #connectButton {
     background: #222;
@@ -88,12 +75,18 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     background: #383838;
 }
 
-#disconnectButton {
-    background: #999;
+/* 신호 연결 통합 버튼 상태 */
+#connectButton.btn-connected {
+    background: #2a9d6a;
 }
-
-#disconnectButton:hover {
-    background: #777;
+#connectButton.btn-connected:hover {
+    background: #237d55;
+}
+#connectButton.btn-failed {
+    background: #E74C3C;
+}
+#connectButton.btn-failed:hover {
+    background: #c0392b;
 }
 
 #runButton {
@@ -102,6 +95,14 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 
 #runButton:hover {
     background: #e04d1f;
+}
+
+/* 미션 전송 → 비상정지 모드 */
+#runButton.btn-stop {
+    background: #E74C3C;
+}
+#runButton.btn-stop:hover {
+    background: #c0392b;
 }
 
 #saveButton, #loadButton {
@@ -118,14 +119,6 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 
 #dashboardButton:hover {
     background: #484848;
-}
-
-#logToggleButton {
-    background: #999;
-}
-
-#logToggleButton:hover {
-    background: #777;
 }
 
 .container {
@@ -167,32 +160,6 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     color: var(--text-primary);
     white-space: nowrap;
     flex-shrink: 0;
-}
-
-.header-sub {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding: 4px 6px 0;
-    font-size: 0.85em;
-}
-
-.header-sub #exampleSelect {
-    font-family: 'Inter Tight', sans-serif;
-    font-size: 0.88em;
-    height: 32px;
-    padding: 0 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: var(--background-white);
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-.header-sub #exampleSelect:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 .subtitle {
@@ -256,27 +223,6 @@ body.log-hidden #logContainer {
 
 body.log-hidden .main-content {
     margin-bottom: 12px;
-}
-
-#status {
-    font-size: 0.9em;
-    font-weight: 600;
-    color: var(--info-color);
-    margin-left: 8px;
-}
-
-#status.connected {
-    color: var(--success-color);
-}
-
-#status.error {
-    color: var(--error-color);
-}
-
-#deviceInfo {
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin-top: 4px;
 }
 
 .main-content {
@@ -459,8 +405,6 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
     border-radius: 8px;
   }
 
-  #status { font-size: 14px; }
-
   .main-content, #blocklyDiv {
     width: 100%;
     height: 100%;
@@ -538,17 +482,6 @@ iframe, #dashboardFrame {
       border-radius: 10px;
   }
 
-  #status {
-    display: block;
-    width: 100%;
-    margin-top: 6px;
-    font-size: 0.8em;
-  }
-
-  #deviceInfo {
-    display: block;
-    width: 100%;
-  }
 }
 
 /* ===== Log: compact by default, expand on click ===== */

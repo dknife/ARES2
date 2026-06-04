@@ -174,6 +174,28 @@ function validateConnection() {
   return true;
 }
 
+// 미션 전송 ↔ 비상정지 통합 버튼의 라벨·색·활성 상태를 한곳에서 갱신.
+//   - state.isExecuting=true 면 비상정지(빨강, 항상 활성)
+//   - 그 외에는 미션 뷰 + BLE 연결 + 대시보드 모드가 아닐 때만 활성
+function updateRunButtonUI() {
+  const btn = elements.runButton;
+  if (!btn) return;
+  if (state.isExecuting) {
+    btn.textContent = '🛑 비상정지';
+    btn.title = '실행 중인 미션을 즉시 멈춥니다';
+    btn.classList.add('btn-stop');
+    btn.disabled = false;
+    return;
+  }
+  btn.textContent = '▶️ 미션 전송';
+  btn.title = '블록코딩 내용을 피코로 전송해 실행';
+  btn.classList.remove('btn-stop');
+  const inMission = currentView === 'mission';
+  const dashboardFrame = document.getElementById('dashboardFrame');
+  const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
+  btn.disabled = !inMission || inDashboard || !isBleConnected();
+}
+
 // ============================================================
 // 라우터 (URL hash 기반)
 //   #                       → overview
@@ -227,12 +249,14 @@ function showView(view) {
 
   const inMission = view === 'mission';
   // 미션 뷰일 때만 코딩 관련 버튼 활성화
-  const ble = isBleConnected();
   if (elements.saveButton) elements.saveButton.disabled = !inMission;
   if (elements.loadButton) elements.loadButton.disabled = !inMission;
   const exampleSelect = document.getElementById('exampleSelect');
-  if (exampleSelect) exampleSelect.disabled = !inMission;
-  if (elements.runButton) elements.runButton.disabled = !inMission || !ble;
+  if (exampleSelect) {
+    exampleSelect.disabled = !inMission;
+    exampleSelect.hidden = !inMission;
+  }
+  updateRunButtonUI();
 
   // 콘텐츠 토글 버튼은 미션 뷰에서만 노출
   const contentBtn = document.getElementById('contentToggleBtn');
@@ -508,10 +532,9 @@ function toggleDashboard() {
     if (contentToggleBtn) contentToggleBtn.style.display = 'none';
     dashboardButton.textContent = '🧩 코딩';
 
-    if (elements.runButton) elements.runButton.disabled = true;
     if (elements.saveButton) elements.saveButton.disabled = true;
     if (elements.loadButton) elements.loadButton.disabled = true;
-    BluetoothManager.updateConnectionStatus(isBleConnected());
+    updateRunButtonUI();
     Logger.add('[모드] 대시보드 전환', 'info');
   } else {
     blocklyDiv.style.display = 'block';
@@ -521,8 +544,7 @@ function toggleDashboard() {
 
     if (elements.saveButton) elements.saveButton.disabled = false;
     if (elements.loadButton) elements.loadButton.disabled = false;
-    if (elements.runButton) elements.runButton.disabled = !isBleConnected();
-    BluetoothManager.updateConnectionStatus(isBleConnected());
+    updateRunButtonUI();
     Logger.add('[모드] 블록코딩 전환', 'info');
   }
 }
@@ -542,41 +564,6 @@ function setupLogToggle() {
     if (e.target?.id === 'clearLogBtn') return;
     const expanded = logContainer.classList.toggle('expanded');
     logContainer.classList.toggle('compact', !expanded);
-    Logger.refresh();
-  });
-}
-
-function setupLogVisibilityButton() {
-  const btn = document.getElementById('logToggleButton');
-  const logContainer = document.getElementById('logContainer');
-  if (!btn || !logContainer) return;
-
-  const STORAGE_KEY = 'ares.log.visible';
-
-  const readVisible = () => {
-    try {
-      const v = localStorage.getItem(STORAGE_KEY);
-      if (v === null) return true;
-      return v === 'true';
-    } catch { return true; }
-  };
-  const writeVisible = (visible) => {
-    try { localStorage.setItem(STORAGE_KEY, String(visible)); } catch {}
-  };
-  const applyVisible = (visible) => {
-    document.body.classList.toggle('log-hidden', !visible);
-    btn.setAttribute('aria-pressed', String(visible));
-    btn.title = visible ? '통신 로그 숨기기' : '통신 로그 보기';
-    btn.textContent = visible ? '📝 로그끄기' : '📝 로그켜기';
-    if (workspace) {
-      setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
-    }
-  };
-  applyVisible(readVisible());
-  btn.addEventListener('click', () => {
-    const nextVisible = document.body.classList.contains('log-hidden');
-    applyVisible(nextVisible);
-    writeVisible(nextVisible);
     Logger.refresh();
   });
 }
@@ -650,9 +637,14 @@ function setupContentToggle() {
 // 항상 켜 있는 이벤트 리스너 (BLE, 비상 정지, 로그 등)
 // ============================================================
 function initializeAlwaysOnListeners() {
-  // BLE 연결/해제
-  elements.connectButton?.addEventListener('click', () => BluetoothManager.connect());
-  elements.disconnectButton?.addEventListener('click', () => BluetoothManager.disconnect());
+  // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
+  elements.connectButton?.addEventListener('click', () => {
+    if (isBleConnected()) {
+      BluetoothManager.disconnect();
+    } else {
+      BluetoothManager.connect();
+    }
+  });
 
   // 로그 지우기
   elements.clearLogBtn?.addEventListener('click', () => {
@@ -663,21 +655,9 @@ function initializeAlwaysOnListeners() {
   // 대시보드
   document.getElementById('dashboardButton')?.addEventListener('click', toggleDashboard);
 
-  // 비상 정지 — 어디서나 작동
-  document.getElementById('emergencyStopButton')?.addEventListener('click', async () => {
-    Logger.add('[비상정지] 실행됨', 'error');
-    state.isExecuting = false;
-    if (isBleConnected()) {
-      try {
-        await BluetoothManager.sendData('STOP_ALL', false);
-        Logger.add('[비상정지] 모든 하드웨어 정지 완료', 'info');
-      } catch (error) {
-        Logger.add(`[오류] 비상 정지 전송 실패: ${error.message}`, 'error');
-      }
-    } else {
-      Logger.add('[비상정지] 블루투스 미연결 - 블록만 중단됨', 'info');
-    }
-  });
+  // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
+  window.addEventListener('ares:connection', updateRunButtonUI);
+  window.addEventListener('ares:execution',  updateRunButtonUI);
 
   // 홈(개요)
   document.getElementById('homeButton')?.addEventListener('click', () => navigate({}));
@@ -706,13 +686,26 @@ function initializeAlwaysOnListeners() {
 // 미션 뷰 전용 이벤트 (Blockly 워크스페이스 의존)
 // ============================================================
 function initializeMissionListeners(ws) {
-  // 명령 실행
+  // 미션 전송 / 비상정지 통합 버튼
   elements.runButton?.addEventListener('click', async () => {
-    if (!validateConnection()) return;
     if (state.isExecuting) {
-      alert('이미 명령이 실행 중입니다. 잠시만 기다려주세요.');
+      // 비상정지 모드 — 실행 중인 명령 흐름을 중단하고 STOP_ALL 전송
+      Logger.add('[비상정지] 실행됨', 'error');
+      state.isExecuting = false;
+      updateRunButtonUI();
+      if (isBleConnected()) {
+        try {
+          await BluetoothManager.sendData('STOP_ALL', false);
+          Logger.add('[비상정지] 모든 하드웨어 정지 완료', 'info');
+        } catch (error) {
+          Logger.add(`[오류] 비상 정지 전송 실패: ${error.message}`, 'error');
+        }
+      } else {
+        Logger.add('[비상정지] 블루투스 미연결 - 블록만 중단됨', 'info');
+      }
       return;
     }
+    if (!validateConnection()) return;
     try {
       await CommandExecutor.executeWorkspace(ws);
     } catch (error) {
@@ -830,16 +823,10 @@ function initializeMissionListeners(ws) {
     }
     if (data.type === 'log_toggle') {
       const logContainer = document.getElementById('logContainer');
-      const btn = document.getElementById('logToggleButton');
       const STORAGE_KEY = 'ares.log.visible';
       if (logContainer) {
         document.body.classList.toggle('log-hidden', !data.visible);
         try { localStorage.setItem(STORAGE_KEY, String(data.visible)); } catch {}
-        if (btn) {
-          btn.setAttribute('aria-pressed', String(data.visible));
-          btn.title = data.visible ? '통신 로그 숨기기' : '통신 로그 보기';
-          btn.textContent = data.visible ? '📝 로그끄기' : '📝 로그켜기';
-        }
         try { Blockly.svgResize(ws); } catch {}
         Logger.refresh();
       }
@@ -867,7 +854,6 @@ function main() {
   const logContainer = document.getElementById('logContainer');
   if (logContainer) logContainer.classList.add('compact');
   setupLogToggle();
-  setupLogVisibilityButton();
   setupContentToggle();
   simController = setupSimulation({
     workspace,

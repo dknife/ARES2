@@ -413,9 +413,9 @@ export const CommandExecutor = {
 
   async executeWorkspace(workspace) {
     state.isExecuting = true;
-    elements.runButton.disabled = true;
+    // runButton 라벨/색 갱신은 main.js 의 updateRunButtonUI 가 담당
+    window.dispatchEvent(new CustomEvent('ares:execution', { detail: { executing: true } }));
 
-    BluetoothManager.updateStatus('프로그램 실행 중...', STATUS_COLORS.ORANGE);
     Logger.add('[실행] 프로그램 시작', 'info');
 
     try {
@@ -425,31 +425,23 @@ export const CommandExecutor = {
           Logger.add('[실행] 중단됨', 'warning');
           break;
         }
-        
+
         if (block.type === 'procedures_defnoreturn' || block.type === 'procedures_defreturn') {
           continue;
         }
-        
+
         await this.processBlock(block);
       }
-      
+
       if (state.isExecuting) {
-        BluetoothManager.updateStatus('✅ 프로그램 실행 완료!', STATUS_COLORS.GREEN);
         Logger.add('[실행] 완료', 'info');
       }
     } catch (error) {
-      BluetoothManager.updateStatus(`❌ 프로그램 실행 실패: ${error.message}`, STATUS_COLORS.RED);
       Logger.add(`[오류] 프로그램 실행 실패: ${error.message}`, 'error');
     }
 
     state.isExecuting = false;
-    
-    const isConnected = state.bluetoothDevice?.gatt?.connected && state.characteristic;
-    elements.runButton.disabled = !isConnected;
-    
-    setTimeout(() => {
-      BluetoothManager.updateConnectionStatus(isConnected);
-    }, 1500);
+    window.dispatchEvent(new CustomEvent('ares:execution', { detail: { executing: false } }));
   },
 
   // 시뮬레이션 실행: 실제 BLE 없이 sink(로그)로 명령을 흘려보낸다.
