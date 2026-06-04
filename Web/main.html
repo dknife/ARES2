@@ -60,8 +60,7 @@
             <select id="missionSelect" aria-label="미션 선택" disabled>
                 <option value="">미션 선택…</option>
             </select>
-            <button id="toolboxToggleBtn" class="nav-btn" type="button" hidden aria-pressed="true" title="블럭코딩 열기/닫기">🧩 블럭코딩 닫기</button>
-            <button id="missionPanelToggle" class="nav-btn" type="button" hidden aria-pressed="true" title="미션 설명 패널 열기/닫기">📖 미션 설명 닫기</button>
+            <button id="contentToggleBtn" class="nav-btn" type="button" hidden title="미션 설명 ↔ 블럭코딩 전환">🧩 블럭코딩 열기</button>
             <button id="simToggle" class="nav-btn" type="button" hidden aria-pressed="false" title="3D 시뮬레이션 열기/닫기">🤖 시뮬레이션 열기</button>
             <span id="breadcrumb" aria-live="polite"></span>
         </nav>
@@ -93,8 +92,8 @@
                 </div>
             </section>
 
-            <!-- 미션 코딩 뷰 -->
-            <section id="missionView" class="content-view" data-view="mission" hidden>
+            <!-- 미션 코딩 뷰 (description / coding / simulation 모드 전환) -->
+            <section id="missionView" class="content-view" data-view="mission" data-mode="description" hidden>
                 <aside id="missionPanel" class="mission-panel">
                     <div class="mission-panel-head">
                         <span class="lesson-tag" id="missionTagBadge"></span>
@@ -123,7 +122,6 @@
                 <!-- 3D 시뮬레이션 카드 (시뮬레이션 열기 버튼으로 토글) -->
                 <div id="simCard" class="sim-card" hidden>
                     <div class="sim-card-head">
-                        <span class="sim-drag" title="끌어서 창 이동" aria-hidden="true">⠿</span>
                         <select id="simTopic" class="sim-topic" title="시뮬레이션 주제 선택"></select>
                         <div class="sim-led-buttons">
                             <button class="sim-led-btn" data-part="eye"   data-side="R" type="button"><span class="dot"></span>LED 1<small>오른쪽 눈</small></button>
