@@ -1243,33 +1243,33 @@ details.mission-section summary {
         max-height: 220px;
     }
 
-    /* Blockly 툴박스: 모바일에서는 emoji 아이콘만 표시, 텍스트는 일절 표시하지 않음 */
+    /* Blockly 툴박스: 모바일에서는 카테고리 이름을 JS 에서 emoji 1자로 잘라 두므로
+       (initializeBlockly 참고) 라벨 자체에 별도 클립 처리가 필요 없다.
+       여기서는 폭만 좁히고 선택 시 가로 확장이 일어나지 않도록 row 폭을 고정한다. */
     .blocklyToolboxDiv {
         width: 30px !important;
         min-width: 30px !important;
         padding: 2px 0 !important;
+        overflow: hidden !important;
     }
-    .blocklyTreeRow {
-        padding: 5px 3px !important;
+    .blocklyTreeRow,
+    .blocklyTreeSelected {
+        width: 30px !important;
+        max-width: 30px !important;
+        padding: 5px 0 !important;
         text-align: center;
+        box-sizing: border-box;
     }
     .blocklyTreeLabel {
-        font-size: 0.75em !important;
+        font-size: 0.85em !important;
         line-height: 1 !important;
-        max-width: 18px;     /* emoji 한 글자 폭만 노출, 나머지 텍스트는 잘림 */
-        display: inline-block;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: clip;
+        display: inline-block !important;
+        white-space: nowrap !important;
         vertical-align: middle;
-    }
-    /* 선택 시에도 라벨이 펼쳐지지 않도록 — 글자는 끝까지 숨긴다 */
-    .blocklyTreeSelected .blocklyTreeLabel {
-        max-width: 18px;
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        padding: 0;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
     .blocklyTreeIcon {
         display: none !important;
