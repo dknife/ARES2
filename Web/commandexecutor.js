@@ -178,17 +178,15 @@ export const CommandExecutor = {
         return `[${lamps.join(' ')}]`;
       }
       case 'led_on': {
-        const ledNumStr = block.getFieldValue('LED_NUM') || '0';
-        const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
+        const ledNum = Math.max(0, Math.min(5, parseInt(this.evaluateValueBlock(block.getInputTargetBlock('LED_NUM')), 10) || 0));
         const brightness = this.evaluateValueBlock(block.getInputTargetBlock('BRIGHTNESS')) || '1';
         return `LED_ON,${ledNum},${brightness}`;
       }
       case 'led_off': {
-        const ledNumStr = block.getFieldValue('LED_NUM') || '0';
-        if (ledNumStr === 'ALL') return 'LED_OFF,ALL';
-        const ledNum = Math.max(0, Math.min(5, parseInt(ledNumStr, 10)));
+        const ledNum = Math.max(0, Math.min(5, parseInt(this.evaluateValueBlock(block.getInputTargetBlock('LED_NUM')), 10) || 0));
         return `LED_OFF,${ledNum}`;
       }
+      case 'led_off_all': return 'LED_OFF,ALL';
       case 'send_message': {
         const str = String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello');
         return `MSG,${str}`;
