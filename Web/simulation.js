@@ -878,7 +878,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
 
 // 시뮬레이션 모듈 초기화 — main.js 의 워크스페이스를 받아 컨트롤러 { close } 를 반환.
 // 필수 DOM 또는 three.js 라이브러리가 없으면 null 반환.
-export function setupSimulation({ workspace, onOpen }) {
+export function setupSimulation({ workspace, onOpen, onClose }) {
   const btn = document.getElementById('simToggle');
   const card = document.getElementById('simCard');
   const stage = document.getElementById('simStage');
@@ -954,6 +954,12 @@ export function setupSimulation({ workspace, onOpen }) {
 
   const open = () => {
     card.hidden = false;
+    // onOpen 은 호스트(main.js)에서 미션 뷰 data-mode 를 'simulation' 으로
+    // 전환해 sim-card 가 실제로 레이아웃되도록 만든다.
+    // 빌드/리사이즈가 stage.clientWidth 를 읽기 *전에* 호출해야 카메라 종횡비가 맞는다.
+    if (typeof onOpen === 'function') {
+      try { onOpen(); } catch {}
+    }
     if (!sim && sel) sel.value = defaultTopicForMission();  // 첫 오픈: 미션 기본 주제
     const t = (sel && sel.value) || DEFAULT_TOPIC;
     if (!sim || builtTopic !== t) build(t);
@@ -961,9 +967,6 @@ export function setupSimulation({ workspace, onOpen }) {
     cancelAnimationFrame(raf); loop();
     btn.textContent = '🤖 시뮬레이션 닫기';
     btn.setAttribute('aria-pressed', 'true');
-    if (typeof onOpen === 'function') {
-      try { onOpen(); } catch {}
-    }
   };
   // 실제로 카드를 숨기고 렌더 루프를 멈추는 마무리 단계.
   const finalizeClose = () => {
@@ -971,6 +974,9 @@ export function setupSimulation({ workspace, onOpen }) {
     cancelAnimationFrame(raf); raf = 0;
     btn.textContent = '🤖 시뮬레이션 열기';
     btn.setAttribute('aria-pressed', 'false');
+    if (typeof onClose === 'function') {
+      try { onClose(); } catch {}
+    }
   };
   let closing = false;                 // 로켓 복귀 재생 중 중복 close 방지
   const close = () => {
@@ -1322,44 +1328,14 @@ export function setupSimulation({ workspace, onOpen }) {
   });
   if (simClearBtn) simClearBtn.addEventListener('click', () => { if (simLog) simLog.textContent = ''; });
 
-  // 헤더(제목 영역)를 잡아 카드를 이동 — 모바일에서 캔버스가 터치를 가져가도
-  // 위젯을 끌어 화면 위/아래로 옮길 수 있다. (LED 버튼은 드래그 제외)
-  const head = card.querySelector('.sim-card-head');
-  if (head) {
-    let dragging = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
-    head.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.sim-led-btn') || e.target.closest('.sim-traffic-btn') || e.target.closest('.sim-launch-btn') || e.target.closest('.sim-launch-led-btn') || e.target.closest('.sim-topic')) return; // 버튼/드롭다운은 드래그 아님
-      const r = card.getBoundingClientRect();
-      // 뷰포트 기준 고정 좌표로 전환(데스크톱 absolute / 모바일 centered 모두 대응)
-      card.style.position = 'fixed';
-      card.style.left = r.left + 'px';
-      card.style.top = r.top + 'px';
-      card.style.right = 'auto';
-      card.style.bottom = 'auto';
-      card.style.transform = 'none';
-      card.style.margin = '0';
-      dragging = true;
-      startX = e.clientX; startY = e.clientY; baseX = r.left; baseY = r.top;
-      try { head.setPointerCapture(e.pointerId); } catch {}
-      e.preventDefault();
-    });
-    head.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const w = card.offsetWidth;
-      let nx = baseX + (e.clientX - startX);
-      let ny = baseY + (e.clientY - startY);
-      // 헤더가 화면에 남도록 클램프
-      nx = Math.max(40 - w, Math.min(nx, innerWidth - 40));
-      ny = Math.max(0, Math.min(ny, innerHeight - 36));
-      card.style.left = nx + 'px';
-      card.style.top = ny + 'px';
-    });
-    const endDrag = (e) => { if (!dragging) return; dragging = false; try { head.releasePointerCapture(e.pointerId); } catch {} };
-    head.addEventListener('pointerup', endDrag);
-    head.addEventListener('pointercancel', endDrag);
-  }
-
   addEventListener('resize', () => { if (!card.hidden && sim) sim.resize(); });
+
+  // 미션 뷰 콘텐츠 영역이 변하면(미션 진입/모드 전환/로그 토글 등) stage 크기도 같이 변한다.
+  // ResizeObserver 로 stage 의 실제 크기를 추적해 카메라 종횡비와 렌더러 픽셀 버퍼를 동기화.
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => { if (!card.hidden && sim) sim.resize(); });
+    ro.observe(stage);
+  }
 
   // 우주 신호등: 1/2/3 키로 슬롯 토글 (시뮬레이션이 열려 있고, 입력 필드에 포커스가 없을 때)
   addEventListener('keydown', (e) => {

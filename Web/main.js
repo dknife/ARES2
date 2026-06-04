@@ -28,10 +28,11 @@ const lessonCache = new Map(); // n -> lesson.json 객체
 let workspace = null;          // Blockly 워크스페이스 (한 번만 inject)
 let currentView = 'overview';
 
-// 미션 뷰의 세 토글(블럭코딩/미션설명/시뮬레이션) 간 상호 배타 동작을 위해
-// 각 setup 함수가 자신의 setter 를 여기에 등록한다.
-let setBlockCodingOpen = null;
-let setMissionPanelOpen = null;
+// 미션 뷰는 description / coding / simulation 세 모드 중 하나만 표시한다.
+// _preSimMode 는 시뮬을 닫았을 때 복귀할 모드(description 또는 coding)를 기억.
+let _contentMode = 'description';
+let _preSimMode = 'description';
+let setContentMode = null;     // setupContentToggle() 에서 등록
 
 // ============================================================
 // Blockly 한글 메시지 + 워크스페이스 초기화
@@ -233,18 +234,21 @@ function showView(view) {
   if (exampleSelect) exampleSelect.disabled = !inMission;
   if (elements.runButton) elements.runButton.disabled = !inMission || !ble;
 
-  // 미션 설명 패널 토글 버튼은 미션 뷰에서만 노출
-  const panelToggle = document.getElementById('missionPanelToggle');
-  if (panelToggle) panelToggle.hidden = !inMission;
-
-  // 블럭코딩(툴박스) 토글 버튼도 미션 뷰에서만 노출
-  const toolboxBtn = document.getElementById('toolboxToggleBtn');
-  if (toolboxBtn) toolboxBtn.hidden = !inMission;
+  // 콘텐츠 토글 버튼은 미션 뷰에서만 노출
+  const contentBtn = document.getElementById('contentToggleBtn');
+  if (contentBtn) contentBtn.hidden = !inMission;
 
   // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
   const simToggle = document.getElementById('simToggle');
   if (simToggle) simToggle.hidden = !inMission;
-  if (!inMission && simController) simController.close();
+  if (!inMission) {
+    if (simController) simController.close();
+    // 닫힘 애니메이션이 뒤늦게 끝나도 _preSimMode 영향을 받지 않도록 초기화
+    _preSimMode = 'description';
+  }
+
+  // 미션 뷰 진입 시 항상 미션 설명 모드로 시작
+  if (inMission && setContentMode) setContentMode('description');
 
   // 미션 뷰에 진입할 때만 Blockly 리사이즈
   if (inMission && workspace) {
@@ -481,7 +485,7 @@ function toggleDashboard() {
   const blocklyDiv = document.getElementById('blocklyDiv');
   const dashboardFrame = document.getElementById('dashboardFrame');
   const dashboardButton = document.getElementById('dashboardButton');
-  const toolboxToggleBtn = document.getElementById('toolboxToggleBtn');
+  const contentToggleBtn = document.getElementById('contentToggleBtn');
 
   if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
 
@@ -493,12 +497,15 @@ function toggleDashboard() {
     return;
   }
 
+  // 대시보드는 mission-workspace 안에 있으므로 coding 모드여야 보인다.
+  if (setContentMode) setContentMode('coding');
+
   const isDashboardHidden = dashboardFrame.style.display === 'none' || dashboardFrame.style.display === '';
 
   if (isDashboardHidden) {
     blocklyDiv.style.display = 'none';
     dashboardFrame.style.display = 'block';
-    if (toolboxToggleBtn) toolboxToggleBtn.style.display = 'none';
+    if (contentToggleBtn) contentToggleBtn.style.display = 'none';
     dashboardButton.textContent = '🧩 코딩';
 
     if (elements.runButton) elements.runButton.disabled = true;
@@ -509,7 +516,7 @@ function toggleDashboard() {
   } else {
     blocklyDiv.style.display = 'block';
     dashboardFrame.style.display = 'none';
-    if (toolboxToggleBtn) toolboxToggleBtn.style.display = '';
+    if (contentToggleBtn) contentToggleBtn.style.display = '';
     dashboardButton.textContent = '🔍 점검';
 
     if (elements.saveButton) elements.saveButton.disabled = false;
@@ -575,129 +582,68 @@ function setupLogVisibilityButton() {
 }
 
 // ============================================================
-// 미션 설명 패널(미션 정보) 토글 — 미션 선택 드롭다운 옆 버튼
-//   - 초기 상태: 열림 (panel 노출, 버튼 텍스트 "미션 설명 닫기")
-//   - 사용자 선택은 localStorage 에 보존
-// ============================================================
-function setupMissionPanelToggle() {
-  const STORAGE_KEY = 'ares.missionPanel.opened';
-  const btn = document.getElementById('missionPanelToggle');
-  const panel = document.getElementById('missionPanel');
-  if (!btn || !panel) return;
-
-  const readOpened = () => {
-    try {
-      const v = localStorage.getItem(STORAGE_KEY);
-      if (v === null) return true; // 처음 시작: 열림
-      return v === 'true';
-    } catch { return true; }
-  };
-  const writeOpened = (v) => {
-    try { localStorage.setItem(STORAGE_KEY, String(v)); } catch {}
-  };
-
-  const apply = (opened) => {
-    panel.classList.toggle('collapsed', !opened);
-    btn.setAttribute('aria-pressed', String(opened));
-    btn.textContent = opened ? '📖 미션 설명 닫기' : '📖 미션 설명 열기';
-    btn.title = opened ? '미션 설명 패널 숨기기' : '미션 설명 패널 보이기';
-    if (workspace) {
-      setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
-    }
-  };
-
-  // 다른 토글이 미션 설명 패널을 닫고 싶을 때 호출하는 setter
-  setMissionPanelOpen = (opened) => {
-    if (panel.classList.contains('collapsed') === !opened) return;
-    apply(opened);
-    writeOpened(opened);
-  };
-
-  apply(readOpened());
-
-  btn.addEventListener('click', () => {
-    const nextOpened = panel.classList.contains('collapsed'); // 현재 닫혀 있으면 열기
-    apply(nextOpened);
-    writeOpened(nextOpened);
-    // 미션 설명을 열면 블럭코딩은 자동으로 닫는다.
-    if (nextOpened && setBlockCodingOpen) setBlockCodingOpen(false);
-  });
-}
-
-// ============================================================
 // 3D 시뮬레이션 컨트롤러 — 실제 구현은 simulation.js
 //   showView() 에서 미션 뷰를 떠날 때 close() 호출.
 // ============================================================
 let simController = null;
 
 // ============================================================
-// 블럭코딩(툴박스) 토글 버튼 — missionNav 안에 배치
+// 콘텐츠 모드 토글 — 미션 설명 ↔ 블럭코딩 단일 버튼
+//   미션 뷰는 description / coding / simulation 중 하나만 표시한다.
+//   시뮬레이션은 simToggle 로 진입하며, 닫으면 직전 모드(description 또는 coding)로 복귀.
 // ============================================================
-let _toggleBtnOpened = true;
+function setupContentToggle() {
+  const btn = document.getElementById('contentToggleBtn');
+  const view = document.getElementById('missionView');
+  if (!btn || !view) return;
 
-function setupToolboxToggle() {
-  const STORAGE_KEY = 'ares.toolbox.opened';
-  const btn = document.getElementById('toolboxToggleBtn');
-  if (!btn) return;
+  const applyMode = (mode) => {
+    const wasSimulation = _contentMode === 'simulation';
+    _contentMode = mode;
+    view.setAttribute('data-mode', mode);
 
-  const readOpened = () => {
-    try {
-      const v = localStorage.getItem(STORAGE_KEY);
-      if (v === null) return null;
-      return v === 'true';
-    } catch { return null; }
-  };
-  const writeOpened = (v) => {
-    try { localStorage.setItem(STORAGE_KEY, String(v)); } catch {}
-  };
-
-  const updateToggleText = () => {
-    btn.textContent = _toggleBtnOpened ? '🧩 블럭코딩 닫기' : '🧩 블럭코딩 열기';
-    btn.setAttribute('aria-pressed', String(_toggleBtnOpened));
-    btn.title = _toggleBtnOpened ? '블럭코딩 숨기기' : '블럭코딩 보기';
-  };
-
-  const applyToolboxVisibility = (nextOpened) => {
-    _toggleBtnOpened = nextOpened;
-    const tb = workspace?.getToolbox?.();
-    if (tb?.show && tb?.hide) {
-      _toggleBtnOpened ? tb.show() : tb.hide();
-    } else {
-      const toolboxDiv = document.querySelector('.blocklyToolboxDiv');
-      if (toolboxDiv) toolboxDiv.style.display = _toggleBtnOpened ? '' : 'none';
+    // 시뮬레이션 → 다른 모드로 전환할 때는 sim 도 정리
+    // (렌더 루프 중지 + simToggle 버튼 '열기' 로 복귀).
+    // simController.close() 내부 가드(card.hidden/closing) 가 있어 중복 호출은 안전하다.
+    if (wasSimulation && mode !== 'simulation' && simController) {
+      simController.close();
     }
-    updateToggleText();
-    if (workspace) {
+
+    if (mode === 'coding') {
+      // 블럭코딩 모드 진입 시 툴박스도 함께 표시
+      const tb = workspace?.getToolbox?.();
+      try { tb?.show?.(); } catch {}
       setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
     }
-  };
 
-  // 다른 토글이 블럭코딩을 닫고 싶을 때 호출하는 setter
-  setBlockCodingOpen = (opened) => {
-    if (_toggleBtnOpened === opened) return;
-    applyToolboxVisibility(opened);
-    writeOpened(opened);
-  };
-
-  const defaultOpened = !window.matchMedia('(max-width: 768px)').matches;
-  const savedOpened = readOpened();
-  applyToolboxVisibility(savedOpened === null ? defaultOpened : savedOpened);
-
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const nextOpened = !_toggleBtnOpened;
-    applyToolboxVisibility(nextOpened);
-    writeOpened(nextOpened);
-    if (nextOpened) {
-      // 블럭코딩을 열면 미션 설명과 시뮬레이션은 자동으로 닫는다.
-      if (setMissionPanelOpen) setMissionPanelOpen(false);
-      if (simController) simController.close();
+    if (mode === 'description') {
+      btn.textContent = '🧩 블럭코딩 열기';
+      btn.title = '미션 설명을 닫고 블럭코딩 화면으로 전환';
+      btn.disabled = false;
+    } else if (mode === 'coding') {
+      btn.textContent = '📖 미션 설명 보기';
+      btn.title = '블럭코딩을 닫고 미션 설명으로 전환';
+      btn.disabled = false;
     } else {
-      // 블럭코딩을 닫으면 미션 설명과 시뮬레이션은 자동으로 연다.
-      if (setMissionPanelOpen) setMissionPanelOpen(true);
-      if (simController) simController.open?.();
+      // simulation 모드에서는 시뮬레이션 닫기(simToggle)로만 빠져나간다.
+      btn.disabled = true;
+      btn.title = '시뮬레이션을 닫으면 이전 화면으로 돌아갑니다';
     }
+  };
+
+  // 외부(showView/simController)에서 모드를 강제할 때 사용하는 setter
+  setContentMode = (mode) => {
+    if (!['description', 'coding', 'simulation'].includes(mode)) return;
+    if (_contentMode === mode) return;
+    applyMode(mode);
+  };
+
+  btn.addEventListener('click', () => {
+    if (_contentMode === 'simulation') return; // 안전장치 (disabled)
+    applyMode(_contentMode === 'description' ? 'coding' : 'description');
   });
+
+  applyMode('description');
 }
 
 // ============================================================
@@ -826,7 +772,8 @@ function initializeMissionListeners(ws) {
       ws.clear();
       Blockly.Xml.domToWorkspace(xml, ws);
 
-      // 대시보드 모드라면 블록코딩 모드로 전환
+      // 예제 적재 시 블록코딩 화면으로 자동 전환
+      if (setContentMode) setContentMode('coding');
       const blocklyDiv = document.getElementById('blocklyDiv');
       const dashboardFrame = document.getElementById('dashboardFrame');
       if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === 'block') {
@@ -898,8 +845,6 @@ function initializeMissionListeners(ws) {
       }
     }
   });
-
-  setupToolboxToggle();
 }
 
 // ============================================================
@@ -918,16 +863,26 @@ function main() {
   // 4) 네비게이션 UI
   buildLessonSelect();
 
-  // 5) 로그 토글 + 미션 설명 패널 토글
+  // 5) 로그 토글 + 콘텐츠 모드 토글
   const logContainer = document.getElementById('logContainer');
   if (logContainer) logContainer.classList.add('compact');
   setupLogToggle();
   setupLogVisibilityButton();
-  setupMissionPanelToggle();
+  setupContentToggle();
   simController = setupSimulation({
     workspace,
-    // 시뮬레이션을 열면 블럭코딩은 자동으로 닫는다.
-    onOpen: () => { if (setBlockCodingOpen) setBlockCodingOpen(false); },
+    onOpen: () => {
+      // 시뮬을 열면 직전 모드를 기억하고 simulation 모드로 전환
+      if (_contentMode !== 'simulation') _preSimMode = _contentMode;
+      if (setContentMode) setContentMode('simulation');
+    },
+    onClose: () => {
+      // 시뮬을 닫으면 직전 모드로 복귀.
+      // 단, 호스트가 이미 다른 모드로 전환한 뒤(예제 적재 등) 정리 차원에서
+      // close() 가 호출된 경우에는 그 모드를 덮어쓰지 않는다.
+      if (_contentMode !== 'simulation') return;
+      if (setContentMode) setContentMode(_preSimMode || 'description');
+    },
   });
 
   // 6) 상태 초기화 + 라우팅
