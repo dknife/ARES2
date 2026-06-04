@@ -25,12 +25,17 @@ class AresRover:
     # 응답 송신 생략 명령 (Web/commandexecutor.js의 FIRE_AND_FORGET_HEADS와 동기화).
     # 즉시 완료되는 출력 명령은 응답 라운드트립을 생략하여 처리량을 높이고,
     # 응답 매칭 어긋남(LED_ON 응답이 다음 명령 슬롯에 잘못 들어가는 현상)을 차단한다.
+    # BUZZER_ON: 논블로킹으로 음을 '시작만' 하고 즉시 반환하므로 응답 불필요.
+    #   음 길이 페이싱은 웹이 로컬로 처리하고, 자동 정지는 run() 루프의
+    #   buzzer.update()가 담당한다. (SERVO_t*/DC_t*/SLEEP/BATCH/SING은 여전히
+    #   blocking 처리하므로 이 목록에 넣지 말 것.)
     NO_RESPONSE_CMDS = (
         "LED_ON", "LED_OFF",
         "MSG", "CLEAR_DISPLAY",
         "SERVO_FORWARD", "SERVO_BACKWARD", "SERVO_LEFT", "SERVO_RIGHT", "SERVO_STOP",
         "DC_FORWARD", "DC_BACKWARD", "DC_STOP",
         "GUN_FIRE",
+        "BUZZER_ON",
     )
 
     def __init__(self):
@@ -163,7 +168,12 @@ class AresRover:
                     
             except Exception as e:
                 print(f"UART 오류: {e}")
-                    
+
+            # 논블로킹 부저: duration 경과 시 자동 정지(웹이 음 길이만큼 페이싱).
+            # 명령 수신 대기 중에도 매 루프 호출되어 마지막 음도 제때 꺼진다.
+            if self.robot.buzzer:
+                self.robot.buzzer.update()
+
             utime.sleep_ms(MAIN_LOOP_DELAY_MS)
 
 

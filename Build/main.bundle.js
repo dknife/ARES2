@@ -884,10 +884,12 @@
 
   // commandexecutor.js
   var CommandExecutor = {
-    // 즉시 완료 명령 — Pico가 blocking 처리하지 않으므로 응답 대기 불필요.
-    // 시간 의존적(BUZZER_ON, SERVO_t*, DC_t*, SLEEP) 또는 값 반환(DISTANCE,
-    // MAGNET, PING)은 이 집합에 넣지 말 것. 응답 대기로 두어야 타이밍/값이
-    // 보장된다.
+    // 응답 대기(ack)가 불필요한 명령 — Pico가 즉시 처리하고 응답을 보내지 않는다.
+    // (Pico/main.py의 NO_RESPONSE_CMDS와 반드시 동기화할 것.)
+    // BUZZER_ON: 펌웨어가 논블로킹으로 음을 '시작만' 하고 즉시 반환하므로 ack 불필요.
+    //   음 길이만큼의 페이싱(멜로디 겹침 방지)은 handleLogicBlock에서 웹이 로컬로 처리.
+    // 주의: 값 반환 명령(DISTANCE/MAGNET/PING)과 펌웨어가 여전히 blocking 처리하는
+    //   SERVO_t*/DC_t*/SLEEP/BATCH/SING은 이 집합에 넣지 말 것(응답 대기 필요).
     FIRE_AND_FORGET_HEADS: /* @__PURE__ */ new Set([
       "LED_ON",
       "LED_OFF",
@@ -901,7 +903,8 @@
       "DC_FORWARD",
       "DC_BACKWARD",
       "DC_STOP",
-      "GUN_FIRE"
+      "GUN_FIRE",
+      "BUZZER_ON"
     ]),
     _isFireAndForget(command) {
       if (command.startsWith("[")) return true;
@@ -1186,6 +1189,14 @@
         const value = this.evaluateValueBlock(block.getInputTargetBlock("VALUE"));
         state.variables[varName] = value;
         if (DEBUG) Logger.add(`${varName} = ${value}`, "info");
+      } else if (block.type === "buzzer_on" || block.type === "buzzer_note") {
+        if (!this.simSink) {
+          const durSec = parseFloat(this.evaluateValueBlock(block.getInputTargetBlock("DURATION")) || "1");
+          const ms = Math.max(0, durSec * 1e3);
+          for (let waited = 0; waited < ms && state.isExecuting; waited += 50) {
+            await new Promise((resolve) => setTimeout(resolve, Math.min(50, ms - waited)));
+          }
+        }
       } else if (block.type === "assign_variable") {
         const varId = block.getFieldValue("VAR");
         const varName = block.workspace.getVariableById(varId).name;
