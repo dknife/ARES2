@@ -28,6 +28,11 @@ const lessonCache = new Map(); // n -> lesson.json 객체
 let workspace = null;          // Blockly 워크스페이스 (한 번만 inject)
 let currentView = 'overview';
 
+// 미션 뷰의 세 토글(블럭코딩/미션설명/시뮬레이션) 간 상호 배타 동작을 위해
+// 각 setup 함수가 자신의 setter 를 여기에 등록한다.
+let setBlockCodingOpen = null;
+let setMissionPanelOpen = null;
+
 // ============================================================
 // Blockly 한글 메시지 + 워크스페이스 초기화
 // ============================================================
@@ -232,6 +237,10 @@ function showView(view) {
   const panelToggle = document.getElementById('missionPanelToggle');
   if (panelToggle) panelToggle.hidden = !inMission;
 
+  // 블럭코딩(툴박스) 토글 버튼도 미션 뷰에서만 노출
+  const toolboxBtn = document.getElementById('toolboxToggleBtn');
+  if (toolboxBtn) toolboxBtn.hidden = !inMission;
+
   // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
   const simToggle = document.getElementById('simToggle');
   if (simToggle) simToggle.hidden = !inMission;
@@ -378,9 +387,8 @@ async function enterMission(n, m) {
     else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
   };
 
-  // 토글 버튼 재배치 + Blockly 리사이즈
+  // Blockly 리사이즈
   if (workspace) {
-    placeToolboxToggleBtn();
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
   }
 }
@@ -598,12 +606,21 @@ function setupMissionPanelToggle() {
     }
   };
 
+  // 다른 토글이 미션 설명 패널을 닫고 싶을 때 호출하는 setter
+  setMissionPanelOpen = (opened) => {
+    if (panel.classList.contains('collapsed') === !opened) return;
+    apply(opened);
+    writeOpened(opened);
+  };
+
   apply(readOpened());
 
   btn.addEventListener('click', () => {
     const nextOpened = panel.classList.contains('collapsed'); // 현재 닫혀 있으면 열기
     apply(nextOpened);
     writeOpened(nextOpened);
+    // 미션 설명을 열면 블럭코딩은 자동으로 닫는다.
+    if (nextOpened && setBlockCodingOpen) setBlockCodingOpen(false);
   });
 }
 
@@ -614,44 +631,14 @@ function setupMissionPanelToggle() {
 let simController = null;
 
 // ============================================================
-// 툴박스 토글 버튼 — 미션 워크스페이스 영역에 배치
+// 블럭코딩(툴박스) 토글 버튼 — missionNav 안에 배치
 // ============================================================
 let _toggleBtnOpened = true;
 
-function placeToolboxToggleBtn() {
-  const btn = document.getElementById('toolboxToggleBtn');
-  if (!btn) return;
-  const toolboxDiv = document.querySelector('.blocklyToolboxDiv');
-  const ws = document.querySelector('.mission-workspace');
-
-  if (_toggleBtnOpened && toolboxDiv && toolboxDiv.offsetWidth > 0 && toolboxDiv.offsetHeight > 0) {
-    if (btn.parentElement !== toolboxDiv) toolboxDiv.prepend(btn);
-    btn.classList.remove('toolbox-toggle--handle');
-    btn.classList.add('toolbox-toggle--inside');
-    return;
-  }
-  if (ws && btn.parentElement !== ws) ws.appendChild(btn);
-  btn.classList.remove('toolbox-toggle--inside');
-  btn.classList.add('toolbox-toggle--handle');
-}
-
 function setupToolboxToggle() {
   const STORAGE_KEY = 'ares.toolbox.opened';
-
-  // 버튼 생성
-  let btn = document.getElementById('toolboxToggleBtn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'toolboxToggleBtn';
-    btn.type = 'button';
-    btn.title = '블럭코딩 열기/닫기';
-    btn.setAttribute('aria-pressed', 'true');
-    const stop = (e) => e.stopPropagation();
-    btn.addEventListener('pointerdown', stop, true);
-    btn.addEventListener('mousedown', stop, true);
-    btn.addEventListener('touchstart', stop, true);
-    document.querySelector('.mission-workspace')?.appendChild(btn);
-  }
+  const btn = document.getElementById('toolboxToggleBtn');
+  if (!btn) return;
 
   const readOpened = () => {
     try {
@@ -679,9 +666,17 @@ function setupToolboxToggle() {
       const toolboxDiv = document.querySelector('.blocklyToolboxDiv');
       if (toolboxDiv) toolboxDiv.style.display = _toggleBtnOpened ? '' : 'none';
     }
-    placeToolboxToggleBtn();
     updateToggleText();
-    if (workspace) Blockly.svgResize(workspace);
+    if (workspace) {
+      setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
+    }
+  };
+
+  // 다른 토글이 블럭코딩을 닫고 싶을 때 호출하는 setter
+  setBlockCodingOpen = (opened) => {
+    if (_toggleBtnOpened === opened) return;
+    applyToolboxVisibility(opened);
+    writeOpened(opened);
   };
 
   const defaultOpened = !window.matchMedia('(max-width: 768px)').matches;
@@ -690,8 +685,18 @@ function setupToolboxToggle() {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    applyToolboxVisibility(!_toggleBtnOpened);
-    writeOpened(_toggleBtnOpened);
+    const nextOpened = !_toggleBtnOpened;
+    applyToolboxVisibility(nextOpened);
+    writeOpened(nextOpened);
+    if (nextOpened) {
+      // 블럭코딩을 열면 미션 설명과 시뮬레이션은 자동으로 닫는다.
+      if (setMissionPanelOpen) setMissionPanelOpen(false);
+      if (simController) simController.close();
+    } else {
+      // 블럭코딩을 닫으면 미션 설명과 시뮬레이션은 자동으로 연다.
+      if (setMissionPanelOpen) setMissionPanelOpen(true);
+      if (simController) simController.open?.();
+    }
   });
 }
 
@@ -919,7 +924,11 @@ function main() {
   setupLogToggle();
   setupLogVisibilityButton();
   setupMissionPanelToggle();
-  simController = setupSimulation({ workspace });
+  simController = setupSimulation({
+    workspace,
+    // 시뮬레이션을 열면 블럭코딩은 자동으로 닫는다.
+    onOpen: () => { if (setBlockCodingOpen) setBlockCodingOpen(false); },
+  });
 
   // 6) 상태 초기화 + 라우팅
   BluetoothManager.updateConnectionStatus(false);

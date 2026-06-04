@@ -878,7 +878,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
 
 // 시뮬레이션 모듈 초기화 — main.js 의 워크스페이스를 받아 컨트롤러 { close } 를 반환.
 // 필수 DOM 또는 three.js 라이브러리가 없으면 null 반환.
-export function setupSimulation({ workspace }) {
+export function setupSimulation({ workspace, onOpen }) {
   const btn = document.getElementById('simToggle');
   const card = document.getElementById('simCard');
   const stage = document.getElementById('simStage');
@@ -961,6 +961,9 @@ export function setupSimulation({ workspace }) {
     cancelAnimationFrame(raf); loop();
     btn.textContent = '🤖 시뮬레이션 닫기';
     btn.setAttribute('aria-pressed', 'true');
+    if (typeof onOpen === 'function') {
+      try { onOpen(); } catch {}
+    }
   };
   // 실제로 카드를 숨기고 렌더 루프를 멈추는 마무리 단계.
   const finalizeClose = () => {
@@ -1374,5 +1377,5 @@ export function setupSimulation({ workspace }) {
     e.preventDefault();
   });
 
-  return { close };
+  return { open, close };
 }
