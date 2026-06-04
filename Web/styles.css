@@ -1243,42 +1243,35 @@ details.mission-section summary {
         max-height: 220px;
     }
 
-    /* Blockly 툴박스: 카테고리는 평소엔 emoji 아이콘만, 선택 시 라벨이 옆으로 펼쳐진다 */
+    /* Blockly 툴박스: 모바일에서는 emoji 아이콘만 표시, 텍스트는 일절 표시하지 않음 */
     .blocklyToolboxDiv {
         width: 30px !important;
         min-width: 30px !important;
         padding: 2px 0 !important;
-        overflow: visible !important;  /* 선택된 라벨이 옆으로 삐져나올 수 있도록 */
     }
     .blocklyTreeRow {
         padding: 5px 3px !important;
         text-align: center;
-        position: relative;
     }
     .blocklyTreeLabel {
-        font-size: 0.75em !important;   /* 이전의 절반 (1.5em → 0.75em) */
+        font-size: 0.75em !important;
         line-height: 1 !important;
-        max-width: 18px;                 /* emoji 한 글자 폭만 노출, 나머지 텍스트는 잘림 */
+        max-width: 18px;     /* emoji 한 글자 폭만 노출, 나머지 텍스트는 잘림 */
         display: inline-block;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: clip;
         vertical-align: middle;
     }
+    /* 선택 시에도 라벨이 펼쳐지지 않도록 — 글자는 끝까지 숨긴다 */
+    .blocklyTreeSelected .blocklyTreeLabel {
+        max-width: 18px;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
     .blocklyTreeIcon {
         display: none !important;
-    }
-    /* 선택된 카테고리만 라벨이 펼쳐져 글자가 아이콘 옆에 잠시 보인다 */
-    .blocklyTreeSelected .blocklyTreeLabel {
-        max-width: none;
-        font-size: 0.9em !important;
-        background: var(--background-main);
-        padding: 3px 9px;
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
-        position: relative;
-        z-index: 40;          /* Blockly flyout(보통 30 이하)보다 위로 */
-        pointer-events: none; /* 라벨이 flyout 클릭을 가리지 않도록 */
     }
 }
