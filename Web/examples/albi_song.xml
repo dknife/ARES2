@@ -1,59 +1,215 @@
 <xml xmlns="https://developers.google.com/blockly/xml">
-  <block type="buzzer_note" x="40" y="40">
-    <field name="NOTE">392</field>
-    <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+  <block type="buzzer_on" x="40" y="40">  <!-- His -->
+    <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+    <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
     <next>
-    <block type="buzzer_note">
-      <field name="NOTE">440</field>
-      <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+    <block type="buzzer_on">  <!-- to_ -->
+      <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+      <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
       <next>
-      <block type="buzzer_note">
-        <field name="NOTE">392</field>
-        <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+      <block type="buzzer_on">  <!-- ria -->
+        <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+        <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
         <next>
-        <block type="buzzer_note">
-          <field name="NOTE">523</field>
-          <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
+        <block type="buzzer_on">  <!-- que -->
+          <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
+          <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
           <next>
-          <block type="buzzer_note">
-            <field name="NOTE">392</field>
-            <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+          <block type="buzzer_on">  <!-- tú -->
+            <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+            <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
             <next>
-            <block type="buzzer_note">
-              <field name="NOTE">440</field>
+            <block type="buzzer_on">  <!-- hi -->
+              <value name="FREQ"><block type="math_number"><field name="NUM">587</field></block></value>
               <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
               <next>
-              <block type="buzzer_note">
-                <field name="NOTE">392</field>
-                <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+              <block type="buzzer_on">  <!-- cis# -->
+                <value name="FREQ"><block type="math_number"><field name="NUM">554</field></block></value>
+                <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
                 <next>
-                <block type="buzzer_note">
-                  <field name="NOTE">523</field>
+                <block type="buzzer_on">  <!-- te -->
+                  <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
                   <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
                   <next>
-                  <block type="buzzer_note">
-                    <field name="NOTE">523</field>
-                    <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                  <block type="buzzer_on">  <!-- his -->
+                    <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                    <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
                     <next>
-                    <block type="buzzer_note">
-                      <field name="NOTE">440</field>
-                      <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                    <block type="buzzer_on">  <!-- to_ -->
+                      <value name="FREQ"><block type="math_number"><field name="NUM">440</field></block></value>
+                      <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
                       <next>
-                      <block type="buzzer_note">
-                        <field name="NOTE">392</field>
-                        <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                      <block type="buzzer_on">  <!-- ria -->
+                        <value name="FREQ"><block type="math_number"><field name="NUM">440</field></block></value>
+                        <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
                         <next>
-                        <block type="buzzer_note">
-                          <field name="NOTE">330</field>
-                          <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                        <block type="buzzer_on">  <!-- por -->
+                          <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                          <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
                           <next>
-                          <block type="buzzer_note">
-                            <field name="NOTE">294</field>
-                            <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                          <block type="buzzer_on">  <!-- ha -->
+                            <value name="FREQ"><block type="math_number"><field name="NUM">349</field></block></value>
+                            <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
                             <next>
-                            <block type="buzzer_note">
-                              <field name="NOTE">262</field>
+                            <block type="buzzer_on">  <!-- cer -->
+                              <value name="FREQ"><block type="math_number"><field name="NUM">330</field></block></value>
                               <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
+                              <next>
+                              <block type="buzzer_on">  <!-- Por -->
+                                <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                <next>
+                                <block type="buzzer_on">  <!-- que -->
+                                  <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+                                  <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
+                                  <next>
+                                  <block type="buzzer_on">  <!-- na -->
+                                    <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
+                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                    <next>
+                                    <block type="buzzer_on">  <!-- die -->
+                                      <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+                                      <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                      <next>
+                                      <block type="buzzer_on">  <!-- re -->
+                                        <value name="FREQ"><block type="math_number"><field name="NUM">587</field></block></value>
+                                        <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                                        <next>
+                                        <block type="buzzer_on">  <!-- sis# -->
+                                          <value name="FREQ"><block type="math_number"><field name="NUM">554</field></block></value>
+                                          <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                          <next>
+                                          <block type="buzzer_on">  <!-- te -->
+                                            <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
+                                            <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
+                                            <next>
+                                            <block type="buzzer_on">  <!-- tus -->
+                                              <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                              <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                              <next>
+                                              <block type="buzzer_on">  <!-- ga_ -->
+                                                <value name="FREQ"><block type="math_number"><field name="NUM">440</field></block></value>
+                                                <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
+                                                <next>
+                                                <block type="buzzer_on">  <!-- nas -->
+                                                  <value name="FREQ"><block type="math_number"><field name="NUM">440</field></block></value>
+                                                  <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                                  <next>
+                                                  <block type="buzzer_on">  <!-- de -->
+                                                    <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                                    <next>
+                                                    <block type="buzzer_on">  <!-- ven -->
+                                                      <value name="FREQ"><block type="math_number"><field name="NUM">349</field></block></value>
+                                                      <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                                      <next>
+                                                      <block type="buzzer_on">  <!-- cer -->
+                                                        <value name="FREQ"><block type="math_number"><field name="NUM">330</field></block></value>
+                                                        <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
+                                                        <next>
+                                                        <block type="buzzer_on">  <!-- Ya -->
+                                                          <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                                          <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                                          <next>
+                                                          <block type="buzzer_on">  <!-- sa -->
+                                                            <value name="FREQ"><block type="math_number"><field name="NUM">440</field></block></value>
+                                                            <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                                                            <next>
+                                                            <block type="buzzer_on">  <!-- len -->
+                                                              <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
+                                                              <value name="DURATION"><block type="math_number"><field name="NUM">0.3</field></block></value>
+                                                              <next>
+                                                              <block type="buzzer_on">  <!-- las -->
+                                                                <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+                                                                <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                                                <next>
+                                                                <block type="buzzer_on">  <!-- es -->
+                                                                  <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
+                                                                  <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                                                  <next>
+                                                                  <block type="buzzer_on">  <!-- tre -->
+                                                                    <value name="FREQ"><block type="math_number"><field name="NUM">523</field></block></value>
+                                                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                                                    <next>
+                                                                    <block type="buzzer_on">  <!-- llas -->
+                                                                      <value name="FREQ"><block type="math_number"><field name="NUM">494</field></block></value>
+                                                                      <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                                                      <next>
+                                                                      <block type="buzzer_on">  <!-- mi -->
+                                                                        <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                                                        <value name="DURATION"><block type="math_number"><field name="NUM">0.4</field></block></value>
+                                                                        <next>
+                                                                        <block type="buzzer_on">  <!-- vie -->
+                                                                          <value name="FREQ"><block type="math_number"><field name="NUM">440</field></block></value>
+                                                                          <value name="DURATION"><block type="math_number"><field name="NUM">0.6</field></block></value>
+                                                                          <next>
+                                                                          <block type="buzzer_on">  <!-- jo -->
+                                                                            <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                                                            <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                                                            <next>
+                                                                            <block type="buzzer_on">  <!-- Cha -->
+                                                                              <value name="FREQ"><block type="math_number"><field name="NUM">349</field></block></value>
+                                                                              <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                                                              <next>
+                                                                              <block type="buzzer_on">  <!-- mar -->
+                                                                                <value name="FREQ"><block type="math_number"><field name="NUM">330</field></block></value>
+                                                                                <value name="DURATION"><block type="math_number"><field name="NUM">0.2</field></block></value>
+                                                                                <next>
+                                                                                <block type="buzzer_on">  <!-- tin -->
+                                                                                  <value name="FREQ"><block type="math_number"><field name="NUM">392</field></block></value>
+                                                                                  <value name="DURATION"><block type="math_number"><field name="NUM">0.9</field></block></value>
+                                                                                </block>
+                                                                                </next>
+                                                                              </block>
+                                                                              </next>
+                                                                            </block>
+                                                                            </next>
+                                                                          </block>
+                                                                          </next>
+                                                                        </block>
+                                                                        </next>
+                                                                      </block>
+                                                                      </next>
+                                                                    </block>
+                                                                    </next>
+                                                                  </block>
+                                                                  </next>
+                                                                </block>
+                                                                </next>
+                                                              </block>
+                                                              </next>
+                                                            </block>
+                                                            </next>
+                                                          </block>
+                                                          </next>
+                                                        </block>
+                                                        </next>
+                                                      </block>
+                                                      </next>
+                                                    </block>
+                                                    </next>
+                                                  </block>
+                                                  </next>
+                                                </block>
+                                                </next>
+                                              </block>
+                                              </next>
+                                            </block>
+                                            </next>
+                                          </block>
+                                          </next>
+                                        </block>
+                                        </next>
+                                      </block>
+                                      </next>
+                                    </block>
+                                    </next>
+                                  </block>
+                                  </next>
+                                </block>
+                                </next>
+                              </block>
+                              </next>
                             </block>
                             </next>
                           </block>
