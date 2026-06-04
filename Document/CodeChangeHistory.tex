@@ -1550,9 +1550,19 @@ build.bat              (cmd 진입점, 메시지 갱신)
 05-28 & \texttt{build.ps1} & 시뮬 GLB 7종(\texttt{AlbiStaticLow}, \texttt{LampBox}, \texttt{LampGeneral}, \texttt{LampHand1\textendash 3}, \texttt{LaunchStation}) base64 BIN 일괄 인라인. \texttt{Build/Mesh/} 폴더 폐기, \texttt{ares\_robot.embed.js} 를 \texttt{Build/} 루트로 복사하고 \texttt{ares\_robot.glb} fallback 제거. 랜딩 \texttt{index.html} 의 \texttt{Mesh/ares\_robot.*} 경로를 루트로 치환. \\
 05-28 & \texttt{Document/FinalBuild.md} & 폴더 트리에서 \texttt{Mesh/} 항목 제거, \texttt{ares\_robot.embed.js} 를 루트로 옮기고 시뮬 GLB 가 fetch shim 으로 처리됨을 명시. \\
 05-28 & \texttt{Document/CodeChangeHistory.tex} & 05-28 커밋 해시(\texttt{110acf1}, \texttt{9e04b2b})를 반영해 (pending) 행 치환. ``우선 할 일 (Backlog)'' 섹션 신설 — \texttt{Build/vendor/inline\_assets.js} 50.54\,MB(GitHub 권장 한도 50\,MB 초과)에 대한 GLB 최적화 항목 등록(Meshopt/Draco 압축, 텍스처 축소, \texttt{Build/} \texttt{.gitignore} 처리 옵션 등). \\
+\midrule
+06-02 & \texttt{Web/simulation.js} & 알비 가슴 LED(붉은 \texttt{CHEST\_PALETTE} 구) 1개 추가. \texttt{applyTopicEffect} 에서 시뮬 명령 $\to$ 시각 반응 매핑: \texttt{LED\_ON}/\texttt{LED\_OFF}/LED 패턴 $\to$ 눈·슬롯·발사대 LED, \texttt{BUZZER\_ON} $\to$ 가슴 LED 점등 + 부저 비프(\texttt{playBeep}), \texttt{SLEEP} $\to$ hold 대기. \\
+\midrule
+06-04 & \texttt{Web/simulation.js} & 발사대 LED 6개 동적 생성 --- LED1\textendash 5(전면 세로 줄, 초록 \texttt{LAUNCH\_STRIP\_PALETTE}) + LED0(로켓 바닥 도넛, 빨강 \texttt{LAUNCH\_TORUS\_PALETTE}). \texttt{applyLed} 채도 튜닝 확장: \texttt{intensityScale}(발광량 $\downarrow$)·\texttt{opacityOn}(구체 불투명도 $\uparrow$)·\texttt{glowScale}(가산 글로우 $\downarrow$)로 ACES 흰빛 날림 억제. LED0 을 가슴 팔레트에서 전용 팔레트로 분리. \\
+06-04 & \texttt{Web/main.html}, \texttt{Web/styles.css} & 발사대 LED 전체 토글 버튼(\texttt{\#simLaunchLeds}, \texttt{.sim-launch-led-btn}) --- 한 번에 LED0\textendash 5 점등/소등, 활성색 발광 빨강. \\
+06-04 & \texttt{Web/simulation.js} & 로켓 발사 시 회백색 연기/구름 분출 --- Sprite 풀 80개 + 뭉게구름 텍스처(다중 radial blob). \texttt{rocketMeshRef}(mesh-local)에 부착해 로켓과 함께 솟지 않고 발사대 바닥 구름 + 상승 trail 형성. 추진 중 분출 후 팽창·페이드·소멸. \\
+06-04 & \texttt{Web/simulation.js} & 시뮬 실행 종료(\texttt{finally})·시뮬 카드 닫기(\texttt{close}) 시 떠 있는 로켓을 ``발사 중지''와 동일하게 원위치 복귀시키는 과정 재생. \texttt{rocketAtRest} getter + \texttt{finalizeClose}(복귀 완료 후 카드 숨김). \\
+06-04 & \texttt{Web/simulation.js} & 로켓 발사음 \texttt{playRocketLaunch()} --- Web Audio 화이트노이즈를 lowpass(럼블)·bandpass(분사 로어)로 필터링한 ${\approx}3.6$초 절차적 굉음. UI 로켓 버튼·\texttt{GUN\_FIRE} 명령에서 발사 시작 시 재생. \\
+06-04 & \texttt{Web/examples/albi\_song.xml} (신규) & 예제 ``알비의 노래'' --- Real Madrid 응원가 \textit{Hala Madrid y nada más} 1절 주선율을 \texttt{buzzer\_on} 40음으로 전사(반음은 정확 Hz, 예: C\#5=554). \\
+06-04 & \texttt{Web/main.html} & 예제 드롭다운(\texttt{\#exampleSelect})에 ``🎵 알비의 노래'' 옵션 추가. \\
 \bottomrule
 \end{tabularx}
-\caption{2026-05-19 \textendash{} 05-28 변경 범위 (롤링).}
+\caption{2026-05-19 \textendash{} 06-04 변경 범위 (롤링).}
 \end{table}
 
 \begin{table}[h]
@@ -1589,6 +1599,14 @@ build.bat              (cmd 진입점, 메시지 갱신)
 05-28 & \textit{(pending)} & Split simulation out of Web/main.js into Web/simulation.js and bundle launchpad scene (antenna recolor + radar spin, rocket recolor + launch animation with camera tracking and flame) \\
 05-28 & \texttt{110acf1} & Sim: simulation.js 분리 + 발사대 안테나/로켓 액션 추가 \\
 05-28 & \texttt{9e04b2b} & Build: 시뮬 GLB 7종 inline\_assets 통합, Build/Mesh 폴더 폐기 \\
+\midrule
+06-02 & \texttt{4670c8a} & Sim: 알비 가슴 LED + LED\_ON/OFF/BUZZER\_ON/SLEEP 시뮬 명령 반응 \\
+\midrule
+06-04 & \texttt{d26629f} & Sim: 발사대 LED 전체 토글 버튼 추가 (LED0 도넛 + LED1\textendash 5 세로 줄) \\
+06-04 & \texttt{72bf32b} & Sim: 로켓 발사 연기/구름 + 종료 시 로켓 자동 복귀 + 발사대 LED 채도 강화 \\
+06-04 & \texttt{e666ea9} & Sim: 로켓 발사 시 절차적 발사음 추가 (럼블+분사 굉음) \\
+06-04 & \texttt{db9985b} & Example: ``알비의 노래'' 추가 --- 부저로 Hala Madrid(알라 마드리드) 응원가 후렴 연주 \\
+06-04 & \texttt{0f4fe08} & Example: ``알비의 노래''를 악보 기반 1절 주선율로 교체 (Hala Madrid y nada más) \\
 \bottomrule
 \end{tabularx}
 \caption{관련 커밋 (\texttt{main} 브랜치). 05-22 행만 본 문서 갱신 시점에 아직 커밋되지 않은 작업.}
@@ -1606,6 +1624,8 @@ build.bat              (cmd 진입점, 메시지 갱신)
 등록일 & 항목 & 내용 \\
 \midrule
 05-28 & GLB 최적화 & \texttt{Build/vendor/inline\_assets.js} 가 50.54\,MB 로 GitHub 권장 한도 50\,MB 초과(푸시는 성공, 절대 한도 100\,MB 미만). 원인: 시뮬 GLB 7종 base64 인라인. 주범 \texttt{AlbiStaticLow.glb}(14.6\,MB), \texttt{LaunchStation.glb}(14.8\,MB), \texttt{LampBox.glb}(9.6\,MB). 해법 후보: (1) \texttt{gltfpack -cc -tc} (Meshopt) 또는 Draco 압축으로 GLB 자체 경량화 — 목표 합산 $\le$10\,MB, (2) 각 모델에서 카메라가 보지 않는 디테일/큰 텍스처 정리(예: 발사대 박스 내부), (3) 정책 변경으로 \texttt{Build/} 를 \texttt{.gitignore} 처리하고 GitHub Releases 로 배포(현재 추적 중인 운영을 같이 바꿔야 함). 경량화 후 \texttt{build.bat} 재실행 $\to$ \texttt{inline\_assets.js} 크기 재확인. \\
+\midrule
+06-04 & \texttt{Build/} 재빌드 & 06-04 \texttt{Web/} 변경(\texttt{simulation.js} 로켓 연기/발사음/복귀·발사대 LED, \texttt{examples/albi\_song.xml} 신규, \texttt{main.html} 예제 옵션)은 아직 \texttt{Build/} 오프라인 산출물에 미반영. 배포본 갱신 시 \texttt{build.bat} 재실행 필요(인라인 데이터는 빌드 시점 snapshot). \\
 \bottomrule
 \end{tabularx}
 \caption{우선 할 일 목록 — 완료 시 위쪽 변경 행으로 이동.}
