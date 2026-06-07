@@ -973,14 +973,14 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (!sim || builtTopic !== t) build(t);
     sim.resize();
     cancelAnimationFrame(raf); loop();
-    btn.textContent = '🤖 시뮬레이션 닫기';
+    btn.textContent = '코드 확인';        // 누르면 시뮬레이션을 닫고 항상 블록 코딩 모드로
     btn.setAttribute('aria-pressed', 'true');
   };
   // 실제로 카드를 숨기고 렌더 루프를 멈추는 마무리 단계.
   const finalizeClose = () => {
     card.hidden = true;
     cancelAnimationFrame(raf); raf = 0;
-    btn.textContent = '🤖 시뮬레이션 열기';
+    btn.textContent = '시뮬레이션';
     btn.setAttribute('aria-pressed', 'false');
     if (typeof onClose === 'function') {
       try { onClose(); } catch {}

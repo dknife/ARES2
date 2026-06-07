@@ -589,6 +589,25 @@ iframe, #dashboardFrame {
     color: var(--text-secondary);
 }
 
+/* 블록 코딩 / 시뮬레이션 모드: 개요·차시·미션 선택·breadcrumb 를 숨겨 네비를 단순화.
+   (body[data-content-mode] 는 main.js applyMode 에서 설정)
+   - coding     → 남는 것: 미션 설명 · 시뮬레이션 · 예제
+   - simulation → 남는 것: 시뮬레이션 닫기 · 예제 */
+body[data-content-mode="coding"]     #missionNav > #homeButton,
+body[data-content-mode="coding"]     #missionNav > #lessonSelect,
+body[data-content-mode="coding"]     #missionNav > #missionSelect,
+body[data-content-mode="coding"]     #missionNav > #breadcrumb,
+body[data-content-mode="simulation"] #missionNav > #homeButton,
+body[data-content-mode="simulation"] #missionNav > #lessonSelect,
+body[data-content-mode="simulation"] #missionNav > #missionSelect,
+body[data-content-mode="simulation"] #missionNav > #breadcrumb {
+    display: none !important;
+}
+/* 시뮬레이션 모드에서는 '미션 설명' 토글도 숨김 (시뮬레이션 닫기로만 빠져나감) */
+body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
+    display: none !important;
+}
+
 /* ----- 콘텐츠 뷰 공통 ----- */
 .content-view {
     width: 100%;
@@ -991,6 +1010,17 @@ iframe, #dashboardFrame {
 .sim-launch-led-btn:hover { border-color: var(--primary-color, #4682c8); }
 .sim-launch-led-btn.on { background: rgba(255, 60, 60, 0.16); border-color: #e54f4f; color: #a01818; }
 .sim-launch-led-btn.on .dot { background: #ff3030; box-shadow: 0 0 7px 2px rgba(255, 60, 60, 0.78); }
+
+/* 주제별 기능 버튼은 반투명하게 — 뒤의 3D 장면이 비치도록. (:not(.on) 으로 활성 색은 유지) */
+.sim-card-head .sim-led-btn:not(.on),
+.sim-card-head .sim-traffic-btn:not(.on),
+.sim-card-head .sim-launch-btn:not(.on),
+.sim-card-head .sim-launch-led-btn:not(.on) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #eef3fb;
+}
+
 .sim-stage {
     position: relative; width: 100%;
     flex: 1 1 0; min-height: 240px;
@@ -1030,11 +1060,17 @@ iframe, #dashboardFrame {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; cursor: pointer;
 }
-#simRun { flex: 1 1 auto; background: #2a3550; color: #fff; border-color: #2a3550; }
-#simRun:hover:not(:disabled) { background: #38507a; }
+/* 눈에 잘 띄는 노란색 — 어두운 텍스트로 대비, 은은한 발광 그림자 */
+#simRun {
+    flex: 1 1 auto; font-weight: 700;
+    background: #FFC400; color: #1f2430; border-color: #FFB300;
+    box-shadow: 0 2px 10px rgba(255, 196, 0, 0.45);
+}
+#simRun:hover:not(:disabled) { background: #FFD23F; border-color: #FFC400; }
 #simRun:disabled { opacity: 0.6; cursor: not-allowed; }
 /* 실행 중에는 '시뮬레이션 중지'(비상 정지) 버튼으로 변신 — 붉은색 */
-#simRun.running { background: #b3261e; border-color: #b3261e; }
+#simRun.running { background: #b3261e; border-color: #b3261e; color: #fff;
+    box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
 #simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
 /* 통신 로그 — 렌더링 창 맨 뒤(z:0) 배경 레이어. 투명 캔버스 너머로 흐릿하게 비친다.
