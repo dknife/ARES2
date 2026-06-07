@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARES 관제실</title>
+    <!-- 데스크톱에서 ?mobile=true 로 모바일 화면 미리보기 (다른 스크립트보다 먼저 실행) -->
+    <script src="mobile-preview.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
@@ -113,36 +115,42 @@
                     <iframe id="dashboardFrame" src="dashboard.html"></iframe>
                 </div>
 
-                <!-- 3D 시뮬레이션 카드 (시뮬레이션 열기 버튼으로 토글) -->
+                <!-- 3D 시뮬레이션 카드 — 카드 전체가 하나의 렌더링 영역이며,
+                     메뉴/버튼/실행/로그가 모두 이 영역 안의 위젯(오버레이)으로 들어간다.
+                     (시뮬레이션 열기 버튼으로 토글) -->
                 <div id="simCard" class="sim-card" hidden>
-                    <div class="sim-card-head">
-                        <select id="simTopic" class="sim-topic" title="시뮬레이션 주제 선택"></select>
-                        <div class="sim-led-buttons">
-                            <button class="sim-led-btn" data-part="eye"   data-side="R" type="button"><span class="dot"></span>LED 1<small>오른쪽 눈</small></button>
-                            <button class="sim-led-btn" data-part="eye"   data-side="L" type="button"><span class="dot"></span>LED 2<small>왼쪽 눈</small></button>
-                            <button class="sim-led-btn" data-part="chest" type="button"><span class="dot"></span>LED 3<small>가슴</small></button>
-                        </div>
-                        <div class="sim-traffic-buttons" style="display:none">
-                            <button class="sim-traffic-btn" data-action="lamps" type="button"><span class="dot"></span>신호등<small>램프 배치</small></button>
-                            <button class="sim-traffic-btn" data-action="hand"  type="button"><span class="dot"></span>가위바위보<small>손 바꾸기</small></button>
-                        </div>
-                        <div class="sim-launch-buttons" style="display:none">
-                            <button id="simRadar"  class="sim-launch-btn" data-action="radar"  type="button"><span class="dot"></span>🛰️ 레이더<small>안테나 회전</small></button>
-                            <button id="simRocket" class="sim-launch-btn" data-action="rocket" type="button"><span class="dot"></span>🚀 로켓 발사<small>위로 상승</small></button>
-                        </div>
-                        <div class="sim-launch-led-buttons" style="display:none">
-                            <button id="simLaunchLeds" class="sim-launch-led-btn" type="button"><span class="dot"></span>💡 LED 전체<small>모두 켜기/끄기</small></button>
-                        </div>
-                    </div>
                     <div id="simStage" class="sim-stage">
+                        <!-- 통신 로그: 렌더링 창 맨 뒤 배경 레이어 (투명 캔버스 너머로 비친다) -->
+                        <div id="simLog" class="sim-log" aria-live="polite"></div>
+                        <!-- 주제 선택 + 주제별 버튼: 렌더링 창 안 좌상단에 세로로 겹쳐 띄워
+                             시뮬레이션 공간을 더 넓게 확보한다 -->
+                        <div class="sim-card-head">
+                            <select id="simTopic" class="sim-topic" title="시뮬레이션 주제 선택"></select>
+                            <div class="sim-led-buttons">
+                                <button class="sim-led-btn" data-part="eye"   data-side="R" type="button"><span class="dot"></span>LED 1<small>오른쪽 눈</small></button>
+                                <button class="sim-led-btn" data-part="eye"   data-side="L" type="button"><span class="dot"></span>LED 2<small>왼쪽 눈</small></button>
+                                <button class="sim-led-btn" data-part="chest" type="button"><span class="dot"></span>LED 3<small>가슴</small></button>
+                            </div>
+                            <div class="sim-traffic-buttons" style="display:none">
+                                <button class="sim-traffic-btn" data-action="lamps" type="button"><span class="dot"></span>신호등<small>램프 배치</small></button>
+                                <button class="sim-traffic-btn" data-action="hand"  type="button"><span class="dot"></span>가위바위보<small>손 바꾸기</small></button>
+                            </div>
+                            <div class="sim-launch-buttons" style="display:none">
+                                <button id="simRadar"  class="sim-launch-btn" data-action="radar"  type="button"><span class="dot"></span>레이더</button>
+                                <button id="simRocket" class="sim-launch-btn" data-action="rocket" type="button"><span class="dot"></span>로켓</button>
+                            </div>
+                            <div class="sim-launch-led-buttons" style="display:none">
+                                <button id="simLaunchLeds" class="sim-launch-led-btn" type="button"><span class="dot"></span>LED</button>
+                            </div>
+                        </div>
+                        <!-- 실행/중지 + 로그 지우기: 렌더링 창 안 하단에 띄운다 -->
+                        <div class="sim-runbar">
+                            <button id="simRun" type="button" title="블록 명령을 피코로 보내는 과정을 시뮬레이션">▶ 시뮬레이션 해보기</button>
+                            <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
+                        </div>
+                        <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기</p>
                         <div class="sim-loading" id="simLoading">알비를 불러오는 중…</div>
                     </div>
-                    <div class="sim-runbar">
-                        <button id="simRun" type="button" title="블록 명령을 피코로 보내는 과정을 시뮬레이션">▶ 시뮬레이션 해보기</button>
-                        <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
-                    </div>
-                    <div id="simLog" class="sim-log" aria-live="polite"></div>
-                    <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈·가슴 켜고 끄기</p>
                 </div>
             </section>
 

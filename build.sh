@@ -36,6 +36,7 @@ echo "[4/7] copy static assets + robot + viewer"
 cp Web/dashboard.html Build/dashboard.html
 cp Web/styles.css     Build/styles.css
 cp Web/index.css      Build/index.css
+cp Web/mobile-preview.js Build/mobile-preview.js
 cp Web/vendor/three-bundle.min.js Build/vendor/three-bundle.min.js
 mkdir -p Build/Mesh
 cp Web/Mesh/ares_robot.embed.js Build/Mesh/ares_robot.embed.js

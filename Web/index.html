@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>코리아사이언스 화성 탐사선</title>
+    <!-- 데스크톱에서 ?mobile=true 로 모바일 화면 미리보기 (head 맨 앞 유지) -->
+    <script src="mobile-preview.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
     <style>
@@ -51,6 +53,9 @@
     <script>
     'use strict';
     (function () {
+      // 모바일 미리보기 프레임이 이 페이지를 대체하는 중이면(최상위 ?mobile=true)
+      // 백그라운드에서 3D 렌더러를 띄우지 않는다. 실제 페이지는 프레임 안(framed=1)에서 동작.
+      if (window.__ARES_MOBILE_FRAME__) return;
       const THREE = window.THREE;
       const { GLTFLoader, OrbitControls, RoomEnvironment } = window.ARES3;
 

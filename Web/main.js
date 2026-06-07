@@ -890,7 +890,11 @@ function main() {
   applyRoute();
 }
 
-if (document.readyState === 'loading') {
+// 최상위 ?mobile=true 진입 시에는 모바일 미리보기 프레임이 화면을 대체하므로
+// 관제실 본 UI 를 프레임 뒤에서 중복 초기화하지 않는다. 실제 UI 는 프레임 안(framed=1)에서 구동.
+if (window.__ARES_MOBILE_FRAME__) {
+  // no-op — mobile-preview.js 가 프레임을 구성한다
+} else if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', main);
 } else {
   main();
