@@ -900,22 +900,29 @@ iframe, #dashboardFrame {
     min-height: 0;
 }
 .sim-card[hidden] { display: none; }
+/* 주제 선택 + 주제별 버튼 — 렌더링 창(.sim-stage) 안 좌상단에 세로로 겹쳐 띄운다.
+   (헤더 바를 없애 시뮬레이션 공간을 더 넓게 확보) */
 .sim-card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; padding: 10px 12px; flex-wrap: wrap;
-    border-bottom: 1px solid var(--border-color);
+    position: absolute; top: 10px; left: 10px; z-index: 5;
+    display: flex; flex-direction: column; align-items: stretch;
+    gap: 6px; padding: 8px; width: 158px; max-width: calc(100% - 20px);
+    background: rgba(12, 13, 42, 0.55);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     user-select: none;
 }
 .sim-drag { display: none; }
 .sim-topic {
-    flex: 1 1 auto; min-width: 96px; max-width: 200px;
+    flex: 0 0 auto; width: 100%; min-width: 0; max-width: none;
     font-family: 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
     color: var(--text-primary); background: var(--background-white);
     border: 1px solid var(--border-color); border-radius: 8px;
     padding: 6px 8px; cursor: pointer; touch-action: auto;
 }
 .sim-card-head h3 { margin: 0; font-size: 0.98em; }
-.sim-led-buttons { display: flex; gap: 6px; }
+/* 오버레이 안에서는 각 버튼이 위→아래로 차례로 쌓이도록 세로 배치 */
+.sim-led-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-led-btn {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
@@ -932,7 +939,7 @@ iframe, #dashboardFrame {
 .sim-led-btn.on { background: rgba(34, 200, 100, 0.16); border-color: #22c864; color: #0a7a3a; }
 .sim-led-btn.on .dot { background: #22e070; box-shadow: 0 0 7px 2px rgba(34, 255, 122, 0.75); }
 /* 우주 신호등 액션 버튼 — LED 버튼과 동일한 룩, 활성 색만 주황(신호등 느낌) */
-.sim-traffic-buttons { display: flex; gap: 6px; }
+.sim-traffic-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-traffic-btn {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
@@ -950,7 +957,7 @@ iframe, #dashboardFrame {
 .sim-traffic-btn.on .dot { background: #ffa726; box-shadow: 0 0 7px 2px rgba(255, 167, 38, 0.75); }
 
 /* 탐사선 발사대 액션 버튼(레이더) — 신호등 버튼과 동일한 룩, 활성 색만 청록(레이더 느낌) */
-.sim-launch-buttons { display: flex; gap: 6px; }
+.sim-launch-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-launch-btn {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
@@ -968,7 +975,7 @@ iframe, #dashboardFrame {
 .sim-launch-btn.on .dot { background: #2dd4d4; box-shadow: 0 0 7px 2px rgba(45, 212, 212, 0.75); }
 
 /* 발사대 LED 버튼(LED0=도넛, LED1..LED5=세로 줄) — 활성 색은 LED 발광색(붉은색) */
-.sim-launch-led-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.sim-launch-led-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-launch-led-btn {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
@@ -987,22 +994,38 @@ iframe, #dashboardFrame {
 .sim-stage {
     position: relative; width: 100%;
     flex: 1 1 0; min-height: 240px;
+    overflow: hidden;        /* 3D 메시가 시뮬레이션 창 밖으로 그려지지 않도록 클립 */
+    isolation: isolate;      /* 캔버스(replaced)가 stage 컨텍스트를 벗어나 로그 위로 칠해지지 않도록 격리 */
     /* 우주 느낌의 어둡지만 채도 있는 배경: 보라 → 인디고 → 짙은 네이비 */
     background: radial-gradient(circle at 60% 25%, #3a1d6e 0%, #1b1e58 45%, #0c0d2a 100%);
 }
-.sim-stage canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
+/* 캔버스를 창에 절대 배치로 꽉 채운다. (플렉스 높이 모호성으로 캔버스가 창을 넘어
+   아래 버튼을 덮어 클릭이 막히던 문제 방지)
+   z-index:1 — 배경 로그(z:0) 위, 컨트롤 오버레이(z:4~5) 아래.
+   캔버스는 alpha:true(투명)라 빈 곳으로 배경 로그가 비친다. */
+.sim-stage canvas {
+    position: absolute; inset: 0; z-index: 1;
+    display: block; width: 100% !important; height: 100% !important; cursor: grab;
+}
 .sim-stage canvas:active { cursor: grabbing; }
 .sim-loading {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
     color: #9aa6bf; font-size: 0.85em; pointer-events: none; text-align: center; padding: 12px;
 }
+/* 사용 힌트 — 렌더링 창 하단(실행 바 바로 위)에 흐릿한 캡션 오버레이 */
 .sim-hint {
-    margin: 0; padding: 7px 12px; font-size: 0.74em;
-    color: var(--text-secondary); border-top: 1px solid var(--border-color);
+    position: absolute; left: 12px; right: 12px; bottom: 48px; z-index: 4;
+    margin: 0; padding: 0; font-size: 0.7em; text-align: center;
+    color: rgba(220, 228, 245, 0.5); border: none; background: none;
+    pointer-events: none;
 }
 
-/* 블록 명령 시뮬레이션 실행/로그 */
-.sim-runbar { display: flex; gap: 6px; padding: 8px 12px 0; }
+/* 블록 명령 시뮬레이션 실행/로그 — 렌더링 창(.sim-stage) 안 하단 오버레이로 띄운다.
+   (캔버스 위에 z-index 로 올려 어떤 상황에서도 버튼이 가려지지 않고 눌리도록) */
+.sim-runbar {
+    position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 5;
+    display: flex; gap: 8px; padding: 0;
+}
 .sim-runbar button {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; cursor: pointer;
@@ -1010,12 +1033,19 @@ iframe, #dashboardFrame {
 #simRun { flex: 1 1 auto; background: #2a3550; color: #fff; border-color: #2a3550; }
 #simRun:hover:not(:disabled) { background: #38507a; }
 #simRun:disabled { opacity: 0.6; cursor: not-allowed; }
+/* 실행 중에는 '시뮬레이션 중지'(비상 정지) 버튼으로 변신 — 붉은색 */
+#simRun.running { background: #b3261e; border-color: #b3261e; }
+#simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
+/* 통신 로그 — 렌더링 창 맨 뒤(z:0) 배경 레이어. 투명 캔버스 너머로 흐릿하게 비친다.
+   배경이므로 포인터 이벤트는 통과(로봇 드래그 방해 안 함). 최신 줄이 아래에 오도록 정렬. */
 .sim-log {
-    margin: 8px 12px 0; height: 112px; overflow-y: auto;
-    background: #0d1422; border: 1px solid var(--border-color); border-radius: 8px;
-    padding: 6px 8px; font-family: 'D2Coding', Menlo, monospace; font-size: 11px; line-height: 1.5;
-    color: #cfe0f5; -webkit-overflow-scrolling: touch;
+    position: absolute; inset: 0; z-index: 0;
+    margin: 0; padding: 16px; overflow: hidden;
+    background: transparent; border: none; border-radius: 0;
+    font-family: 'D2Coding', Menlo, monospace; font-size: 11px; line-height: 1.5;
+    color: #cfe0f5; opacity: 0.34; pointer-events: none;
+    display: flex; flex-direction: column; justify-content: flex-end;
 }
 .sim-log-line { white-space: pre-wrap; word-break: break-all; }
 .sim-log-line.tx-ack { color: #ffd089; }   /* Ack 명령 송신 */
@@ -1224,13 +1254,16 @@ details.mission-section summary {
         height: 75dvh;
         min-height: 480px;
     }
-    /* 시뮬레이션: 캔버스 + 컨트롤 + 로그 모두 보이도록 충분한 높이 */
+    /* 시뮬레이션: 카드 전체가 하나의 렌더링 영역. 확정 높이를 줘서(스테이지가 채움)
+       캔버스(height:100%)가 정확히 창에 맞게 풀리도록 한다. */
     #missionView[data-mode="simulation"] > .sim-card {
-        height: auto;
-        min-height: 90dvh;
+        height: 78dvh;
+        min-height: 0;
     }
     #missionView[data-mode="simulation"] .sim-stage {
-        min-height: 55dvh;
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
     }
 
     /* 로그 컨테이너: 페이지 스크롤로 끝부분에서 보이도록 */

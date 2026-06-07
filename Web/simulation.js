@@ -5,6 +5,7 @@
 //   - three.js 는 vendor/three-bundle.min.js 가 window.THREE / window.ARES3 로 노출
 // ============================================================
 import { CommandExecutor } from './commandexecutor.js';
+import { state } from './state.js';
 
 // LaunchStation.glb 는 단일 mesh·머티리얼로 통합되어 있어 이름으로 부속을 분리할 수 없다.
 // 대신 mesh 로컬 bounding box 기준 휴리스틱으로 안테나·로켓 영역 정점을 골라
@@ -896,13 +897,14 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const radarBtn  = document.getElementById('simRadar');
   const rocketBtn = document.getElementById('simRocket');
   const simHint = document.getElementById('simHint');
-  const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · 제목줄을 끌면 창 이동 · LED 버튼으로 눈·가슴 켜고 끄기';
+  const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기';
   const HINT_TRAFFIC = '1, 2, 3번 키를 눌러 램프를 켜고 끄기';
   const HINT_LAUNCH  = '레이더 가동 · 로켓 발사 버튼을 눌러 발사대를 작동시켜 보세요';
-  const RADAR_LABEL_ON   = '<span class="dot"></span>🛰️ 레이더<small>회전 멈춤</small>';
-  const RADAR_LABEL_OFF  = '<span class="dot"></span>🛰️ 레이더<small>안테나 회전</small>';
-  const ROCKET_LABEL_ON  = '<span class="dot"></span>🚀 발사 중지<small>원위치로</small>';
-  const ROCKET_LABEL_OFF = '<span class="dot"></span>🚀 로켓 발사<small>위로 상승</small>';
+  // 발사대 버튼은 간단히 표시(레이더 / 로켓). 활성 여부는 .on 클래스(점 색)로만 구분.
+  const RADAR_LABEL_ON   = '<span class="dot"></span>레이더';
+  const RADAR_LABEL_OFF  = '<span class="dot"></span>레이더';
+  const ROCKET_LABEL_ON  = '<span class="dot"></span>로켓';
+  const ROCKET_LABEL_OFF = '<span class="dot"></span>로켓';
   const sel = document.getElementById('simTopic');
   if (!btn || !card || !stage) return null;
 
@@ -1105,7 +1107,12 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     simLog.appendChild(d);
     simLog.scrollTop = simLog.scrollHeight;
   };
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // 취소 가능한 대기 — 비상 정지 시 진행 중인 대기(예: SLEEP 5초)를 즉시 끝낸다.
+  let activeWaitCancel = null;
+  const wait = (ms) => new Promise((resolve) => {
+    const id = setTimeout(() => { activeWaitCancel = null; resolve(); }, ms);
+    activeWaitCancel = () => { clearTimeout(id); activeWaitCancel = null; resolve(); };
+  });
   // 부저 비프 — 사용자가 시뮬레이션 버튼을 클릭한 직후 호출되므로 AudioContext가 허용됨.
   // square파로 부저 같은 음색을 내고, 끝에 짧은 페이드로 클릭 노이즈 제거.
   let audioCtx = null;
@@ -1287,6 +1294,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
       await wait(ackMs);
       const subs = command.slice('BATCH;'.length).split('|').filter((s) => s.length > 0);
       for (const sub of subs) {
+        if (!state.isExecuting) break;       // 비상 정지: 남은 서브명령 처리 중단
         const subHoldMs = Math.round(commandHoldSeconds(sub) * 1000);
         const cleanup = applyTopicEffect(sub);
         if (subHoldMs > 0) await wait(subHoldMs);
@@ -1307,19 +1315,37 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     logLine(`     ↩ ${reply}  (+${total}ms, ${waitForResponse ? 'Ack' : '비Ack'}${holdNote})`, 'rx');
     return reply;
   };
+  const SIM_RUN_LABEL = '▶ 시뮬레이션 해보기';
+  const SIM_STOP_LABEL = '⏹ 시뮬레이션 중지';
   let simRunning = false;
+  let simAborted = false;
   if (simRunBtn) simRunBtn.addEventListener('click', async () => {
-    if (simRunning) return;
+    // 실행 중 다시 누르면 '비상 정지' — 진행 중인 명령 처리를 즉시 중단한다.
+    if (simRunning) {
+      simAborted = true;
+      state.isExecuting = false;       // 모든 블록 루프(반복/while/순차)가 이 플래그를 검사해 멈춘다
+      if (activeWaitCancel) activeWaitCancel();   // 진행 중인 대기를 즉시 종료
+      return;
+    }
     if (!workspace) { logLine('워크스페이스가 준비되지 않았습니다', 'err'); return; }
-    simRunning = true; simRunBtn.disabled = true;
+    simRunning = true; simAborted = false;
+    simRunBtn.textContent = SIM_STOP_LABEL;
+    simRunBtn.classList.add('running');
     logLine('──── 시뮬레이션 시작 ────', 'sys');
     try {
       await CommandExecutor.simulateWorkspace(workspace, simSink);
-      logLine('──── 시뮬레이션 종료 ────', 'sys');
+      logLine(simAborted ? '──── 비상 정지 ────' : '──── 시뮬레이션 종료 ────', 'sys');
     } catch (e) {
       logLine('오류: ' + (e && e.message ? e.message : e), 'err');
     } finally {
-      simRunning = false; simRunBtn.disabled = false;
+      simRunning = false;
+      simRunBtn.textContent = SIM_RUN_LABEL;
+      simRunBtn.classList.remove('running');
+      // 비상 정지 시 진행 중이던 효과(LED·레이더)를 즉시 정리한다.
+      if (simAborted) {
+        setAllLedsOff();
+        if (sim && sim.hasRadar) sim.setRadar(false);
+      }
       // 시뮬레이션 종료 시, GUN_FIRE 로 떠오른 로켓을 '발사 중지'와 동일하게 원위치로 복귀.
       // 렌더 루프가 돌고 있으므로 setRocketLaunch(false) 만으로 하강 애니메이션이 재생된다.
       if (sim && sim.hasRocket && !sim.rocketAtRest) {
