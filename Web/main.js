@@ -280,6 +280,7 @@ function showView(view) {
     if (simController) simController.close();
     // 닫힘 애니메이션이 뒤늦게 끝나도 _preSimMode 영향을 받지 않도록 초기화
     _preSimMode = 'description';
+    document.body.removeAttribute('data-content-mode');   // 네비 즉시 복원(닫힘 애니메이션 대기 안 함)
   }
 
   // 미션 뷰 진입 시 항상 미션 설명 모드로 시작
@@ -599,6 +600,9 @@ function setupContentToggle() {
     const wasSimulation = _contentMode === 'simulation';
     _contentMode = mode;
     view.setAttribute('data-mode', mode);
+    // 네비게이션(#missionNav)은 #missionView 바깥이라 body 속성으로 모드를 전달해 제어.
+    //   coding/simulation 모드: 개요·차시·미션 선택을 숨겨 단순화.
+    document.body.setAttribute('data-content-mode', mode);
 
     // 시뮬레이션 → 다른 모드로 전환할 때는 sim 도 정리
     // (렌더 루프 중지 + simToggle 버튼 '열기' 로 복귀).
@@ -615,11 +619,11 @@ function setupContentToggle() {
     }
 
     if (mode === 'description') {
-      btn.textContent = '🧩 블럭코딩 열기';
+      btn.textContent = '블록 코딩';
       btn.title = '미션 설명을 닫고 블럭코딩 화면으로 전환';
       btn.disabled = false;
     } else if (mode === 'coding') {
-      btn.textContent = '📖 미션 설명 보기';
+      btn.textContent = '미션 설명';
       btn.title = '블럭코딩을 닫고 미션 설명으로 전환';
       btn.disabled = false;
     } else {
@@ -874,11 +878,11 @@ function main() {
       if (setContentMode) setContentMode('simulation');
     },
     onClose: () => {
-      // 시뮬을 닫으면 직전 모드로 복귀.
+      // '코드 확인' 으로 시뮬을 닫으면 항상 블록 코딩 모드로 이동한다.
       // 단, 호스트가 이미 다른 모드로 전환한 뒤(예제 적재 등) 정리 차원에서
       // close() 가 호출된 경우에는 그 모드를 덮어쓰지 않는다.
       if (_contentMode !== 'simulation') return;
-      if (setContentMode) setContentMode(_preSimMode || 'description');
+      if (setContentMode) setContentMode('coding');
     },
   });
 
