@@ -113,17 +113,53 @@ $landing = $landing -replace 'Mesh/ares_robot\.glb',       'ares_robot.glb'
 Write-Utf8 'Build\index.html' $landing
 Write-Host ''
 
+# ---------- 5.5) Enumerate GLB sources to plan bin chunks ----------
+# inline_assets 를 GLB 1개당 vendor/bin_*.js 1개로 쪼개기 위해 먼저 소스 GLB 의
+# 파일 목록만 수집한다. 실제 base64 임베드는 step 7 에서 수행. step 6 의 main.html
+# 패치가 <script src="vendor/bin_*.js"> 를 미리 끼워 넣어야 하므로 이름 목록을
+# 사전에 알아야 한다.
+$simGlbs = @(
+    'AlbiStaticLow.glb',
+    'LampBox.glb',
+    'LampGeneral.glb',
+    'LampHand1.glb',
+    'LampHand2.glb',
+    'LampHand3.glb',
+    'LaunchStation.glb'
+)
+$binEntries = New-Object System.Collections.Generic.List[object]
+foreach ($name in $simGlbs) {
+    $p = "Web\Mesh\$name"
+    if (Test-Path $p) {
+        $binEntries.Add([pscustomobject]@{ glb = $name; src = (Resolve-Path $p).Path })
+    } else {
+        Write-Warning "Web\Mesh\$name 없음 -- skip"
+    }
+}
+if (Test-Path 'Web\Mesh\RoverParts') {
+    foreach ($f in (Get-ChildItem 'Web\Mesh\RoverParts' -Filter '*.glb')) {
+        $binEntries.Add([pscustomobject]@{ glb = $f.Name; src = $f.FullName })
+    }
+}
+$binScriptNames = @($binEntries | ForEach-Object {
+    'bin_' + [System.IO.Path]::GetFileNameWithoutExtension($_.glb) + '.js'
+})
+Write-Host ("        enumerated $($binEntries.Count) GLB sources -> $($binScriptNames.Count) bin chunks")
+Write-Host ''
+
 # ---------- 6) Patch main.html (block editor) ----------
 # (a) Blockly CDN URL -> vendor/ local path
-# (b) <script type="module" src="main.js"> -> inline_assets shim + main.bundle.js (defer)
+# (b) <script type="module" src="main.js"> -> bin_*.js 청크들 + inline_assets shim + main.bundle.js (defer)
+#     defer 스크립트는 문서 순서대로 실행되므로 bin_*.js (BIN 채움) -> inline_assets.js
+#     (DATA + shim 설치) -> main.bundle.js (앱 시작) 순서가 보장된다.
 Write-Host '[6/7] generating and patching main.html'
 Copy-Item 'Web\main.html' 'Build\main.html' -Force
 $mainPath = (Resolve-Path 'Build\main.html').Path
 $c = Read-Utf8 'Build\main.html'
 $c = $c -replace 'https://unpkg\.com/blockly@11/(\w+_compressed\.js)', 'vendor/$1'
-$c = $c -replace `
-    '<script type="module" src="main\.js"></script>', `
-    '<script src="vendor/inline_assets.js" defer></script><script src="main.bundle.js" defer></script>'
+$mainBinTags = ($binScriptNames | ForEach-Object { "    <script src=`"vendor/$_`" defer></script>" }) -join "`n"
+$mainReplacement = "$mainBinTags`n    <script src=`"vendor/inline_assets.js`" defer></script>`n    <script src=`"main.bundle.js`" defer></script>"
+$c = $c -replace '<script type="module" src="main\.js"></script>', $mainReplacement
 Write-Utf8 $mainPath $c
 
 # Sanity check
@@ -136,26 +172,51 @@ if (Select-String -Path $mainPath -SimpleMatch 'type="module"' -Quiet) {
 if (-not (Select-String -Path $mainPath -SimpleMatch 'inline_assets.js' -Quiet)) {
     throw 'main.html patch failed: inline_assets.js script tag not injected'
 }
+if ($binScriptNames.Count -gt 0) {
+    $firstBin = $binScriptNames[0]
+    if (-not (Select-String -Path $mainPath -SimpleMatch $firstBin -Quiet)) {
+        throw "main.html patch failed: bin chunk '$firstBin' script tag not injected"
+    }
+}
 Write-Host ''
 
-# ---------- 7) Inline assets (overview.html + 12 lesson.json + examples/*.xml) ----------
-# main.js 는 런타임에 다음 세 종류를 fetch() 한다:
-#   - overview.html
-#   - Lesson{NN}/lesson.json   (NN = 01..12)
-#   - examples/{name}.xml
-# file:// 컨텍스트에서는 동일 출처 정책으로 fetch 가 차단되므로,
-# 이 데이터들을 한 JS 파일에 문자열로 인라인하고 window.fetch 를 가로채는
-# 얇은 shim 을 생성한다. shim 은 main.bundle.js 실행 전(같은 defer 순서)에
-# 한 번만 설치된다.
-Write-Host '[7/7] generating vendor\inline_assets.js'
+# ---------- 7) Inline assets: per-GLB bin chunks + text shim ----------
+# 한 GLB 당 vendor/bin_<stem>.js 하나에 base64 1줄로 분리한다. 텍스트 자산
+# (overview.html / lesson.json / examples/*.xml) 과 fetch shim 만 한 곳
+# (vendor/inline_assets.js) 에 남긴다.
+#
+# Why: 통합 inline_assets.js 가 GitHub 절대 한도(100 MB) 를 넘기는 사태를 막기 위함.
+#   - GLB 1개당 base64 ~10~20 MB → 청크 1개도 한도와 무관.
+#   - 자산 추가/제거 시 변경 diff 가 해당 청크 파일에만 국한.
+#
+# fetch shim 매칭 로직은 변경 없음 — 키는 여전히 파일명("Foo.glb").
+#   - main.html (Mesh/Foo.glb · Mesh/RoverParts/Foo.glb) 도 endsWith 로 매칭
+#   - viewer (Resources/AlbiStaticLow.glb) 도 동일
+Write-Host '[7/7] generating vendor\bin_*.js (per-GLB chunks) + vendor\inline_assets.js (text + fetch shim)'
 
+# 7a) GLB → vendor/bin_<stem>.js 1개씩.
+foreach ($e in $binEntries) {
+    $glb  = $e.glb
+    $src  = $e.src
+    $b64  = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($src))
+    $stem = [System.IO.Path]::GetFileNameWithoutExtension($glb)
+    $binPath = "Build\vendor\bin_$stem.js"
+    $jsLit  = (ConvertTo-Json -InputObject $b64 -Compress -Depth 1).Replace('</','<\/')
+    $keyLit = Encode-JsString $glb
+    $line   = "(window.__ARES_BIN__ = window.__ARES_BIN__ || {})[$keyLit] = $jsLit;`n"
+    Write-Utf8 $binPath $line
+    Write-Host ("        chunk: vendor/bin_$stem.js ({0:N1} MB base64)" -f ($b64.Length / 1MB))
+}
+
+# 7b) inline_assets.js — 텍스트 자산 + fetch shim. (GLB 는 bin_*.js 가 이미 채움)
 $sb = New-Object System.Text.StringBuilder
-[void]$sb.AppendLine('// Auto-generated by build.ps1 -- inlined fetch() targets for file:// support.')
+[void]$sb.AppendLine('// Auto-generated by build.ps1 -- text assets + fetch shim. GLB binaries are split into vendor/bin_*.js (loaded earlier).')
 [void]$sb.AppendLine('(function () {')
 [void]$sb.AppendLine('  if (window.__ARES_INLINE_INSTALLED__) return;')
 [void]$sb.AppendLine('  window.__ARES_INLINE_INSTALLED__ = true;')
 [void]$sb.AppendLine('  var DATA = {};')
-[void]$sb.AppendLine('  var BIN = {};')
+[void]$sb.AppendLine('  // BIN 은 bin_*.js 들이 이 스크립트 직전 defer 순서로 채워 둔 글로벌.')
+[void]$sb.AppendLine('  var BIN = window.__ARES_BIN__ || (window.__ARES_BIN__ = {});')
 
 # overview.html
 $overview = Read-Utf8 'Web\overview.html'
@@ -183,42 +244,6 @@ if (Test-Path $exampleDir) {
     }
 }
 
-# 시뮬레이션 모델 GLB: file:// 에서 fetch 불가 → base64 로 BIN 에 인라인.
-# 파일명만 키로 사용해 main.html(Mesh/...)과 viewer(Resources/...) 양쪽 fetch 모두 매칭한다.
-# 알비(주제 1) 외에 우주 신호등(LampBox/LampGeneral/LampHand1~3)과 탐사선 발사대(LaunchStation)도
-# file:// 오프라인에서 동작하도록 모두 인라인한다.
-$simGlbs = @(
-    'AlbiStaticLow.glb',
-    'LampBox.glb',
-    'LampGeneral.glb',
-    'LampHand1.glb',
-    'LampHand2.glb',
-    'LampHand3.glb',
-    'LaunchStation.glb'
-)
-foreach ($name in $simGlbs) {
-    $p = "Web\Mesh\$name"
-    if (Test-Path $p) {
-        $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Resolve-Path $p).Path))
-        [void]$sb.AppendLine("  BIN['$name'] = `"$b64`";")
-        Write-Host ("        inlined GLB: $name ({0:N1} MB base64)" -f ($b64.Length / 1MB))
-    } else {
-        Write-Warning "Web\Mesh\$name 없음 -- 시뮬레이션 GLB 미인라인"
-    }
-}
-
-# 로버 부속(주제 '로버'): Web\Mesh\RoverParts\*.glb 전체를 인라인.
-# 파일명 키만 사용하므로 fetch 가 'Mesh/RoverParts/RoverHead.glb' 로 와도 endsWith 매칭으로 잡힌다.
-if (Test-Path 'Web\Mesh\RoverParts') {
-    foreach ($f in (Get-ChildItem 'Web\Mesh\RoverParts' -Filter '*.glb')) {
-        $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($f.FullName))
-        [void]$sb.AppendLine("  BIN['$($f.Name)'] = `"$b64`";")
-        Write-Host ("        inlined GLB: RoverParts/$($f.Name) ({0:N2} MB base64)" -f ($b64.Length / 1MB))
-    }
-} else {
-    Write-Warning 'Web\Mesh\RoverParts 폴더 없음 -- 로버 토픽 GLB 미인라인'
-}
-
 [void]$sb.AppendLine(@'
   function b64ToU8(b64){ var s=atob(b64), n=s.length, u=new Uint8Array(n); for(var i=0;i<n;i++)u[i]=s.charCodeAt(i); return u; }
   var origFetch = window.fetch ? window.fetch.bind(window) : null;
@@ -239,22 +264,34 @@ if (Test-Path 'Web\Mesh\RoverParts') {
 
 Write-Utf8 'Build\vendor\inline_assets.js' $sb.ToString()
 
-# Sanity check inline_assets
+# Sanity check inline_assets + chunks
 $inlineKeys = (Select-String -Path 'Build\vendor\inline_assets.js' -Pattern "DATA\[" -AllMatches).Matches.Count
-Write-Host ("        inlined entries: {0}" -f $inlineKeys)
-if ($inlineKeys -lt 13) {
-    throw "inline_assets.js: expected >= 13 entries (overview + 12 lessons), got $inlineKeys"
+$binCount   = (Get-ChildItem 'Build\vendor' -Filter 'bin_*.js' | Measure-Object).Count
+Write-Host ("        text entries: $inlineKeys,  bin chunks: $binCount")
+if ($inlineKeys -lt 13) { throw "inline_assets.js: expected >= 13 text entries (overview + 12 lessons), got $inlineKeys" }
+if ($binCount   -lt 1)  { throw "vendor/bin_*.js: no chunks generated" }
+
+# 단일 청크가 95 MB 를 넘으면 GitHub 100 MB 한도 위험 → 빌드 경고.
+$maxBin = Get-ChildItem 'Build\vendor' -Filter 'bin_*.js' | Sort-Object Length -Descending | Select-Object -First 1
+if ($maxBin) {
+    $maxMB = $maxBin.Length / 1MB
+    Write-Host ("        largest chunk: $($maxBin.Name) ({0:N1} MB)" -f $maxMB)
+    if ($maxMB -gt 95) {
+        Write-Warning "single bin chunk exceeds 95 MB ($($maxBin.Name)) -- GitHub 100 MB hard limit risk"
+    }
 }
 Write-Host ''
 
-# 뷰어도 file:// 에서 GLB를 fetch shim 으로 받도록 inline_assets 주입
+# 7c) viewer 도 동일하게 bin_*.js 들 + inline_assets.js 를 로드.
 $vp = 'Build\viewer\index.html'
 if (Test-Path $vp) {
     $v = Read-Utf8 $vp
     if ($v -notmatch 'inline_assets\.js') {
-        $v = $v.Replace('<script src="vendor/three-bundle.min.js"></script>', "<script src=`"vendor/three-bundle.min.js`"></script>`n<script src=`"../vendor/inline_assets.js`"></script>")
+        $viewerBinTags = ($binScriptNames | ForEach-Object { "  <script src=`"../vendor/$_`"></script>" }) -join "`n"
+        $injection = "<script src=`"vendor/three-bundle.min.js`"></script>`n$viewerBinTags`n  <script src=`"../vendor/inline_assets.js`"></script>"
+        $v = $v.Replace('<script src="vendor/three-bundle.min.js"></script>', $injection)
         Write-Utf8 $vp $v
-        Write-Host '        patched viewer\index.html -> inline_assets shim'
+        Write-Host '        patched viewer\index.html -> bin chunks + inline_assets shim'
         Write-Host ''
     }
 }
