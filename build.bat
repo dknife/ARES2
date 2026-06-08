@@ -13,6 +13,8 @@ REM   - Build\styles.css, Build\index.css
 REM   - Build\mobile-preview.js  (?mobile=true 휴대폰 프레임 미리보기, 클래식 스크립트)
 REM   - Build\main.bundle.js     (8개 ES 모듈 IIFE 번들)
 REM   - Build\vendor\
+REM       bin_<name>.js          (시뮬레이션 GLB 1개당 base64 청크 1개 — GitHub
+REM                                100 MB 한도 회피용 분할)
 REM       inline_assets.js       (overview.html, Lesson*/lesson.json,
 REM                                examples/*.xml 인라인 + fetch() shim)
 REM       blockly_compressed.js, blocks_compressed.js,

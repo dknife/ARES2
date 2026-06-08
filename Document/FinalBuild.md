@@ -32,7 +32,8 @@ ARES_Project/
     │   ├── blockly_compressed.js
     │   ├── blocks_compressed.js
     │   ├── python_compressed.js
-    │   ├── inline_assets.js        ← fetch shim (overview/lesson/examples + 시뮬 GLB 7종 + 로버 부속 GLB 6종)
+    │   ├── bin_<name>.js           ← 시뮬 GLB 1개당 base64 청크 1개 (GitHub 100 MB 한도 회피 분할)
+    │   ├── inline_assets.js        ← 텍스트 자산(overview/lesson/examples) + fetch shim
     │   └── three-bundle.min.js     ← three.js (랜딩 로봇 + 시뮬레이션 렌더링)
     └── viewer/                     ← WebGL 3D 로봇 뷰어 (file:// 오프라인 동작, 선택)
         ├── index.html              ← `vendor/inline_assets.js` shim 주입 (AlbiStaticLow.glb fetch 가로채기)
@@ -42,10 +43,17 @@ ARES_Project/
 ```
 
 > 시뮬레이션 GLB(`AlbiStaticLow`, `LampBox`, `LampGeneral`, `LampHand1~3`, `LaunchStation`,
-> 그리고 로버 토픽용 `RoverParts/Rover{Gun,Head,LED,OLED,Radar,Wheel}.glb` 6종)는 모두
-> `vendor/inline_assets.js` 의 `BIN` 에 base64 로 임베드되어 있고, `window.fetch` shim 이
-> `Mesh/…` · `Mesh/RoverParts/…` 요청을 가로채 즉시 응답한다. 키는 파일명만 쓰므로 하위
-> 폴더 경로의 fetch 도 `endsWith` 매칭으로 잡힌다. 따라서 `Build/Mesh/` 폴더는 더 이상 존재하지 않는다.
+> 그리고 로버 토픽용 `RoverParts/Rover{Body,Gun,Head,LED,OLED,Radar,Wheel}.glb` 7종)는
+> **GLB 1개당 청크 1개**로 `vendor/bin_<stem>.js` 에 base64 분리되어 있고, 각 청크는
+> `window.__ARES_BIN__['Foo.glb'] = "<base64>"` 한 줄만 담는다. 모든 청크가 `defer` 순서로
+> 먼저 실행되어 BIN 글로벌을 채우고, 그 다음 `vendor/inline_assets.js` 가 텍스트 DATA 등록과
+> `window.fetch` shim 설치를 마친다. shim 은 키가 파일명이라 `Mesh/…` · `Mesh/RoverParts/…`
+> · `Resources/…` 어떤 경로로 와도 `endsWith` 매칭으로 잡는다. `Build/Mesh/` 폴더는 존재하지 않는다.
+>
+> **분할 이유.** 통합 `inline_assets.js` 가 GitHub 절대 한도(100 MB) 를 넘기는 위험을
+> 차단하기 위함이다. 청크 크기는 원본 GLB × 4/3(base64 팽창)이므로 가장 큰 GLB(~18 MB)
+> 도 단일 청크로 ~25 MB 수준 — 한도와 무관. 자산 추가/제거 시 diff 도 해당 청크 파일에만
+> 국한된다(전체가 함께 변경되지 않음).
 
 > **3D 로봇 오프라인 동작.** 랜딩 페이지(`index.html`)의 손 흔드는 로봇은 임베드 스크립트
 > (`ares_robot.embed.js`)의 base64 GLB를 `<script>` 태그로 정적 로드한 뒤
@@ -95,10 +103,11 @@ build.bat
        ├── 5) Web/index.html → Build/index.html (백링크 제거 + Mesh/ 경로 평탄화)
        ├── 6) Web/main.html → Build/main.html 두 곳 패치 + 검증
        │      (Blockly CDN → vendor/, ES module → inline_assets shim + bundle defer)
-       └── 7) Build/vendor/inline_assets.js 생성
-              (overview.html + 12 lesson.json + examples/*.xml + 시뮬 GLB 7종 base64
-               + RoverParts/*.glb 6종(로버 토픽) base64,
-               viewer/index.html 에도 shim <script> 주입)
+       ├── (5.5) GLB 소스 열거 → bin 청크 파일 이름 목록 사전 결정
+       └── 7) Build/vendor/bin_<stem>.js (GLB 1개당 청크 1개, base64)
+              + Build/vendor/inline_assets.js (overview.html + 12 lesson.json
+                + examples/*.xml + fetch shim — BIN 은 bin_*.js 가 채움)
+              + viewer/index.html 에 bin_*.js + inline_assets.js <script> 주입
 ```
 
 `build.ps1`의 마지막 단계는 패치 결과를 `Select-String`으로 다시 검증하여 `main.bundle.js`가 포함되고 `type="module"`이 사라졌는지 확인합니다. 한 줄이라도 빠지면 `throw`로 실패합니다.
