@@ -995,6 +995,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 
 /* 발사대 LED 버튼(LED0=도넛, LED1..LED5=세로 줄) — 활성 색은 LED 발광색(붉은색) */
 .sim-launch-led-buttons { display: flex; flex-direction: column; gap: 6px; }
+.sim-rover-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-launch-led-btn {
     font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
@@ -1031,8 +1032,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 }
 /* 캔버스를 창에 절대 배치로 꽉 채운다. (플렉스 높이 모호성으로 캔버스가 창을 넘어
    아래 버튼을 덮어 클릭이 막히던 문제 방지)
-   z-index:1 — 배경 로그(z:0) 위, 컨트롤 오버레이(z:4~5) 아래.
-   캔버스는 alpha:true(투명)라 빈 곳으로 배경 로그가 비친다. */
+   z-index:1 — 그라디언트 배경 위, 로그(z:3)·컨트롤 오버레이(z:4~5) 아래. */
 .sim-stage canvas {
     position: absolute; inset: 0; z-index: 1;
     display: block; width: 100% !important; height: 100% !important; cursor: grab;
@@ -1073,10 +1073,11 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
 #simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
-/* 통신 로그 — 렌더링 창 맨 뒤(z:0) 배경 레이어. 투명 캔버스 너머로 흐릿하게 비친다.
-   배경이므로 포인터 이벤트는 통과(로봇 드래그 방해 안 함). 최신 줄이 아래에 오도록 정렬. */
+/* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
+   명령 글자가 늘 바닥을 이기고 보이도록 캔버스 위 레이어로 올렸다(컨트롤 z:4~5 아래).
+   반투명(opacity)·포인터 이벤트 통과라 로봇 드래그/버튼 클릭은 방해하지 않는다. 최신 줄이 아래. */
 .sim-log {
-    position: absolute; inset: 0; z-index: 0;
+    position: absolute; inset: 0; z-index: 3;
     margin: 0; padding: 16px; overflow: hidden;
     background: transparent; border: none; border-radius: 0;
     font-family: 'D2Coding', Menlo, monospace; font-size: 11px; line-height: 1.5;

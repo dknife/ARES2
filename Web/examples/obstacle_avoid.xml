@@ -1,0 +1,62 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <!-- 장애물 회피 주행 예제.
+       1) 계속 전진한다.
+       2) 거리를 재서 앞 장애물이 20cm 이내면 멈추고,
+       3) 40cm 이상 열린 방향을 찾을 때까지 '좌회전 1초 → 다시 측정'을 반복한다.
+       4) 열린 방향을 찾으면 그쪽으로 다시 전진을 시작해 계속 달린다.
+       (바깥 반복은 시뮬레이터 안전장치로 최대 100회까지 도는 무한 반복이다.) -->
+  <variables>
+    <variable id="dist">거리값</variable>
+  </variables>
+  <block type="move_forward" x="40" y="40">
+    <next>
+      <block type="controls_whileUntil">
+        <field name="MODE">WHILE</field>
+        <value name="BOOL">
+          <block type="logic_boolean"><field name="BOOL">TRUE</field></block>
+        </value>
+        <statement name="DO">
+          <block type="check_distance">
+            <field name="VAR" id="dist">거리값</field>
+            <next>
+              <block type="controls_if">
+                <value name="IF0">
+                  <block type="logic_compare">
+                    <field name="OP">LT</field>
+                    <value name="A"><block type="variables_get"><field name="VAR" id="dist">거리값</field></block></value>
+                    <value name="B"><block type="math_number"><field name="NUM">20</field></block></value>
+                  </block>
+                </value>
+                <statement name="DO0">
+                  <block type="controls_whileUntil">
+                    <field name="MODE">UNTIL</field>
+                    <value name="BOOL">
+                      <block type="logic_compare">
+                        <field name="OP">GTE</field>
+                        <value name="A"><block type="variables_get"><field name="VAR" id="dist">거리값</field></block></value>
+                        <value name="B"><block type="math_number"><field name="NUM">40</field></block></value>
+                      </block>
+                    </value>
+                    <statement name="DO">
+                      <block type="timed_left">
+                        <value name="SECONDS"><block type="math_number"><field name="NUM">1</field></block></value>
+                        <next>
+                          <block type="check_distance">
+                            <field name="VAR" id="dist">거리값</field>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <next>
+                      <block type="move_forward"></block>
+                    </next>
+                  </block>
+                </statement>
+              </block>
+            </next>
+          </block>
+        </statement>
+      </block>
+    </next>
+  </block>
+</xml>
