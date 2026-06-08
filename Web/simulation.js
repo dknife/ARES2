@@ -220,6 +220,16 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   const CHEST  = cfg.chest  || null; // 가슴 LED 설정 (없으면 null)
   const LAUNCH = cfg.launch || null; // 발사대 LED 설정 (구체 5개 + 도넛 1개)
   const TRAFFIC = cfg.traffic || null; // 우주 신호등 설정 (LampBox 위 LampGeneral / LampHandN)
+  let planeGrids = null;               // 좌표 평면(XY/YZ/ZX) 0.1 그리드 그룹 — g 키 토글 (helpers 토픽만)
+  const roverLeds = [];                // 로버 LED0~LED5 투명 구 (점등 hook)
+  let magSensorBall = null;            // 로버 자기 센서 동작 표시 투명 구
+  const irSensorBalls = [];            // 로버 적외선 센서 동작 표시 투명 구 2개
+  let worldGroup = null;               // 로버를 제외한 바닥·그리드 묶음 — 로버 전·후진 시 반대 방향으로 이동
+  let wheelR = null, wheelL = null;    // 로버 좌·우 바퀴 (전·후진 시 회전)
+  const boxes = [];                    // 바닥 위 박스(장애물) — 로버와의 충돌 판정 대상
+  const BOX_SPAWN_RANGE = 50;          // 박스 랜덤 분포 범위(±) — 최초 배치·재배치 공용
+  const BOX_CLEAR_R = 5;               // 로버(원점) 주위 이 반경 안에는 박스를 두지 않는다
+  let obstaclesOn = true;              // 장애물(박스) 설치 여부 — 제거하면 충돌·거리감지에서도 빠진다
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -242,7 +252,13 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   scene.add(new THREE.HemisphereLight(0xdfeaff, 0x32402f, 0.55));
   const key = new THREE.DirectionalLight(0xfff4e6, 2.0);
   key.position.set(3, 6, 5); key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0003;
+  key.shadow.mapSize.set(4096, 4096); key.shadow.bias = -0.0003;
+  // 그림자 카메라(ortho) 기본 프러스텀(±5)은 너무 좁아 박스 그림자가 잘려 안 보인다.
+  // 박스 분포(±50) 전체를 덮도록 크게 넓혀, 멀리 흩어진 박스들의 그림자도 바닥에 그려지게 한다.
+  key.shadow.camera.left = -55; key.shadow.camera.right = 55;
+  key.shadow.camera.top = 55;   key.shadow.camera.bottom = -55;
+  key.shadow.camera.near = 0.5; key.shadow.camera.far = 140;
+  key.shadow.camera.updateProjectionMatrix();
   scene.add(key);
   const fill = new THREE.DirectionalLight(0x9fc0f0, 0.5);
   fill.position.set(-4, 2, 4); scene.add(fill);
@@ -250,18 +266,67 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 
   // 배치 보조용 헬퍼 — 로버처럼 부속을 좌표상에서 정렬해야 하는 토픽에서만 켠다.
-  //   - 세 좌표 평면(XZ 바닥 + XY 벽 + YZ 벽) 각각 0.1 간격 그리드 (size=2 / divisions=20)
+  //   - 그리드가 그려진 회색 바닥(XZ 평면) — 선은 1 간격 (size=10 / divisions=10)
   //   - AxesHelper(1): 원점에 X(빨강)/Y(초록)/Z(파랑) 각 길이 1
   if (cfg.helpers) {
-    const makeGrid = () => new THREE.GridHelper(2, 20, 0x666666, 0xbcbcbc);
-    // 기본 GridHelper 는 XZ 평면. 회전으로 다른 두 평면을 만든다.
-    const gridXZ = makeGrid();                                        // y=0 바닥
-    const gridXY = makeGrid(); gridXY.rotation.x = Math.PI / 2;        // z=0 벽 (X축 기준 90° 세움)
-    const gridYZ = makeGrid(); gridYZ.rotation.z = Math.PI / 2;        // x=0 벽 (Z축 기준 90° 세움)
-    scene.add(gridXZ, gridXY, gridYZ);
+    const FLOOR_SIZE = 100;                                           // 100×100 → 1 간격 격자
+    // 회색 바닥 — 그림자 전용 ground 바로 아래에 깔아 색이 비치도록.
+    // polygonOffset(+) 으로 깊이값을 뒤로 밀어 동일 평면의 다른 물체에 늘 가려지게(Z파이팅에서 지게) 한다.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE),
+      new THREE.MeshStandardMaterial({
+        color: 0x3a3a3a, roughness: 0.95, metalness: 0.0,
+        polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
+      }),
+    );
+    floor.rotation.x = -Math.PI / 2;                                  // y=0 바닥(XZ 평면)
+    floor.position.y = -0.001;                                        // 그림자 ground 와 z-fight 방지
+    floor.receiveShadow = true;
+    floor.renderOrder = -1;                                           // 가장 먼저 그려 다른 물체가 위에 보이도록
+    // 1 간격 그리드 선만 표시 (좌표 평면 벽 그리드는 제거).
+    const grid = new THREE.GridHelper(FLOOR_SIZE, FLOOR_SIZE, 0x444444, 0x666666);
+    grid.position.y = 0.002;                                          // 바닥 위로 살짝 띄워 z-fight 방지
+    // 바닥+그리드를 worldGroup 으로 묶는다 — 로버 전·후진은 이 그룹을 반대로 움직여 표현하고,
+    // 좌표축(axes)·평면 그리드는 로버와 함께 머물게 두어 좌표계가 늘 로버에 고정되게 한다.
+    worldGroup = new THREE.Group();
+    worldGroup.add(floor, grid);
+    // 바닥 위 장애물 — 폭 1 × 높이 2 박스를 랜덤 위치에 배치한다(바닥에 닿도록 중심 y=1).
+    //   worldGroup 에 넣어 로버 전·후진·회전 시 바닥과 함께 움직인다. 로버 근처(반경 2)는 피한다.
+    {
+      const BOX_COUNT = 150;
+      const boxGeom = new THREE.BoxGeometry(1, 2, 1);
+      for (let i = 0; i < BOX_COUNT; i++) {
+        let x = 0, z = 0;
+        do {
+          x = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
+          z = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
+        } while (Math.hypot(x, z) < BOX_CLEAR_R); // 로버 자리(원점 주위)는 비운다
+        const box = new THREE.Mesh(
+          boxGeom,
+          new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.55, 0.5), roughness: 0.8, metalness: 0.0 }),
+        );
+        box.position.set(x, 1, z);
+        box.castShadow = true;
+        box.receiveShadow = true;
+        worldGroup.add(box);
+        boxes.push(box);             // 충돌 판정용
+      }
+    }
+    scene.add(worldGroup);
     const axes = new THREE.AxesHelper(1);
-    axes.position.y = 0.001;                                          // ground 와 z-fight 방지
+    axes.position.y = 0.003;                                          // 바닥/그리드 와 z-fight 방지
     scene.add(axes);
+
+    // 좌표 평면 그리드(XY · YZ · ZX) — 0.1 간격 (size=2 / divisions=20).
+    // g 키 토글로만 보이며, 기본은 숨김.
+    const makePlaneGrid = () => new THREE.GridHelper(2, 20, 0x888888, 0x444466);
+    const gridXZ = makePlaneGrid();                                   // ZX 평면 (y=0 바닥, GridHelper 기본 방향)
+    const gridXY = makePlaneGrid(); gridXY.rotation.x = Math.PI / 2;  // XY 평면 (z=0, X축 기준 90° 세움)
+    const gridYZ = makePlaneGrid(); gridYZ.rotation.z = Math.PI / 2;  // YZ 평면 (x=0, Z축 기준 90° 세움)
+    planeGrids = new THREE.Group();
+    planeGrids.add(gridXZ, gridXY, gridYZ);
+    planeGrids.visible = false;
+    scene.add(planeGrids);
   }
 
   // LED(발광 구/도넛) — eyes/chest/launch 설정이 있을 때만 구성.
@@ -356,6 +421,24 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     // launchLeds 는 모델 로딩이 끝나야 채워진다. 그 전 호출은 무시.
     if (!LAUNCH || !launchLeds || !launchLeds[i]) return;
     applyLed(launchLeds[i], value);
+  }
+  // 로버 LED0~LED5 — 켜지면 해당 구가 초록색으로 빛난다(emissive 초록 + 불투명도↑). 0이면 투명 흰색 복귀.
+  function setRoverLed(num, value) {
+    const ball = roverLeds[num];
+    if (!ball) return;
+    const v = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : (value ? 1 : 0);
+    const m = ball.material;
+    if (v > 0) {
+      m.color.setHex(0x00ff66);
+      m.emissive.setHex(0x00ff66);
+      m.emissiveIntensity = 2.6 * v;
+      m.opacity = 0.35 + 0.6 * v;     // 켜질수록 또렷·불투명
+    } else {
+      m.color.setHex(0xffffff);
+      m.emissive.setHex(0x000000);
+      m.emissiveIntensity = 0;
+      m.opacity = 0.25;               // 점등 전 투명 흰색
+    }
   }
 
   const frame = (cy, dist) => {
@@ -461,6 +544,43 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     const roverGroup = new THREE.Group();
     roverGroup.position.y = 0.4;     // 전체 로버를 y +0.4 만큼 들어올림
     scene.add(roverGroup);
+
+    // LED0~LED5 자리 — 점등될 위치를 표시하는 투명한 공 6개.
+    //   중심: y=0.8, z=0.25 고정 / x 는 LED0(-0.4)~LED5(0.4) 등간격(step 0.16) / 반지름 0.05.
+    {
+      // roverGroup 이 y +0.4 들려 있으므로, 월드 y≈0.8 이 되도록 로컬 y 는 0.4 로 둔다.
+      const LED_COUNT = 6, LED_X0 = -0.4, LED_X1 = 0.4, LED_Y = 0.4, LED_Z = 0.25, LED_R = 0.05;
+      const step = (LED_X1 - LED_X0) / (LED_COUNT - 1);
+      const ledGeom = new THREE.SphereGeometry(LED_R, 16, 12);
+      for (let i = 0; i < LED_COUNT; i++) {
+        const ball = new THREE.Mesh(
+          ledGeom,
+          new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
+        );
+        ball.position.set(LED_X0 + step * i, LED_Y, LED_Z);
+        roverGroup.add(ball);
+        roverLeds.push(ball);   // 추후 점등 hook (LED0..LED5)
+      }
+      // 자기 센서 동작 표시 구 — LED 와 같은 크기(반지름 0.05).
+      //   월드 (0, 0.1, 0.9) 가 되도록 로컬 y 는 0.1 - 0.4 = -0.3.
+      magSensorBall = new THREE.Mesh(
+        ledGeom,
+        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
+      );
+      magSensorBall.position.set(0, -0.3, 0.9);
+      roverGroup.add(magSensorBall);
+      // 적외선 센서 동작 표시 구 2개 — LED 와 같은 크기(반지름 0.05).
+      //   월드 (±0.22, 0.98, 0.1) 가 되도록 로컬 y 는 0.98 - 0.4 = 0.58.
+      [-0.22, 0.22].forEach((x) => {
+        const ball = new THREE.Mesh(
+          ledGeom,
+          new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
+        );
+        ball.position.set(x, 0.58, 0.1);
+        roverGroup.add(ball);
+        irSensorBalls.push(ball);
+      });
+    }
     let remaining = cfg.parts.length;
     cfg.parts.forEach((url) => {
       loader.load(url, (gltf) => {
@@ -473,8 +593,8 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
           // y축 기준 90° 회전 → 휠 축이 x 방향을 향함. 그 뒤 x = ±0.7 로 평행 이동해 본체 양옆에 배치.
           // (clone 은 deep 이라 scale/머티리얼 공유)
           root.scale.multiplyScalar(0.8);
-          const wheelR = root;
-          const wheelL = root.clone();
+          wheelR = root;
+          wheelL = root.clone();
           wheelR.rotation.y = Math.PI / 2;
           wheelL.rotation.y = Math.PI / 2;
           wheelR.position.set( 0.7, 0, -0.3);
@@ -485,6 +605,8 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
           root.scale.multiplyScalar(0.5);
           root.scale.multiplyScalar(0.8);
           root.position.set(0, 0.5, -0.9);   // z = -0.7 - 0.2
+          // DC 모터 명령(DC_FORWARD/BACKWARD/tFORWARD/tBACKWARD)이 이 레이더를 로컬 y축으로 회전.
+          antennaPivot = root;
           roverGroup.add(root);
         } else if (/RoverLED\.glb$/.test(url)) {
           root.position.set(0, 0.35, 0.2);   // y = -0.15 + 0.5,  z = 0.1 + 0.1
@@ -580,6 +702,99 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     if (dir !== undefined && dir !== null) radarDir = dir < 0 ? -1 : 1;
   }
 
+  // 로버 전·후진 — 로버는 제자리에 두고 worldGroup(바닥+그리드)을 반대 방향으로 흘려보내
+  // 전진(+z)/후진(-z) 을 표현한다. 동시에 바퀴를 굴린다(월드 X축 회전).
+  //   servoDir: +1 = 전진, -1 = 후진.
+  const SERVO_WORLD_SPEED = 1.2;       // 바닥이 흐르는 속도 (단위/초) — 그리드 1칸 기준
+  const SERVO_WHEEL_SPIN  = 4.0;       // 바퀴 회전 각속도 (rad/초)
+  const SERVO_TURN_SPEED  = 0.9;       // 제자리 회전 각속도 (rad/초)
+  const SERVO_X_AXIS = new THREE.Vector3(1, 0, 0);
+  const SERVO_Y_AXIS = new THREE.Vector3(0, 1, 0);
+  const SERVO_TURN_PIVOT = new THREE.Vector3(0, 0, -0.3); // 회전축: 두 바퀴 x 중점(0)·바퀴 z(-0.3) 의 수직선
+  // 이동(전·후진)과 회전(좌·우)은 동시에 동작할 수 없다 — 하나를 켜면 다른 하나는 끈다.
+  let servoOn = false;
+  let servoDir = 1;
+  function setServoMove(on, dir) {
+    servoOn = !!on;
+    if (servoOn) servoTurnOn = false;          // 이동 시작 시 회전 정지(상호 배타)
+    if (dir !== undefined && dir !== null) servoDir = dir < 0 ? -1 : 1;
+  }
+  // 로버 제자리 회전(좌/우) — 로버는 고정, worldGroup 을 회전축 기준으로 반대로 돌려 표현한다.
+  //   turnDir: +1 = 왼쪽, -1 = 오른쪽 (로버가 왼쪽으로 돌면 worldGroup 은 +Y 로 회전).
+  let servoTurnOn = false;
+  let servoTurnDir = 1;
+  function setServoTurn(on, dir) {
+    servoTurnOn = !!on;
+    if (servoTurnOn) servoOn = false;          // 회전 시작 시 이동 정지(상호 배타)
+    if (dir !== undefined && dir !== null) servoTurnDir = dir < 0 ? -1 : 1;
+  }
+  function stopServo() { servoOn = false; servoTurnOn = false; }
+  // 충돌 판정 — 로버는 원점(0,0)에 고정. 박스(worldGroup 자식)의 월드 XZ 가 로버 반경 안으로
+  // 들어오면 충돌로 본다. 가장 가까운 박스까지의 XZ 거리를 돌려준다(박스 없으면 Infinity).
+  const BOX_COLLIDE_R = 1.5;           // 로버 중심 ~ 박스 중심 최소 허용 거리
+  const _boxTmp = new THREE.Vector3();
+  function nearestBoxDist() {
+    if (!obstaclesOn) return Infinity;   // 장애물 제거 상태면 충돌 없음
+    let m = Infinity;
+    for (let i = 0; i < boxes.length; i++) {
+      boxes[i].getWorldPosition(_boxTmp);
+      const d = Math.hypot(_boxTmp.x, _boxTmp.z);
+      if (d < m) m = d;
+    }
+    return m;
+  }
+  // 박스 재배치 — worldGroup 변환(누적 이동·회전)을 초기화해 로버를 출발 상태로 되돌린 뒤,
+  // 모든 박스를 새 랜덤 위치(로버 주위 BOX_CLEAR_R 는 비움)로 옮긴다. (r 키)
+  function respawnBoxes() {
+    if (!worldGroup) return;
+    worldGroup.position.set(0, 0, 0);
+    worldGroup.quaternion.identity();
+    for (let i = 0; i < boxes.length; i++) {
+      let x = 0, z = 0;
+      do {
+        x = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
+        z = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
+      } while (Math.hypot(x, z) < BOX_CLEAR_R);
+      boxes[i].position.set(x, 1, z);
+    }
+  }
+  // 장애물 설치/제거 — 박스를 보이거나 숨긴다(숨기면 충돌·거리감지에서도 제외).
+  function setObstacles(on) {
+    obstaclesOn = !!on;
+    for (let i = 0; i < boxes.length; i++) boxes[i].visible = obstaclesOn;
+  }
+
+  // 거리 센서(전방) — DISTANCE 명령 시 RoverHead 의 두 구(irSensorBalls)를 붉게 켜고,
+  // 전진(+z) 방향으로 ray 를 쏘아 박스까지의 거리를 잰다. 씬 1단위 = 10cm 이므로 ×10 하여 cm 로 반환.
+  const DIST_RAY = new THREE.Raycaster();
+  const DIST_DIR = new THREE.Vector3(0, 0, 1);   // 전진 방향(월드 +z)
+  const _distOrigin = new THREE.Vector3();
+  const DIST_NO_HIT = 999;                        // 박스가 없을 때 반환값(cm)
+  function setDistanceSensor(on) {
+    for (let i = 0; i < irSensorBalls.length; i++) {
+      const m = irSensorBalls[i].material;
+      if (on) { m.color.setHex(0xff2222); m.emissive.setHex(0xff2222); m.emissiveIntensity = 2.6; m.opacity = 0.9; }
+      else    { m.color.setHex(0xffffff); m.emissive.setHex(0x000000); m.emissiveIntensity = 0;   m.opacity = 0.25; }
+    }
+  }
+  const DIST_BOX_INFLATE = 1.5;        // 거리 검사 시 박스 폭(가로·세로)을 이 배율로 키워 검사 대상으로 삼는다
+  function measureDistance() {
+    if (irSensorBalls.length === 0 || !obstaclesOn) return DIST_NO_HIT;   // 장애물 없으면 감지 없음
+    // 검사용으로 박스 폭을 1.5배 키운다(높이는 유지). 측정 사이엔 렌더가 없어 화면엔 안 보인다.
+    for (let i = 0; i < boxes.length; i++) boxes[i].scale.set(DIST_BOX_INFLATE, 1, DIST_BOX_INFLATE);
+    if (worldGroup) worldGroup.updateMatrixWorld(true);   // 박스 월드 행렬 최신화(레이캐스트 정확도)
+    let minDist = Infinity;
+    for (let i = 0; i < irSensorBalls.length; i++) {
+      irSensorBalls[i].getWorldPosition(_distOrigin);
+      DIST_RAY.set(_distOrigin, DIST_DIR);
+      const hits = DIST_RAY.intersectObjects(boxes, false);
+      if (hits.length && hits[0].distance < minDist) minDist = hits[0].distance;
+    }
+    for (let i = 0; i < boxes.length; i++) boxes[i].scale.set(1, 1, 1);   // 원래 크기로 원복
+    if (!isFinite(minDist)) return DIST_NO_HIT;
+    return Math.round(minDist * 10);              // 1단위=10cm → ×10 (0.1단위 → 1cm)
+  }
+
   // 로켓 발사 — rocketGroup 을 위로 점진 상승, 카메라가 로켓을 따라가며 쳐다본다.
   let rocketGroup = null, rocketFlameSprite = null, rocketFlameLight = null;
   let rocketCentroidLocal = null, rocketMeshRef = null, rocketBottomLocal = null;
@@ -671,6 +886,60 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       }
       const scale = 1 + t * (WAVE_MAX_SCALE - 1);
       r.mesh.scale.setScalar(scale);      // 반구를 x·y·z 균등 확대 → 돔이 사방·상방으로 퍼짐
+      r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
+    }
+  }
+
+  // 로버 부저 웨이브 — BUZZER_ON 동안 두 스피커 위치에서 반구(돔) 음파가 퍼진다(발사대와 동일 컨셉).
+  //   스피커는 로버에 고정(월드 좌표). 로버는 제자리이므로 웨이브 메시는 scene 에 직접 둔다.
+  const ROVER_SPEAKERS = [
+    new THREE.Vector3(-0.5, 0.3, 0.6),
+    new THREE.Vector3( 0.5, 0.3, 0.6),
+  ];
+  const ROVER_WAVE_BASE_R    = 0.15;    // 스피커 반구 초기 반지름(로버 크기에 맞춰 작게)
+  const ROVER_WAVE_MAX_SCALE = 7;       // 최종 스케일
+  let roverWaveOn = false;
+  let roverWaveSpawnTimer = 0;
+  const roverWaveRings = [];
+  function setRoverWave(on) {
+    if (!worldGroup) return;            // 로버 주제에서만
+    roverWaveOn = !!on;
+    if (!roverWaveOn) roverWaveSpawnTimer = 0;
+  }
+  function spawnRoverWaves() {
+    for (let s = 0; s < ROVER_SPEAKERS.length; s++) {
+      const geom = new THREE.SphereGeometry(ROVER_WAVE_BASE_R, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+      const mat = new THREE.MeshBasicMaterial({
+        color: WAVE_COLOR, transparent: true, opacity: WAVE_OPACITY,
+        side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.copy(ROVER_SPEAKERS[s]);   // 스피커 위치(월드)에서 돔이 솟아오른다
+      scene.add(mesh);
+      roverWaveRings.push({ mesh, age: 0 });
+    }
+  }
+  function updateRoverWaves(dt) {
+    if (roverWaveOn) {
+      roverWaveSpawnTimer += dt;
+      while (roverWaveSpawnTimer >= WAVE_SPAWN_INTERVAL) {
+        roverWaveSpawnTimer -= WAVE_SPAWN_INTERVAL;
+        spawnRoverWaves();
+      }
+    }
+    for (let i = roverWaveRings.length - 1; i >= 0; i--) {
+      const r = roverWaveRings[i];
+      r.age += dt;
+      const t = r.age / WAVE_LIFETIME;
+      if (t >= 1) {
+        r.mesh.geometry.dispose();
+        r.mesh.material.dispose();
+        scene.remove(r.mesh);
+        roverWaveRings.splice(i, 1);
+        continue;
+      }
+      const scale = 1 + t * (ROVER_WAVE_MAX_SCALE - 1);
+      r.mesh.scale.setScalar(scale);
       r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
     }
   }
@@ -772,7 +1041,41 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     lastRenderTime = nowSec;
     controls.update();
     if (radarOn && antennaPivot) antennaPivot.rotation.y += 0.15 * radarDir; // 약 8.6°/프레임
+    // 로버 전·후진 — worldGroup(바닥+그리드)을 로버 진행 방향의 반대로 흘리고, 바퀴를 굴린다.
+    //   전진(servoDir +1, 로버 +z) → 바닥은 -z 로, 바퀴는 +X 축으로 회전.
+    if (servoOn && worldGroup) {
+      // 바퀴는 충돌 여부와 무관하게 항상 돈다(막히면 헛돎).
+      const dTheta = SERVO_WHEEL_SPIN * dt * servoDir;
+      if (wheelR) wheelR.rotateOnWorldAxis(SERVO_X_AXIS, dTheta);
+      if (wheelL) wheelL.rotateOnWorldAxis(SERVO_X_AXIS, dTheta);
+      // 이동 — 미리 적용해 보고, 가장 가까운 박스가 로버 반경 안으로 '더' 가까워지면 차단(되돌림).
+      const before = nearestBoxDist();
+      const savedZ = worldGroup.position.z;
+      worldGroup.position.z -= SERVO_WORLD_SPEED * dt * servoDir;
+      const after = nearestBoxDist();
+      if (after < BOX_COLLIDE_R && after < before) worldGroup.position.z = savedZ;   // 충돌: 이동 취소
+    }
+    // 제자리 회전 — worldGroup 을 회전축(SERVO_TURN_PIVOT) 둘레로 돌리고, 바퀴는 좌우 반대로 굴린다.
+    if (servoTurnOn && worldGroup) {
+      const dSpin = SERVO_WHEEL_SPIN * dt * servoTurnDir;
+      if (wheelR) wheelR.rotateOnWorldAxis(SERVO_X_AXIS, -dSpin);             // 왼쪽 회전 시 오른 바퀴 전진
+      if (wheelL) wheelL.rotateOnWorldAxis(SERVO_X_AXIS,  dSpin);             // 왼 바퀴 후진
+      // 회전 — 미리 적용해 보고, 박스가 로버 반경 안으로 더 가까워지면 차단(되돌림).
+      const before = nearestBoxDist();
+      const savedQ = worldGroup.quaternion.clone();
+      const savedX = worldGroup.position.x, savedZ = worldGroup.position.z;
+      // 좌(+1)/우(-1) 방향 — worldGroup 은 로버 회전의 반대로 돈다. (부호는 실제 보이는 방향에 맞춰 보정)
+      const dYaw = -SERVO_TURN_SPEED * dt * servoTurnDir;
+      worldGroup.rotateOnWorldAxis(SERVO_Y_AXIS, dYaw);                       // 방향(자세) 회전
+      worldGroup.position.sub(SERVO_TURN_PIVOT).applyAxisAngle(SERVO_Y_AXIS, dYaw).add(SERVO_TURN_PIVOT); // 축 둘레로 위치 공전
+      const after = nearestBoxDist();
+      if (after < BOX_COLLIDE_R && after < before) {                          // 충돌: 회전 취소
+        worldGroup.quaternion.copy(savedQ);
+        worldGroup.position.x = savedX; worldGroup.position.z = savedZ;
+      }
+    }
     if (LAUNCH) updateLaunchWaves(dt);
+    if (worldGroup) updateRoverWaves(dt);
 
     if (rocketGroup) {
       const targetT = rocketLaunchOn ? 1 : 0;
@@ -997,9 +1300,18 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     get hasLaunchLeds() { return !!LAUNCH && !!launchLeds; }, setLaunchLed,
     get launchLeds() { return launchLeds; },
     get hasLaunchWave() { return !!LAUNCH; }, setLaunchWave,
+    get hasRoverWave() { return !!worldGroup; }, setRoverWave,
     hasTraffic: !!TRAFFIC, placeLamps, placeHands, resetTraffic, toggleSlot, setSlot: setSlotOn,
+    get hasGrids() { return !!planeGrids; },
+    toggleGrids() { if (planeGrids) planeGrids.visible = !planeGrids.visible; return planeGrids ? planeGrids.visible : false; },
     get hasRadar() { return !!antennaPivot; }, setRadar,
     get radarOn() { return radarOn; },
+    get hasServo() { return !!worldGroup; }, setServoMove, setServoTurn, stopServo,
+    get servoActive() { return servoOn || servoTurnOn; },
+    get hasDistanceSensor() { return irSensorBalls.length > 0; }, setDistanceSensor, measureDistance,
+    get hasBoxes() { return boxes.length > 0; }, respawnBoxes,
+    get obstaclesOn() { return obstaclesOn; }, setObstacles,
+    get hasRoverLeds() { return roverLeds.length > 0; }, setRoverLed,
     get hasRocket() { return !!rocketGroup; }, setRocketLaunch,
     get rocketLaunchOn() { return rocketLaunchOn; },
     // 로켓이 완전히 원위치에 있는지(발사 중도 아니고 복귀 애니메이션도 끝남).
@@ -1018,13 +1330,17 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const trafficWrap = card ? card.querySelector('.sim-traffic-buttons') : null;
   const launchWrap = card ? card.querySelector('.sim-launch-buttons') : null;
   const launchLedWrap = card ? card.querySelector('.sim-launch-led-buttons') : null;
+  const roverWrap = card ? card.querySelector('.sim-rover-buttons') : null;
   const radarBtn  = document.getElementById('simRadar');
   const rocketBtn = document.getElementById('simRocket');
+  const obstacleBtn = document.getElementById('simObstacle');
+  const OBSTACLE_REMOVE  = '<span class="dot"></span>장애물 제거';   // 현재 설치됨 → 누르면 제거
+  const OBSTACLE_INSTALL = '<span class="dot"></span>장애물 설치';   // 현재 제거됨 → 누르면 설치
   const simHint = document.getElementById('simHint');
   const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기';
   const HINT_TRAFFIC = '1, 2, 3번 키를 눌러 램프를 켜고 끄기';
   const HINT_LAUNCH  = '레이더 가동 · 로켓 발사 버튼을 눌러 발사대를 작동시켜 보세요';
-  const HINT_ROVER   = '로버 부속 배치 보기 · 0.1 간격 그리드와 길이 1 축이 표시됩니다 (X 빨강 · Y 초록 · Z 파랑)';
+  const HINT_ROVER   = '로버 부속 배치 보기 · 1 간격 그리드 바닥 · g 키: 0.1 평면 그리드 토글 · r 키: 박스 다시 배치';
   // 발사대 버튼은 간단히 표시(레이더 / 로켓). 활성 여부는 .on 클래스(점 색)로만 구분.
   const RADAR_LABEL_ON   = '<span class="dot"></span>레이더';
   const RADAR_LABEL_OFF  = '<span class="dot"></span>레이더';
@@ -1076,6 +1392,9 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (trafficWrap) trafficWrap.style.display = cfg.traffic ? '' : 'none';
     if (launchWrap) launchWrap.style.display = cfg.radar ? '' : 'none';
     if (launchLedWrap) launchLedWrap.style.display = cfg.launch ? '' : 'none';
+    if (roverWrap) roverWrap.style.display = cfg.helpers ? '' : 'none';
+    // 로버: 처음엔 장애물 설치 상태 → 버튼은 '장애물 제거'
+    if (obstacleBtn) { obstacleBtn.classList.add('on'); obstacleBtn.innerHTML = OBSTACLE_REMOVE; }
     if (radarBtn)  { radarBtn.classList.remove('on');  radarBtn.innerHTML  = RADAR_LABEL_OFF;  radarBtn.setAttribute('aria-pressed', 'false'); }
     if (rocketBtn) { rocketBtn.classList.remove('on'); rocketBtn.innerHTML = ROCKET_LABEL_OFF; rocketBtn.setAttribute('aria-pressed', 'false'); }
     if (simHint) {
@@ -1208,6 +1527,17 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     });
   }
 
+  // 장애물 설치/제거 — 토글. 제거하면 박스가 모두 사라지고(충돌·거리감지도 제외), 설치하면 다시 나타난다.
+  if (obstacleBtn) {
+    obstacleBtn.addEventListener('click', () => {
+      if (!sim || !sim.hasBoxes) return;
+      const next = !sim.obstaclesOn;     // true=설치, false=제거
+      sim.setObstacles(next);
+      obstacleBtn.classList.toggle('on', next);
+      obstacleBtn.innerHTML = next ? OBSTACLE_REMOVE : OBSTACLE_INSTALL;
+    });
+  }
+
   // 로켓 발사/중지 — 토글. 다시 누르면 로켓이 점진적으로 원위치로 돌아오고 화염도 사라진다.
   if (rocketBtn) {
     rocketBtn.addEventListener('click', () => {
@@ -1329,6 +1659,8 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
       if (num >= 1 && num <= 3) sim.setSlot(num - 1, intensity);
     } else if (sim.hasLaunchLeds) {
       if (num >= 0 && num <= 5) sim.setLaunchLed(num, intensity);
+    } else if (sim.hasRoverLeds) {
+      if (num >= 0 && num <= 5) sim.setRoverLed(num, intensity);
     }
   };
   const setAllLedsOff = () => {
@@ -1336,10 +1668,17 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (sim.hasChest)      sim.setChest(0);
     if (sim.hasTraffic)    { sim.setSlot(0, 0); sim.setSlot(1, 0); sim.setSlot(2, 0); }
     if (sim.hasLaunchLeds) { for (let i = 0; i <= 5; i++) sim.setLaunchLed(i, 0); }
+    if (sim.hasRoverLeds)  { for (let i = 0; i <= 5; i++) sim.setRoverLed(i, 0); }
   };
   const applyTopicEffect = (cmd) => {
     if (!sim) return null;
     // BATCH 는 simSink 에서 서브명령 단위로 순차 처리하므로 여기로 도달하지 않는다.
+    // DISTANCE — 거리 센서 두 구를 붉게 켠다. 측정·반환 후(끄기) 처리는 simSink 가 cleanup 으로 수행.
+    if (cmd.startsWith('DISTANCE')) {
+      if (!sim.hasDistanceSensor) return null;
+      sim.setDistanceSensor(true);
+      return () => { if (sim) sim.setDistanceSensor(false); };
+    }
     if (cmd.startsWith('LED_ON,')) {
       const parts = cmd.split(',');
       const num = parseInt(parts[1], 10);
@@ -1365,11 +1704,13 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (cmd.startsWith('BUZZER_ON,')) {
       // 주제별 시각 효과:
       //   - 알비:        가슴 LED 점등
-      //   - 발사대:      지면에서 동심원 웨이브가 퍼져 나감
+      //   - 발사대:      지면에서 반구 음파 웨이브가 퍼져 나감
+      //   - 로버:        두 스피커 위치에서 반구 음파 웨이브가 퍼져 나감
       //   - 신호등 등:   해당 사항 없음 → 부저 전체를 미처리
       const cleanups = [];
       if (sim.hasChest)      { sim.setChest(1);          cleanups.push(() => { if (sim?.hasChest)      sim.setChest(0); }); }
       if (sim.hasLaunchWave) { sim.setLaunchWave(true);  cleanups.push(() => { if (sim?.hasLaunchWave) sim.setLaunchWave(false); }); }
+      if (sim.hasRoverWave)  { sim.setRoverWave(true);   cleanups.push(() => { if (sim?.hasRoverWave)  sim.setRoverWave(false); }); }
       if (cleanups.length === 0) return null;
       const parts = cmd.split(',');
       const hz  = parseFloat(parts[1]) || 0;
@@ -1377,6 +1718,27 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
       playBeep(hz, sec);
       return () => cleanups.forEach((fn) => fn());
     }
+    // 서보(로버 바퀴) — t초 동안 전진/후진. 로버는 제자리, 바닥(worldGroup)이 반대로 흐른다.
+    //   SERVO_tFORWARD,t : 바퀴 앞으로 굴러 전진(+z) / SERVO_tBACKWARD,t : 뒤로(-z).
+    if (cmd.startsWith('SERVO_tFORWARD,') || cmd.startsWith('SERVO_tBACKWARD,')) {
+      if (!sim.hasServo) return null;
+      const dir = cmd.startsWith('SERVO_tFORWARD,') ? 1 : -1;
+      sim.setServoMove(true, dir);
+      return () => { if (sim) sim.setServoMove(false); };
+    }
+    // 서보(로버 바퀴) 제자리 회전 — t초 동안 왼쪽/오른쪽으로 회전.
+    if (cmd.startsWith('SERVO_tLEFT,') || cmd.startsWith('SERVO_tRIGHT,')) {
+      if (!sim.hasServo) return null;
+      const dir = cmd.startsWith('SERVO_tLEFT,') ? 1 : -1;
+      sim.setServoTurn(true, dir);
+      return () => { if (sim) sim.setServoTurn(false); };
+    }
+    // 서보 연속 동작(시간 제약 없음) — SERVO_STOP 전까지 계속. 이동·회전은 상호 배타.
+    if (cmd === 'SERVO_FORWARD'  || cmd.startsWith('SERVO_FORWARD,'))  { if (sim.hasServo) sim.setServoMove(true,  1); return null; }
+    if (cmd === 'SERVO_BACKWARD' || cmd.startsWith('SERVO_BACKWARD,')) { if (sim.hasServo) sim.setServoMove(true, -1); return null; }
+    if (cmd === 'SERVO_LEFT'     || cmd.startsWith('SERVO_LEFT,'))     { if (sim.hasServo) sim.setServoTurn(true,  1); return null; }
+    if (cmd === 'SERVO_RIGHT'    || cmd.startsWith('SERVO_RIGHT,'))    { if (sim.hasServo) sim.setServoTurn(true, -1); return null; }
+    if (cmd === 'SERVO_STOP'     || cmd.startsWith('SERVO_STOP,'))     { if (sim.hasServo) sim.stopServo();           return null; }
     // DC 모터 — 발사대에서는 레이더 안테나 회전을 제어한다. 시계방향(+) / 반시계(−).
     //   DC_tFORWARD,t / DC_tBACKWARD,t : t초 회전 후 정지(블로킹, hold 시간 후 cleanup).
     //   DC_FORWARD / DC_BACKWARD        : 회전을 켜고 즉시 다음 명령으로 (non-blocking).
@@ -1416,6 +1778,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     const ackMs = waitForResponse ? 100 : 20;             // Ack 100ms / 비Ack 20ms (BATCH는 1회만)
     logLine(`→ ${command}`, waitForResponse ? 'tx-ack' : 'tx');
     let holdMs = 0;
+    let distMeasured = null;                              // DISTANCE 측정값(cm) — 측정 시 채워짐
     if (command.startsWith('BATCH;')) {
       // BATCH;A|B|C — 서브명령을 순차로 처리. 명령 사이 추가 대기 없음.
       // 각 서브명령의 hold 시간(SLEEP, BUZZER, 시간형 모션)만큼만 기다린 뒤 다음으로 넘어간다.
@@ -1431,13 +1794,15 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
       }
     } else {
       holdMs = Math.round(commandHoldSeconds(command) * 1000);
-      const cleanup = applyTopicEffect(command);            // 시작 효과 적용 (LED/부저)
+      const cleanup = applyTopicEffect(command);            // 시작 효과 적용 (LED/부저/거리센서 점등)
       await wait(ackMs + holdMs);
-      cleanup?.();                                          // 동작 시간 종료 처리 (예: 가슴 LED 끔)
+      // 거리 측정은 붉은 빛이 켜져 있는 동안(끄기 직전) 수행한다.
+      if (command.startsWith('DISTANCE') && sim && sim.hasDistanceSensor) distMeasured = sim.measureDistance();
+      cleanup?.();                                          // 동작 시간 종료 처리 (예: 가슴 LED·거리센서 끔)
     }
     const total = ackMs + holdMs;
     let reply = '1';
-    if (command.startsWith('DISTANCE')) reply = 'DIST:30';
+    if (command.startsWith('DISTANCE')) reply = `DIST:${distMeasured != null ? distMeasured : 30}`;
     else if (command.startsWith('MAGNET')) reply = 'MAG:0';
     const holdNote = holdMs > 0 ? ` + 대기 ${holdMs}ms` : '';
     logLine(`     ↩ ${reply}  (+${total}ms, ${waitForResponse ? 'Ack' : '비Ack'}${holdNote})`, 'rx');
@@ -1447,12 +1812,13 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const SIM_STOP_LABEL = '⏹ 시뮬레이션 중지';
   let simRunning = false;
   let simAborted = false;
+  const SERVO_LINGER_MS = 10000;       // 연속 SERVO 가 켜진 채 끝나면 이만큼 더 유지 후 종료
   if (simRunBtn) simRunBtn.addEventListener('click', async () => {
     // 실행 중 다시 누르면 '비상 정지' — 진행 중인 명령 처리를 즉시 중단한다.
     if (simRunning) {
       simAborted = true;
       state.isExecuting = false;       // 모든 블록 루프(반복/while/순차)가 이 플래그를 검사해 멈춘다
-      if (activeWaitCancel) activeWaitCancel();   // 진행 중인 대기를 즉시 종료
+      if (activeWaitCancel) activeWaitCancel();   // 진행 중인 대기(연속 SERVO 유지 포함)를 즉시 종료
       return;
     }
     if (!workspace) { logLine('워크스페이스가 준비되지 않았습니다', 'err'); return; }
@@ -1462,6 +1828,13 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     logLine('──── 시뮬레이션 시작 ────', 'sys');
     try {
       await CommandExecutor.simulateWorkspace(workspace, simSink);
+      // 블록 실행이 끝나도 연속 SERVO(전·후진/좌·우회전)가 켜져 있으면 바로 종료하지 않고,
+      // 정지 타이머(10초)가 끝날 때까지 '실행 중' 상태를 유지한다(그동안 중지 버튼으로 즉시 종료 가능).
+      if (!simAborted && sim && sim.hasServo && sim.servoActive) {
+        logLine(`연속 SERVO 동작 유지 중 — ${SERVO_LINGER_MS / 1000}초 후 종료`, 'sys');
+        await wait(SERVO_LINGER_MS);          // 중지 버튼이 activeWaitCancel 로 즉시 깨운다
+        if (sim && sim.hasServo) sim.stopServo();
+      }
       logLine(simAborted ? '──── 비상 정지 ────' : '──── 시뮬레이션 종료 ────', 'sys');
     } catch (e) {
       logLine('오류: ' + (e && e.message ? e.message : e), 'err');
@@ -1469,8 +1842,10 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
       simRunning = false;
       simRunBtn.textContent = SIM_RUN_LABEL;
       simRunBtn.classList.remove('running');
-      // 비상 정지 시 진행 중이던 효과(LED·레이더)를 즉시 정리한다.
+      // 정상 종료 시의 연속 SERVO 유지는 위 try 블록에서 처리(타이머만큼 기다린 뒤 정지)한다.
+      // 여기서는 비상 정지 시 진행 중이던 효과(서보·LED·레이더)를 즉시 정리한다.
       if (simAborted) {
+        if (sim && sim.hasServo) sim.stopServo();
         setAllLedsOff();
         if (sim && sim.hasRadar) sim.setRadar(false);
       }
@@ -1497,13 +1872,26 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     ro.observe(stage);
   }
 
-  // 우주 신호등: 1/2/3 키로 슬롯 토글 (시뮬레이션이 열려 있고, 입력 필드에 포커스가 없을 때)
+  // 키보드 단축키 (시뮬레이션이 열려 있고, 입력 필드에 포커스가 없을 때)
+  //   - 1/2/3 : 우주 신호등 슬롯 토글
+  //   - g     : 좌표 평면(XY/YZ/ZX) 0.1 그리드 표시/숨김 토글 (로버 등 helpers 토픽)
   addEventListener('keydown', (e) => {
-    if (card.hidden || !sim || !sim.hasTraffic) return;
+    if (card.hidden || !sim) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const t = e.target;
     const tag = (t && t.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+    if ((e.key === 'g' || e.key === 'G') && sim.hasGrids) {
+      sim.toggleGrids();
+      e.preventDefault();
+      return;
+    }
+    if ((e.key === 'r' || e.key === 'R') && sim.hasBoxes) {
+      sim.respawnBoxes();
+      e.preventDefault();
+      return;
+    }
+    if (!sim.hasTraffic) return;
     let idx = -1;
     if (e.key === '1') idx = 0;
     else if (e.key === '2') idx = 1;
@@ -1512,6 +1900,16 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     sim.toggleSlot(idx);
     e.preventDefault();
   });
+
+  // 모바일: 시뮬레이션 창 더블클릭(더블탭)으로 박스 재배치 — 키보드가 없으므로 r 키 대체.
+  const isMobileLike = new URLSearchParams(location.search).get('mobile') === 'true'
+    || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (isMobileLike && stage) {
+    stage.addEventListener('dblclick', () => {
+      if (card.hidden || !sim || !sim.hasBoxes) return;
+      sim.respawnBoxes();
+    });
+  }
 
   return { open, close };
 }

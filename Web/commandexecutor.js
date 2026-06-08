@@ -30,11 +30,25 @@ export const CommandExecutor = {
   // 전송 경로 추상화: 시뮬레이션 중(simSink 설정)에는 실제 BLE 대신
   // sink 로 명령을 흘려보낸다. sink(command, waitForResponse) 는 회신을
   // 흉내내고 가짜 응답을 반환한다. 평소(simSink=null)에는 실제 BLE 송신.
+  // 실제 BLE 는 수신 알림에서 _updateBlocklyVariable 가 DIST/MAG 를 변수에 반영하지만,
+  // 시뮬레이션은 그 경로가 없으므로 sink 응답을 여기서 직접 파싱해 동일하게 반영한다.
   simSink: null,
-  _dispatch(command, waitForResponse) {
-    return this.simSink
-      ? this.simSink(command, waitForResponse)
-      : BluetoothManager.sendData(command, waitForResponse);
+  async _dispatch(command, waitForResponse) {
+    if (this.simSink) {
+      const reply = await this.simSink(command, waitForResponse);
+      this._parseSensorReply(reply);
+      return reply;
+    }
+    return BluetoothManager.sendData(command, waitForResponse);
+  },
+  // sink/BLE 응답 문자열에서 거리(DIST)·자기(MAG) 값을 추출해 Blockly 변수에 저장.
+  // (bluetooth.js 의 _updateBlocklyVariable 와 동일 규칙 — 시뮬레이션용)
+  _parseSensorReply(data) {
+    if (typeof data !== 'string') return;
+    const distMatch = data.match(/DIST[:\s]*([\d.]+)/i);
+    if (distMatch) state.variables['_last_distance'] = distMatch[1];
+    const magMatch = data.match(/MAG[:\s]*([\d]+)/i);
+    if (magMatch) state.variables['_last_magnetic'] = magMatch[1];
   },
 
   evaluateValueBlock(block) {
