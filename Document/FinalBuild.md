@@ -23,32 +23,38 @@ ARES_Project/
     ├── index.html                  ← 랜딩 페이지(3D 로봇 손흔들기) — Web/index.html 기반
     ├── index.css
     ├── main.html                   ← 블록 에디터 — Web/main.html 패치본
-    ├── main.bundle.js              ← esbuild로 묶은 단일 JS (8개 모듈 통합)
+    ├── main.bundle.js              ← esbuild로 묶은 단일 JS (main.js 진입점, 7개 import 모듈 통합)
     ├── styles.css                  ← main.html이 참조하는 스타일시트
+    ├── mobile-preview.js           ← ?mobile=true 휴대폰 프레임 미리보기 (index/main.html이 클래식 스크립트로 로드)
     ├── dashboard.html              ← 대시보드 (iframe 자식, ES module 사용 안 함)
     ├── ares_robot.embed.js         ← 랜딩 로봇 GLB(base64) — file:// 오프라인 렌더용
     ├── vendor/
     │   ├── blockly_compressed.js
     │   ├── blocks_compressed.js
     │   ├── python_compressed.js
-    │   ├── inline_assets.js        ← fetch shim (overview/lesson/examples + 시뮬 GLB 7종)
+    │   ├── inline_assets.js        ← fetch shim (overview/lesson/examples + 시뮬 GLB 7종 + 로버 부속 GLB 6종)
     │   └── three-bundle.min.js     ← three.js (랜딩 로봇 + 시뮬레이션 렌더링)
-    └── viewer/                     ← WebGL 3D 로봇 뷰어 (file:// 오프라인 동작)
-        ├── index.html
-        ├── models-embedded.js      ← Idle 모델 GLB(base64)
+    └── viewer/                     ← WebGL 3D 로봇 뷰어 (file:// 오프라인 동작, 선택)
+        ├── index.html              ← `vendor/inline_assets.js` shim 주입 (AlbiStaticLow.glb fetch 가로채기)
         └── vendor/three-bundle.min.js
+
+> `viewer/`는 `WebGL/`(개인 개발 폴더)이 저장소에 포함되어 있을 때만 생성된다. CI나 외부 클론에서는 비어 있어도 정상이며, `Build/main.html` 본 기능은 영향받지 않는다.
 ```
 
-> 시뮬레이션 GLB(`AlbiStaticLow`, `LampBox`, `LampGeneral`, `LampHand1~3`, `LaunchStation`)는 모두
+> 시뮬레이션 GLB(`AlbiStaticLow`, `LampBox`, `LampGeneral`, `LampHand1~3`, `LaunchStation`,
+> 그리고 로버 토픽용 `RoverParts/Rover{Gun,Head,LED,OLED,Radar,Wheel}.glb` 6종)는 모두
 > `vendor/inline_assets.js` 의 `BIN` 에 base64 로 임베드되어 있고, `window.fetch` shim 이
-> `Mesh/…` 요청을 가로채 즉시 응답한다. 따라서 `Build/Mesh/` 폴더는 더 이상 존재하지 않는다.
+> `Mesh/…` · `Mesh/RoverParts/…` 요청을 가로채 즉시 응답한다. 키는 파일명만 쓰므로 하위
+> 폴더 경로의 fetch 도 `endsWith` 매칭으로 잡힌다. 따라서 `Build/Mesh/` 폴더는 더 이상 존재하지 않는다.
 
-> **3D 로봇 오프라인 동작.** 랜딩 페이지(`index.html`)의 손 흔드는 로봇과 `viewer/`의
-> 3D 뷰어는 모두 three.js 로컬 번들 + GLB base64 임베드로 구성되어, **인터넷 없이
-> `file://`로도** 렌더링됩니다. `file://`에서는 브라우저가 로컬 GLB를 `fetch`할 수
-> 없으므로(CORS, `origin: null`), `<script>`로 임베드한 base64를 `GLTFLoader.parse()`로
-> 직접 파싱합니다. (단, `index.html`의 Google Fonts 링크만 오프라인에서 시스템 폰트로
-> 대체될 뿐 기능에는 영향이 없습니다.)
+> **3D 로봇 오프라인 동작.** 랜딩 페이지(`index.html`)의 손 흔드는 로봇은 임베드 스크립트
+> (`ares_robot.embed.js`)의 base64 GLB를 `<script>` 태그로 정적 로드한 뒤
+> `GLTFLoader.parse()`로 직접 파싱합니다. `viewer/`의 3D 뷰어는 일반 `fetch('Resources/AlbiStaticLow.glb')`
+> 를 호출하지만, `vendor/inline_assets.js` 의 fetch shim 이 `BIN` 사전에 base64 로 임베드된
+> GLB 를 바이너리 `Response` 로 즉시 반환합니다. 두 경로 모두 **인터넷 없이 `file://`로도**
+> 렌더링됩니다(`file://`은 브라우저 CORS·`origin: null` 정책으로 로컬 GLB fetch가 막힘).
+> (단, `index.html`의 Google Fonts 링크만 오프라인에서 시스템 폰트로 대체될 뿐
+> 기능에는 영향이 없습니다.)
 
 배포 시 그대로 폴더째 복사하고, 학생 PC에서 `Build/index.html`을 더블클릭하면 끝납니다.
 
@@ -81,10 +87,18 @@ npx esbuild --version
 build.bat
  └── build.ps1   (PowerShell, 모든 빌드 로직)
        ├── 1) Build\ 폴더 초기화 + Build\vendor 생성
-       ├── 2) npx esbuild로 main.bundle.js 번들
+       ├── 2) npx esbuild로 main.bundle.js 번들 (main.js 진입, 7개 import 통합)
        ├── 3) Invoke-WebRequest로 Blockly 3개 다운로드
-       ├── 4) dashboard.html, styles.css 복사
-       └── 5) main.html을 index.html로 복사 후 두 곳 패치 + 검증
+       ├── 4) 정적 자산 복사 — dashboard.html, styles.css, index.css,
+       │      mobile-preview.js, vendor/three-bundle.min.js,
+       │      ares_robot.embed.js(랜딩 GLB), WebGL/ 있으면 viewer/도 복사
+       ├── 5) Web/index.html → Build/index.html (백링크 제거 + Mesh/ 경로 평탄화)
+       ├── 6) Web/main.html → Build/main.html 두 곳 패치 + 검증
+       │      (Blockly CDN → vendor/, ES module → inline_assets shim + bundle defer)
+       └── 7) Build/vendor/inline_assets.js 생성
+              (overview.html + 12 lesson.json + examples/*.xml + 시뮬 GLB 7종 base64
+               + RoverParts/*.glb 6종(로버 토픽) base64,
+               viewer/index.html 에도 shim <script> 주입)
 ```
 
 `build.ps1`의 마지막 단계는 패치 결과를 `Select-String`으로 다시 검증하여 `main.bundle.js`가 포함되고 `type="module"`이 사라졌는지 확인합니다. 한 줄이라도 빠지면 `throw`로 실패합니다.
@@ -170,13 +184,15 @@ curl -L -o python_compressed.js   https://unpkg.com/blockly@11/python_compressed
 
 `type="module"` 속성을 **반드시 제거**해야 합니다. 이게 `file://` 차단의 직접 원인입니다. 단 `type="module"`은 자동으로 deferred 실행이지만 일반 `<script>`는 그렇지 않으므로 **반드시 `defer` 속성을 추가**해야 합니다. 그렇지 않으면 `Web/elements.js`의 모듈 로드 시점 `document.getElementById(...)` 호출이 DOM 준비 전에 실행되어 모든 element 참조가 `null`이 되고, "아레스 탐사선 찾기" 같은 버튼 클릭 핸들러가 부착되지 못합니다.
 
-### 4.4 `dashboard.html`과 `styles.css` 복사
+### 4.4 정적 자산 복사 (dashboard.html · styles.css · index.css · mobile-preview.js)
 
-`Web/dashboard.html`은 ES module을 사용하지 않으므로 별다른 수정 없이 그대로 `Build/`로 복사합니다. `index.html` 안에서 iframe으로 임베드되어 동작합니다. `Web/styles.css`는 `main.html`이 직접 참조하는 스타일시트라 함께 복사해야 합니다.
+`Web/dashboard.html`은 ES module을 사용하지 않으므로 별다른 수정 없이 그대로 `Build/`로 복사합니다. `index.html` 안에서 iframe으로 임베드되어 동작합니다. `Web/styles.css`는 `main.html`이, `Web/index.css`는 랜딩 페이지(`index.html`)가 직접 참조합니다. `Web/mobile-preview.js`는 `index.html`·`main.html` 양쪽이 `<head>` 최상단에서 **클래식 스크립트**로 로드(`?mobile=true` 휴대폰 프레임 미리보기)하기 때문에 ES module 번들에 포함되지 않으며, 반드시 `Build/` 루트에 별도 복사해야 합니다(없으면 콘솔에 404가 뜨고 모바일 미리보기가 동작하지 않습니다).
 
 ```bash
-cp Web/dashboard.html Build/dashboard.html
-cp Web/styles.css     Build/styles.css
+cp Web/dashboard.html     Build/dashboard.html
+cp Web/styles.css         Build/styles.css
+cp Web/index.css          Build/index.css
+cp Web/mobile-preview.js  Build/mobile-preview.js
 ```
 
 ## 5. 검증
@@ -244,9 +260,11 @@ cd ../..
 cp Web/main.html Build/index.html
 # (에디터로 type="module" 제거 + Blockly src를 vendor/ 로 변경. 자동화하려면 sed 활용)
 
-# 4. dashboard.html과 styles.css는 그대로 복사
-cp Web/dashboard.html Build/dashboard.html
-cp Web/styles.css     Build/styles.css
+# 4. 정적 자산 복사 (mobile-preview.js 는 클래식 스크립트라 번들에 안 포함됨 → 반드시 별도 복사)
+cp Web/dashboard.html     Build/dashboard.html
+cp Web/styles.css         Build/styles.css
+cp Web/index.css          Build/index.css
+cp Web/mobile-preview.js  Build/mobile-preview.js
 
 # 5. 검증: Build/index.html 더블클릭
 

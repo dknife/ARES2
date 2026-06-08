@@ -10,6 +10,7 @@ REM   - Build\index.html         (랜딩: "탐사선 연결" 버튼 -> main.html
 REM   - Build\main.html          (관제실/블록 코딩 + dashboard iframe)
 REM   - Build\dashboard.html
 REM   - Build\styles.css, Build\index.css
+REM   - Build\mobile-preview.js  (?mobile=true 휴대폰 프레임 미리보기, 클래식 스크립트)
 REM   - Build\main.bundle.js     (8개 ES 모듈 IIFE 번들)
 REM   - Build\vendor\
 REM       inline_assets.js       (overview.html, Lesson*/lesson.json,

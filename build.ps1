@@ -67,10 +67,13 @@ foreach ($f in $blockly) {
 Write-Host ''
 
 # ---------- 4) Static assets ----------
-Write-Host '[4/7] copying dashboard.html, styles.css, index.css'
-Copy-Item 'Web\dashboard.html' 'Build\dashboard.html' -Force
-Copy-Item 'Web\styles.css'     'Build\styles.css'     -Force
-Copy-Item 'Web\index.css'      'Build\index.css'      -Force
+Write-Host '[4/7] copying dashboard.html, styles.css, index.css, mobile-preview.js'
+Copy-Item 'Web\dashboard.html'     'Build\dashboard.html'     -Force
+Copy-Item 'Web\styles.css'         'Build\styles.css'         -Force
+Copy-Item 'Web\index.css'          'Build\index.css'          -Force
+# index.html / main.html 의 <head> 최상단에서 클래식 스크립트로 로드되므로
+# Build\ 루트에도 그대로 복사해야 ?mobile=true 미리보기가 동작한다.
+Copy-Item 'Web\mobile-preview.js'  'Build\mobile-preview.js'  -Force
 
 # 랜딩 페이지의 3D 로봇 히어로 에셋.
 # three.js 로컬 번들 + 로봇 GLB를 base64 로 임베드한 클래식 스크립트.
@@ -202,6 +205,18 @@ foreach ($name in $simGlbs) {
     } else {
         Write-Warning "Web\Mesh\$name 없음 -- 시뮬레이션 GLB 미인라인"
     }
+}
+
+# 로버 부속(주제 '로버'): Web\Mesh\RoverParts\*.glb 전체를 인라인.
+# 파일명 키만 사용하므로 fetch 가 'Mesh/RoverParts/RoverHead.glb' 로 와도 endsWith 매칭으로 잡힌다.
+if (Test-Path 'Web\Mesh\RoverParts') {
+    foreach ($f in (Get-ChildItem 'Web\Mesh\RoverParts' -Filter '*.glb')) {
+        $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($f.FullName))
+        [void]$sb.AppendLine("  BIN['$($f.Name)'] = `"$b64`";")
+        Write-Host ("        inlined GLB: RoverParts/$($f.Name) ({0:N2} MB base64)" -f ($b64.Length / 1MB))
+    }
+} else {
+    Write-Warning 'Web\Mesh\RoverParts 폴더 없음 -- 로버 토픽 GLB 미인라인'
 }
 
 [void]$sb.AppendLine(@'

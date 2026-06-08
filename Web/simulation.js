@@ -189,8 +189,20 @@ const TOPICS = {
       torusYOffset: -0.08,          // 로켓 바닥에서 내려 발사대 상단에 살짝 닿도록
     },
   },
+  // 로버 — RoverParts/ 안의 부속 GLB 6종을 그대로 원점에 올려 배치 작업에 쓰는 토픽.
+  // 단일 model 이 아니라 parts 배열로 로드한다. 각 GLB 의 원점/스케일을 보정 없이 유지하므로
+  // 부속의 상대 위치를 그대로 확인할 수 있다. helpers: true 면 0.1 간격 그리드 + 길이 1 축을 추가.
+  rover: { label: '로버', eyes: null, helpers: true, parts: [
+    'Mesh/RoverParts/RoverBody.glb',   // 본체 — 1배 스케일 유지
+    'Mesh/RoverParts/RoverGun.glb',
+    'Mesh/RoverParts/RoverHead.glb',
+    'Mesh/RoverParts/RoverLED.glb',
+    'Mesh/RoverParts/RoverOLED.glb',
+    'Mesh/RoverParts/RoverRadar.glb',
+    'Mesh/RoverParts/RoverWheel.glb',
+  ] },
 };
-const TOPIC_ORDER = ['albi', 'traffic', 'launchpad'];
+const TOPIC_ORDER = ['albi', 'traffic', 'launchpad', 'rover'];
 const DEFAULT_TOPIC = 'albi';
 // 미션별 기본 주제(현재는 모두 기본값 사용). 'L{차시}M{미션}' → topic key
 const MISSION_TOPIC = {};
@@ -236,6 +248,21 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   fill.position.set(-4, 2, 4); scene.add(fill);
   const ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+  // 배치 보조용 헬퍼 — 로버처럼 부속을 좌표상에서 정렬해야 하는 토픽에서만 켠다.
+  //   - 세 좌표 평면(XZ 바닥 + XY 벽 + YZ 벽) 각각 0.1 간격 그리드 (size=2 / divisions=20)
+  //   - AxesHelper(1): 원점에 X(빨강)/Y(초록)/Z(파랑) 각 길이 1
+  if (cfg.helpers) {
+    const makeGrid = () => new THREE.GridHelper(2, 20, 0x666666, 0xbcbcbc);
+    // 기본 GridHelper 는 XZ 평면. 회전으로 다른 두 평면을 만든다.
+    const gridXZ = makeGrid();                                        // y=0 바닥
+    const gridXY = makeGrid(); gridXY.rotation.x = Math.PI / 2;        // z=0 벽 (X축 기준 90° 세움)
+    const gridYZ = makeGrid(); gridYZ.rotation.z = Math.PI / 2;        // x=0 벽 (Z축 기준 90° 세움)
+    scene.add(gridXZ, gridXY, gridYZ);
+    const axes = new THREE.AxesHelper(1);
+    axes.position.y = 0.001;                                          // ground 와 z-fight 방지
+    scene.add(axes);
+  }
 
   // LED(발광 구/도넛) — eyes/chest/launch 설정이 있을 때만 구성.
   // 눈은 초록 좌우 한 쌍(L/R), 가슴은 붉은 중앙 단일 LED.
@@ -426,6 +453,103 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       console.error('시뮬레이션 모델 로드 실패:', err);
       if (loadingEl) loadingEl.textContent = '모델을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
     });
+  } else if (cfg.parts && cfg.parts.length) {
+    // 부속 GLB 다중 로드 — 각 파일의 원점/스케일을 그대로 유지해 좌표 그대로 씬에 추가.
+    // (모델 정렬·중앙 정렬 없음 — 배치 작업용 뷰)
+    // 헬퍼(그리드/축)는 scene 에 그대로 두고, 로버 부속만 roverGroup 으로 묶어 전체를 한 번에 이동.
+    const loader = new GLTFLoader();
+    const roverGroup = new THREE.Group();
+    roverGroup.position.y = 0.4;     // 전체 로버를 y +0.4 만큼 들어올림
+    scene.add(roverGroup);
+    let remaining = cfg.parts.length;
+    cfg.parts.forEach((url) => {
+      loader.load(url, (gltf) => {
+        const root = gltf.scene;
+        // RoverBody 는 본체라 1.0 그대로, 나머지 부속은 본체 기준으로 비율을 맞추기 위해 1/2 축소.
+        if (!/RoverBody\.glb$/.test(url)) root.scale.setScalar(0.5);
+        root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+        if (/RoverWheel\.glb$/.test(url)) {
+          // 바퀴는 좌·우 한 쌍을 둔다. 먼저 현재 스케일(=0.5)에서 0.8 추가 축소(→최종 0.4),
+          // y축 기준 90° 회전 → 휠 축이 x 방향을 향함. 그 뒤 x = ±0.7 로 평행 이동해 본체 양옆에 배치.
+          // (clone 은 deep 이라 scale/머티리얼 공유)
+          root.scale.multiplyScalar(0.8);
+          const wheelR = root;
+          const wheelL = root.clone();
+          wheelR.rotation.y = Math.PI / 2;
+          wheelL.rotation.y = Math.PI / 2;
+          wheelR.position.set( 0.7, 0, -0.3);
+          wheelL.position.set(-0.7, 0, -0.3);
+          roverGroup.add(wheelR, wheelL);
+        } else if (/RoverRadar\.glb$/.test(url)) {
+          // 레이더: 현재 스케일(=0.5) × 0.5 × 0.8 → 최종 0.20. 위치는 (0, 0.5, -0.9).
+          root.scale.multiplyScalar(0.5);
+          root.scale.multiplyScalar(0.8);
+          root.position.set(0, 0.5, -0.9);   // z = -0.7 - 0.2
+          roverGroup.add(root);
+        } else if (/RoverLED\.glb$/.test(url)) {
+          root.position.set(0, 0.35, 0.2);   // y = -0.15 + 0.5,  z = 0.1 + 0.1
+          root.rotation.x = Math.PI / 4;
+          roverGroup.add(root);
+        } else if (/RoverHead\.glb$/.test(url)) {
+          root.position.set(0, 0.6, -0.3);   // y = 0.8 - 0.2,  z = 0 - 0.3
+          root.rotation.y = Math.PI;         // y축 기준 180°
+          roverGroup.add(root);
+        } else if (/RoverGun\.glb$/.test(url)) {
+          root.position.set(0.55, 0.5, -0.5);
+          root.rotation.y = Math.PI / 2;     // y축 기준 90°
+          roverGroup.add(root);
+        } else if (/RoverOLED\.glb$/.test(url)) {
+          root.position.set(0, 0.1, 0.5);   // y = 0.2 - 0.1
+          root.rotation.x = -Math.PI / 6;   // x축 기준 -30°
+          // 화면에 'Hello' 텍스트 — Canvas 텍스처를 작은 평면에 입혀 +Z 면에 부착.
+          // root 의 변환을 제거한 사본으로 bbox 를 구해 평면 위치를 자동 결정한다.
+          // (model 의 local +Z 가 화면 정면이라는 일반적인 가정 — 다른 면이라면 위치 조정 필요)
+          {
+            const probe = root.clone(true);
+            probe.position.set(0, 0, 0); probe.rotation.set(0, 0, 0); probe.scale.set(1, 1, 1);
+            const box = new THREE.Box3().setFromObject(probe);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            const cv = document.createElement('canvas');
+            cv.width = 512; cv.height = 256;
+            const cx = cv.getContext('2d');
+            cx.fillStyle = '#000814'; cx.fillRect(0, 0, cv.width, cv.height);
+            cx.fillStyle = '#7dffff';
+            cx.font = 'bold 15px monospace';     // 기존 150px 의 1/10
+            cx.textAlign = 'left'; cx.textBaseline = 'top';
+            cx.fillText('Hello', 12, 10);        // 좌상단 여백 (≈ 캔버스 2~4 %)
+            const tex = new THREE.CanvasTexture(cv);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            const w = size.x * 0.85 * 0.95 * 0.95;   // 직전 단계에서 한 번 더 95 %
+            const h = w * (cv.height / cv.width);
+            const screen = new THREE.Mesh(
+              new THREE.PlaneGeometry(w, h),
+              new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
+            );
+            // 하단 모서리 축 기준 회전을 위해 pivot 그룹 사용.
+            // pivot 을 화면 하단 위치(+Z 면, y = center.y - h/2)에 두고,
+            // 화면은 pivot 의 +Y 로 h/2 만큼 띄워 두면 pivot.rotation.x 가 하단 축 회전이 된다.
+            //   - 음의 회전(-10°): 화면 상단이 -Z(로버 쪽)로 기운다.
+            const pivot = new THREE.Group();
+            pivot.position.set(center.x, center.y - h / 2, box.max.z + 0.001);
+            pivot.rotation.x = -Math.PI / 12;   // 로버 쪽으로 15° (10° + 5°)
+            screen.position.set(0, h / 2, 0);
+            pivot.add(screen);
+            root.add(pivot);
+            root.userData.oledScreen = screen;   // 추후 텍스트 변경 hook
+          }
+          roverGroup.add(root);
+        } else {
+          roverGroup.add(root);
+        }
+        if (--remaining === 0 && loadingEl) loadingEl.style.display = 'none';
+      }, undefined, (err) => {
+        console.error('부속 로드 실패:', url, err);
+        if (--remaining === 0 && loadingEl) loadingEl.style.display = 'none';
+      });
+    });
+    // 배치용 카메라 — 그리드(2×2)와 길이 1 축이 잘 보이는 비스듬한 시점.
+    frame(0.6, 2.8);
   } else {
     // 빈 객체(준비 중): 플레이스홀더 와이어프레임 + 안내 텍스트
     const ph = new THREE.Mesh(
@@ -900,6 +1024,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const HINT_DEFAULT = '로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기';
   const HINT_TRAFFIC = '1, 2, 3번 키를 눌러 램프를 켜고 끄기';
   const HINT_LAUNCH  = '레이더 가동 · 로켓 발사 버튼을 눌러 발사대를 작동시켜 보세요';
+  const HINT_ROVER   = '로버 부속 배치 보기 · 0.1 간격 그리드와 길이 1 축이 표시됩니다 (X 빨강 · Y 초록 · Z 파랑)';
   // 발사대 버튼은 간단히 표시(레이더 / 로켓). 활성 여부는 .on 클래스(점 색)로만 구분.
   const RADAR_LABEL_ON   = '<span class="dot"></span>레이더';
   const RADAR_LABEL_OFF  = '<span class="dot"></span>레이더';
@@ -954,7 +1079,10 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (radarBtn)  { radarBtn.classList.remove('on');  radarBtn.innerHTML  = RADAR_LABEL_OFF;  radarBtn.setAttribute('aria-pressed', 'false'); }
     if (rocketBtn) { rocketBtn.classList.remove('on'); rocketBtn.innerHTML = ROCKET_LABEL_OFF; rocketBtn.setAttribute('aria-pressed', 'false'); }
     if (simHint) {
-      simHint.textContent = cfg.traffic ? HINT_TRAFFIC : (cfg.radar ? HINT_LAUNCH : HINT_DEFAULT);
+      simHint.textContent =
+        cfg.traffic ? HINT_TRAFFIC :
+        cfg.radar   ? HINT_LAUNCH  :
+        cfg.parts   ? HINT_ROVER   : HINT_DEFAULT;
     }
     sim = buildSim(THREE, A, stage, loadingEl, cfg);
     builtTopic = topicKey;
