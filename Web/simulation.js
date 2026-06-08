@@ -429,10 +429,12 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     const v = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : (value ? 1 : 0);
     const m = ball.material;
     if (v > 0) {
-      m.color.setHex(0x00ff66);
-      m.emissive.setHex(0x00ff66);
-      m.emissiveIntensity = 2.6 * v;
-      m.opacity = 0.35 + 0.6 * v;     // 켜질수록 또렷·불투명
+      // 채도 우선: 발광량을 낮춰 ACES 톤매핑의 흰빛 날림을 줄이고, 순수 초록 + 높은 불투명도로
+      // 색이 또렷하게 보이게 한다(밝기는 약간 낮아짐).
+      m.color.setHex(0x00ff22);
+      m.emissive.setHex(0x00ff22);
+      m.emissiveIntensity = 0.9 * v;
+      m.opacity = 0.6 + 0.4 * v;      // 켜질수록 또렷·불투명(본래 색 보존)
     } else {
       m.color.setHex(0xffffff);
       m.emissive.setHex(0x000000);
@@ -777,7 +779,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       else    { m.color.setHex(0xffffff); m.emissive.setHex(0x000000); m.emissiveIntensity = 0;   m.opacity = 0.25; }
     }
   }
-  const DIST_BOX_INFLATE = 1.5;        // 거리 검사 시 박스 폭(가로·세로)을 이 배율로 키워 검사 대상으로 삼는다
+  const DIST_BOX_INFLATE = 2.0;        // 거리 검사 시 박스 폭(가로·세로)을 이 배율로 키워 검사 대상으로 삼는다
   function measureDistance() {
     if (irSensorBalls.length === 0 || !obstaclesOn) return DIST_NO_HIT;   // 장애물 없으면 감지 없음
     // 검사용으로 박스 폭을 1.5배 키운다(높이는 유지). 측정 사이엔 렌더가 없어 화면엔 안 보인다.
