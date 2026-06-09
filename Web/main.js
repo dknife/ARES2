@@ -733,14 +733,18 @@ function initializeMissionListeners(ws) {
   // 저장
   elements.saveButton?.addEventListener('click', () => {
     const xml = Blockly.Xml.workspaceToDom(ws);
-    const xmlText = Blockly.utils.xml.domToText(xml);
+    const xmlText = Blockly.Xml.domToPrettyText(xml);
     const fileName = prompt("저장할 파일 이름을 입력하세요 (확장자 제외):", "Ares_Workspace");
     if (!fileName) return;
-    const blob = new Blob([xmlText], { type: 'text/xml' });
+    const blob = new Blob([xmlText], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    link.href = url;
     link.download = `${fileName}.xml`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
   // 불러오기

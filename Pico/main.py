@@ -31,7 +31,7 @@ class AresRover:
     #   blocking 처리하므로 이 목록에 넣지 말 것.)
     NO_RESPONSE_CMDS = (
         "LED_ON", "LED_OFF",
-        "MSG", "CLEAR_DISPLAY",
+        "MSG", "MSG_XY", "ICON", "CLEAR_DISPLAY", "CLEAR_RECT",
         "SERVO_FORWARD", "SERVO_BACKWARD", "SERVO_LEFT", "SERVO_RIGHT", "SERVO_STOP",
         "DC_FORWARD", "DC_BACKWARD", "DC_STOP",
         "GUN_FIRE",

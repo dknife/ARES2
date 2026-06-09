@@ -212,6 +212,51 @@ function defaultTopicForMission() {
   return MISSION_TOPIC[`L${l}M${m}`] || DEFAULT_TOPIC;
 }
 
+// OLED 아이콘 32×32 비트맵 — Pico/icon.py 의 mars_rover32x32 / cute_robot32x32 와
+// 1:1 동일 (1바이트 = 8 수평 픽셀, MSB 가 좌측). ICON,name,x,y 명령의 name 키와 매핑.
+const OLED_ICONS = {
+  rover: new Uint8Array([
+    0x00,0x01,0xC0,0x00, 0x00,0x01,0xC0,0x00, 0x00,0x01,0xC0,0x00, 0x1F,0xFF,0xFF,0xF8,
+    0x1F,0xFF,0xFF,0xF8, 0x1E,0x07,0xE0,0x78, 0x1E,0xE7,0xE7,0x78, 0x1E,0x17,0xE8,0x78,
+    0x1E,0x07,0xE0,0x78, 0x1E,0x07,0xE0,0x78, 0x1C,0xFF,0xFF,0x38, 0x1F,0x7F,0xFE,0xF8,
+    0x1F,0x8F,0xF1,0xF8, 0x1F,0xF0,0x0F,0xF8, 0x1E,0xFF,0xFF,0x78, 0x1E,0xFF,0xFF,0x78,
+    0x1E,0xFF,0xFF,0x78, 0x00,0xFF,0x7F,0x00, 0x1F,0xFF,0x7F,0xF8, 0x1F,0xFC,0x9F,0xF8,
+    0x1F,0xF9,0xCF,0xF8, 0x1F,0xF0,0x07,0xF8, 0x1F,0xE7,0xF3,0xF8, 0x1F,0xE7,0xF3,0xF8,
+    0x1F,0xFF,0xFF,0xF8, 0x1F,0xFF,0xFF,0xF8, 0x1F,0xC0,0x03,0xF8, 0x1F,0xC0,0x03,0xF8,
+    0x1F,0xC0,0x03,0xF8, 0x1F,0xC0,0x03,0xF8, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+  ]),
+  mars: new Uint8Array([
+    0x00,0x00,0x00,0x00, 0x0C,0x00,0x00,0x00, 0x0C,0x00,0x7E,0x00, 0x0C,0x01,0xFE,0x00,
+    0x0C,0x03,0xFF,0x00, 0x06,0x07,0xFF,0x80, 0x03,0x0F,0xFF,0xC0, 0x00,0xFF,0xFF,0xE0,
+    0x00,0x1F,0xFF,0xE0, 0x00,0x3F,0xFF,0xF0, 0x00,0x3F,0xFF,0xF0, 0x00,0x3E,0x01,0xF0,
+    0x00,0x3C,0x00,0xF0, 0x00,0x3C,0x78,0x70, 0x00,0x3C,0xF8,0x70, 0x00,0x3C,0xF8,0x70,
+    0x00,0x3C,0x78,0x70, 0x00,0x3C,0x00,0x70, 0x00,0x3C,0x00,0x70, 0x00,0x3C,0x00,0x70,
+    0x00,0x3C,0x00,0x70, 0x00,0x3F,0xFF,0xF0, 0x00,0x3F,0xFF,0xF0, 0x00,0x1F,0xFF,0xE0,
+    0x00,0x07,0xFF,0xC0, 0x00,0x03,0xFF,0x80, 0x00,0x01,0xFE,0x00, 0x00,0x00,0x7E,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+  ]),
+  open_eye: new Uint8Array([
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0xFF,0xFF,0x00, 0x07,0x00,0x00,0xE0,
+    0x18,0x00,0x00,0x18, 0x20,0x00,0x00,0x04, 0x40,0x00,0x00,0x02, 0x80,0x00,0x00,0x01,
+    0x80,0x03,0xE0,0x01, 0x80,0x07,0xF0,0x01, 0x80,0x0F,0xF8,0x01, 0x80,0x0F,0xF8,0x01,
+    0x80,0x0F,0xF8,0x01, 0x80,0x0F,0xF8,0x01, 0x80,0x07,0xF0,0x01, 0x80,0x03,0xE0,0x01,
+    0x80,0x00,0x00,0x01, 0x40,0x00,0x00,0x02, 0x20,0x00,0x00,0x04, 0x18,0x00,0x00,0x18,
+    0x07,0x00,0x00,0xE0, 0x00,0xFF,0xFF,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+  ]),
+  closed_eye: new Uint8Array([
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x01,0xFF,0xFF,0x80, 0x07,0x00,0x00,0xE0, 0x18,0x00,0x00,0x18, 0x20,0x00,0x00,0x04,
+    0x40,0x00,0x00,0x02, 0x80,0x00,0x00,0x01, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+  ]),
+};
+
 // 카드 안에 3D 씬을 구성해 { render, resize, setEye, dispose, hasEyes, eyeL, eyeR,
 //   hasTraffic, placeLamps, placeHands, resetTraffic } 반환
 function buildSim(THREE, A, stage, loadingEl, cfg) {
@@ -227,6 +272,37 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   let worldGroup = null;               // 로버를 제외한 바닥·그리드 묶음 — 로버 전·후진 시 반대 방향으로 이동
   let wheelR = null, wheelL = null;    // 로버 좌·우 바퀴 (전·후진 시 회전)
   const boxes = [];                    // 바닥 위 박스(장애물) — 로버와의 충돌 판정 대상
+
+  // 로버 OLED 가상 화면 — 실제 SSD1306 과 동일하게 128×64 픽셀로 가정한다.
+  // 글자 한 칸은 8×8 픽셀 (16자 × 8줄). 캔버스는 OLED 픽셀 1 → canvas 4 픽셀로 확대(=512×256)
+  // 해서 PlaneGeometry 텍스처로 입힌다. (firmware: framebuf.text 의 8×8 폰트와 1:1 매핑)
+  const OLED_W = 128, OLED_H = 64;
+  const OLED_SCALE = 4;                  // 1 OLED px = 4 canvas px
+  const OLED_CHAR_W = 8, OLED_CHAR_H = 8;
+  let oledCanvas = null;                 // <canvas> — 텍스처 백킹
+  let oledCtx = null;                    // 2D 컨텍스트
+  let oledTex = null;                    // THREE.CanvasTexture (변경 시 needsUpdate)
+
+  // 로버 총(RoverGun.glb) GUN_FIRE 효과 — 총구 플래시 + 스파크 + 짧은 점광원, 폭발음.
+  // 총은 roverGroup 안에 부착되어 위치가 고정되므로(로버는 worldGroup만 움직임),
+  // 모델 로딩 시 bbox 에서 가장 긴 축의 절대값이 큰 끝점을 총구로 캐시한다.
+  let gunMesh = null;                    // RoverGun.glb 의 root (참조 보유 / hasGun 판정)
+  let muzzleFlash = null;                // 그룹 컨테이너 (sphere + light + sparks)
+  let muzzleFlashSphere = null;          // 핵심 플래시 구
+  let muzzleFlashLight = null;           // 짧은 점광원
+  const muzzleSparks = [];               // [{ mesh, vel, age }] — 튀어나가는 스파크 입자
+  let muzzleFlashT = 0;                  // 0 = 비활성, >0 = 경과 시간(초)
+  const MUZZLE_DUR = 0.35;               // 350ms 동안 플래시 + 스파크 유지
+  const muzzleWorldPos = new THREE.Vector3();    // 캐시된 총구 위치(월드)
+  const muzzleForward = new THREE.Vector3();     // 캐시된 발사 방향(월드, 단위벡터)
+  // 총구 연기 — 발사 직후 짧은 시간 동안 puff 들을 연속 분출, 월드 좌표로 떠다닌다.
+  let gunSmokeGroup = null;              // scene 에 부착되는 컨테이너 (총·로버 변환 영향 X)
+  const gunSmokePool = [];               // { sprite, active, age, life, vel, scale0, scaleMax, rot, rotSpeed }
+  const GUN_SMOKE_POOL = 18;             // 풀 크기 (동시에 떠 있을 수 있는 최대 puff 수)
+  const GUN_SMOKE_BURST = 12;            // 발사 1회당 분출 puff 개수
+  const GUN_SMOKE_BURST_DUR = 0.18;      // 분출이 퍼지는 시간 — 180ms 동안 12개를 흩뿌림
+  let gunSmokeRemaining = 0;             // 이번 발사에서 아직 분출되지 않은 puff 개수
+  let gunSmokeAcc = 0;                   // 분출 진행 시간 누적
   const BOX_SPAWN_RANGE = 50;          // 박스 랜덤 분포 범위(±) — 최초 배치·재배치 공용
   const BOX_CLEAR_R = 5;               // 로버(원점) 주위 이 반경 안에는 박스를 두지 않는다
   let obstaclesOn = true;              // 장애물(박스) 설치 여부 — 제거하면 충돌·거리감지에서도 빠진다
@@ -443,6 +519,214 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     }
   }
 
+  // OLED 그리기 헬퍼 — buildSim 스코프의 oledCanvas/oledCtx/oledTex 를 직접 갱신.
+  // 좌표는 모두 OLED 픽셀(0..127, 0..63) 기준이며 내부에서 ×OLED_SCALE 로 캔버스에 매핑.
+  function oledClear() {
+    if (!oledCtx) return;
+    oledCtx.fillStyle = '#000814';                                  // 어두운 남색 = OFF 픽셀
+    oledCtx.fillRect(0, 0, oledCanvas.width, oledCanvas.height);
+    if (oledTex) oledTex.needsUpdate = true;
+  }
+  function oledClearRect(x, y, w, h) {
+    if (!oledCtx) return;
+    // 화면 경계로 자르기 (펌웨어 framebuf.fill_rect 와 동일한 클리핑 동작)
+    const x0 = Math.max(0, x), y0 = Math.max(0, y);
+    const x1 = Math.min(OLED_W, x + w), y1 = Math.min(OLED_H, y + h);
+    if (x1 <= x0 || y1 <= y0) return;
+    oledCtx.fillStyle = '#000814';
+    oledCtx.fillRect(x0 * OLED_SCALE, y0 * OLED_SCALE, (x1 - x0) * OLED_SCALE, (y1 - y0) * OLED_SCALE);
+    if (oledTex) oledTex.needsUpdate = true;
+  }
+  function oledText(x, y, text) {
+    if (!oledCtx) return;
+    oledCtx.fillStyle = '#7dffff';                                  // 시안색 = ON 픽셀 (단색 SSD1306 톤)
+    oledCtx.font = `bold ${OLED_CHAR_H * OLED_SCALE}px monospace`;  // 폰트 높이 = 8 OLED px = 32 canvas px
+    oledCtx.textAlign = 'left'; oledCtx.textBaseline = 'top';
+    const s = String(text);
+    // 각 글자를 8 OLED 픽셀 간격으로 강제 배치 — 실제 framebuf.text 와 동일한 monospace 셀.
+    for (let i = 0; i < s.length; i++) {
+      const ox = x + i * OLED_CHAR_W;
+      if (ox >= OLED_W) break;                                      // 우측 경계 넘으면 잘림(펌웨어 동작과 동일)
+      oledCtx.fillText(s[i], ox * OLED_SCALE, y * OLED_SCALE);
+    }
+    if (oledTex) oledTex.needsUpdate = true;
+  }
+  function oledIcon(name, x, y) {
+    if (!oledCtx) return;
+    const bm = OLED_ICONS[name];
+    if (!bm) return;
+    oledCtx.fillStyle = '#7dffff';
+    // 비트맵은 32×32, 1바이트 = 8 수평 픽셀(MSB 가 좌측). icon.py 의 buff 포맷과 동일.
+    for (let row = 0; row < 32; row++) {
+      for (let bc = 0; bc < 4; bc++) {
+        const byte = bm[row * 4 + bc];
+        if (!byte) continue;
+        for (let bit = 0; bit < 8; bit++) {
+          if (byte & (1 << (7 - bit))) {
+            const px = x + bc * 8 + bit;
+            const py = y + row;
+            if (px >= 0 && px < OLED_W && py >= 0 && py < OLED_H) {
+              oledCtx.fillRect(px * OLED_SCALE, py * OLED_SCALE, OLED_SCALE, OLED_SCALE);
+            }
+          }
+        }
+      }
+    }
+    if (oledTex) oledTex.needsUpdate = true;
+  }
+
+  // 총구 플래시 자원 lazy 생성 — 첫 발사 시점에 한 번 만들어 두고 재사용.
+  function ensureMuzzleFlash() {
+    if (muzzleFlash || !gunMesh) return;
+    muzzleFlash = new THREE.Group();
+    muzzleFlashSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 16, 12),
+      new THREE.MeshBasicMaterial({
+        color: 0xffd980, transparent: true, opacity: 0,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      })
+    );
+    muzzleFlash.add(muzzleFlashSphere);
+    muzzleFlashLight = new THREE.PointLight(0xffaa44, 0, 3, 2);
+    muzzleFlash.add(muzzleFlashLight);
+    for (let i = 0; i < 12; i++) {
+      const spark = new THREE.Mesh(
+        new THREE.SphereGeometry(0.025, 6, 6),
+        new THREE.MeshBasicMaterial({
+          color: 0xffeeaa, transparent: true, opacity: 0,
+          blending: THREE.AdditiveBlending, depthWrite: false,
+        })
+      );
+      muzzleFlash.add(spark);
+      muzzleSparks.push({ mesh: spark, vel: new THREE.Vector3(), age: 0 });
+    }
+    scene.add(muzzleFlash);
+    muzzleFlash.visible = false;
+  }
+  // GUN_FIRE — 총구 위치에 플래시·라이트·스파크 발생시키고 폭발음 재생.
+  function setGunFire() {
+    if (!gunMesh) return;
+    ensureMuzzleFlash();
+    muzzleFlash.position.copy(muzzleWorldPos);
+    // 스파크 초기화 — 총구 앞으로 산란하며 튀어나간다.
+    for (const sp of muzzleSparks) {
+      sp.mesh.position.set(0, 0, 0);
+      const speed = 1.0 + Math.random() * 1.6;
+      sp.vel.copy(muzzleForward).multiplyScalar(speed);
+      sp.vel.x += (Math.random() - 0.5) * 0.8;
+      sp.vel.y += (Math.random() - 0.5) * 0.6;
+      sp.vel.z += (Math.random() - 0.5) * 0.8;
+      sp.age = 0;
+      sp.mesh.material.opacity = 1;
+    }
+    muzzleFlashT = 0.0001;            // 활성화 (0 이 아님)
+    muzzleFlash.visible = true;
+    // 격발음(playGunFire)은 buildSim 스코프 밖(setupSimulation)에 있어 여기서 호출 불가 —
+    // applyTopicEffect 에서 setGunFire 호출 직후 별도로 재생한다(playRocketLaunch 패턴과 동일).
+    // 총구 연기 분출 시작 — updateGunSmoke 가 BURST_DUR 동안 puff 들을 흩뿌린다.
+    gunSmokeRemaining = GUN_SMOKE_BURST;
+    gunSmokeAcc = 0;
+  }
+  // 매 프레임 호출 — 플래시·스파크의 시간적 변화 처리.
+  function updateMuzzleFlash(dt) {
+    if (muzzleFlashT <= 0 || !muzzleFlash) return;
+    muzzleFlashT += dt;
+    if (muzzleFlashT >= MUZZLE_DUR) {
+      muzzleFlashT = 0;
+      muzzleFlash.visible = false;
+      return;
+    }
+    const t = muzzleFlashT / MUZZLE_DUR;   // 0..1 정규화 진행도
+    // 메인 플래시: 즉시 최대 → (1-t)^2 로 가파르게 감쇠, 크기는 조금 부풀림.
+    const flashI = (1 - t) * (1 - t);
+    muzzleFlashSphere.material.opacity = flashI * 0.95;
+    muzzleFlashSphere.scale.setScalar(0.7 + t * 1.8);
+    muzzleFlashLight.intensity = 5 * flashI;
+    // 스파크: 속도 적용 + 마찰 감속 + 약한 중력 + 0.3초 동안 페이드아웃.
+    for (const sp of muzzleSparks) {
+      sp.age += dt;
+      sp.mesh.position.add(sp.vel.clone().multiplyScalar(dt));
+      sp.vel.multiplyScalar(0.92);
+      sp.vel.y -= 2.5 * dt;
+      sp.mesh.material.opacity = Math.max(0, 1 - sp.age / 0.3);
+    }
+  }
+
+  // 총구 연기 풀 — 발사 시 한 번 만들고 재사용. makeSmokeTex 는 로켓 연기와 동일한 텍스처를 공유.
+  function ensureGunSmoke() {
+    if (gunSmokeGroup || !gunMesh) return;
+    if (!smokeTex) smokeTex = makeSmokeTex();   // 로켓이 먼저 만들지 않았다면 여기서
+    gunSmokeGroup = new THREE.Group();
+    scene.add(gunSmokeGroup);                    // 월드 좌표 — 로버가 움직여도 연기는 그 자리에 떠 있음
+    for (let i = 0; i < GUN_SMOKE_POOL; i++) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: smokeTex, color: 0xd8dde6, transparent: true,
+        depthWrite: false, opacity: 0,           // 약간 회색 — 화약 연기 톤
+      }));
+      sp.visible = false;
+      gunSmokeGroup.add(sp);
+      gunSmokePool.push({ sprite: sp, active: false, age: 0, life: 1, vel: new THREE.Vector3(),
+                          scale0: 0.06, scaleMax: 0.5, rot: 0, rotSpeed: 0 });
+    }
+  }
+  // 총구 위치에서 puff 하나 분출 — 발사 방향으로 흩날리며 천천히 떠오르고 퍼진다.
+  function spawnGunSmoke() {
+    const p = gunSmokePool.find((q) => !q.active);
+    if (!p) return;
+    p.active = true; p.age = 0;
+    p.life = 1.2 + Math.random() * 0.9;          // 1.2 ~ 2.1초 동안 살아있음
+    // 시작 위치 — 총구 위치에 약간의 산란
+    p.sprite.position.copy(muzzleWorldPos);
+    p.sprite.position.x += (Math.random() - 0.5) * 0.06;
+    p.sprite.position.y += (Math.random() - 0.5) * 0.06;
+    p.sprite.position.z += (Math.random() - 0.5) * 0.06;
+    // 속도 — 총구 forward 로 빠르게 + 측방 산란 + 약한 부양
+    const spd = 0.7 + Math.random() * 0.5;
+    p.vel.copy(muzzleForward).multiplyScalar(spd);
+    p.vel.x += (Math.random() - 0.5) * 0.45;
+    p.vel.y += 0.15 + Math.random() * 0.25;
+    p.vel.z += (Math.random() - 0.5) * 0.45;
+    p.scale0  = 0.08 + Math.random() * 0.08;
+    p.scaleMax = 0.45 + Math.random() * 0.45;    // 약 0.45~0.9 까지 팽창 (로켓보다 작음)
+    p.rot = Math.random() * Math.PI * 2;
+    p.rotSpeed = (Math.random() - 0.5) * 1.2;
+    p.sprite.material.opacity = 0;
+    p.sprite.material.rotation = p.rot;
+    p.sprite.scale.set(p.scale0, p.scale0, 1);
+    p.sprite.visible = true;
+  }
+  function updateGunSmoke(dt) {
+    ensureGunSmoke();
+    if (!gunSmokeGroup) return;
+    // 분출 — gunSmokeRemaining 가 0 보다 클 때만, BURST_DUR 동안 균등 간격으로 흩뿌림.
+    if (gunSmokeRemaining > 0) {
+      gunSmokeAcc += dt;
+      const alreadySpawned = GUN_SMOKE_BURST - gunSmokeRemaining;
+      const targetSpawned = Math.min(GUN_SMOKE_BURST, Math.ceil(GUN_SMOKE_BURST * gunSmokeAcc / GUN_SMOKE_BURST_DUR));
+      let toSpawn = targetSpawned - alreadySpawned;
+      while (toSpawn-- > 0 && gunSmokeRemaining > 0) {
+        spawnGunSmoke();
+        gunSmokeRemaining--;
+      }
+    }
+    // 활성 puff 갱신 — 팽창·이동·페이드.
+    for (const p of gunSmokePool) {
+      if (!p.active) continue;
+      p.age += dt;
+      const t = p.age / p.life;
+      if (t >= 1) { p.active = false; p.sprite.visible = false; continue; }
+      p.sprite.position.addScaledVector(p.vel, dt);
+      p.vel.multiplyScalar(Math.max(0, 1 - 2.5 * dt));     // 공기 저항 — 로켓보다 빠르게 멈춤
+      p.vel.y += 0.4 * dt;                                  // 연기는 위로 떠오름
+      const grow = 1 - (1 - t) * (1 - t);                   // ease-out 팽창
+      const s = p.scale0 + (p.scaleMax - p.scale0) * grow;
+      p.sprite.scale.set(s, s, 1);
+      p.sprite.material.opacity = Math.min(1, t * 8) * (1 - t) * 0.7;
+      p.rot += p.rotSpeed * dt;
+      p.sprite.material.rotation = p.rot;
+    }
+  }
+
   const frame = (cy, dist) => {
     camera.position.set(0, cy, dist);
     camera.near = dist / 100; camera.far = dist * 100; camera.updateProjectionMatrix();
@@ -622,33 +906,54 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
           root.position.set(0.55, 0.5, -0.5);
           root.rotation.y = Math.PI / 2;     // y축 기준 90°
           roverGroup.add(root);
+          gunMesh = root;
+          // 총구 위치/방향 캐시 — 변환이 적용된 월드 bbox 에서 가장 긴 축을
+          // 총신으로 보고, 원점에 더 가까운(=로버 바깥쪽 반대편, 즉 실제 총구) 끝점을 잡는다.
+          // (이전에 '원점에서 더 먼 쪽' 으로 잡았다가 총신 반대편에서 발사되어 뒤집음.)
+          {
+            const bbox = new THREE.Box3().setFromObject(root);
+            const size = bbox.getSize(new THREE.Vector3());
+            const center = bbox.getCenter(new THREE.Vector3());
+            let ax = 0;
+            if (size.y > size.x && size.y > size.z) ax = 1;
+            else if (size.z > size.x) ax = 2;
+            const minV = bbox.min.getComponent(ax);
+            const maxV = bbox.max.getComponent(ax);
+            const muzzleEnd = Math.abs(maxV) > Math.abs(minV) ? minV : maxV;   // 더 가까운 끝
+            muzzleWorldPos.copy(center);
+            muzzleWorldPos.setComponent(ax, muzzleEnd);
+            muzzleForward.set(0, 0, 0);
+            muzzleForward.setComponent(ax, Math.sign(muzzleEnd - center.getComponent(ax)) || -1);
+          }
         } else if (/RoverOLED\.glb$/.test(url)) {
           root.position.set(0, 0.1, 0.5);   // y = 0.2 - 0.1
           root.rotation.x = -Math.PI / 6;   // x축 기준 -30°
-          // 화면에 'Hello' 텍스트 — Canvas 텍스처를 작은 평면에 입혀 +Z 면에 부착.
-          // root 의 변환을 제거한 사본으로 bbox 를 구해 평면 위치를 자동 결정한다.
-          // (model 의 local +Z 가 화면 정면이라는 일반적인 가정 — 다른 면이라면 위치 조정 필요)
+          // OLED 가상 화면 — 128×64 픽셀, 8×8 글자 셀. Canvas 텍스처를 작은 평면에
+          // 입혀 +Z 면에 부착. root 의 변환을 제거한 사본으로 bbox 를 구해 평면
+          // 위치를 자동 결정한다. (model 의 local +Z 가 화면 정면이라는 일반적인
+          // 가정 — 다른 면이라면 위치 조정 필요)
           {
             const probe = root.clone(true);
             probe.position.set(0, 0, 0); probe.rotation.set(0, 0, 0); probe.scale.set(1, 1, 1);
             const box = new THREE.Box3().setFromObject(probe);
             const size = box.getSize(new THREE.Vector3());
             const center = box.getCenter(new THREE.Vector3());
-            const cv = document.createElement('canvas');
-            cv.width = 512; cv.height = 256;
-            const cx = cv.getContext('2d');
-            cx.fillStyle = '#000814'; cx.fillRect(0, 0, cv.width, cv.height);
-            cx.fillStyle = '#7dffff';
-            cx.font = 'bold 15px monospace';     // 기존 150px 의 1/10
-            cx.textAlign = 'left'; cx.textBaseline = 'top';
-            cx.fillText('Hello', 12, 10);        // 좌상단 여백 (≈ 캔버스 2~4 %)
-            const tex = new THREE.CanvasTexture(cv);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            const w = size.x * 0.85 * 0.95 * 0.95;   // 직전 단계에서 한 번 더 95 %
-            const h = w * (cv.height / cv.width);
+            // 공유 canvas/texture 초기화 — buildSim 스코프 변수에 저장해 외부에서 그릴 수 있게 한다.
+            oledCanvas = document.createElement('canvas');
+            oledCanvas.width = OLED_W * OLED_SCALE;
+            oledCanvas.height = OLED_H * OLED_SCALE;
+            oledCtx = oledCanvas.getContext('2d');
+            oledClear();
+            oledText(0, 0, 'Hello');           // 부팅 화면 (firmware booting_msg 와 동일 톤)
+            oledTex = new THREE.CanvasTexture(oledCanvas);
+            oledTex.colorSpace = THREE.SRGBColorSpace;
+            oledTex.magFilter = THREE.NearestFilter;   // 픽셀 그대로 — SSD1306 의 도트 느낌
+            oledTex.minFilter = THREE.NearestFilter;
+            const w = size.x * 0.85 * 0.95 * 0.95 * 0.9;   // 직전 단계에서 한 번 더 95 %, 테두리 가림 회피 위해 90 %
+            const h = w * (oledCanvas.height / oledCanvas.width);
             const screen = new THREE.Mesh(
               new THREE.PlaneGeometry(w, h),
-              new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
+              new THREE.MeshBasicMaterial({ map: oledTex, side: THREE.DoubleSide })
             );
             // 하단 모서리 축 기준 회전을 위해 pivot 그룹 사용.
             // pivot 을 화면 하단 위치(+Z 면, y = center.y - h/2)에 두고,
@@ -1078,6 +1383,8 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     }
     if (LAUNCH) updateLaunchWaves(dt);
     if (worldGroup) updateRoverWaves(dt);
+    updateMuzzleFlash(dt);
+    if (gunMesh) updateGunSmoke(dt);
 
     if (rocketGroup) {
       const targetT = rocketLaunchOn ? 1 : 0;
@@ -1284,7 +1591,9 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     // 연기 puff(Sprite)는 traverse(isMesh)에 안 잡히므로 재료/텍스처를 직접 정리.
     try {
       smokePool.forEach((p) => p.sprite?.material?.dispose?.());
+      gunSmokePool.forEach((p) => p.sprite?.material?.dispose?.());
       smokeTex?.dispose?.();
+      oledTex?.dispose?.();
     } catch {}
     scene.traverse((o) => {
       if (o.isMesh) {
@@ -1314,6 +1623,9 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     get hasBoxes() { return boxes.length > 0; }, respawnBoxes,
     get obstaclesOn() { return obstaclesOn; }, setObstacles,
     get hasRoverLeds() { return roverLeds.length > 0; }, setRoverLed,
+    get hasOled() { return !!oledCanvas; },
+    oledClear, oledClearRect, oledText, oledIcon,
+    get hasGun() { return !!gunMesh; }, setGunFire,
     get hasRocket() { return !!rocketGroup; }, setRocketLaunch,
     get rocketLaunchOn() { return rocketLaunchOn; },
     // 로켓이 완전히 원위치에 있는지(발사 중도 아니고 복귀 애니메이션도 끝남).
@@ -1643,6 +1955,67 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
       roarSrc.start(t0);   roarSrc.stop(t0 + DUR + 0.05);
     } catch (e) { console.warn('rocket launch sound 실패:', e); }
   };
+  // 총성 — 큰 폭발음. 고역 crack(~80ms) + 저역 boom(~700ms) + 초저역 rumble(~1.1s) 합성.
+  //   화이트노이즈를 highpass/lowpass/대역분리 후 가파른 attack + 긴 exp 감쇠로 단발 사운드를 만든다.
+  //   매 격발이 동일하게 들리도록 다음을 보장한다:
+  //     1) 노이즈 버퍼를 첫 호출 시 한 번 만들어 캐시 (콘텐츠 고정)
+  //     2) 직전 발사의 소스가 아직 울리고 있으면 중단 (잔향 중첩으로 진폭 합산되는 변동 차단)
+  //     3) 시작 시점에 짧은 attack 램프를 둬 0→peak 점프로 인한 클릭 위상 변동 제거
+  //     4) t0 를 currentTime 보다 약간 앞에 두어 스케줄링이 항상 미래에 일어나게 함
+  let gunNoiseBuffer = null;
+  let activeGunSources = [];
+  const playGunFire = () => {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const t0 = ctx.currentTime + 0.005;          // 5ms lead-in (스케줄링 안정)
+      if (!gunNoiseBuffer) {
+        const bufLen = Math.floor(ctx.sampleRate * 1.5);   // 1.5초 — 럼블 꼬리 수용
+        gunNoiseBuffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+        const data = gunNoiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+      }
+      // 직전 발사 소스를 즉시 중단 — 잔향 중첩 차단으로 매 발이 동일하게 들린다.
+      for (const s of activeGunSources) { try { s.stop(); } catch {} }
+      activeGunSources = [];
+
+      // 저역 boom — 묵직한 폭발 코어 (700ms 동안 감쇠)
+      const boomSrc = ctx.createBufferSource(); boomSrc.buffer = gunNoiseBuffer;
+      const boomLp = ctx.createBiquadFilter(); boomLp.type = 'lowpass'; boomLp.frequency.value = 280;
+      const boomGain = ctx.createGain();
+      boomSrc.connect(boomLp); boomLp.connect(boomGain); boomGain.connect(ctx.destination);
+      boomGain.gain.setValueAtTime(0.0001, t0);
+      boomGain.gain.linearRampToValueAtTime(0.75, t0 + 0.003);           // 3ms snap attack
+      boomGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.70);
+
+      // 고역 crack — 째지는 듯한 초기 충격음 (80ms)
+      const crackSrc = ctx.createBufferSource(); crackSrc.buffer = gunNoiseBuffer;
+      const crackHp = ctx.createBiquadFilter(); crackHp.type = 'highpass'; crackHp.frequency.value = 2000;
+      const crackGain = ctx.createGain();
+      crackSrc.connect(crackHp); crackHp.connect(crackGain); crackGain.connect(ctx.destination);
+      crackGain.gain.setValueAtTime(0.0001, t0);
+      crackGain.gain.linearRampToValueAtTime(0.5, t0 + 0.002);           // 2ms snap attack
+      crackGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
+
+      // 초저역 rumble — boom 끝나갈 무렵에 살짝 더 깔리는 우르릉 꼬리 (1.1초)
+      //   주파수 컷오프를 시간에 따라 더 내려서 '먼 데서 굴러가는 듯한' 잔향감.
+      const rumbleSrc = ctx.createBufferSource(); rumbleSrc.buffer = gunNoiseBuffer;
+      const rumbleLp = ctx.createBiquadFilter(); rumbleLp.type = 'lowpass';
+      rumbleLp.frequency.setValueAtTime(160, t0);
+      rumbleLp.frequency.exponentialRampToValueAtTime(70, t0 + 1.1);
+      const rumbleGain = ctx.createGain();
+      rumbleSrc.connect(rumbleLp); rumbleLp.connect(rumbleGain); rumbleGain.connect(ctx.destination);
+      rumbleGain.gain.setValueAtTime(0.0001, t0);
+      rumbleGain.gain.linearRampToValueAtTime(0.35, t0 + 0.04);          // 살짝 늦게 차오름
+      rumbleGain.gain.exponentialRampToValueAtTime(0.001, t0 + 1.10);
+
+      boomSrc.start(t0);   boomSrc.stop(t0 + 0.75);
+      crackSrc.start(t0);  crackSrc.stop(t0 + 0.10);
+      rumbleSrc.start(t0); rumbleSrc.stop(t0 + 1.15);
+      activeGunSources.push(boomSrc, crackSrc, rumbleSrc);
+    } catch (e) { console.warn('gun fire sound 실패:', e); }
+  };
   // 현재 주제(알비 / 우주 신호등 …)에 따라 명령 시작 시점에 시각·소리 효과를 적용한다.
   // BUZZER_ON처럼 동작 종료 시 원복이 필요한 효과는 정리 콜백을 돌려주고,
   // simSink가 wait 직후 그 콜백을 실행한다.
@@ -1754,9 +2127,61 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (cmd === 'DC_FORWARD'  || cmd.startsWith('DC_FORWARD,'))  { if (sim.hasRadar) sim.setRadar(true,  1); return null; }
     if (cmd === 'DC_BACKWARD' || cmd.startsWith('DC_BACKWARD,')) { if (sim.hasRadar) sim.setRadar(true, -1); return null; }
     if (cmd === 'DC_STOP'     || cmd.startsWith('DC_STOP,'))     { if (sim.hasRadar) sim.setRadar(false);    return null; }
-    // GUN_FIRE — 로켓 발사. 시뮬레이션 경로에서는 카메라가 따라가지 않는다(=followCamera:false).
+    // GUN_FIRE — 토픽별 발사 효과.
+    //   · 발사대 토픽: 로켓 발사 (카메라 추적은 시뮬 경로에서 비활성)
+    //   · 로버 토픽:   총구 플래시 + 스파크 + 폭발음
     if (cmd === 'GUN_FIRE' || cmd.startsWith('GUN_FIRE,')) {
       if (sim.hasRocket) { sim.setRocketLaunch(true, false); playRocketLaunch(); }
+      if (sim.hasGun)    { sim.setGunFire(); playGunFire(); }
+      return null;
+    }
+    // OLED 디스플레이 — 128×64 가상 화면. 8×8 글자 셀로 좌표 텍스트/아이콘을 그린다.
+    if (cmd === 'CLEAR_DISPLAY' || cmd.startsWith('CLEAR_DISPLAY')) {
+      if (sim.hasOled) sim.oledClear();
+      return null;
+    }
+    // CLEAR_RECT,x,y,w,h — 특정 사각 영역만 지우기 (아이콘 위치만 깔끔히 비우는 용도).
+    if (cmd.startsWith('CLEAR_RECT,')) {
+      if (!sim.hasOled) return null;
+      const parts = cmd.split(',');
+      const x = parseInt(parts[1], 10) || 0;
+      const y = parseInt(parts[2], 10) || 0;
+      const w = parseInt(parts[3], 10) || 0;
+      const h = parseInt(parts[4], 10) || 0;
+      sim.oledClearRect(x, y, w, h);
+      return null;
+    }
+    // MSG,<text> — 펌웨어 _handle_msg 와 동일: fill(0) 후 16자 자동 줄바꿈, y는 8 OLED px 간격.
+    if (cmd.startsWith('MSG,')) {
+      if (!sim.hasOled) return null;
+      sim.oledClear();
+      let rem = cmd.slice(4) || 'Hello';
+      const MAX_CHARS = 16;          // 한 줄 = 16자 (128 / 8)
+      const LINE_H = 8;              // 줄 간격 = 글자 셀 높이 = 8 OLED px
+      for (let yp = 0; rem && yp < 64; yp += LINE_H) {
+        sim.oledText(0, yp, rem.slice(0, MAX_CHARS));
+        rem = rem.slice(MAX_CHARS);
+      }
+      return null;
+    }
+    // MSG_XY,x,y,text — 화면을 지우지 않고 좌표에 텍스트 누적 (text 에 콤마 포함 가능).
+    if (cmd.startsWith('MSG_XY,')) {
+      if (!sim.hasOled) return null;
+      const parts = cmd.split(',');
+      const x = parseInt(parts[1], 10) || 0;
+      const y = parseInt(parts[2], 10) || 0;
+      const text = parts.slice(3).join(',') || 'Hello';
+      sim.oledText(x, y, text);
+      return null;
+    }
+    // ICON,name,x,y — 32×32 아이콘을 누적 (name: rover | mars).
+    if (cmd.startsWith('ICON,')) {
+      if (!sim.hasOled) return null;
+      const parts = cmd.split(',');
+      const name = (parts[1] || '').trim().toLowerCase();
+      const x = parseInt(parts[2], 10) || 0;
+      const y = parseInt(parts[3], 10) || 0;
+      sim.oledIcon(name, x, y);
       return null;
     }
     return null;

@@ -207,6 +207,55 @@ export const BlocklyConfig = {
       colour: "#9966FF",
       tooltip: "OLED 디스플레이 화면을 깨끗하게 지웁니다."
     },
+    {
+      type: "clear_rect",
+      message0: "🖥️ 영역 지우기 (x: %1, y: %2, 폭: %3, 높이: %4)",
+      args0: [
+        { type: "input_value", name: "X", check: "Number" },
+        { type: "input_value", name: "Y", check: "Number" },
+        { type: "input_value", name: "W", check: "Number" },
+        { type: "input_value", name: "H", check: "Number" }
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: "#9966FF",
+      tooltip: "OLED 화면에서 지정한 사각 영역만 지웁니다. 기본 32×32 (아이콘 크기)."
+    },
+    {
+      type: "send_message_xy",
+      message0: "🖥️ 화면 (x: %1, y: %2) 에 표시: %3",
+      args0: [
+        { type: "input_value", name: "X", check: "Number" },
+        { type: "input_value", name: "Y", check: "Number" },
+        { type: "input_value", name: "Msg", check: "String" }
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: "#9966FF",
+      tooltip: "OLED 화면의 (x, y) 좌표에 텍스트를 표시합니다. 화면을 지우지 않으므로 여러 줄을 쌓을 수 있습니다."
+    },
+    {
+      type: "display_icon",
+      message0: "🖥️ 아이콘 %1 을(를) (x: %2, y: %3) 에 표시",
+      args0: [
+        {
+          type: "field_dropdown",
+          name: "ICON",
+          options: [
+            ["🤖 로봇", "rover"],
+            ["🚀 화성탐사선", "mars"],
+            ["👁️ 뜬 눈", "open_eye"],
+            ["😌 감은 눈", "closed_eye"]
+          ]
+        },
+        { type: "input_value", name: "X", check: "Number" },
+        { type: "input_value", name: "Y", check: "Number" }
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: "#9966FF",
+      tooltip: "OLED 화면의 (x, y) 좌표에 32×32 아이콘을 그립니다."
+    },
 
     // 소리 블록 (하늘색 #00CCFF)
     {
