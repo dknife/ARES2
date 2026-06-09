@@ -49,6 +49,9 @@ class SSD1306:
         self.init_display()
         # 아이콘 생성
         self.icon_rover = KSicon(cute_robot32x32, 32, 32, self)
+        self.icon_mars = KSicon(mars_rover32x32, 32, 32, self)
+        self.icon_open_eye = KSicon(open_eye32x32, 32, 32, self)
+        self.icon_closed_eye = KSicon(closed_eye32x32, 32, 32, self)
 
     def init_display(self):
         for cmd in (
@@ -108,6 +111,9 @@ class SSD1306:
 
     def pixel(self, x, y, col):
         self.framebuf.pixel(x, y, col)
+
+    def fill_rect(self, x, y, w, h, col):
+        self.framebuf.fill_rect(x, y, w, h, col)
 
     def scroll(self, dx, dy):
         self.framebuf.scroll(dx, dy)

@@ -157,8 +157,14 @@ class CommandProcessor:
             robot.oled.fill(0)
             robot.oled.show()
             return 1
+        elif data.startswith("CLEAR_RECT,"):
+            return self._handle_clear_rect(data)
         elif data.startswith("MSG,"):
             return self._handle_msg(data)
+        elif data.startswith("MSG_XY,"):
+            return self._handle_msg_xy(data)
+        elif data.startswith("ICON,"):
+            return self._handle_icon(data)
             
         # 전투
         elif data.startswith("GUN_FIRE"):
@@ -561,7 +567,81 @@ class CommandProcessor:
         except Exception as e:
             print(f"MSG 오류: {e}")
             return 0
-    
+
+    def _handle_clear_rect(self, data):
+        """특정 영역만 지우기 — CLEAR_RECT,x,y,w,h
+        framebuf.fill_rect 로 (x, y) 부터 폭 w, 높이 h 영역을 OFF(0)로 채운다.
+        화면 경계 밖은 framebuf 가 자동 클리핑한다.
+        """
+        if not robot.oled:
+            return 0
+        try:
+            parts = data.split(',')
+            if len(parts) < 5:
+                return 0
+            x = int(parts[1])
+            y = int(parts[2])
+            w = int(parts[3])
+            h = int(parts[4])
+            robot.oled.fill_rect(x, y, w, h, 0)
+            robot.oled.show()
+            return 1
+        except Exception as e:
+            print(f"CLEAR_RECT 오류: {e}")
+            return 0
+
+    def _handle_msg_xy(self, data):
+        """좌표 기반 OLED 텍스트 출력 — MSG_XY,x,y,text
+        화면을 지우지 않으므로 누적 출력이 가능하다. (지우려면 CLEAR_DISPLAY 선행)
+        """
+        if not robot.oled:
+            return 0
+        try:
+            # text에 콤마가 포함될 수 있으므로 maxsplit=3
+            parts = data.split(',', 3)
+            if len(parts) < 4:
+                return 0
+            x = int(parts[1])
+            y = int(parts[2])
+            msg = str(parts[3]) if parts[3] else "Hello"
+            robot.oled.text(msg, x, y)
+            robot.oled.show()
+            return 1
+        except Exception as e:
+            print(f"MSG_XY 오류: {e}")
+            return 0
+
+    def _handle_icon(self, data):
+        """아이콘 출력 — ICON,name,x,y  (name: rover | mars)
+        화면을 지우지 않으므로 텍스트와 함께 누적 가능.
+        """
+        if not robot.oled:
+            return 0
+        try:
+            parts = data.split(',')
+            if len(parts) < 4:
+                return 0
+            name = parts[1].strip().lower()
+            x = int(parts[2])
+            y = int(parts[3])
+            icon = None
+            if name == 'rover':
+                icon = robot.oled.icon_rover
+            elif name == 'mars':
+                icon = robot.oled.icon_mars
+            elif name == 'open_eye':
+                icon = robot.oled.icon_open_eye
+            elif name == 'closed_eye':
+                icon = robot.oled.icon_closed_eye
+            if icon is None:
+                return 0
+            icon.blit(x, y)
+            robot.oled.show()
+            return 1
+        except Exception as e:
+            print(f"ICON 오류: {e}")
+            return 0
+
     # 유틸리티 핸들러
     def _handle_sleep(self, data):
         """대기"""

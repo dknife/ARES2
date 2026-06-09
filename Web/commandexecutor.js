@@ -14,7 +14,7 @@ export const CommandExecutor = {
   //   SERVO_t*/DC_t*/SLEEP/BATCH/SING은 이 집합에 넣지 말 것(응답 대기 필요).
   FIRE_AND_FORGET_HEADS: new Set([
     'LED_ON', 'LED_OFF',
-    'MSG', 'CLEAR_DISPLAY',
+    'MSG', 'MSG_XY', 'ICON', 'CLEAR_DISPLAY', 'CLEAR_RECT',
     'SERVO_FORWARD', 'SERVO_BACKWARD', 'SERVO_LEFT', 'SERVO_RIGHT', 'SERVO_STOP',
     'DC_FORWARD', 'DC_BACKWARD', 'DC_STOP',
     'GUN_FIRE',
@@ -208,7 +208,26 @@ export const CommandExecutor = {
         const str = String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello');
         return `MSG,${str}`;
       }
+      case 'send_message_xy': {
+        const x = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('X')) || '0', 10) || 0;
+        const y = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('Y')) || '0', 10) || 0;
+        const str = String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello');
+        return `MSG_XY,${x},${y},${str}`;
+      }
+      case 'display_icon': {
+        const name = block.getFieldValue('ICON') || 'rover';
+        const x = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('X')) || '0', 10) || 0;
+        const y = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('Y')) || '0', 10) || 0;
+        return `ICON,${name},${x},${y}`;
+      }
       case 'clear_display': return 'CLEAR_DISPLAY';
+      case 'clear_rect': {
+        const x = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('X')) || '0', 10) || 0;
+        const y = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('Y')) || '0', 10) || 0;
+        const w = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('W')) || '32', 10) || 32;
+        const h = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('H')) || '32', 10) || 32;
+        return `CLEAR_RECT,${x},${y},${w},${h}`;
+      }
       case 'buzzer_on': {
         const freq = Math.trunc(parseFloat(this.evaluateValueBlock(block.getInputTargetBlock('FREQ')) || '262'));
         const duration = this.evaluateValueBlock(block.getInputTargetBlock('DURATION')) || '1';
