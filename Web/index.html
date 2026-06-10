@@ -147,6 +147,8 @@
       let ready = false;
 
       const loader = new GLTFLoader();
+      // ares_robot.glb 가 meshopt 압축본이라 디코더 필수 ([[project_glb_optimization_todo]])
+      if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
       function onModelLoad(gltf) {
         const root = gltf.scene;
         root.traverse((o) => {
