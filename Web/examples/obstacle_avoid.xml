@@ -2,8 +2,8 @@
   <!-- 장애물 회피 주행 예제 (업그레이드).
        · 시작: 부팅음(도-미-솔) → 레이더(DC 모터) 회전 시작 → 전진
        · 평소: LED를 좌(1·2·3) ↔ 우(4·5·6)로 번갈아 점멸하며 달린다
-       · 장애물(20cm 이내): 경고음 + LED 전체 점등, 레이더를 반대로 돌리며
-         40cm 이상 열린 곳을 찾을 때까지 좌회전 1초씩 반복
+       · 장애물(40cm 이내): 경고음 + LED 전체 점등, 레이더를 반대로 돌리며
+         50cm 이상 열린 곳을 찾을 때까지 좌회전 1초씩 반복
        · 통로 발견: 안전음 + 레이더 정방향 → 그 방향으로 다시 전진
        (바깥 반복은 시뮬레이터 안전장치로 최대 100회까지 도는 무한 반복) -->
   <variables>
@@ -43,7 +43,7 @@
                                       <block type="logic_compare">
                                         <field name="OP">LT</field>
                                         <value name="A"><block type="variables_get"><field name="VAR" id="dist">거리값</field></block></value>
-                                        <value name="B"><block type="math_number"><field name="NUM">20</field></block></value>
+                                        <value name="B"><block type="math_number"><field name="NUM">40</field></block></value>
                                       </block>
                                     </value>
                                     <statement name="DO0">
@@ -71,7 +71,7 @@
                                                           <block type="logic_compare">
                                                             <field name="OP">GTE</field>
                                                             <value name="A"><block type="variables_get"><field name="VAR" id="dist">거리값</field></block></value>
-                                                            <value name="B"><block type="math_number"><field name="NUM">40</field></block></value>
+                                                            <value name="B"><block type="math_number"><field name="NUM">50</field></block></value>
                                                           </block>
                                                         </value>
                                                         <statement name="DO">
