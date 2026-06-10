@@ -22,21 +22,23 @@ function recolorLaunchpadAntenna(root, THREE) {
 
   // 영역 안에 들어가는 삼각형(3 정점 모두 안)을 분리해 inside/outside 인덱스 배열로 반환.
   // centroid 도 함께 계산. inside 가 비면 null 반환.
-  function splitTris(idxArr, pos, isInRegion) {
+  // posAttr.getX/Y/Z 로 정점 좌표를 읽는다 — EXT_meshopt_compression 압축본은
+  // InterleavedBufferAttribute 로 디코드되므로 array[v*3] 직접 인덱싱이 깨진다.
+  function splitTris(idxArr, posAttr, isInRegion) {
     const insideTris = [], outsideTris = [];
     const triCount = idxArr.length / 3;
     for (let t = 0; t < triCount; t++) {
       const a = idxArr[t * 3], b = idxArr[t * 3 + 1], c = idxArr[t * 3 + 2];
       const allIn =
-        isInRegion(pos[a * 3], pos[a * 3 + 1]) &&
-        isInRegion(pos[b * 3], pos[b * 3 + 1]) &&
-        isInRegion(pos[c * 3], pos[c * 3 + 1]);
+        isInRegion(posAttr.getX(a), posAttr.getY(a)) &&
+        isInRegion(posAttr.getX(b), posAttr.getY(b)) &&
+        isInRegion(posAttr.getX(c), posAttr.getY(c));
       (allIn ? insideTris : outsideTris).push(a, b, c);
     }
     if (!insideTris.length) return null;
     let cx = 0, cy = 0, cz = 0, n = 0;
     const used = new Set(insideTris);
-    for (const v of used) { cx += pos[v * 3]; cy += pos[v * 3 + 1]; cz += pos[v * 3 + 2]; n++; }
+    for (const v of used) { cx += posAttr.getX(v); cy += posAttr.getY(v); cz += posAttr.getZ(v); n++; }
     return { insideTris, outsideTris, centroid: { x: cx / n, y: cy / n, z: cz / n } };
   }
 
@@ -44,7 +46,6 @@ function recolorLaunchpadAntenna(root, THREE) {
     const geom = mesh.geometry;
     const posAttr = geom.getAttribute('position');
     if (!geom.getIndex() || !posAttr) continue;
-    const pos = posAttr.array;
     geom.computeBoundingBox();
     const bb = geom.boundingBox;
     const sx = bb.max.x - bb.min.x;
@@ -56,7 +57,7 @@ function recolorLaunchpadAntenna(root, THREE) {
       const fy = (y - bb.min.y) / sy;
       return fx > 0.78 && fx < 0.92 && fy > 0.70;
     };
-    let split = splitTris(geom.getIndex().array, pos, isAntenna);
+    let split = splitTris(geom.getIndex().array, posAttr, isAntenna);
     if (!split) {
       console.warn('[LaunchStation] 안테나 정점 감지 실패');
     } else {
@@ -92,7 +93,7 @@ function recolorLaunchpadAntenna(root, THREE) {
       const fy = (y - bb.min.y) / sy;
       return fx > 0.28 && fx < 0.46 && fy > 0.68;
     };
-    split = splitTris(geom.getIndex().array, pos, isRocket);
+    split = splitTris(geom.getIndex().array, posAttr, isRocket);
     if (!split) {
       console.warn('[LaunchStation] 로켓 정점 감지 실패');
     } else {
@@ -107,7 +108,7 @@ function recolorLaunchpadAntenna(root, THREE) {
       let rzMin = Infinity, rzMax = -Infinity;
       const usedR = new Set(insideTris);
       for (const v of usedR) {
-        const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
+        const x = posAttr.getX(v), y = posAttr.getY(v), z = posAttr.getZ(v);
         if (x < rxMin) rxMin = x; if (x > rxMax) rxMax = x;
         if (y < ryMin) ryMin = y; if (y > ryMax) ryMax = y;
         if (z < rzMin) rzMin = z; if (z > rzMax) rzMax = z;
