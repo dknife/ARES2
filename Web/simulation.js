@@ -261,6 +261,14 @@ const OLED_ICONS = {
 //   hasTraffic, placeLamps, placeHands, resetTraffic } 반환
 function buildSim(THREE, A, stage, loadingEl, cfg) {
   const { GLTFLoader, OrbitControls, RoomEnvironment } = A;
+  // Meshopt 압축 GLB(EXT_meshopt_compression) 로드용 디코더.
+  // 디코더가 있으면 압축본, 없으면 원본 GLB만 로드 가능 — 양쪽 모두 호환.
+  function makeGLTFLoader() {
+    const loader = new GLTFLoader();
+    const md = window.MeshoptDecoder;
+    if (md) loader.setMeshoptDecoder(md);
+    return loader;
+  }
   const EYE    = cfg.eyes   || null; // 눈 LED 설정 (없으면 null)
   const CHEST  = cfg.chest  || null; // 가슴 LED 설정 (없으면 null)
   const LAUNCH = cfg.launch || null; // 발사대 LED 설정 (구체 5개 + 도넛 1개)
@@ -747,7 +755,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   const TRAFFIC_HAND_COLOR  = 0xffcc00;
 
   if (cfg.model) {
-    new GLTFLoader().load(cfg.model, (gltf) => {
+    makeGLTFLoader().load(cfg.model, (gltf) => {
       const root = gltf.scene;
       root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
       const box = new THREE.Box3().setFromObject(root);
@@ -826,7 +834,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     // 부속 GLB 다중 로드 — 각 파일의 원점/스케일을 그대로 유지해 좌표 그대로 씬에 추가.
     // (모델 정렬·중앙 정렬 없음 — 배치 작업용 뷰)
     // 헬퍼(그리드/축)는 scene 에 그대로 두고, 로버 부속만 roverGroup 으로 묶어 전체를 한 번에 이동.
-    const loader = new GLTFLoader();
+    const loader = makeGLTFLoader();
     const roverGroup = new THREE.Group();
     roverGroup.position.y = 0.4;     // 전체 로버를 y +0.4 만큼 들어올림
     scene.add(roverGroup);
@@ -1546,7 +1554,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     clearAllSlots();
     trafficMode = 'lamps';
     const myMode = trafficMode;
-    new GLTFLoader().load(TRAFFIC.lamp, (gltf) => {
+    makeGLTFLoader().load(TRAFFIC.lamp, (gltf) => {
       if (trafficMode !== myMode) return;       // 도중에 다른 모드로 바뀌었으면 결과 무시
       const template = gltf.scene;
       template.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
@@ -1570,7 +1578,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     const n = Math.min(trafficSlots.length, TRAFFIC.hands.length);
     for (let i = 0; i < n; i++) {
       const slot = trafficSlots[i], url = TRAFFIC.hands[i], idx = i;
-      new GLTFLoader().load(url, (gltf) => {
+      makeGLTFLoader().load(url, (gltf) => {
         if (trafficMode !== myMode) return;
         const inst = gltf.scene;
         inst.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });

@@ -38,6 +38,7 @@ cp Web/styles.css     Build/styles.css
 cp Web/index.css      Build/index.css
 cp Web/mobile-preview.js Build/mobile-preview.js
 cp Web/vendor/three-bundle.min.js Build/vendor/three-bundle.min.js
+cp Web/vendor/meshopt_decoder.js  Build/vendor/meshopt_decoder.js
 mkdir -p Build/Mesh
 cp Web/Mesh/ares_robot.embed.js Build/Mesh/ares_robot.embed.js
 [ -f Web/Mesh/ares_robot.glb ] && cp Web/Mesh/ares_robot.glb Build/Mesh/ares_robot.glb || true
@@ -47,6 +48,7 @@ if [ -f WebGL/index.html ]; then
   mkdir -p Build/viewer/vendor
   cp WebGL/index.html                 Build/viewer/index.html
   cp WebGL/vendor/three-bundle.min.js Build/viewer/vendor/three-bundle.min.js
+  cp WebGL/vendor/meshopt_decoder.js  Build/viewer/vendor/meshopt_decoder.js
 else
   echo "        (WebGL/ 없음 -- viewer 건너뜀)"
 fi
