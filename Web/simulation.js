@@ -952,7 +952,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
             oledCanvas.height = OLED_H * OLED_SCALE;
             oledCtx = oledCanvas.getContext('2d');
             oledClear();
-            oledText(0, 0, 'Hello');           // 부팅 화면 (firmware booting_msg 와 동일 톤)
+            oledText(0, 0, 'ARES READY');      // 부팅 화면 (firmware booting_msg 와 동일 톤)
             oledTex = new THREE.CanvasTexture(oledCanvas);
             oledTex.colorSpace = THREE.SRGBColorSpace;
             oledTex.magFilter = THREE.NearestFilter;   // 픽셀 그대로 — SSD1306 의 도트 느낌
