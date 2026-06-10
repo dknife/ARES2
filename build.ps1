@@ -82,6 +82,9 @@ Copy-Item 'Web\mobile-preview.js'  'Build\mobile-preview.js'  -Force
 # embed.js 한 파일만 Build\ 루트에 둔다(이전의 Build\Mesh\ 폴더는 폐기).
 Write-Host '        + robot 3D embed (three bundle + ares_robot.embed.js)'
 Copy-Item 'Web\vendor\three-bundle.min.js' 'Build\vendor\three-bundle.min.js' -Force
+# Meshopt(EXT_meshopt_compression) 압축 GLB 디코더 — UMD, window.MeshoptDecoder 노출.
+# main.html / index.html / viewer\index.html 의 three-bundle 직후 <script> 가 이걸 로드한다.
+Copy-Item 'Web\vendor\meshopt_decoder.js'  'Build\vendor\meshopt_decoder.js'  -Force
 Copy-Item 'Web\Mesh\ares_robot.embed.js'   'Build\ares_robot.embed.js'        -Force
 
 # WebGL 로봇 뷰어(알비 + 눈 LED)도 함께 배포 → Build\viewer\.
@@ -93,6 +96,7 @@ if (Test-Path 'WebGL\index.html') {
     New-Item -ItemType Directory -Force -Path 'Build\viewer\vendor' | Out-Null
     Copy-Item 'WebGL\index.html'                 'Build\viewer\index.html'                 -Force
     Copy-Item 'WebGL\vendor\three-bundle.min.js' 'Build\viewer\vendor\three-bundle.min.js' -Force
+    Copy-Item 'WebGL\vendor\meshopt_decoder.js'  'Build\viewer\vendor\meshopt_decoder.js'  -Force
 } else {
     Write-Host '        (WebGL\ 없음 -- viewer 복사 건너뜀)'
 }
