@@ -1,0 +1,129 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="send_message" x="40" y="40">
+    <value name="Msg"><block type="text"><field name="TEXT">ARES Waking Up</field></block></value>
+    <next>
+      <block type="buzzer_on">
+        <value name="FREQ"><block type="math_number"><field name="NUM">262</field></block></value>
+        <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
+        <next>
+          <block type="buzzer_on">
+            <value name="FREQ"><block type="math_number"><field name="NUM">500</field></block></value>
+            <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
+            <next>
+              <block type="clear_display">
+                <next>
+                  <block type="batch_block">
+                    <statement name="DO">
+                      <block type="display_icon">
+                        <field name="ICON">closed_eye</field>
+                        <value name="X"><block type="math_number"><field name="NUM">10</field></block></value>
+                        <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                        <next>
+                          <block type="display_icon">
+                            <field name="ICON">closed_eye</field>
+                            <value name="X"><block type="math_number"><field name="NUM">80</field></block></value>
+                            <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                            <next>
+                              <block type="time_sleep">
+                                <value name="SECONDS"><block type="math_number"><field name="NUM">1</field></block></value>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </statement>
+                    <next>
+                      <block type="batch_block">
+                        <statement name="DO">
+                          <block type="display_icon">
+                            <field name="ICON">open_eye</field>
+                            <value name="X"><block type="math_number"><field name="NUM">10</field></block></value>
+                            <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                            <next>
+                              <block type="display_icon">
+                                <field name="ICON">open_eye</field>
+                                <value name="X"><block type="math_number"><field name="NUM">80</field></block></value>
+                                <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                                <next>
+                                  <block type="time_sleep">
+                                    <value name="SECONDS"><block type="math_number"><field name="NUM">1</field></block></value>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </statement>
+                        <next>
+                          <block type="batch_block">
+                            <statement name="DO">
+                              <block type="clear_rect">
+                                <value name="X"><block type="math_number"><field name="NUM">10</field></block></value>
+                                <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                                <value name="W"><block type="math_number"><field name="NUM">32</field></block></value>
+                                <value name="H"><block type="math_number"><field name="NUM">32</field></block></value>
+                                <next>
+                                  <block type="clear_rect">
+                                    <value name="X"><block type="math_number"><field name="NUM">80</field></block></value>
+                                    <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                                    <value name="W"><block type="math_number"><field name="NUM">32</field></block></value>
+                                    <value name="H"><block type="math_number"><field name="NUM">32</field></block></value>
+                                    <next>
+                                      <block type="display_icon">
+                                        <field name="ICON">open_eye</field>
+                                        <value name="X"><block type="math_number"><field name="NUM">10</field></block></value>
+                                        <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                                        <next>
+                                          <block type="display_icon">
+                                            <field name="ICON">open_eye</field>
+                                            <value name="X"><block type="math_number"><field name="NUM">80</field></block></value>
+                                            <value name="Y"><block type="math_number"><field name="NUM">0</field></block></value>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </statement>
+                            <next>
+                              <block type="send_message_xy">
+                                <value name="X"><block type="math_number"><field name="NUM">10</field></block></value>
+                                <value name="Y"><block type="math_number"><field name="NUM">40</field></block></value>
+                                <value name="Msg"><block type="text"><field name="TEXT">ARES is Ready</field></block></value>
+                                <next>
+                                  <block type="send_message_xy">
+                                    <value name="X"><block type="math_number"><field name="NUM">30</field></block></value>
+                                    <value name="Y"><block type="math_number"><field name="NUM">52</field></block></value>
+                                    <value name="Msg"><block type="text"><field name="TEXT">for You</field></block></value>
+                                    <next>
+                                      <block type="gun_fire">
+                                        <next>
+                                          <block type="time_sleep">
+                                            <value name="SECONDS"><block type="math_number"><field name="NUM">1</field></block></value>
+                                            <next>
+                                              <block type="send_message">
+                                                <value name="Msg"><block type="text"><field name="TEXT">Waiting Mode</field></block></value>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </next>
+  </block>
+</xml>
