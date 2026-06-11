@@ -507,29 +507,42 @@ const value = CommandExecutor.evaluateValueBlock(block.getInputTargetBlock('SECO
 
 **반환값**: `Promise<void>`
 
-**처리 블록 타입 및 명령**:
+**처리 블록 타입 및 명령** (`generateCommand` 기준):
 
 | 블록 타입 | 명령 형식 | 설명 |
 |----------|-----------|------|
-| `set_lamp` | `[lamp0 lamp1 lamp2 lamp3 lamp4]` | LED 램프 설정 |
-| `send_message` | `MSG,{문자열}` | 메시지 전송 |
-| `buzzer_on` | `BUZZER_ON,{주파수},{시간}` | 부저 울리기 |
-| `timed_forward` | `tFORWARD,{시간}` | 일정 시간 전진 |
-| `timed_backward` | `tBACKWARD,{시간}` | 일정 시간 후진 |
-| `timed_right` | `tRIGHT,{시간}` | 일정 시간 우회전 |
-| `timed_left` | `tLEFT,{시간}` | 일정 시간 좌회전 |
-| `move_forward` | `FORWARD` | 계속 전진 |
-| `move_backward` | `BACKWARD` | 계속 후진 |
-| `turn_left` | `LEFT` | 계속 좌회전 |
-| `turn_right` | `RIGHT` | 계속 우회전 |
-| `stop_moving` | `STOP` | 정지 |
+| `set_lamp` | `[v0 v1 v2 v3 v4 v5]` | LED 6개 밝기 일괄 설정 (0.0~1.0) |
+| `led_on` | `LED_ON,{번호},{밝기}` | LED 1개 켜기 (번호 0~5) |
+| `led_off` | `LED_OFF,{번호}` | LED 1개 끄기 |
+| `led_off_all` | `LED_OFF,ALL` | LED 전체 끄기 |
+| `send_message` | `MSG,{문자열}` | OLED에 문자열 표시 |
+| `send_message_xy` | `MSG_XY,{x},{y},{문자열}` | OLED 좌표 지정 문자열 표시 |
+| `display_icon` | `ICON,{이름},{x},{y}` | OLED 아이콘 표시 (rover/mars/open_eye/closed_eye) |
+| `clear_display` | `CLEAR_DISPLAY` | OLED 전체 지우기 |
+| `clear_rect` | `CLEAR_RECT,{x},{y},{w},{h}` | OLED 영역 지우기 |
+| `buzzer_on` / `buzzer_note` | `BUZZER_ON,{주파수},{시간}` | 부저 울리기 |
+| `gun_fire` | `GUN_FIRE` | 총 발사 |
+| `timed_forward` | `SERVO_tFORWARD,{시간}` | 일정 시간 전진 |
+| `timed_backward` | `SERVO_tBACKWARD,{시간}` | 일정 시간 후진 |
+| `timed_right` | `SERVO_tRIGHT,{시간}` | 일정 시간 우회전 |
+| `timed_left` | `SERVO_tLEFT,{시간}` | 일정 시간 좌회전 |
+| `move_forward` | `SERVO_FORWARD` | 계속 전진 |
+| `move_backward` | `SERVO_BACKWARD` | 계속 후진 |
+| `turn_left` | `SERVO_LEFT` | 계속 좌회전 |
+| `turn_right` | `SERVO_RIGHT` | 계속 우회전 |
+| `stop_moving` | `SERVO_STOP` | 정지 |
+| `main_motor_forward_timed` | `DC_tFORWARD,{시간}` | DC 모터 일정 시간 정회전 |
+| `main_motor_backward_timed` | `DC_tBACKWARD,{시간}` | DC 모터 일정 시간 역회전 |
+| `main_motor_forward` | `DC_FORWARD` | DC 모터 계속 정회전 |
+| `main_motor_backward` | `DC_BACKWARD` | DC 모터 계속 역회전 |
+| `main_motor_stop` | `DC_STOP` | DC 모터 정지 |
 | `time_sleep` | `SLEEP,{시간}` | 대기 |
-| `pico_check_device` | `READY` | 장치 상태 확인 |
-| `check_distance` | `DISTANCE` | 거리 측정 |
-| `check_magnetic` | `MAGNET` | 자기장 측정 |
+| `pico_check_device` | `PING` | 장치 상태 확인 (OLED에 CONNECTED! 표시) |
+| `check_distance` | `DISTANCE` | 거리 측정 → `DIST:{값}` 응답 |
+| `check_magnetic` | `MAGNET` | 자기장 측정 → `MAG:{값}` 응답 |
 
 **제어 구조 처리**:
-- `assign_variable`: 변수에 값 할당
+- `batch_block`: 자식 블록들을 `BATCH;cmd1;cmd2;...` 하나로 묶어 전송
 - `math_change`: 변수 값 변경
 - `controls_if`: 조건문 (IF-ELSE)
 - `controls_whileUntil`: 반복문 (WHILE/UNTIL, 최대 100회)
@@ -539,8 +552,9 @@ const value = CommandExecutor.evaluateValueBlock(block.getInputTargetBlock('SECO
 1. 블록 타입 확인
 2. 필요한 입력 값 평가
 3. 명령 문자열 생성
-4. BLE로 전송 (`BluetoothManager.sendData()`)
-5. 500ms 대기 (Pico 처리 시간)
+4. BLE로 전송 (`BluetoothManager.sendData()`) — fire-and-forget 명령은 응답을
+   기다리지 않고, 그 외(센서/시간 제한 이동 등)는 응답 수신까지 대기
+5. 명령별 쿨다운 대기 (fire-and-forget 40ms, 응답 대기 명령 20ms)
 6. 다음 블록 처리 (재귀 호출)
 
 **에러 처리**: 명령 오류 시 로그 기록 후 Error throw
@@ -593,9 +607,9 @@ Blockly에서 사용할 커스텀 블록을 정의합니다.
 ##### 1. 신호 주고받기
 
 **`set_lamp`** - 램프 세팅
-- **입력**: LAMP0, LAMP1, LAMP2, LAMP3, LAMP4 (Number)
+- **입력**: LAMP0, LAMP1, LAMP2, LAMP3, LAMP4, LAMP5 (Number)
 - **색상**: `#4C97FF`
-- **설명**: 5개의 LED 램프 밝기 설정
+- **설명**: 6개의 LED 램프 밝기 설정
 
 **`send_message`** - 메시지 보내기
 - **입력**: Msg (String)
@@ -1102,11 +1116,12 @@ TextEncoder로 인코딩
   ↓
 20바이트 청크로 분할
   ↓
-각 청크를 writeValueWithResponse()
+각 청크를 writeValueWithoutResponse()
+(미지원 characteristic이면 writeValueWithResponse로 fallback)
   ↓
-100ms 대기 (청크 간)
+청크 *사이*에만 100ms 대기 (마지막 청크 후에는 즉시 종료)
   ↓
-응답 대기 (Promise, 타임아웃 20초)
+[응답 대기 명령만] 응답 대기 (Promise, 타임아웃 5초)
   ↓
 characteristicvaluechanged 이벤트
   ↓
@@ -1114,7 +1129,7 @@ handleRxData() → processReceivedData()
   ↓
 Promise resolve
   ↓
-500ms 대기 (Pico 처리 시간)
+쿨다운 대기 (fire-and-forget 40ms, 응답 대기 명령 20ms)
   ↓
 다음 블록 처리
 ```
@@ -1218,35 +1233,70 @@ Logger에 불러오기 로그
 
 ### BLE 명령 프로토콜
 
-| 명령 | 형식 | 예시 | 설명 |
+모든 명령은 newline(`\n`) 종단 텍스트이며 20바이트 청크로 분할 전송된다.
+"응답"이 `—` 인 명령은 fire-and-forget(펌웨어가 응답을 보내지 않음, `Pico/main.py`의
+`NO_RESPONSE_CMDS` 참조)이고, 그 외에는 성공 시 `1`, 미인식 시 `0`, 예외 시 `ERROR`를 회신한다.
+
+**연결/시스템**
+
+| 명령 | 형식 / 예시 | 응답 | 설명 |
 |------|------|------|------|
-| 램프 설정 | `[v0 v1 v2 v3 v4]` | `[1.0 0.5 0.0 0.5 1.0]` | 5개 LED 밝기 (0.0-1.0) |
-| 메시지 전송 | `MSG,{문자열}` | `MSG,Hello` | 문자열 전송 |
-| 부저 | `BUZZER_ON,{주파수},{시간}` | `BUZZER_ON,440,2` | 440Hz, 2초 |
-| 전진(시간) | `tFORWARD,{시간}` | `tFORWARD,1.5` | 1.5초 전진 |
-| 후진(시간) | `tBACKWARD,{시간}` | `tBACKWARD,1.0` | 1.0초 후진 |
-| 우회전(시간) | `tRIGHT,{시간}` | `tRIGHT,0.5` | 0.5초 우회전 |
-| 좌회전(시간) | `tLEFT,{시간}` | `tLEFT,0.5` | 0.5초 좌회전 |
-| 계속 전진 | `FORWARD` | `FORWARD` | 멈출 때까지 전진 |
-| 계속 후진 | `BACKWARD` | `BACKWARD` | 멈출 때까지 후진 |
-| 계속 좌회전 | `LEFT` | `LEFT` | 멈출 때까지 좌회전 |
-| 계속 우회전 | `RIGHT` | `RIGHT` | 멈출 때까지 우회전 |
-| 정지 | `STOP` | `STOP` | 모든 동작 중지 |
-| 대기 | `SLEEP,{시간}` | `SLEEP,2` | 2초 대기 |
-| 장치 확인 | `READY` | `READY` | 장치 상태 확인 |
-| 거리 측정 | `DISTANCE` | `DISTANCE` | 초음파 센서 거리 측정 |
-| 자기장 측정 | `MAGNET` | `MAGNET` | 자기 센서 측정 |
+| 연결 확인 | `PING` | `1` | OLED에 CONNECTED! 표시 |
+| 비상 정지 | `STOP_ALL` | — | 모든 모터·출력 정지 |
+| 상태 조회 | `GET_STATUS` | `STATUS,{6필드}` | 대시보드용 상태 |
+| 설정 조회 | `GET_SYS` | `SYS_VALUES,{속도},{거리},{자동정지},{이름},{좌보정},{우보정}` | 시스템 설정값 |
+| 설정 변경 | `SYS_SET,{속도},{거리},{자동정지},{이름}` | — | 대시보드에서 사용 |
+| 모듈 조회/설정 | `GET_MODULES` / `SET_MODULE,{이름},{0/1}` / `SET_PIN,{이름},{핀}` | `1` | 현재 웹 UI 미사용 |
+| 일괄 실행 | `BATCH;{cmd1};{cmd2};...` | `1` | 묶음 순차 실행 (blocking) |
+| 캘리브레이션 | `CALIB_START` / `CALIB_SET,{좌},{우}` | — | 휠 좌우 속도 보정 |
+
+**이동 (서보 휠 / DC 모터)**
+
+| 명령 | 형식 / 예시 | 응답 | 설명 |
+|------|------|------|------|
+| 시간 이동 | `SERVO_tFORWARD,{초}` (`tBACKWARD`/`tRIGHT`/`tLEFT` 동일) | `1` | blocking — 끝나면 응답 |
+| 연속 이동 | `SERVO_FORWARD` / `SERVO_BACKWARD` / `SERVO_LEFT` / `SERVO_RIGHT` | — | 멈출 때까지 |
+| 정지 | `SERVO_STOP` | — | 휠 정지 |
+| DC 시간 회전 | `DC_tFORWARD,{초}` / `DC_tBACKWARD,{초}` | `1` | blocking |
+| DC 연속/정지 | `DC_FORWARD` / `DC_BACKWARD` / `DC_STOP` | — | DC 모터 |
+| 대기 | `SLEEP,{초}` | `1` | blocking |
+
+(레거시 호환: `tFORWARD,{초}`·`FORWARD`·`STOP`·`DCMOTOR`·`MAIN_FORWARD` 계열도
+펌웨어가 처리하지만 신규 코드에서는 `SERVO_*`/`DC_*` 사용)
+
+**출력 (LED / OLED / 부저 / 총)**
+
+| 명령 | 형식 / 예시 | 응답 | 설명 |
+|------|------|------|------|
+| 램프 일괄 | `[v0 v1 v2 v3 v4 v5]` 예: `[1.0 0.5 0 0 0.5 1.0]` | — | 6개 LED 밝기 (0.0~1.0) |
+| LED 개별 | `LED_ON,{번호},{밝기}` / `LED_OFF,{번호}` / `LED_OFF,ALL` | — | 번호 0~5 |
+| LED 패턴 | `LED_PATTERN` | — | 스와이프 효과 (대시보드) |
+| 메시지 | `MSG,{문자열}` / `MSG_XY,{x},{y},{문자열}` | — | OLED 텍스트 |
+| 아이콘 | `ICON,{이름},{x},{y}` | — | rover/mars/open_eye/closed_eye |
+| 화면 지우기 | `CLEAR_DISPLAY` / `CLEAR_RECT,{x},{y},{w},{h}` | — | OLED |
+| 부저 | `BUZZER_ON,{주파수},{초}` 예: `BUZZER_ON,440,2` | — | 논블로킹 시작, 자동 정지 |
+| 노래 | `SING` | — | 내장 멜로디 (blocking, 대시보드) |
+| 총 발사 | `GUN_FIRE` | — | 1회 발사 |
+
+**센서**
+
+| 명령 | 형식 | 응답 | 설명 |
+|------|------|------|------|
+| 거리 측정 | `DISTANCE` | `DIST:{cm}` (모듈 없으면 `DIST:ERROR`) | 초음파 센서 |
+| 자기장 측정 | `MAGNET` | `MAG:{0/1}` (모듈 없으면 `MAG:ERROR`) | 1=감지 |
 
 ### 주요 상수 값
 
 | 상수 | 값 | 의미 |
 |------|-----|------|
 | MAX_CHUNK_SIZE | 20 | BLE 전송 청크 크기 (바이트) |
-| COMMAND_DELAY | 500 | 명령 간 지연 (ms) |
-| CHUNK_DELAY | 100 | 청크 간 지연 (ms) |
-| READ_INTERVAL | 1000 | 주기적 읽기 간격 (ms) |
-| RESPONSE_TIMEOUT | 20000 | 응답 타임아웃 (ms) |
+| COMMAND_DELAY | 100 | 명령 간 지연 (ms) |
+| CHUNK_DELAY | 100 | 청크 *사이* 지연 (ms, 마지막 청크 후 없음) |
+| READ_INTERVAL | 500 | 폴링 모드 주기적 읽기 간격 (ms) |
+| RESPONSE_TIMEOUT | 5000 | 응답 타임아웃 (ms) |
 | MAX_LOOPS | 100 | 반복문 최대 횟수 |
+| RECEIVE_TIMEOUT_MS (Pico) | 500 | 멀티 청크 명령 라인 완성 대기 (ms) |
+| MAX_BUFFER_SIZE (Pico) | 512 | UART 수신 버퍼 상한 (바이트) |
 
 ### 에러 코드 및 처리
 
@@ -1254,7 +1304,7 @@ Logger에 불러오기 로그
 |------------|------|-----------|
 | `이 브라우저는 Web Bluetooth API를 지원하지 않습니다` | 브라우저 미지원 | Chrome 56+ 또는 Edge 79+ 사용 |
 | `아레스 탐사선이 BLE로 연결되어 있지 않습니다` | BLE 미연결 | 연결 버튼 클릭하여 장치 연결 |
-| `Response timeout--` | 응답 타임아웃 | 장치 상태 확인, 재연결 시도 |
+| `응답 시간 초과` | 응답 타임아웃 (5초) | 장치 상태 확인, 재연결 시도 |
 | `이미 연결 시도 중입니다` | 중복 연결 시도 | 이전 연결 시도 완료 대기 |
 | `먼저 피코를 BLE로 연결해주세요` | 명령 실행 전 미연결 | BLE 연결 후 실행 |
 
@@ -1264,8 +1314,8 @@ Logger에 불러오기 로그
 
 **프로젝트명**: ARES 화성 탐사선 제어 시스템
 **개발사**: 코리아사이언스
-**문서 버전**: 1.0.0
-**최종 수정일**: 2025-10-10
+**문서 버전**: 1.1.0
+**최종 수정일**: 2026-06-11 (명령 프로토콜 표·상수·전송 흐름을 현행 코드 기준으로 갱신)
 
 ---
 

@@ -82,7 +82,7 @@ Upload all `.py` files from `Pico/` to the Pico using Thonny, ampy, or rshell. S
 See `Document/API_DOCUMENTATION.md` for the full command list. Key patterns:
 - Movement: `FORWARD`, `tFORWARD,N` (timed), `MAIN_FORWARD` (DC motor)
 - System: `GET_SYS`, `GET_STATUS`, `SYS_SET,speed,dist,stop,name`, `PING`
-- LED: `[v0 v1 v2 v3 v4]`, `LED_ON,num,brightness`, `LED_OFF,num`
+- LED: `[v0 v1 v2 v3 v4 v5]` (6개), `LED_ON,num,brightness`, `LED_OFF,num`
 - Sensors: `DISTANCE` → `DIST:value`, `MAGNET` → `MAG:value`
 - Modules: `GET_MODULES`, `SET_MODULE,name,0/1`, `SET_PIN,name,num`
 
