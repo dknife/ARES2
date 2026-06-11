@@ -171,7 +171,7 @@ python -m http.server 8000
 - `PING` - 연결 확인
 
 ### LED 명령
-- `[v0 v1 v2 v3 v4]` - 전체 LED 밝기 설정
+- `[v0 v1 v2 v3 v4 v5]` - 전체 LED(6개) 밝기 설정
 - `LED_ON,num,brightness` - 개별 LED 켜기
 - `LED_OFF,num` 또는 `LED_OFF,ALL` - LED 끄기
 

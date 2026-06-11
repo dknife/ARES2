@@ -1560,9 +1560,17 @@ build.bat              (cmd 진입점, 메시지 갱신)
 06-04 & \texttt{Web/simulation.js} & 로켓 발사음 \texttt{playRocketLaunch()} --- Web Audio 화이트노이즈를 lowpass(럼블)·bandpass(분사 로어)로 필터링한 ${\approx}3.6$초 절차적 굉음. UI 로켓 버튼·\texttt{GUN\_FIRE} 명령에서 발사 시작 시 재생. \\
 06-04 & \texttt{Web/examples/albi\_song.xml} (신규) & 예제 ``알비의 노래'' --- Real Madrid 응원가 \textit{Hala Madrid y nada más} 1절 주선율을 \texttt{buzzer\_on} 40음으로 전사(반음은 정확 Hz, 예: C\#5=554). \\
 06-04 & \texttt{Web/main.html} & 예제 드롭다운(\texttt{\#exampleSelect})에 ``🎵 알비의 노래'' 옵션 추가. \\
+\midrule
+06-11 & \texttt{Pico/main.py} & 전수 점검 후속 (1): 부저 비활성 시 \texttt{boot()} AttributeError로 부팅 전체가 실패하던 문제 --- None 가드 추가. \texttt{\_read\_uart\_line} 에 \texttt{\_pop\_line} 분리 --- 한 chunk에 명령 2개가 오면 잔여 라인이 새 바이트 도착까지 매 호출 500\,ms 공회전하던 문제 제거(버퍼 내 완전한 라인 우선 소비). \texttt{NO\_RESPONSE\_CMDS} 에 대시보드/비상정지 경로 명령(\texttt{STOP\_ALL}, \texttt{STOP}, \texttt{t*}, \texttt{LED\_PATTERN}, \texttt{SING}, \texttt{SYS\_SET}, \texttt{CALIB\_*}) 추가 --- 웹이 기다리지 않는 잉여 \texttt{1} 응답이 이후 명령의 응답 슬롯에 오매칭되던 ack 표류 차단. \\
+06-11 & \texttt{Pico/process\_data.py} & \texttt{SERVO\_STOP}/\texttt{STOP}/\texttt{DC\_STOP}/\texttt{MAIN\_STOP}/\texttt{LED\_PATTERN}/\texttt{CLEAR\_DISPLAY} 6곳 모듈 None 가드 누락 보강(모듈 비활성 시 \texttt{ERROR} 대신 규약대로 \texttt{0}). \\
+06-11 & \texttt{Web/bluetooth.js} & \texttt{cleanup()} 이 pending promise를 settle하지 않아 응답 대기 중 연결이 끊기면 \texttt{executeWorkspace} 가 영구 정지하던 문제 --- \texttt{pendingReject} 호출. \texttt{.bind(this)} 등록/unbound 제거 불일치로 재연결마다 BLE 리스너가 누적되던 문제 --- bound 핸들러를 필드에 보관해 참조 통일. \texttt{disconnect()} 의 \texttt{stopNotifications} 이중 호출 제거. \texttt{requestDevice} 에 UART 서비스 필터 추가 --- \texttt{AT+NAME} 으로 개명된 장치도 검색됨. \\
+06-11 & \texttt{Web/commandexecutor.js} & 툴박스에 있던 \texttt{logic\_operation}(그리고/또는)·\texttt{logic\_negate}(아니다)가 평가기에 없어 항상 거짓으로 평가되던 문제 --- 케이스 추가. \texttt{FIRE\_AND\_FORGET\_HEADS} 를 펌웨어 \texttt{NO\_RESPONSE\_CMDS} 와 동기화. \\
+06-11 & \texttt{Web/simulation.js} & WebGL 자원 누수 일괄 수정: \texttt{dispose()} 에 PMREM 환경맵·Sprite 머티리얼/텍스처 해제 + \texttt{forceContextLoss()}(토픽 전환 반복 시 컨텍스트 상한 도달 방지). \texttt{disposed} 플래그로 GLB 비동기 로드 vs 토픽 전환 레이스 차단(죽은 씬 추가·\texttt{loadingEl} 조기 숨김 방지, 미사용 GLB 자원 즉시 해제). 신호등 로드를 모드 문자열 비교 대신 증가 토큰으로 --- 버튼 연타 시 고아 인스턴스 누적 제거. \\
+06-11 & \texttt{Pico/system\_config.py}, \texttt{Pico/system.json} & \texttt{pin\_leds} 를 \texttt{pins.py LED\_PINS} 와 동일한 6핀(\texttt{21,20,19,18,17,16})으로 정합. \texttt{device\_name} \texttt{"ARE"}(잘림 추정) $\to$ \texttt{"ARES"} 복원. \\
+06-11 & \texttt{Document/API\_DOCUMENTATION.md} 외 & 프로토콜 표 전면 현행화(레거시 \texttt{tFORWARD} $\to$ \texttt{SERVO\_t*}, \texttt{READY} $\to$ \texttt{PING}, LED\,5$\to$6개, OLED/LED/DC/BATCH/캘리브레이션 명령·응답 포맷 추가), 상수 표(\texttt{RESPONSE\_TIMEOUT} 5000 등)·전송 흐름(\texttt{writeValueWithoutResponse}, 청크 사이 지연, 쿨다운 40/20\,ms) 갱신. \texttt{CLAUDE.md}/\texttt{README.md}/\texttt{copilot-instructions.md} 의 LED 패턴 표기를 6값으로 통일. \\
 \bottomrule
 \end{tabularx}
-\caption{2026-05-19 \textendash{} 06-04 변경 범위 (롤링).}
+\caption{2026-05-19 \textendash{} 06-11 변경 범위 (롤링).}
 \end{table}
 
 \begin{table}[h]
@@ -1607,6 +1615,11 @@ build.bat              (cmd 진입점, 메시지 갱신)
 06-04 & \texttt{e666ea9} & Sim: 로켓 발사 시 절차적 발사음 추가 (럼블+분사 굉음) \\
 06-04 & \texttt{db9985b} & Example: ``알비의 노래'' 추가 --- 부저로 Hala Madrid(알라 마드리드) 응원가 후렴 연주 \\
 06-04 & \texttt{0f4fe08} & Example: ``알비의 노래''를 악보 기반 1절 주선율로 교체 (Hala Madrid y nada más) \\
+\midrule
+06-11 & \texttt{6aa162f} & Fix(Pico): 부팅·수신 루프 안정화 + None 가드 6곳 + ack 표류 차단 \\
+06-11 & \texttt{a906d36} & Fix(Web): BLE pending 영구 대기·리스너 누적·논리 블록 평가 수정 \\
+06-11 & \texttt{6ac65a3} & Sim: WebGL 자원 누수·GLB 로드 레이스 수정 \\
+06-11 & \textit{(pending)} & Docs: API 문서 프로토콜 표·상수 현행화, LED 6값 표기 통일, 변경 이력 추가 \\
 \bottomrule
 \end{tabularx}
 \caption{관련 커밋 (\texttt{main} 브랜치). 05-22 행만 본 문서 갱신 시점에 아직 커밋되지 않은 작업.}

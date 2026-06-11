@@ -160,7 +160,7 @@ if not robot.wheel:
 |------|------|------|
 | **서보 이동** | `SERVO_tFORWARD,N` / `SERVO_FORWARD` / `SERVO_STOP` | `1` (성공) / `0` (실패) |
 | **DC 모터** | `DC_tFORWARD,N` / `DC_FORWARD` / `DC_STOP` | `1` / `0` |
-| **LED** | `LED_ON,num,brightness` / `LED_OFF,num` / `[v0 v1 v2 v3 v4]` | `1` / `0` |
+| **LED** | `LED_ON,num,brightness` / `LED_OFF,num` / `[v0 v1 v2 v3 v4 v5]` | `1` / `0` |
 | **디스플레이** | `MSG,텍스트` / `CLEAR_DISPLAY` | `1` / `0` |
 | **부저** | `BUZZER_ON,freq,duration` | `1` / `0` |
 | **전투** | `GUN_FIRE` | `1` / `0` |
