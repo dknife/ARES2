@@ -29,6 +29,10 @@ class AresRover:
     #   음 길이 페이싱은 웹이 로컬로 처리하고, 자동 정지는 run() 루프의
     #   buzzer.update()가 담당한다. (SERVO_t*/DC_t*/SLEEP/BATCH/SING은 여전히
     #   blocking 처리하므로 이 목록에 넣지 말 것.)
+    # 대시보드/비상정지 경로 명령(STOP_ALL, SYS_SET, CALIB_*, 레거시 t*, STOP,
+    # LED_PATTERN, SING)은 웹이 응답을 기다리지 않고 보낸다(waitForResponse=false).
+    # 이들에 응답하면 잉여 ack가 떠돌다 이후 다른 명령의 응답 슬롯에 잘못
+    # 매칭되므로(웹은 명령-응답을 짝짓지 않음) 응답을 생략한다.
     NO_RESPONSE_CMDS = (
         "LED_ON", "LED_OFF",
         "MSG", "MSG_XY", "ICON", "CLEAR_DISPLAY", "CLEAR_RECT",
@@ -36,6 +40,10 @@ class AresRover:
         "DC_FORWARD", "DC_BACKWARD", "DC_STOP",
         "GUN_FIRE",
         "BUZZER_ON",
+        "STOP_ALL", "STOP",
+        "tFORWARD", "tBACKWARD", "tLEFT", "tRIGHT",
+        "LED_PATTERN", "SING",
+        "SYS_SET", "CALIB_START", "CALIB_SET",
     )
 
     def __init__(self):
@@ -67,8 +75,9 @@ class AresRover:
         # 모든 하드웨어 안전 정지
         self._safe_stop_all_motors()
         
-        # 부팅 사운드
-        self.robot.buzzer.boot_sound()
+        # 부팅 사운드 (부저 비활성/초기화 실패 시에도 부팅은 계속)
+        if self.robot.buzzer is not None:
+            self.robot.buzzer.boot_sound()
         
         # OLED 부팅 메시지
         if self.robot.oled is not None:
@@ -83,12 +92,28 @@ class AresRover:
         """모든 하드웨어 안전 정지"""
         self.robot.stop_all()
 
+    def _pop_line(self):
+        """rx_buffer에 완전한 라인이 있으면 떼어내 반환, 없으면 None."""
+        if '\n' not in self.rx_buffer:
+            return None
+        newline_idx = self.rx_buffer.index('\n')
+        complete_line = self.rx_buffer[:newline_idx].strip()
+        self.rx_buffer = self.rx_buffer[newline_idx + 1:]
+        return complete_line
+
     def _read_uart_line(self):
         """UART에서 완전한 라인 읽기.
         newline 발견 즉시 종료 — 단일 chunk 명령에서 무조건 50ms를 기다리지 않는다.
         멀티 chunk 명령(LED 패턴, SYS_SET 등)은 RECEIVE_TIMEOUT_MS까지 폴링하여 안전.
         """
-        if not self.uart.any() and not self.rx_buffer:
+        # 한 chunk에 명령이 2개 이상 도착해 버퍼에 남은 라인을 먼저 소비한다.
+        # (이 검사가 없으면 새 바이트가 올 때까지 아래 루프가 매번
+        #  RECEIVE_TIMEOUT_MS를 공회전하며 둘째 명령 실행이 지연된다.)
+        line = self._pop_line()
+        if line is not None:
+            return line
+
+        if not self.uart.any():
             return None
 
         start = utime.ticks_ms()
@@ -105,11 +130,9 @@ class AresRover:
                     return None
 
                 # newline 즉시 종료
-                if '\n' in self.rx_buffer:
-                    newline_idx = self.rx_buffer.index('\n')
-                    complete_line = self.rx_buffer[:newline_idx].strip()
-                    self.rx_buffer = self.rx_buffer[newline_idx + 1:]
-                    return complete_line
+                line = self._pop_line()
+                if line is not None:
+                    return line
             else:
                 utime.sleep_ms(2)
 
@@ -120,7 +143,7 @@ class AresRover:
 
     def _needs_response(self, data):
         """응답 송신 여부. fire-and-forget 명령은 False (NO_RESPONSE_CMDS 참조)."""
-        if data.startswith("["):           # LED 패턴 [v0 v1 v2 v3 v4]
+        if data.startswith("["):           # LED 패턴 [v0 v1 v2 v3 v4 v5]
             return False
         head = data.split(",", 1)[0]
         return head not in self.NO_RESPONSE_CMDS

@@ -34,7 +34,7 @@ DEFAULT_CONFIG = {
     "pin_distance_echo": 7,
     "pin_magsensor": 26,
     "pin_gun": 22,
-    "pin_leds": "20,19,18,17,16",  # 5개 LED 핀 (쉼표로 구분)
+    "pin_leds": "21,20,19,18,17,16",  # 6개 LED 핀 (쉼표로 구분, pins.py LED_PINS와 동일)
     "pin_i2c_sda": 4,
     "pin_i2c_scl": 5
 }
