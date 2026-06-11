@@ -316,6 +316,21 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
   const BOX_CLEAR_R = 5;               // 로버(원점) 주위 이 반경 안에는 박스를 두지 않는다
   let obstaclesOn = true;              // 장애물(박스) 설치 여부 — 제거하면 충돌·거리감지에서도 빠진다
 
+  // dispose() 이후 도착하는 비동기 GLB 로드 콜백 차단용 플래그.
+  // (토픽 전환 중 로드가 끝나면 죽은 씬에 추가되어 영영 해제되지 않고,
+  //  공유 DOM인 loadingEl 을 건드려 새 토픽의 로딩 표시를 조기에 숨긴다.)
+  let disposed = false;
+  // 로드됐지만 쓰이지 못한 GLB 의 GPU 자원 해제
+  function disposeObject3D(root) {
+    root.traverse((o) => {
+      if (o.isMesh || o.isSprite) {
+        o.geometry?.dispose?.();
+        const m = o.material;
+        (Array.isArray(m) ? m : [m]).forEach((mm) => { mm?.map?.dispose?.(); mm?.dispose?.(); });
+      }
+    });
+  }
+
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -757,6 +772,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
 
   if (cfg.model) {
     makeGLTFLoader().load(cfg.model, (gltf) => {
+      if (disposed) { disposeObject3D(gltf.scene); return; }
       const root = gltf.scene;
       root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
       const box = new THREE.Box3().setFromObject(root);
@@ -829,7 +845,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       if (loadingEl) loadingEl.style.display = 'none';
     }, undefined, (err) => {
       console.error('시뮬레이션 모델 로드 실패:', err);
-      if (loadingEl) loadingEl.textContent = '모델을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
+      if (loadingEl && !disposed) loadingEl.textContent = '모델을 불러오지 못했어요 (HTTP 서버에서 실행해야 합니다)';
     });
   } else if (cfg.parts && cfg.parts.length) {
     // 부속 GLB 다중 로드 — 각 파일의 원점/스케일을 그대로 유지해 좌표 그대로 씬에 추가.
@@ -879,6 +895,7 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     let remaining = cfg.parts.length;
     cfg.parts.forEach((url) => {
       loader.load(url, (gltf) => {
+        if (disposed) { disposeObject3D(gltf.scene); return; }
         const root = gltf.scene;
         // RoverBody 는 본체라 1.0 그대로, 나머지 부속은 본체 기준으로 비율을 맞추기 위해 1/2 축소.
         if (!/RoverBody\.glb$/.test(url)) root.scale.setScalar(0.5);
@@ -980,10 +997,10 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
         } else {
           roverGroup.add(root);
         }
-        if (--remaining === 0 && loadingEl) loadingEl.style.display = 'none';
+        if (--remaining === 0 && loadingEl && !disposed) loadingEl.style.display = 'none';
       }, undefined, (err) => {
         console.error('부속 로드 실패:', url, err);
-        if (--remaining === 0 && loadingEl) loadingEl.style.display = 'none';
+        if (--remaining === 0 && loadingEl && !disposed) loadingEl.style.display = 'none';
       });
     });
     // 배치용 카메라 — 그리드(2×2)와 길이 1 축이 잘 보이는 비스듬한 시점.
@@ -1550,13 +1567,16 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     if (!s) return;
     setSlotOn(i, !s.on);
   }
+  // 모드 문자열 비교만으로는 같은 모드 재진입(버튼 연타)을 구분하지 못해
+  // 앞선 로드의 인스턴스가 고아로 남는다 — 호출마다 증가하는 토큰으로 구분.
+  let trafficLoadToken = 0;
   function placeLamps() {
     if (!TRAFFIC || !trafficRoot || !trafficSlots) return;
     clearAllSlots();
     trafficMode = 'lamps';
-    const myMode = trafficMode;
+    const myToken = ++trafficLoadToken;
     makeGLTFLoader().load(TRAFFIC.lamp, (gltf) => {
-      if (trafficMode !== myMode) return;       // 도중에 다른 모드로 바뀌었으면 결과 무시
+      if (disposed || myToken !== trafficLoadToken) { disposeObject3D(gltf.scene); return; }
       const template = gltf.scene;
       template.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
       for (let i = 0; i < trafficSlots.length; i++) {
@@ -1575,12 +1595,12 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
     if (!TRAFFIC || !trafficRoot || !trafficSlots) return;
     clearAllSlots();
     trafficMode = 'hands';
-    const myMode = trafficMode;
+    const myToken = ++trafficLoadToken;
     const n = Math.min(trafficSlots.length, TRAFFIC.hands.length);
     for (let i = 0; i < n; i++) {
       const slot = trafficSlots[i], url = TRAFFIC.hands[i], idx = i;
       makeGLTFLoader().load(url, (gltf) => {
-        if (trafficMode !== myMode) return;
+        if (disposed || myToken !== trafficLoadToken) { disposeObject3D(gltf.scene); return; }
         const inst = gltf.scene;
         inst.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
         cloneInstanceMaterials(inst);
@@ -1593,24 +1613,36 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       }, undefined, (err) => console.error('LampHand 로드 실패:', err));
     }
   }
-  function resetTraffic() { clearAllSlots(); trafficMode = null; }
+  function resetTraffic() { ++trafficLoadToken; clearAllSlots(); trafficMode = null; }
 
   function dispose() {
+    disposed = true;                 // 진행 중인 GLB 로드 콜백 무효화
     try { controls.dispose(); } catch {}
-    // 연기 puff(Sprite)는 traverse(isMesh)에 안 잡히므로 재료/텍스처를 직접 정리.
+    // 풀에 있지만 씬에 안 붙어 있는 연기 puff(Sprite) 재료/텍스처를 직접 정리.
     try {
       smokePool.forEach((p) => p.sprite?.material?.dispose?.());
       gunSmokePool.forEach((p) => p.sprite?.material?.dispose?.());
       smokeTex?.dispose?.();
       oledTex?.dispose?.();
     } catch {}
+    // Sprite(LED 글로우, 로켓 화염 등)도 포함해 지오메트리·머티리얼·텍스처 해제
     scene.traverse((o) => {
-      if (o.isMesh) {
+      if (o.isMesh || o.isSprite) {
         o.geometry?.dispose?.();
-        const m = o.material; (Array.isArray(m) ? m : [m]).forEach((mm) => mm?.dispose?.());
+        const m = o.material;
+        (Array.isArray(m) ? m : [m]).forEach((mm) => { mm?.map?.dispose?.(); mm?.dispose?.(); });
       }
     });
+    // PMREM 환경맵 — traverse(isMesh)에 안 잡혀 토픽 전환마다 누적되던 누수
+    try {
+      scene.environment?.dispose?.();
+      scene.environment = null;
+      pmrem.dispose();
+    } catch {}
     try { renderer.dispose(); } catch {}
+    // 컨텍스트 해제를 GC에 맡기지 않는다 — 토픽을 여러 번 오가면
+    // 브라우저 WebGL 컨텍스트 상한(8~16개)에 걸려 씬이 소실된다.
+    try { renderer.forceContextLoss?.(); } catch {}
     if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
   }
   return {
