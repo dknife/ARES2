@@ -12,6 +12,8 @@ export const CommandExecutor = {
   //   음 길이만큼의 페이싱(멜로디 겹침 방지)은 handleLogicBlock에서 웹이 로컬로 처리.
   // 주의: 값 반환 명령(DISTANCE/MAGNET/PING)과 펌웨어가 여전히 blocking 처리하는
   //   SERVO_t*/DC_t*/SLEEP/BATCH/SING은 이 집합에 넣지 말 것(응답 대기 필요).
+  // 마지막 그룹(STOP_ALL~CALIB_SET)은 대시보드/비상정지 경로 전용 명령 —
+  // 블록 실행기는 생성하지 않지만 펌웨어 NO_RESPONSE_CMDS와의 동기화를 위해 등재.
   FIRE_AND_FORGET_HEADS: new Set([
     'LED_ON', 'LED_OFF',
     'MSG', 'MSG_XY', 'ICON', 'CLEAR_DISPLAY', 'CLEAR_RECT',
@@ -19,6 +21,10 @@ export const CommandExecutor = {
     'DC_FORWARD', 'DC_BACKWARD', 'DC_STOP',
     'GUN_FIRE',
     'BUZZER_ON',
+    'STOP_ALL', 'STOP',
+    'tFORWARD', 'tBACKWARD', 'tLEFT', 'tRIGHT',
+    'LED_PATTERN', 'SING',
+    'SYS_SET', 'CALIB_START', 'CALIB_SET',
   ]),
 
   _isFireAndForget(command) {
@@ -99,6 +105,17 @@ export const CommandExecutor = {
         case 'GTE': result = (isNum ? numA : a) >= (isNum ? numB : b); break;
       }
       return result ? 'true' : 'false';
+    } else if (block.type === 'logic_operation') {
+      // 그리고/또는 — logic_compare와 동일하게 'true'/'false' 문자열 규약 사용
+      const op = block.getFieldValue('OP');
+      const a = this.evaluateValueBlock(block.getInputTargetBlock('A')) === 'true';
+      const b = this.evaluateValueBlock(block.getInputTargetBlock('B')) === 'true';
+      const result = op === 'AND' ? (a && b) : (a || b);
+      return result ? 'true' : 'false';
+    } else if (block.type === 'logic_negate') {
+      // 아니다
+      const v = this.evaluateValueBlock(block.getInputTargetBlock('BOOL'));
+      return v === 'true' ? 'false' : 'true';
     } else if (block.type === 'logic_boolean') {
       return block.getFieldValue('BOOL') === 'TRUE' ? 'true' : 'false';
     } else if (block.type === 'math_random_int') {

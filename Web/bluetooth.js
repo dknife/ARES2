@@ -9,6 +9,11 @@ import { BLUETOOTH_CONFIG, STATUS_COLORS } from './constants.js';
 let receiveBuffer = '';
 
 export const BluetoothManager = {
+    // addEventListener/removeEventListener에 같은 참조를 넘기기 위한 bound 핸들러.
+    // (매번 .bind(this)로 등록하면 remove가 실패해 재연결마다 리스너가 누적된다.)
+    _boundHandleRxData: null,
+    _boundOnDeviceDisconnected: null,
+
     // 연결
     async connect() {
         if (state.isConnecting) {
@@ -27,16 +32,23 @@ export const BluetoothManager = {
                 filters: [
                     { name: 'PicoBLE' },
                     { name: 'HMSoft' },
-                    { name: 'BT05' }
+                    { name: 'BT05' },
+                    // 펌웨어가 AT+NAME{device_name}으로 모듈을 개명하면 위 고정
+                    // 이름과 달라진다 — UART 서비스를 광고하는 장치는 이름과
+                    // 무관하게 검색되도록 서비스 필터를 함께 둔다.
+                    { services: [BLUETOOTH_CONFIG.UART_SERVICE_UUID] }
                 ],
                 optionalServices: [BLUETOOTH_CONFIG.UART_SERVICE_UUID]
             });
 
             Logger.add(`[BLE] 장치 발견: ${state.bluetoothDevice.name || 'Unknown'}`, 'info');
 
+            if (!this._boundOnDeviceDisconnected) {
+                this._boundOnDeviceDisconnected = this.onDeviceDisconnected.bind(this);
+            }
             state.bluetoothDevice.addEventListener(
                 'gattserverdisconnected',
-                this.onDeviceDisconnected.bind(this)
+                this._boundOnDeviceDisconnected
             );
 
             state.bluetoothServer = await state.bluetoothDevice.gatt.connect();
@@ -53,9 +65,12 @@ export const BluetoothManager = {
 
             try {
                 await state.characteristic.startNotifications();
+                if (!this._boundHandleRxData) {
+                    this._boundHandleRxData = this.handleRxData.bind(this);
+                }
                 state.characteristic.addEventListener(
                     'characteristicvaluechanged',
-                    this.handleRxData.bind(this)
+                    this._boundHandleRxData
                 );
                 state.notificationsEnabled = true;
                 Logger.add('[BLE] 알림 모드 활성화', 'info');
@@ -78,21 +93,9 @@ export const BluetoothManager = {
         }
     },
 
-    // 연결 해제
+    // 연결 해제 (알림 중지/리스너 제거는 cleanup이 담당)
     async disconnect() {
         try {
-            if (state.characteristic && state.notificationsEnabled) {
-                try {
-                    await state.characteristic.stopNotifications();
-                    state.characteristic.removeEventListener(
-                        'characteristicvaluechanged',
-                        this.handleRxData
-                    );
-                } catch (e) {
-                    console.warn('알림 중지 오류:', e);
-                }
-            }
-
             if (state.bluetoothDevice && state.bluetoothDevice.gatt.connected) {
                 await state.bluetoothDevice.gatt.disconnect();
             }
@@ -114,10 +117,12 @@ export const BluetoothManager = {
         if (state.characteristic && state.notificationsEnabled) {
             try {
                 await state.characteristic.stopNotifications();
-                state.characteristic.removeEventListener(
-                    'characteristicvaluechanged',
-                    this.handleRxData
-                );
+                if (this._boundHandleRxData) {
+                    state.characteristic.removeEventListener(
+                        'characteristicvaluechanged',
+                        this._boundHandleRxData
+                    );
+                }
             } catch (e) {
                 console.warn('알림 정리 오류:', e);
             }
@@ -133,21 +138,31 @@ export const BluetoothManager = {
         state.bluetoothServer = null;
 
         if (state.bluetoothDevice) {
-            state.bluetoothDevice.removeEventListener(
-                'gattserverdisconnected',
-                this.onDeviceDisconnected
-            );
+            if (this._boundOnDeviceDisconnected) {
+                state.bluetoothDevice.removeEventListener(
+                    'gattserverdisconnected',
+                    this._boundOnDeviceDisconnected
+                );
+            }
             state.bluetoothDevice = null;
         }
-        
+
         state.notificationsEnabled = false;
-        
+
+        // 응답 대기 중이던 promise는 반드시 reject로 settle시킨다.
+        // (타이머만 지우고 방치하면 sendData의 await가 영원히 끝나지 않아
+        //  executeWorkspace가 멈춘 채로 남는다.)
         if (state.pendingTimeout) {
             clearTimeout(state.pendingTimeout);
-            state.pendingResolve = null;
-            state.pendingReject = null;
             state.pendingTimeout = null;
         }
+        if (state.pendingReject) {
+            const reject = state.pendingReject;
+            state.pendingResolve = null;
+            state.pendingReject = null;
+            reject(new Error('연결이 끊어져 응답 대기를 취소했습니다.'));
+        }
+        state.pendingResolve = null;
     },
 
     // 연결 해제 이벤트
