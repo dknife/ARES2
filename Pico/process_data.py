@@ -95,6 +95,8 @@ class CommandProcessor:
         elif data == "SERVO_RIGHT":
             return self._handle_continuous_wheel("right")
         elif data == "SERVO_STOP":
+            if not robot.wheel:
+                return 0
             robot.wheel.stop()
             return 1
         # 레거시 호환
@@ -107,6 +109,8 @@ class CommandProcessor:
         elif data == "RIGHT":
             return self._handle_continuous_wheel("right")
         elif data == "STOP":
+            if not robot.wheel:
+                return 0
             robot.wheel.stop()
             return 1
             
@@ -120,6 +124,8 @@ class CommandProcessor:
         elif data == "DC_BACKWARD":
             return self._handle_main_motor("backward")
         elif data == "DC_STOP":
+            if not robot.dcmotor:
+                return 0
             robot.dcmotor.dc_stop()
             return 1
         # 레거시 호환
@@ -132,6 +138,8 @@ class CommandProcessor:
         elif data == "MAIN_BACKWARD":
             return self._handle_main_motor("backward")
         elif data == "MAIN_STOP":
+            if not robot.dcmotor:
+                return 0
             robot.dcmotor.dc_stop()
             return 1
             
@@ -143,6 +151,8 @@ class CommandProcessor:
             
         # LED
         elif data == "LED_PATTERN":
+            if not robot.leds:
+                return 0
             robot.leds.swipe_effect()
             return 1
         elif data.startswith("LED_ON"):
@@ -154,6 +164,8 @@ class CommandProcessor:
             
         # 디스플레이
         elif data == "CLEAR_DISPLAY":
+            if not robot.oled:
+                return 0
             robot.oled.fill(0)
             robot.oled.show()
             return 1
