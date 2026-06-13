@@ -61,6 +61,7 @@
                 <option value="obstacle_avoid">🚧 장애물 피하기</option>
                 <option value="rover_wakeup">🤖 로버 깨우기</option>
             </select>
+            <button id="aiHelpButton" class="nav-btn" type="button" hidden title="하고 싶은 일을 자연어로 적으면 블록을 만들어 줘요">🤖 AI 도움</button>
             <span id="breadcrumb" aria-live="polite"></span>
         </nav>
 
@@ -169,6 +170,26 @@
             </div>
             <div id="logContent"></div>
         </section>
+    </div>
+
+    <!-- ===== 🤖 AI 도움 채팅 패널 (오프라인 규칙 기반, 외부 통신 없음) ===== -->
+    <div id="aiPanel" class="ai-panel" hidden role="dialog" aria-label="AI 도움">
+        <div class="ai-panel-head">
+            <span>🤖 AI 도움</span>
+            <button id="aiCloseButton" class="ai-close" type="button" title="닫기" aria-label="닫기">✕</button>
+        </div>
+        <div id="aiMessages" class="ai-messages" aria-live="polite"></div>
+        <div class="ai-chips">
+            <button type="button" class="ai-chip">앞으로 2초 가기</button>
+            <button type="button" class="ai-chip">불 켜줘</button>
+            <button type="button" class="ai-chip">도레미 울려줘</button>
+            <button type="button" class="ai-chip">화면에 안녕 표시</button>
+            <button type="button" class="ai-chip">3번 반복 앞으로 가기</button>
+        </div>
+        <form id="aiForm" class="ai-form" autocomplete="off">
+            <input id="aiInput" type="text" placeholder="하고 싶은 일을 적어줘 (예: 앞으로 3초 가고 도레미 울려줘)" />
+            <button type="submit" title="블록 만들기">보내기</button>
+        </form>
     </div>
 
 

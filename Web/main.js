@@ -5,6 +5,7 @@ import { BluetoothManager } from './bluetooth.js';
 import { BlocklyConfig, attachBatchBlockValidator } from './blocklyconfig.js';
 import { CommandExecutor } from './commandexecutor.js';
 import { setupSimulation } from './simulation.js';
+import { parse as aiParse } from './ai_helper.js';
 
 // ============================================================
 // 차시 카탈로그 — 네비게이션 드롭다운/개요 표 렌더링에 사용
@@ -267,6 +268,9 @@ function showView(view) {
     exampleSelect.disabled = !inMission;
     exampleSelect.hidden = !inMission;
   }
+  const aiHelpButton = document.getElementById('aiHelpButton');
+  if (aiHelpButton) aiHelpButton.hidden = !inMission;
+  if (!inMission) document.getElementById('aiPanel')?.setAttribute('hidden', '');
   updateRunButtonUI();
 
   // 콘텐츠 토글 버튼은 미션 뷰에서만 노출
@@ -803,6 +807,122 @@ function initializeMissionListeners(ws) {
     } finally {
       e.target.value = '';
     }
+  });
+
+  // ===== 🤖 AI 도움 — 자연어 → 블록 (오프라인 규칙 기반, 외부 통신 없음) =====
+  const aiPanel = document.getElementById('aiPanel');
+  const aiMessages = document.getElementById('aiMessages');
+  const aiInput = document.getElementById('aiInput');
+  const aiForm = document.getElementById('aiForm');
+
+  function aiAddMessage(role, html) {
+    if (!aiMessages) return;
+    const div = document.createElement('div');
+    div.className = `ai-msg ai-msg-${role}`;
+    div.innerHTML = html;
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  }
+
+  function aiEscape(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // 생성된 XML 을 워크스페이스에 삽입. replace=true 면 기존 블록을 지우고,
+  // 아니면 기존 블록 스택의 끝에 이어 붙인다.
+  function aiInsertXml(xmlText, replace) {
+    const dom = Blockly.utils.xml.textToDom(xmlText);
+    if (replace) {
+      ws.clear();
+      Blockly.Xml.domToWorkspace(dom, ws);
+    } else {
+      // 기존 첫 명령 스택의 마지막 블록을 찾아 둔다
+      let tail = null;
+      for (const b of ws.getTopBlocks(true)) {
+        if (b.previousConnection || b.nextConnection) {
+          let cur = b;
+          while (cur.getNextBlock()) cur = cur.getNextBlock();
+          tail = cur;
+          break;
+        }
+      }
+      const ids = Blockly.Xml.domToWorkspace(dom, ws);
+      let head = null;
+      for (const id of ids) {
+        const b = ws.getBlockById(id);
+        if (b && b.previousConnection) { head = b; break; }
+      }
+      if (tail && head && tail.nextConnection && head.previousConnection) {
+        tail.nextConnection.connect(head.previousConnection);
+      }
+    }
+    if (setContentMode) setContentMode('coding');
+    setTimeout(() => { try { Blockly.svgResize(ws); ws.scrollCenter(); } catch {} }, 0);
+  }
+
+  // 추천 블록 목록을 HTML 로 (완성형 코드를 못 만들 때 "이런 블록을 써보세요")
+  function aiFormatSuggest(suggest) {
+    if (!suggest || !suggest.length) return '';
+    return suggest.map((s) =>
+      `<div class="ai-suggest"><b>${aiEscape(s.title)}</b><br>${s.blocks.map(aiEscape).join(' · ')}` +
+      `<br><span class="ai-hint">${aiEscape(s.hint)}</span></div>`).join('');
+  }
+
+  function aiHandle(text) {
+    if (!text.trim()) return;
+    aiAddMessage('user', aiEscape(text));
+    const result = aiParse(text);
+    if (!result.ok) {
+      const sug = aiFormatSuggest(result.suggest);
+      aiAddMessage('bot',
+        sug
+          ? `${aiEscape(result.error)} 완성은 어렵지만 이런 블록들을 써보세요:${sug}`
+          : `${aiEscape(result.error)}<br>이렇게 말해볼까요? <em>앞으로 2초 가기 · 불 켜줘 · 도레미 울려줘</em>`);
+      Logger.add(`[AI] 이해 실패: "${text}"`, 'warning');
+      return;
+    }
+    try {
+      aiInsertXml(result.xml, result.replace);
+    } catch (err) {
+      aiAddMessage('bot', '블록을 넣는 중 문제가 생겼어요. 다시 말해줄래요?');
+      Logger.add(`[AI] 삽입 오류: ${err.message}`, 'error');
+      console.error('[AI 삽입 오류]', err);
+      return;
+    }
+    const list = result.added.map((a) => `• ${aiEscape(a)}`).join('<br>');
+    let msg = `코딩창에 ${result.added.length}개를 넣었어요!<br>${list}`;
+    if (result.replace) msg = `기존 블록을 지우고 새로 넣었어요!<br>${list}`;
+    if (result.unmatched && result.unmatched.length) {
+      msg += `<br><span class="ai-warn">못 알아들은 부분: ${aiEscape(result.unmatched.join(', '))}</span>`;
+      const sug = aiFormatSuggest(result.suggest);
+      if (sug) msg += `<br>이런 블록도 도움이 돼요:${sug}`;
+    }
+    aiAddMessage('bot', msg);
+    Logger.add(`[AI] 블록 ${result.added.length}개 생성 — "${text}"`, 'info');
+  }
+
+  document.getElementById('aiHelpButton')?.addEventListener('click', () => {
+    if (!aiPanel) return;
+    const open = aiPanel.hasAttribute('hidden');
+    if (open) {
+      aiPanel.removeAttribute('hidden');
+      if (aiMessages && !aiMessages.childElementCount) {
+        aiAddMessage('bot', '안녕! 하고 싶은 일을 적어줘. 예: <em>앞으로 3초 가고 도레미 울려줘</em>');
+      }
+      setTimeout(() => aiInput?.focus(), 0);
+    } else {
+      aiPanel.setAttribute('hidden', '');
+    }
+  });
+  document.getElementById('aiCloseButton')?.addEventListener('click', () => aiPanel?.setAttribute('hidden', ''));
+  aiForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = aiInput.value;
+    aiInput.value = '';
+    aiHandle(text);
+  });
+  document.querySelectorAll('.ai-chip').forEach((chip) => {
+    chip.addEventListener('click', () => aiHandle(chip.textContent));
   });
 
   // 대시보드 메시지 (iframe → main)

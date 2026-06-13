@@ -4,6 +4,7 @@ import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BLUETOOTH_CONFIG, STATUS_COLORS } from './constants.js';
 import { BATCH_FORBIDDEN_TYPES } from './blocklyconfig.js';
+import { romanizeKorean } from './romanize.js';
 
 export const CommandExecutor = {
   // 응답 대기(ack)가 불필요한 명령 — Pico가 즉시 처리하고 응답을 보내지 않는다.
@@ -222,13 +223,14 @@ export const CommandExecutor = {
       }
       case 'led_off_all': return 'LED_OFF,ALL';
       case 'send_message': {
-        const str = String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello');
+        // OLED는 ASCII 글꼴만 그리므로 한글은 로마자로 변환해 보낸다.
+        const str = romanizeKorean(String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello'));
         return `MSG,${str}`;
       }
       case 'send_message_xy': {
         const x = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('X')) || '0', 10) || 0;
         const y = parseInt(this.evaluateValueBlock(block.getInputTargetBlock('Y')) || '0', 10) || 0;
-        const str = String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello');
+        const str = romanizeKorean(String(this.evaluateValueBlock(block.getInputTargetBlock('Msg')) || 'Hello'));
         return `MSG_XY,${x},${y},${str}`;
       }
       case 'display_icon': {
