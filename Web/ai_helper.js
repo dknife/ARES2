@@ -76,6 +76,19 @@ function distanceTo(name) { return { type: 'check_distance', fields: { VAR: { va
 function magneticTo(name) { return { type: 'check_magnetic', fields: { VAR: { var: name } } }; }
 function compare(op, a, b) { return { type: 'logic_compare', fields: { OP: op }, values: { A: a, B: b } }; }
 function ifThen(cond, body) { return { type: 'controls_if', values: { IF0: cond }, statements: { DO0: body } }; }
+function ledOn(n) { return { type: 'led_on', values: { LED_NUM: num(n), BRIGHTNESS: num(1) } }; }
+function ledOff(n) { return { type: 'led_off', values: { LED_NUM: num(n) } }; }
+function lampAll(v) { return { type: 'set_lamp', values: Object.fromEntries([0, 1, 2, 3, 4, 5].map((i) => [`LAMP${i}`, num(v)])) }; }
+function sleepFor(s) { return { type: 'time_sleep', values: { SECONDS: num(s) } }; }
+function repeatN(n, body) { return { type: 'controls_repeat_ext', values: { TIMES: num(n) }, statements: { DO: body } }; }
+// 눈/가슴 → LED 번호 (시뮬 매핑: 오른눈=LED1, 왼눈=LED2, 가슴=LED3)
+function eyeTargets(c) {
+  if (/왼쪽\s*눈|좌측\s*눈|왼눈/.test(c)) return { leds: [2], label: '왼쪽 눈' };
+  if (/오른쪽\s*눈|우측\s*눈|오른눈/.test(c)) return { leds: [1], label: '오른쪽 눈' };
+  if (/양쪽?\s*눈|두\s*눈|눈/.test(c)) return { leds: [1, 2], label: '양쪽 눈' };
+  if (/가슴/.test(c)) return { leds: [3], label: '가슴' };
+  return null;
+}
 
 function serializeBlock(desc) {
   let inner = '';
@@ -161,6 +174,12 @@ function matchAction(c, ctx) {
     const chain = notes.map((f) => ({ type: 'buzzer_note', fields: { NOTE: f }, values: { DURATION: num(dur) } }));
     return { node: chain, label: `계명 ${notes.length}개 멜로디` };
   }
+  // 노래/멜로디/음악 (계명 미지정) → 기본 멜로디(도미솔도). 소리는 부저로 매핑.
+  if (/노래|멜로디|음악/.test(c)) {
+    const tune = [262, 330, 392, 523];
+    const chain = tune.map((f) => ({ type: 'buzzer_note', fields: { NOTE: f }, values: { DURATION: num(0.4) } }));
+    return { node: chain, label: '노래(도미솔도) — 부저' };
+  }
 
   // 3) 부저 / 소리
   if (/부저|삐|소리|울려|울리|헤르츠|hz/i.test(c)) {
@@ -182,22 +201,57 @@ function matchAction(c, ctx) {
     return { node: { type: 'send_message', values: { Msg: txt(rom) } }, label: `화면에 "${rom}" 표시${note}` };
   }
 
-  // 5) LED
-  if (/(?:led|엘이디|램프|불|전구|빛)/i.test(c)) {
+  // 5) LED / 눈 / 가슴 (의미 매핑 + 행동 패턴)
+  //   눈=LED(오른눈1·왼눈2), 가슴=LED3. "번갈아 켰다 껐다 / 깜빡 / 윙크" 같은
+  //   간접 요구를 led_on/off + 기다리기 + 반복 조합으로 생성한다.
+  const eye = eyeTargets(c);
+  if (eye || /윙크/.test(c) || /(?:led|엘이디|램프|불|전구|빛)/i.test(c)) {
+    const targets = eye ? eye.leds : null;          // null = 전체(set_lamp)
+    const tLabel = eye ? eye.label : 'LED';
+    const cnt = extractNumber(c, '번', 4).value;
     const numMatch = c.match(/(\d+)\s*번/);
+
+    // 번갈아 켰다 껐다 (2개 이상 대상)
+    if (targets && targets.length >= 2 && /번갈아|교대/.test(c)) {
+      const [a, b] = targets;
+      const cycle = [ledOn(a), ledOff(b), sleepFor(0.4), ledOff(a), ledOn(b), sleepFor(0.4)];
+      return { node: repeatN(cnt, cycle), label: `${tLabel} 번갈아 깜빡 (${cnt}번)` };
+    }
+    // 깜빡임 / 켰다 껐다 / 윙크
+    if (/깜빡|깜박|반짝|점멸|켰다\s*껐다|껐다\s*켰다|윙크/.test(c)) {
+      const wink = /윙크/.test(c);
+      // 윙크는 한쪽 눈만 — 지정된 눈이 있으면 그 눈, 없으면 오른눈(LED1)
+      const leds = wink ? (eye && eye.leds.length === 1 ? eye.leds : [1]) : targets;
+      const onArr = leds ? leds.map(ledOn) : [lampAll(1)];
+      const offArr = leds ? leds.map(ledOff) : [lampAll(0)];
+      const cycle = [...onArr, sleepFor(0.4), ...offArr, sleepFor(0.4)];
+      return { node: repeatN(cnt, cycle), label: `${wink ? '윙크' : tLabel + ' 깜빡'} (${cnt}번)` };
+    }
+    // 끄기
     if (/끄|꺼|소등|off/i.test(c)) {
-      if (numMatch) return { node: { type: 'led_off', values: { LED_NUM: num(+numMatch[1]) } }, label: `LED ${numMatch[1]}번 끄기` };
+      if (targets) return { node: targets.map(ledOff), label: `${tLabel} 끄기` };
+      if (numMatch) return { node: ledOff(+numMatch[1]), label: `LED ${numMatch[1]}번 끄기` };
       return { node: { type: 'led_off_all' }, label: 'LED 전체 끄기' };
     }
+    // 켜기
     if (/켜|키|on|밝/i.test(c)) {
+      if (targets) return { node: targets.map(ledOn), label: `${tLabel} 켜기` };
       const brightness = /밝기/.test(c) ? extractNumber(c, '밝기', 1).value : 1;
       if (numMatch) return { node: { type: 'led_on', values: { LED_NUM: num(+numMatch[1]), BRIGHTNESS: num(brightness) } }, label: `LED ${numMatch[1]}번 켜기` };
-      return { node: { type: 'set_lamp', values: Object.fromEntries([0, 1, 2, 3, 4, 5].map((i) => [`LAMP${i}`, num(1)])) }, label: 'LED 전체 켜기' };
+      return { node: lampAll(1), label: 'LED 전체 켜기' };
     }
   }
 
-  // 6) 발사
-  if (/발사|쏴|쏘|총\s*(?:쏘|발사)?/.test(c)) return { node: { type: 'gun_fire' }, label: '발사' };
+  // 6) 발사 (로켓 발사 / 총 쏘기 — 둘 다 gun_fire 로 매핑)
+  if (/발사|쏴|쏘|로켓|총/.test(c)) return { node: { type: 'gun_fire' }, label: '발사' };
+
+  // 6.5) 레이더(발사대) = DC 모터 회전
+  if (/레이더|radar/i.test(c)) {
+    if (/멈춰|멈추|정지|꺼|끄|스톱|그만/.test(c)) return { node: { type: 'main_motor_stop' }, label: '레이더 정지 (DC모터)' };
+    const s = seconds(c, 2);
+    if (s.found && !/계속/.test(c)) return { node: { type: 'main_motor_forward_timed', values: { SECONDS: num(s.value) } }, label: `레이더 ${s.value}초 회전 (DC모터)` };
+    return { node: { type: 'main_motor_forward' }, label: '레이더 회전 (DC모터)' };
+  }
 
   // 7) 연결 확인
   if (/연결\s*(?:확인|상태|됐|되었)|접속\s*확인/.test(c)) return { node: { type: 'pico_check_device' }, label: '연결 확인' };
