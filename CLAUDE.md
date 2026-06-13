@@ -6,6 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ARES (Autonomous Rover Exploration System) — an educational robotics project with a block-coding web UI that controls a Raspberry Pi Pico rover over Bluetooth (BLE/UART). Target audience is elementary-school-age children.
 
+## 개발 워크플로 (필수 — 모든 기기 공통)
+
+**git 저장소를 OneDrive 등 클라우드 동기화 폴더 안에 두지 말 것.** OneDrive "파일 온디맨드"가 `.git` 내부 객체를 클라우드 전용 placeholder로 만들어 저장소를 손상시킨 사고가 있었다(2026-06-13: 다운로드 정지 → `.git` 객체 DB 손상, fetch 불가/unresolved delta). 복구는 GitHub에서 OneDrive 밖으로 새 clone 해서 해결했다.
+
+- **개발·버전관리**: 클라우드 밖 로컬 경로에 clone 해서 작업한다(예: macOS `~/Projects/ARES2`, Windows `C:\dev\ARES2`). 기기 간 동기화는 **git push/pull 로만** 한다. origin: `https://github.com/dknife/ARES2.git`
+- **새 기기에서 시작할 때도** OneDrive 폴더를 직접 열지 말고, GitHub 에서 새 clone 후 작업한다.
+- **OneDrive 에는 최종 결과물만 가끔 작업 파일을 복사**한다(문서·백업·배포용). 복사 시 **`.git` 은 반드시 제외**:
+  ```
+  rsync -rc --exclude='.git/' --exclude='.DS_Store' <clone>/ "<OneDrive>/.../ARES_Project/"
+  ```
+  (`--delete` 금지 — OneDrive 에만 있는 `.hwp`/`.pptx` 등 비추적 문서 보존)
+
 ## Architecture
 
 Three runtime domains:
