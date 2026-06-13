@@ -1294,13 +1294,41 @@ details.mission-section summary {
     /* 시뮬레이션: 카드 전체가 하나의 렌더링 영역. 확정 높이를 줘서(스테이지가 채움)
        캔버스(height:100%)가 정확히 창에 맞게 풀리도록 한다. */
     #missionView[data-mode="simulation"] > .sim-card {
-        height: 78dvh;
+        height: 62dvh;   /* 기존 78dvh 의 0.8배 — 모바일에서 한 눈에 보이도록 */
         min-height: 0;
     }
     #missionView[data-mode="simulation"] .sim-stage {
         flex: 1 1 auto;
         height: 100%;
         min-height: 0;
+    }
+
+    /* 네비 버튼/셀렉트(코드확인·블록코딩·시뮬레이션·예제·AI 도움): 모바일에서
+       글자가 두 줄로 넘치지 않도록 폰트를 기존의 80% 로 줄이고 줄바꿈을 막는다. */
+    #missionNav .nav-btn { font-size: 0.68em; }   /* 0.85 × 0.8 */
+    #missionNav select   { font-size: 0.70em; }   /* 0.88 × 0.8 */
+    #missionNav .nav-btn,
+    #missionNav select {
+        white-space: nowrap;
+        padding: 0 8px;
+        height: 30px;
+    }
+
+    /* 블록 코딩 모드: 남는 4개(미션 설명·시뮬레이션·예제·AI 도움)를 한 줄에 배치.
+       버튼은 내용 너비로, '예제' 셀렉트가 남는 폭을 채우며 줄어들어 줄바꿈을 막는다. */
+    body[data-content-mode="coding"] #missionNav {
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+    body[data-content-mode="coding"] #missionNav > #contentToggleBtn,
+    body[data-content-mode="coding"] #missionNav > #simToggle,
+    body[data-content-mode="coding"] #missionNav > #aiHelpButton {
+        flex: 0 0 auto;
+        padding: 0 7px;
+    }
+    body[data-content-mode="coding"] #missionNav > #exampleSelect {
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
     /* 로그 컨테이너: 페이지 스크롤로 끝부분에서 보이도록 */
@@ -1354,6 +1382,8 @@ details.mission-section summary {
     width: 340px;
     max-width: calc(100vw - 32px);
     max-height: 70vh;
+    /* 전체 폰트를 0.8배로 — 하위 em 글자들이 모두 비례 축소되어 여백이 생긴다 */
+    font-size: 0.8em;
     background: var(--background-white);
     border: 1px solid var(--border-color);
     border-radius: 16px;
