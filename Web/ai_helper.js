@@ -44,6 +44,15 @@ function splitClauses(text) {
   return text.split(CONNECTOR_RE).map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
+// ── 측정 동작 뒤에 다른 동작/조건이 이어지면, 접속어가 없어도 절을 분리한다 ──
+//   "거리를 측정해 결과를 출력해" → "거리를 측정해, 결과를 출력해"
+//   "거리를 측정해 거리값이 10보다 작으면 멈춰" → "거리를 측정해, 거리값이 ..."
+//   (측정 동사 형태는 그대로 두고 뒤에 구분자만 끼워, 1절의 센서 매칭은 유지)
+const MEASURE_BOUNDARY_RE = /((?:거리|적외선|초음파|자기|자석)\s*(?:센서)?\s*(?:를|을)?\s*(?:재고|재서|재어|재|측정하고|측정해서|측정하여|측정해|측정하|측정|확인해서|확인하고|체크해서|체크하고|읽어서|읽고))\s+(?=\S)/g;
+function splitMeasureBoundary(text) {
+  return text.replace(MEASURE_BOUNDARY_RE, '$1, ');
+}
+
 // ── 숫자 추출 ──
 function extractNumber(clause, unitRe, def) {
   const m = clause.match(new RegExp(`(\\d+(?:\\.\\d+)?)\\s*${unitRe}`));
@@ -145,17 +154,35 @@ function extractNotes(clause) {
   return notes;
 }
 
+// ── 변수 생성 기록: 측정/대입한 변수와 "직전 변수"를 ctx 에 남긴다 ──
+//   ctx.lastVar 는 "결과를 출력해" / "10보다 작으면" 처럼 이름을 생략한
+//   참조가 어떤 변수를 가리키는지 해석하는 데 쓰인다.
+function markVar(ctx, name, sensor) {
+  ctx.measured.add(name);
+  ctx.lastVar = name;
+  ctx.lastSensor = sensor || null;
+}
+
+// ── 출력 대상 변수 해석: "결과/거리값/측정값을 출력" → 변수명 (없으면 null) ──
+function detectOutputVar(c, ctx) {
+  // 1) 이미 만든 변수 이름을 직접 말한 경우 ("거리값을 보여줘")
+  for (const v of ctx.measured) if (c.includes(v)) return v;
+  // 2) "결과/측정값/센서값/값을/숫자/수치" → 직전에 측정·생성한 변수
+  if (ctx.lastVar && /결과|측정\s*값|센서\s*값|값을|숫자|수치/.test(c)) return ctx.lastVar;
+  return null;
+}
+
 // ════════════════════════════════════════════════════════════
 // 동작(action) 규칙 — 절 하나 → { node, label } 또는 null
 // ════════════════════════════════════════════════════════════
 function matchAction(c, ctx) {
   // 0) 센서 측정 → 변수
   if (/(?:적외선|거리|초음파)\s*(?:센서)?\s*(?:를)?\s*(?:재|측정|확인|체크|읽)/.test(c)) {
-    ctx.measured.add('거리값');
+    markVar(ctx, '거리값', 'distance');
     return { node: distanceTo('거리값'), label: '거리 측정 → 거리값' };
   }
   if (/(?:자기|자석)\s*(?:센서)?\s*(?:를)?\s*(?:재|측정|확인|감지|체크)/.test(c)) {
-    ctx.measured.add('자기값');
+    markVar(ctx, '자기값', 'magnetic');
     return { node: magneticTo('자기값'), label: '자기 측정 → 자기값' };
   }
 
@@ -163,7 +190,7 @@ function matchAction(c, ctx) {
   let mv = c.match(/([가-힣A-Za-z_]+)\s*(?:을|를|는|=)?\s*(\d+(?:\.\d+)?)\s*(?:으?로)?\s*(?:정해|정하|저장|담아|넣어|로\s*해)/);
   if (mv && !/cm|센티|초|번|밝기/.test(mv[0])) {
     const name = mv[1].replace(/(?:을|를|은|는|이|가|의)$/, '') || mv[1];
-    ctx.measured.add(name);
+    markVar(ctx, name, null);
     return { node: vset(name, num(parseFloat(mv[2]))), label: `${name} = ${mv[2]}` };
   }
 
@@ -194,7 +221,15 @@ function matchAction(c, ctx) {
   if (/화면\s*지우|화면\s*클리어/.test(c)) {
     return { node: { type: 'clear_display' }, label: '화면 지우기' };
   }
-  if (/화면|표시|글자|써줘|써\b|보여|출력|말해|인사/.test(c)) {
+  if (/화면|표시|글자|써줘|써\b|보여|출력|말해|알려|인사/.test(c)) {
+    // 측정·변수 결과 출력: "결과를 출력해", "거리값을 보여줘" → 변수값을 화면에.
+    // 따옴표가 있으면 사용자가 적은 문자 그대로 출력하려는 의도이므로 변수 해석 생략.
+    if (!/["'“”']/.test(c)) {
+      const outVar = detectOutputVar(c, ctx);
+      if (outVar) {
+        return { node: { type: 'send_message', values: { Msg: vget(outVar) } }, label: `화면에 ${outVar} 값 표시` };
+      }
+    }
     const raw = extractMessage(c);
     const rom = romanizeKorean(raw) || 'Hello';
     const note = (hasKorean(raw) && rom !== raw) ? ` (한글→로마자 "${raw}"→"${rom}")` : '';
@@ -300,6 +335,12 @@ function detectComparison(condText, ctx) {
     // 이미 만든 변수 이름이 조건에 등장하면 사용
     for (const v of ctx.measured) if (condText.includes(v)) { varName = v; break; }
   }
+  // 변수명을 생략한 비교 ("10보다 작으면") → 직전에 측정·생성한 변수에 결부
+  if (!varName && ctx.lastVar && /\d/.test(condText)
+      && /작|적|크|많|같|동일|이상|이하|미만|초과|넘|가까|멀|짧|길|아래|위|낮|높|이내/.test(condText)) {
+    varName = ctx.lastVar;
+    sensor = ctx.lastSensor;
+  }
   if (!varName) return null;
 
   let op = null;
@@ -332,7 +373,7 @@ function parseClause(c, ctx) {
         if (info.sensor && !ctx.measured.has(info.varName)) {
           // 아직 측정 전이면 조건 앞에 센서 측정 블록을 자동으로 끼운다
           prepend.push(info.sensor === 'distance' ? distanceTo(info.varName) : magneticTo(info.varName));
-          ctx.measured.add(info.varName);
+          markVar(ctx, info.varName, info.sensor);
         }
         const ifNode = ifThen(compare(info.op, vget(info.varName), num(info.value)), bodyArr);
         return {
@@ -394,10 +435,12 @@ export function parse(rawText) {
   if (!text) return { ok: false, error: '무엇을 하고 싶은지 적어줘요.', unmatched: [], added: [], suggest: [] };
 
   const replace = /처음부터|새로\s*만들|다\s*지우고|지우고\s*시작|싹\s*지우/.test(text);
-  const cleaned = text.replace(/처음부터|새로\s*만들(?:어줘|어)?|다\s*지우고|지우고\s*시작|싹\s*지우고?/g, ' ');
+  const cleaned = splitMeasureBoundary(
+    text.replace(/처음부터|새로\s*만들(?:어줘|어)?|다\s*지우고|지우고\s*시작|싹\s*지우고?/g, ' ')
+  );
 
   const clauses = splitClauses(cleaned);
-  const ctx = { measured: new Set() };
+  const ctx = { measured: new Set(), lastVar: null, lastSensor: null };
   const descs = [];
   const added = [];
   const unmatched = [];
@@ -433,4 +476,4 @@ export function parse(rawText) {
   return { ok: true, replace, xml: wrapXml(descs), added, unmatched, suggest };
 }
 
-export const _internal = { splitClauses, matchAction, parseClause, detectComparison };
+export const _internal = { splitClauses, splitMeasureBoundary, matchAction, parseClause, detectComparison, detectOutputVar };
