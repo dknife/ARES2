@@ -1820,7 +1820,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     cancelAnimationFrame(raf); loop();
   });
 
-  btn.addEventListener('click', () => { card.hidden ? open() : close(); });
+  btn.addEventListener('click', () => { ensureAudio(); card.hidden ? open() : close(); });
 
   card.querySelectorAll('.sim-led-btn').forEach((b) => {
     b.addEventListener('click', () => {
@@ -1926,13 +1926,38 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     const id = setTimeout(() => { activeWaitCancel = null; resolve(); }, ms);
     activeWaitCancel = () => { clearTimeout(id); activeWaitCancel = null; resolve(); };
   });
-  // 부저 비프 — 사용자가 시뮬레이션 버튼을 클릭한 직후 호출되므로 AudioContext가 허용됨.
-  // square파로 부저 같은 음색을 내고, 끝에 짧은 페이드로 클릭 노이즈 제거.
+  // ── 오디오 언락 ────────────────────────────────────────────────
+  // 모바일(iOS/Android)은 자동재생 정책상 AudioContext 가 'suspended' 로 시작하고,
+  // 사용자 제스처(클릭/터치) 안에서 resume() + 무음 버퍼 재생을 해야 풀린다.
+  // 비동기 시뮬레이션 실행 중(awaits 이후) 처음 소리를 내면 제스처 밖이라 막히므로,
+  // 실행/열기 버튼 클릭 시점과 첫 입력에서 ensureAudio() 로 미리 풀어둔다.
   let audioCtx = null;
+  const ensureAudio = () => {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { console.warn('AudioContext 생성 실패:', e); return null; }
+    if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch {} }
+    // 아직 'running' 이 아니면 무음(1샘플) 버퍼로 언락 시도 — 제스처 안에서 호출되면 풀린다.
+    if (audioCtx.state !== 'running') {
+      try {
+        const b = audioCtx.createBuffer(1, 1, 22050);
+        const s = audioCtx.createBufferSource();
+        s.buffer = b; s.connect(audioCtx.destination); s.start(0);
+      } catch {}
+    }
+    return audioCtx;
+  };
+  // 첫 사용자 입력에서 한 번 언락(안전망 — 어떤 경로로 소리가 나든 그 전에 풀리도록).
+  const _unlockOnce = () => ensureAudio();
+  document.addEventListener('pointerdown', _unlockOnce, { once: true, passive: true });
+  document.addEventListener('touchstart', _unlockOnce, { once: true, passive: true });
+
+  // 부저 비프 — square파로 부저 같은 음색을 내고, 끝에 짧은 페이드로 클릭 노이즈 제거.
   const playBeep = (hz, sec) => {
     if (!hz || sec <= 0) return;
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioCtx = ensureAudio();
+      if (!audioCtx) return;
       const o = audioCtx.createOscillator();
       const g = audioCtx.createGain();
       o.type = 'square';
@@ -1954,9 +1979,8 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   //   엔벨로프: 빠른 점화 폭발 → 서서히 감쇠(약 3.6초).
   const playRocketLaunch = () => {
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = audioCtx;
-      if (ctx.state === 'suspended') ctx.resume();
+      const ctx = ensureAudio();
+      if (!ctx) return;
       const t0 = ctx.currentTime;
       const DUR = 3.6;
       // 2초 길이 화이트노이즈 버퍼를 루프로 재생 — 럼블/로어 공통 소스.
@@ -2007,9 +2031,8 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   let activeGunSources = [];
   const playGunFire = () => {
     try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = audioCtx;
-      if (ctx.state === 'suspended') ctx.resume();
+      const ctx = ensureAudio();
+      if (!ctx) return;
       const t0 = ctx.currentTime + 0.005;          // 5ms lead-in (스케줄링 안정)
       if (!gunNoiseBuffer) {
         const bufLen = Math.floor(ctx.sampleRate * 1.5);   // 1.5초 — 럼블 꼬리 수용
@@ -2282,6 +2305,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   let simAborted = false;
   const SERVO_LINGER_MS = 10000;       // 연속 SERVO 가 켜진 채 끝나면 이만큼 더 유지 후 종료
   if (simRunBtn) simRunBtn.addEventListener('click', async () => {
+    ensureAudio();   // 제스처 안에서 오디오 언락 — 이후 비동기 실행 중 비프/효과음이 들리도록
     // 실행 중 다시 누르면 '비상 정지' — 진행 중인 명령 처리를 즉시 중단한다.
     if (simRunning) {
       simAborted = true;
