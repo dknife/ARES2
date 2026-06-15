@@ -476,4 +476,4 @@ export function parse(rawText) {
   return { ok: true, replace, xml: wrapXml(descs), added, unmatched, suggest };
 }
 
-export const _internal = { splitClauses, splitMeasureBoundary, matchAction, parseClause, detectComparison, detectOutputVar };
+export const _internal = { splitClauses, splitMeasureBoundary, matchAction, parseClause, detectComparison, detectOutputVar, KNOWN_TYPES };
