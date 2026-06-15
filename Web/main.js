@@ -75,7 +75,99 @@ function initializeBlockly() {
   });
 
   Blockly.Python.init(workspace);
+  setupBlockContextMenu(workspace);
   return workspace;
+}
+
+// ============================================================
+// 블록 컨텍스트 메뉴 — 복사 / 삭제 / 전체 삭제 (어린이용 단순 메뉴)
+//   · 데스크톱: 블록을 클릭(또는 우클릭)하면 표시
+//   · 모바일: 블록을 길게 누르면(롱프레스) 표시 — Blockly 기본 제스처
+// 기존의 복잡한 기본 메뉴(주석/접기/비활성화 등)는 제거해 단순화한다.
+// ============================================================
+function setupBlockContextMenu(workspace) {
+  const Reg = Blockly.ContextMenuRegistry.registry;
+  const ScopeType = Blockly.ContextMenuRegistry.ScopeType;
+
+  // 1) 기본 메뉴의 잡다한 항목 제거(있으면 무시)
+  ['blockComment', 'blockInline', 'blockCollapseExpand', 'blockDisable',
+    'blockHelp', 'blockDuplicate', 'blockDelete',
+    'cleanWorkspace', 'collapseWorkspace', 'expandWorkspace',
+    'undoWorkspace', 'redoWorkspace', 'workspaceDelete'].forEach((id) => {
+    try { Reg.unregister(id); } catch (_) { /* 등록 안 돼 있으면 무시 */ }
+  });
+
+  // 2) 동작 (네이티브 메뉴와 클릭 메뉴가 공유) ─ undo 묶음으로 처리
+  function duplicateBlock(block) {
+    if (!block || block.isInFlyout) return;
+    Blockly.Events.setGroup(true);
+    try {
+      const data = Blockly.serialization.blocks.save(block, { addCoordinates: true });
+      if (data) {
+        data.x = (data.x || 0) + 30;
+        data.y = (data.y || 0) + 30;
+        const copy = Blockly.serialization.blocks.append(data, block.workspace);
+        if (copy && copy.select) copy.select();
+      }
+    } finally {
+      Blockly.Events.setGroup(false);
+    }
+  }
+  function deleteBlock(block) {
+    if (!block || block.isInFlyout) return;
+    Blockly.Events.setGroup(true);
+    try { block.dispose(true); }   // healStack: 아래 블록은 위로 이어 붙임
+    finally { Blockly.Events.setGroup(false); }
+  }
+  function deleteAll(ws) {
+    const tops = ws.getTopBlocks(false);
+    if (!tops.length) return;
+    if (!window.confirm('블록을 모두 지울까요?')) return;
+    Blockly.Events.setGroup(true);
+    try { tops.forEach((b) => b.dispose(false)); }
+    finally { Blockly.Events.setGroup(false); }
+  }
+
+  // 3) 네이티브 메뉴(우클릭/롱프레스)용 레지스트리 등록
+  const onBlock = (scope) => (scope.block && !scope.block.isInFlyout ? 'enabled' : 'hidden');
+  Reg.register({
+    id: 'aresCopy', weight: 1, scopeType: ScopeType.BLOCK, displayText: '📄 복사',
+    preconditionFn: onBlock, callback: (scope) => duplicateBlock(scope.block),
+  });
+  Reg.register({
+    id: 'aresDelete', weight: 2, scopeType: ScopeType.BLOCK, displayText: '🗑️ 삭제',
+    preconditionFn: onBlock, callback: (scope) => deleteBlock(scope.block),
+  });
+  Reg.register({
+    id: 'aresDeleteAllBlock', weight: 3, scopeType: ScopeType.BLOCK, displayText: '🧹 전체 삭제',
+    preconditionFn: onBlock, callback: (scope) => deleteAll(scope.block.workspace),
+  });
+  Reg.register({
+    id: 'aresDeleteAllWs', weight: 1, scopeType: ScopeType.WORKSPACE, displayText: '🧹 전체 삭제',
+    preconditionFn: (scope) => (scope.workspace && scope.workspace.getTopBlocks(false).length ? 'enabled' : 'disabled'),
+    callback: (scope) => deleteAll(scope.workspace),
+  });
+
+  // 4) 데스크톱: 블록을 클릭하면 같은 메뉴 표시 (모바일 터치는 롱프레스로만)
+  let lastPointer = null;
+  const div = workspace.getInjectionDiv ? workspace.getInjectionDiv() : document.getElementById('blocklyDiv');
+  if (div) div.addEventListener('pointerdown', (e) => { lastPointer = e; }, true);
+
+  workspace.addChangeListener((e) => {
+    if (e.type !== Blockly.Events.CLICK || e.targetType !== 'block' || !e.blockId) return;
+    if (!lastPointer || lastPointer.pointerType === 'touch') return;          // 터치는 롱프레스로
+    if (lastPointer.target && lastPointer.target.closest &&
+        lastPointer.target.closest('.blocklyEditableText')) return;          // 입력 필드 클릭은 편집 우선
+    const block = workspace.getBlockById(e.blockId);
+    if (!block || block.isInFlyout) return;
+    const hasBlocks = workspace.getTopBlocks(false).length > 0;
+    const options = [
+      { text: '📄 복사', enabled: true, callback: () => duplicateBlock(block) },
+      { text: '🗑️ 삭제', enabled: true, callback: () => deleteBlock(block) },
+      { text: '🧹 전체 삭제', enabled: hasBlocks, callback: () => deleteAll(workspace) },
+    ];
+    Blockly.ContextMenu.show(lastPointer, options, workspace.RTL, workspace);
+  });
 }
 
 function applyKoreanMessages() {
