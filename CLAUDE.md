@@ -12,11 +12,13 @@ ARES (Autonomous Rover Exploration System) — an educational robotics project w
 
 - **개발·버전관리**: 클라우드 밖 로컬 경로에 clone 해서 작업한다(예: macOS `~/Projects/ARES2`, Windows `C:\dev\ARES2`). 기기 간 동기화는 **git push/pull 로만** 한다. origin: `https://github.com/dknife/ARES2.git`
 - **새 기기에서 시작할 때도** OneDrive 폴더를 직접 열지 말고, GitHub 에서 새 clone 후 작업한다.
+- **개발 저장소(이 clone)가 정본(正本)이다.** Windows 작업 경로 예: `C:\Users\young\MyGitProjects\ARES2`. OneDrive 의 `ARES_Project` 폴더는 2026-06-15 부터 `.git` 을 제거해 **문서·배포 산출물 백업 전용**으로 강등됐다(저장소 아님). 그 폴더에는 코드를 두지 않고 `Document/`·`Build/`·`Papers/` 만 남긴다.
 - **OneDrive 에는 최종 결과물만 가끔 작업 파일을 복사**한다(문서·백업·배포용). 복사 시 **`.git` 은 반드시 제외**:
   ```
   rsync -rc --exclude='.git/' --exclude='.DS_Store' <clone>/ "<OneDrive>/.../ARES_Project/"
   ```
   (`--delete` 금지 — OneDrive 에만 있는 `.hwp`/`.pptx` 등 비추적 문서 보존)
+- **Build 산출물은 저장소와 OneDrive 백업 폴더에 동시에 둔다.** 빌드하면 `Build/` 결과를 (1) 저장소에 커밋하고, (2) OneDrive `ARES_Project/Build/` 에도 복사해 배포용 사본을 항상 최신으로 유지한다.
 
 ## Architecture
 
