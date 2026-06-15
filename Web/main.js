@@ -98,57 +98,90 @@ function setupBlockContextMenu(workspace) {
   });
 
   // 2) 동작 (네이티브 메뉴와 클릭 메뉴가 공유) ─ undo 묶음으로 처리
-  function duplicateBlock(block) {
-    if (!block || block.isInFlyout) return;
+  //   · 복사/삭제        → 해당 블록 하나만
+  //   · 연결된 블록 복사/삭제 → 그 블록이 속한 스택(묶여 있는 블록들) 전체
+  //   · 전체 복사/삭제    → 워크스페이스의 모든 블록
+  // 복사는 saveIds:false 로 새 id 를 받아 원본과 충돌하지 않게 한다.
+  const offsetAppend = (data, ws) => {
+    if (!data) return null;
+    data.x = (data.x || 0) + 30;
+    data.y = (data.y || 0) + 30;
+    const copy = Blockly.serialization.blocks.append(data, ws, { recordUndo: true });
+    if (copy && copy.select) copy.select();
+    return copy;
+  };
+  const inGroup = (fn) => {
     Blockly.Events.setGroup(true);
-    try {
-      const data = Blockly.serialization.blocks.save(block, { addCoordinates: true });
-      if (data) {
-        data.x = (data.x || 0) + 30;
-        data.y = (data.y || 0) + 30;
-        const copy = Blockly.serialization.blocks.append(data, block.workspace);
-        if (copy && copy.select) copy.select();
-      }
-    } finally {
-      Blockly.Events.setGroup(false);
-    }
+    try { fn(); } finally { Blockly.Events.setGroup(false); }
+  };
+
+  // 복사 — 해당 블록만 (입력/하위·다음 스택 제외)
+  function copyBlock(block) {
+    if (!block || block.isInFlyout) return;
+    inGroup(() => offsetAppend(
+      Blockly.serialization.blocks.save(block, { addCoordinates: true, saveIds: false, addInputBlocks: false, addNextBlocks: false }),
+      block.workspace));
   }
+  // 복사 — 연결된 블록 전체 (그 블록이 속한 스택 루트부터 통째로)
+  function copyConnected(block) {
+    if (!block || block.isInFlyout) return;
+    const root = block.getRootBlock ? block.getRootBlock() : block;
+    inGroup(() => offsetAppend(
+      Blockly.serialization.blocks.save(root, { addCoordinates: true, saveIds: false }),
+      block.workspace));
+  }
+  // 복사 — 전체 (모든 최상위 스택을 각각 복제)
+  function copyAll(ws) {
+    const tops = ws.getTopBlocks(false);
+    if (!tops.length) return;
+    inGroup(() => tops.forEach((b) => offsetAppend(
+      Blockly.serialization.blocks.save(b, { addCoordinates: true, saveIds: false }), ws)));
+  }
+  // 삭제 — 해당 블록만 (아래 스택은 위로 이어 붙임)
   function deleteBlock(block) {
     if (!block || block.isInFlyout) return;
-    Blockly.Events.setGroup(true);
-    try { block.dispose(true); }   // healStack: 아래 블록은 위로 이어 붙임
-    finally { Blockly.Events.setGroup(false); }
+    inGroup(() => block.dispose(true));
   }
+  // 삭제 — 연결된 블록 전체 (그 블록이 속한 스택 통째로)
+  function deleteConnected(block) {
+    if (!block || block.isInFlyout) return;
+    const root = block.getRootBlock ? block.getRootBlock() : block;
+    inGroup(() => root.dispose(false));
+  }
+  // 삭제 — 전체 (확인 후 모든 스택 제거)
   function deleteAll(ws) {
     const tops = ws.getTopBlocks(false);
     if (!tops.length) return;
     if (!window.confirm('블록을 모두 지울까요?')) return;
-    Blockly.Events.setGroup(true);
-    try { tops.forEach((b) => b.dispose(false)); }
-    finally { Blockly.Events.setGroup(false); }
+    inGroup(() => tops.forEach((b) => b.dispose(false)));
   }
 
-  // 3) 네이티브 메뉴(우클릭/롱프레스)용 레지스트리 등록
+  // 3) 네이티브 메뉴(우클릭/롱프레스)용 레지스트리 등록 (6개)
   const onBlock = (scope) => (scope.block && !scope.block.isInFlyout ? 'enabled' : 'hidden');
+  const ITEMS = [
+    { id: 'aresCopy', text: '📄 복사', run: (b) => copyBlock(b) },
+    { id: 'aresDelete', text: '🗑️ 삭제', run: (b) => deleteBlock(b) },
+    { id: 'aresCopyConn', text: '📑 연결된 블록 복사', run: (b) => copyConnected(b) },
+    { id: 'aresDeleteConn', text: '🗑️ 연결된 블록 삭제', run: (b) => deleteConnected(b) },
+    { id: 'aresCopyAll', text: '📋 전체 복사', run: (b) => copyAll(b.workspace) },
+    { id: 'aresDeleteAll', text: '🧹 전체 삭제', run: (b) => deleteAll(b.workspace) },
+  ];
+  ITEMS.forEach((it, i) => Reg.register({
+    id: it.id, weight: i + 1, scopeType: ScopeType.BLOCK, displayText: it.text,
+    preconditionFn: onBlock, callback: (scope) => it.run(scope.block),
+  }));
+  // 빈 캔버스(워크스페이스 영역) 우클릭/롱프레스: 전체 복사/삭제만
+  const wsHas = (scope) => (scope.workspace && scope.workspace.getTopBlocks(false).length ? 'enabled' : 'disabled');
   Reg.register({
-    id: 'aresCopy', weight: 1, scopeType: ScopeType.BLOCK, displayText: '📄 복사',
-    preconditionFn: onBlock, callback: (scope) => duplicateBlock(scope.block),
+    id: 'aresCopyAllWs', weight: 1, scopeType: ScopeType.WORKSPACE, displayText: '📋 전체 복사',
+    preconditionFn: wsHas, callback: (scope) => copyAll(scope.workspace),
   });
   Reg.register({
-    id: 'aresDelete', weight: 2, scopeType: ScopeType.BLOCK, displayText: '🗑️ 삭제',
-    preconditionFn: onBlock, callback: (scope) => deleteBlock(scope.block),
-  });
-  Reg.register({
-    id: 'aresDeleteAllBlock', weight: 3, scopeType: ScopeType.BLOCK, displayText: '🧹 전체 삭제',
-    preconditionFn: onBlock, callback: (scope) => deleteAll(scope.block.workspace),
-  });
-  Reg.register({
-    id: 'aresDeleteAllWs', weight: 1, scopeType: ScopeType.WORKSPACE, displayText: '🧹 전체 삭제',
-    preconditionFn: (scope) => (scope.workspace && scope.workspace.getTopBlocks(false).length ? 'enabled' : 'disabled'),
-    callback: (scope) => deleteAll(scope.workspace),
+    id: 'aresDeleteAllWs', weight: 2, scopeType: ScopeType.WORKSPACE, displayText: '🧹 전체 삭제',
+    preconditionFn: wsHas, callback: (scope) => deleteAll(scope.workspace),
   });
 
-  // 4) 데스크톱: 블록을 클릭하면 같은 메뉴 표시 (모바일 터치는 롱프레스로만)
+  // 4) 데스크톱: 블록을 클릭하면 같은 6개 메뉴 표시 (모바일 터치는 롱프레스로만)
   let lastPointer = null;
   const div = workspace.getInjectionDiv ? workspace.getInjectionDiv() : document.getElementById('blocklyDiv');
   if (div) div.addEventListener('pointerdown', (e) => { lastPointer = e; }, true);
@@ -160,12 +193,7 @@ function setupBlockContextMenu(workspace) {
         lastPointer.target.closest('.blocklyEditableText')) return;          // 입력 필드 클릭은 편집 우선
     const block = workspace.getBlockById(e.blockId);
     if (!block || block.isInFlyout) return;
-    const hasBlocks = workspace.getTopBlocks(false).length > 0;
-    const options = [
-      { text: '📄 복사', enabled: true, callback: () => duplicateBlock(block) },
-      { text: '🗑️ 삭제', enabled: true, callback: () => deleteBlock(block) },
-      { text: '🧹 전체 삭제', enabled: hasBlocks, callback: () => deleteAll(workspace) },
-    ];
+    const options = ITEMS.map((it) => ({ text: it.text, enabled: true, callback: () => it.run(block) }));
     Blockly.ContextMenu.show(lastPointer, options, workspace.RTL, workspace);
   });
 }
