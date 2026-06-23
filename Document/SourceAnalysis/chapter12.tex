@@ -1,0 +1,107 @@
+\section{기술적 파급효과와 향후 추가 개발 계획}
+
+\subsection{기술적 파급효과}
+
+\subsubsection{교육적 파급효과}
+
+\begin{itemize}
+  \item \textbf{진입 장벽 완화}: 시각적 블록과 한국어 UI, 어린이용 단순화
+        인터페이스로 초등 저학년도 물리 로봇 제어를 경험한다.
+  \item \textbf{실기 없는 학습 보장}: 동일 블록이 동일 명령으로 시뮬레이터와
+        실기 양쪽에서 동작하므로, 로버 보급 대수에 구애받지 않고 수업을
+        진행할 수 있다.
+  \item \textbf{단계적 개념 습득}: 디지털 출력$\to$다채널$\to$난수$\to$구동$\to$
+        센서$\to$제어흐름$\to$모듈화로 이어지는 미션 설계가 컴퓨팅 사고력을
+        점진적으로 형성한다.
+\end{itemize}
+
+\subsubsection{기술적 파급효과}
+
+\begin{itemize}
+  \item \textbf{오프라인 우선 설계}: esbuild 번들과 fetch 심을 통한 \code{file://}
+        단독 실행은, 네트워크\textbf{·}계정\textbf{·}설치가 제약되는 교실 환경에
+        적합한 배포 모델을 제시한다. 이는 다른 웹 기반 교구에 재사용 가능한
+        패턴이다.
+  \item \textbf{개방형 하드웨어 구성}: \code{system.json} 기반 모듈\textbf{·}핀
+        런타임 구성은 동일 펌웨어로 다양한 하드웨어 조합을 수용하여,
+        저비용\textbf{·}맞춤형 교구 제작을 가능케 한다.
+  \item \textbf{표준 웹 기술 활용}: Web Bluetooth\textbf{·}WebGL\textbf{·}Blockly 등
+        표준 기술만으로 구성되어 특정 벤더 종속이 없고, 유지보수\textbf{·}확장이
+        용이하다.
+\end{itemize}
+
+\subsection{향후 추가 개발 계획}
+
+\subsubsection{단기 (기존 자산 강화)}
+
+\begin{itemize}
+  \item 통신 계층 추상화 및 명령 프로토콜 단일 출처화(11장 우선순위 항목).
+  \item AI 도우미(NL$\to$블록, 코딩 질의응답)의 편집기 정식 통합.
+  \item 펌웨어 시간 명령 비차단화로 비상정지 반응성 개선.
+  \item 단위 테스트\textbf{·}빌드 스모크 테스트 도입.
+\end{itemize}
+
+\subsubsection{중기 (플랫폼 확장)}
+
+\begin{itemize}
+  \item Electron 데스크톱 앱 출시(코드 재사용 최대).
+  \item Android PWA 제공 및 Capacitor 래퍼 검토.
+  \item iOS는 Capacitor + 네이티브 BLE 플러그인으로 대응.
+  \item 미션\textbf{·}예제 콘텐츠 확장 및 교사용 진도\textbf{·}평가 도구 보강.
+\end{itemize}
+
+\subsubsection{장기 (플랫폼 고도화)}
+
+\begin{itemize}
+  \item 다중 로버\textbf{·}협동 미션(다중 BLE 연결) 지원 검토.
+  \item 센서\textbf{·}구동 모듈 확장(라인트레이서, 카메라 등)과 그에 맞는 블록\textbf{·}
+        명령 추가.
+  \item 학습 데이터\textbf{·}작업물 클라우드 동기화(선택적, 오프라인 우선 원칙
+        유지).
+  \item 다국어 지원을 통한 해외 보급.
+  \item 시뮬레이터의 물리\textbf{·}센서 모델 정교화로 실기와의 정합성 향상.
+\end{itemize}
+
+\subsection{개발 로드맵 개관}
+
+위 계획을 단기\textbf{·}중기\textbf{·}장기로 배치하면 그림~\ref{fig:roadmap}와 같다.
+전송 추상화와 프로토콜 단일 출처화가 단기 토대가 되고, 이를 발판으로 중기의
+멀티플랫폼 확장과 장기의 플랫폼 고도화가 이어진다.
+
+\begin{diagram}{단기 → 중기 → 장기 개발 로드맵}{fig:roadmap}
+\node[dom, text width=42mm] (s) {단기\\{\footnotesize\mdseries 전송 추상화 · 프로토콜 단일화 · AI 통합 · 테스트}};
+\node[dom, text width=42mm, right=10mm of s] (m) {중기\\{\footnotesize\mdseries Electron · Android PWA/Capacitor · iOS 네이티브 BLE · 콘텐츠 확장}};
+\node[dom, text width=42mm, right=10mm of m] (l) {장기\\{\footnotesize\mdseries 다중 로버 · 모듈 확장 · 다국어 · 시뮬레이터 고도화}};
+\draw[flow] (s) -- node[lbl,above]{토대} (m);
+\draw[flow] (m) -- node[lbl,above]{확장} (l);
+\node[hw, below=8mm of s, text width=42mm] (sf) {기존 자산 강화};
+\node[hw, below=8mm of m, text width=42mm] (mf) {플랫폼 확장};
+\node[hw, below=8mm of l, text width=42mm] (lf) {플랫폼 고도화};
+\draw[dep] (s)--(sf); \draw[dep] (m)--(mf); \draw[dep] (l)--(lf);
+\end{diagram}
+
+\begin{teachbox}{이 설계가 남기는 것}
+\teachhead{설계 의도}
+\begin{itemize}
+  \item 오프라인 우선\textbf{·}표준 웹 기술\textbf{·}개방형 하드웨어 구성이 교육 보급성과 확장성을 만든다.
+\end{itemize}
+\teachhead{분석할 때 핵심 질문}
+\begin{itemize}
+  \item 이 설계의 어떤 점이 \emph{다른 교구}에도 재사용될 수 있는가?
+  \item 새 기능을 더할 때 ``오프라인 우선'' 원칙을 어떻게 지킬 것인가?
+\end{itemize}
+\teachhead{점검 요소}
+\begin{itemize}
+  \item 새 미션이나 새 하드웨어 모듈을 하나 제안하고, 1\textasciitilde 12장 중 \emph{어느 장}의 코드를 수정해야 하는지 매핑하라.
+\end{itemize}
+\end{teachbox}
+
+\subsection{결론}
+
+ARES는 시각적 블록 코딩, 표준 웹 통신(Web Bluetooth), WebGL 3D 시뮬레이션,
+모듈식 MicroPython 펌웨어를 결합하여, 초등 교육 현장에 적합한 오프라인 우선
+로봇 코딩 플랫폼을 구현하였다. 코드베이스는 역할별로 명확히 분리되어 있으며,
+웹과 펌웨어를 잇는 단순 텍스트 프로토콜이 시스템의 유연성과 확장성의 근간을
+이룬다. 본 보고서가 분석한 구조적 특성과 개선\textbf{·}확장 계획은, ARES를
+네이티브 멀티플랫폼으로 확장하고 콘텐츠\textbf{·}AI 보조 기능을 고도화하는
+다음 단계의 기술적 토대가 된다.
