@@ -1,0 +1,204 @@
+\section{연구 주제 도출과 논문 방향}
+
+본 장은 ARES를 단순한 교구 개발을 넘어 \emph{학술 연구}로 발전시키기 위해,
+앞선 분석(1\textasciitilde 13장)에서 학술적 가치가 있는 요소를 추출하고 연구
+요소별 연구 방향과 논문화 전략을 제시한다.
+
+\begin{infobox}[title=서술 원칙]
+본 장에서 제시하는 효과\textbf{·}수치는 \emph{아직 측정되지 않은 연구 가설}이다.
+실제 실험\textbf{·}측정으로 입증하기 전에는 성능\textbf{·}학습 효과를 단정하지 않으며,
+모든 정량 주장은 ``측정 대상''으로만 기술한다. 이는 연구 재현성과 진실성을 위한 것이다.
+\end{infobox}
+
+\subsection{학술적 가치의 세 축}
+
+ARES의 코드\textbf{·}설계에는 서로 다른 분야의 연구 질문을 던질 수 있는 세 가지
+가치 축이 있다.
+
+\begin{enumerate}
+  \item \textbf{교육적 기여} --- 블록 코딩 $\to$ 물리 로봇 제어, 시뮬레이터--실기
+        동형 설계, 오프라인 우선 접근성이 컴퓨팅 사고력\textbf{·}학습 동기에 주는 영향.
+  \item \textbf{시스템\textbf{·}공학적 기여} --- 텍스트 명령 계약 기반 느슨한 결합,
+        Web Bluetooth 통신 특성, 오프라인 단독 실행 빌드, 제약 환경 모듈식 펌웨어.
+  \item \textbf{AI\textbf{·}HCI 기여} --- 오프라인\textbf{·}경량 자연어$\to$블록 변환,
+        어린이 대상 블록 UI/UX와 3D 시뮬레이션의 동기 효과.
+\end{enumerate}
+
+\subsection{연구 요소 1 --- 시뮬레이터--실기 동형 설계의 교육 효과}
+
+\noindent\textbf{학술적 가치.} ARES는 동일 블록이 동일 명령으로 시뮬레이터와
+실기 양쪽에서 같은 의미로 동작한다(7\textbf{·}9장). 이 ``동형성(isomorphism)''은
+로버 보급 대수와 무관한 학습을 가능케 한다는 점에서 저자원 로보틱스 교육의
+설계 원칙으로 검증할 가치가 있다.
+
+\noindent\textbf{연구 질문(RQ).}
+\begin{itemize}
+  \item RQ1. 시뮬레이터 선행 학습이 실기로의 전이(transfer)와 디버깅 수행에 미치는 효과는?
+  \item RQ2. 로버 1:N(공유) 환경에서 동형 설계가 학습 성취 격차를 줄이는가?
+\end{itemize}
+
+\noindent\textbf{연구 방법.} 준실험 설계(시뮬-우선 / 실기-우선 / 혼합 집단),
+사전--사후 컴퓨팅 사고력 평가, 미션 완수율\textbf{·}디버깅 소요 시간\textbf{·}오류 유형
+분석.
+
+\noindent\textbf{기대 기여.} 저자원\textbf{·}대규모 교실에서 ``시뮬-실기 동형'' 설계의
+학습 효과에 대한 실증 근거.
+
+\noindent\textbf{논문 방향.} 컴퓨터\textbf{·}정보 교육 분야 실증 연구(예: 컴퓨터교육\textbf{·}
+정보교육 계열 학술지). 논문 유형: \emph{실증(empirical) 연구}.
+
+\subsection{연구 요소 2 --- 오프라인 우선 웹--임베디드 교구 아키텍처}
+
+\noindent\textbf{학술적 가치.} esbuild 번들링 + \code{fetch} 심 + 자산 인라인으로
+\code{file://} 단독 실행을 구현한 것(6\textbf{·}8장)은, 네트워크\textbf{·}설치\textbf{·}계정
+없이 표준 웹 기술만으로 브라우저에서 임베디드 하드웨어를 제어하는 \emph{재현
+가능한 배포 패턴}이다.
+
+\noindent\textbf{연구 질문(RQ).}
+\begin{itemize}
+  \item RQ1. 오프라인 우선 설계가 교육 현장 배포 용이성\textbf{·}유지보수 비용에 주는 영향은?
+  \item RQ2. 이 빌드 패턴(번들 + 심 + 인라인)은 다른 웹--임베디드 교구로 일반화되는가?
+\end{itemize}
+
+\noindent\textbf{연구 방법.} 설계 과학(Design Science) 또는 사례 연구 + 산출물
+특성 \emph{실측}(번들 용량, 외부 의존성 수, 브라우저\textbf{·}OS 호환 범위) + 현장
+배포 사례 기술.
+
+\noindent\textbf{기대 기여.} 저자원 환경을 위한 ``오프라인 우선 웹--임베디드
+교구'' 레퍼런스 아키텍처와 일반화 가능한 빌드 패턴.
+
+\noindent\textbf{논문 방향.} 교육공학\textbf{·}시스템 분야의 설계\textbf{·}사례 논문.
+논문 유형: \emph{설계 과학/시스템 기여}.
+
+\subsection{연구 요소 3 --- 브라우저--임베디드(Web Bluetooth) 통신 특성}
+
+\noindent\textbf{학술적 가치.} 20바이트 청크, 연결 인터벌 한계, 청크 지연,
+fire-and-forget 대 응답 대기, 차단형 시간 명령 등(4\textbf{·}6장) 웹 BLE 제어의
+실측 특성과 교육 로봇 제어 적합성은 측정 기반 연구 대상이다.
+
+\noindent\textbf{연구 질문(RQ).}
+\begin{itemize}
+  \item RQ1. 청크 지연\textbf{·}페이로드 크기\textbf{·}응답 정책이 명령 처리율\textbf{·}패킷
+        손실\textbf{·}체감 지연에 주는 영향은?
+  \item RQ2. 교육용 시나리오(연속 구동, 일괄 명령)에 대한 최적 파라미터는?
+\end{itemize}
+
+\noindent\textbf{연구 방법.} 다양한 \code{CHUNK\_DELAY}\textbf{·}페이로드\textbf{·}기기\textbf{·}
+브라우저 조합에 대한 \emph{실측 벤치마크}(처리율\textbf{·}손실률\textbf{·}왕복 지연). 모든
+수치는 측정으로 확보하며 날조하지 않는다.
+
+\noindent\textbf{기대 기여.} 교육용 웹 BLE 제어의 설계 가이드라인(파라미터 권고).
+
+\noindent\textbf{논문 방향.} 임베디드\textbf{·}시스템\textbf{·}HCI 측정 연구.
+논문 유형: \emph{측정/벤치마크 연구}.
+
+\subsection{연구 요소 4 --- 제약 환경 모듈식 펌웨어와 결함 내성}
+
+\noindent\textbf{학술적 가치.} MicroPython RAM 제약 하에서 설정 주도 모듈 토글과
+``설정 검사 $\to$ try/except $\to$ None 검사''의 3단 방어(2\textbf{·}4장)는 부분 고장\textbf{·}
+부분 구성에서도 운용을 보장한다. 단일 펌웨어로 다양한 하드웨어 구성을 수용하는
+설계 패턴이다.
+
+\noindent\textbf{연구 질문(RQ).}
+\begin{itemize}
+  \item RQ1. 설정 주도 모듈식 펌웨어가 하드웨어 다양성 수용\textbf{·}결함 격리\textbf{·}교실
+        운용 신뢰성에 주는 효과는?
+  \item RQ2. 3단 방어 패턴은 다른 교육용 임베디드 시스템으로 일반화되는가?
+\end{itemize}
+
+\noindent\textbf{연구 방법.} 결함 주입(모듈 제거\textbf{·}고장) 실험으로 부팅 성공률\textbf{·}
+기능 저하(degradation) 양상 \emph{측정}, 구성 다양성 사례 분석.
+
+\noindent\textbf{기대 기여.} 교육 로봇용 ``구성 주도 결함 내성 펌웨어'' 설계 패턴.
+
+\noindent\textbf{논문 방향.} 임베디드 소프트웨어\textbf{·}소프트웨어공학(설계 패턴).
+논문 유형: \emph{설계 패턴/시스템 연구}.
+
+\subsection{연구 요소 5 --- 오프라인\textbf{·}경량 자연어$\to$블록 변환}
+
+\noindent\textbf{학술적 가치.} 규칙\textbf{·}문법 기반 NL$\to$Blockly 파서(if/else\textbf{·}
+while/until\textbf{·}중첩 제어)와 로컬 LLM PoC(1장, 부록 A2\textbf{·}A3)는 오프라인\textbf{·}경량
+제약 하의 자연어$\to$코드(NL2Code)와 어린이 한국어 의도 파싱이라는 연구 주제를
+연다.
+
+\noindent\textbf{연구 질문(RQ).}
+\begin{itemize}
+  \item RQ1. 문법 기반 파서와 경량 LLM의 정확도\textbf{·}커버리지\textbf{·}지연 트레이드오프는?
+  \item RQ2. 어린이 발화 분포(비표준 어순\textbf{·}구어체)에서의 강건성과 학습 스캐폴딩 효과는?
+\end{itemize}
+
+\noindent\textbf{연구 방법.} 어린이 명령 코퍼스 구축, 파싱 정확도\textbf{·}커버리지 측정,
+블록 생성 성공률과 만족도에 대한 사용자 연구.
+
+\noindent\textbf{기대 기여.} 오프라인 교육용 NL2Block 벤치마크\textbf{·}방법론.
+
+\noindent\textbf{논문 방향.} 교육 AI\textbf{·}자연어 처리(한국어). 논문 유형:
+\emph{방법론 + 평가 연구}.
+
+\subsection{인접 연구 주제(HCI)}
+
+추가로, 어린이 대상 블록 UI/UX(이모지 카테고리\textbf{·}단순화 컨텍스트 메뉴)와
+WebGL 3D 시뮬레이션의 동기\textbf{·}몰입 효과는 HCI 사용성 연구로 확장 가능하다
+(5\textbf{·}7\textbf{·}8장).
+
+\subsection{논문화 로드맵}
+
+연구 요소를 연구 유형\textbf{·}필요 데이터\textbf{·}대상 분야\textbf{·}우선순위로 정리하면 다음과 같다.
+
+\begin{longtable}{L{3.0cm} L{2.6cm} L{3.4cm} L{2.4cm} L{1.6cm}}
+\toprule
+\rowcolor{tablehead}\textbf{연구 요소} & \textbf{연구 유형} & \textbf{필요 데이터\textbf{·}측정} & \textbf{대상 분야} & \textbf{우선순위} \\
+\midrule
+\endhead
+1. 시뮬-실기 동형 & 실증 & 학습자 사전/사후, 미션 로그 & CS\textbf{·}정보 교육 & 높음 \\
+2. 오프라인 우선 아키텍처 & 설계 과학 & 산출물 특성, 배포 사례 & 교육공학\textbf{·}시스템 & 높음 \\
+3. Web BLE 통신 특성 & 측정 & 통신 벤치마크 실측 & 임베디드\textbf{·}HCI & 중간 \\
+4. 모듈식 결함 내성 펌웨어 & 설계 패턴 & 결함 주입 실험 & 임베디드 SW & 중간 \\
+5. 오프라인 NL2Block & 방법+평가 & 어린이 명령 코퍼스 & 교육 AI\textbf{·}NLP & 중간 \\
+\bottomrule
+\end{longtable}
+
+\subsection{통합 논문 전략}
+
+\begin{itemize}
+  \item \textbf{대표(flagship) 논문}: ``시뮬-실기 동형 + 오프라인 우선''을 결합한
+        \emph{시스템 + 교육 효과} 논문. 시스템 기여(아키텍처)와 실증 기여(학습 효과)를
+        함께 제시해 영향력을 높인다(연구 요소 1\textbf{·}2 결합).
+  \item \textbf{위성(satellite) 논문}: 통신 특성(요소 3), 결함 내성 펌웨어(요소 4),
+        NL2Block(요소 5)을 각각 독립 논문으로 분리해 기여를 선명히 한다.
+  \item \textbf{게재 순서 제안}: 측정\textbf{·}설계 기여(요소 2\textbf{·}3\textbf{·}4)는 데이터
+        확보가 비교적 빠르므로 먼저, 학습 효과(요소 1)와 코퍼스 기반(요소 5)은
+        피험자\textbf{·}데이터 수집 후 진행한다.
+\end{itemize}
+
+\subsection{연구 타당성과 윤리}
+
+\begin{infobox}[title=타당성\textbf{·}윤리 점검]
+\begin{itemize}
+  \item \textbf{어린이 피험자}: 학습 효과\textbf{·}사용자 연구는 보호자 동의와 기관
+        생명윤리(IRB) 승인 절차를 따른다.
+  \item \textbf{측정 진실성}: 성능\textbf{·}학습 수치는 실제 측정으로만 보고하고, 미확보
+        수치는 본문\textbf{·}논문에 기재하지 않는다(재현성 원칙).
+  \item \textbf{일반화 한계}: 단일 플랫폼\textbf{·}특정 연령\textbf{·}언어(한국어) 기반이라는
+        외적 타당도 한계를 명시한다.
+  \item \textbf{재현성}: 코드\textbf{·}빌드 산출물\textbf{·}데이터를 공개해 재현 가능하도록 한다.
+\end{itemize}
+\end{infobox}
+
+\begin{teachbox}{분석에서 연구로}
+\teachhead{설계 의도}
+\begin{itemize}
+  \item 코드 분석으로 드러난 ``설계 결정''을 연구 질문으로 바꾸는 것이 이 장의 목적이다.
+        구현 특징(동형성\textbf{·}오프라인\textbf{·}청크\textbf{·}모듈식)을 그대로 검증 대상으로 삼는다.
+\end{itemize}
+\teachhead{핵심 질문}
+\begin{itemize}
+  \item 우리가 맡은 구현 요소 중 ``측정하면 학술적 주장이 되는'' 것은 무엇인가?
+  \item 그 주장을 입증하려면 어떤 데이터\textbf{·}실험\textbf{·}대조군이 필요한가?
+\end{itemize}
+\teachhead{점검 요소}
+\begin{itemize}
+  \item 연구 요소 1\textbf{·}5 중 하나를 골라 RQ--방법--측정 지표--필요 데이터를 한 쪽 분량의
+        연구 계획서로 구체화하라(IRB\textbf{·}측정 진실성 원칙 포함).
+\end{itemize}
+\end{teachbox}

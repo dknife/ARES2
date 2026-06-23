@@ -1,0 +1,174 @@
+\section{서비스 계층 --- 웹 애플리케이션 구조}
+
+본 장은 \code{Web/} 디렉터리의 웹 애플리케이션을 진입점, 모듈 구조,
+상태\textbf{·}DOM\footnote{\textbf{DOM(Document Object Model, 문서 객체 모델)}: 웹 페이지의
+HTML 구조를 객체 트리로 표현한 것. 자바스크립트가 이를 통해 화면 요소를 읽고 바꾼다.} 관리,
+라우팅과 미션 로딩 측면에서 분석한다.
+
+\subsection{진입점 (HTML)}
+
+\begin{longtable}{L{3.0cm} L{11.4cm}}
+\toprule
+\rowcolor{tablehead}\textbf{파일} & \textbf{역할} \\
+\midrule
+\endhead
+\code{index.html} & 랜딩 페이지. three.js로 로버 3D 모델을 렌더링하고 손
+  흔들기 애니메이션을 보여준 뒤 블록 편집기로 진입 \\
+\code{main.html} & 블록 편집기 본체. Blockly 툴박스 정의, 미션 뷰, 차시
+  내비게이션, 대시보드를 iframe으로 임베드 \\
+\code{dashboard.html} & 관제 대시보드. 실시간 모니터링, 시스템 설정, 휠 보정,
+  수동 제어, 진단 \\
+\bottomrule
+\end{longtable}
+
+\subsection{ES 모듈 의존 구조}
+
+애플리케이션 컨트롤러 \code{main.js}가 다른 모듈을 오케스트레이션한다.
+의존 관계의 핵심은 중앙 집중식 상태(\code{state.js})와 상수(\code{constants.js})를
+여러 모듈이 공유한다는 점이다. 실제 \code{import} 구문을 추출한 의존 그래프는
+그림~\ref{fig:webdep}와 같다.
+
+\begin{diagram}{웹 모듈 import 의존 연계도 (화살표 = import)}{fig:webdep}
+\tikzset{m/.style={draw=deepblue, fill=codebg, rounded corners=2pt,
+  font=\scriptsize\ttfamily, inner sep=3pt, minimum height=5.5mm}}
+\tikzset{leaf/.style={m, draw=accentcopper, fill=white}}
+\node[m] (main) at (0,4.2) {main.js};
+\node[m] (cmd) at (-3.4,2.6) {commandexecutor};
+\node[m] (sim) at (0.1,2.6) {simulation};
+\node[m] (aig) at (3.4,2.6) {ai\_helper\_grammar};
+\node[m] (bt) at (-5.0,1.0) {bluetooth};
+\node[m] (log) at (-1.7,1.0) {logger};
+\node[m] (aih) at (3.4,1.0) {ai\_helper};
+\node[leaf] (st) at (-5.4,-0.9) {state};
+\node[leaf] (el) at (-3.6,-0.9) {elements};
+\node[leaf] (co) at (-1.7,-0.9) {constants};
+\node[leaf] (bl) at (0.3,-0.9) {blocklyconfig};
+\node[leaf] (ro) at (3.4,-0.9) {romanize};
+\foreach \a/\b in {main/cmd, main/sim, main/bt, main/log, main/aih, main/st, main/el, main/bl,
+  cmd/bt, cmd/st, cmd/el, cmd/log, cmd/co, cmd/bl, cmd/ro,
+  bt/st, bt/el, bt/log, bt/co, log/el, sim/cmd, sim/st, aih/ro, aig/aih}
+  \draw[dep] (\a) -- (\b);
+\node[font=\scriptsize\sffamily\color{accentcopper}, below=1mm of co] {기반(무의존) 모듈};
+\end{diagram}
+
+그래프에서 드러나는 특징은 다음과 같다. (1) \code{state}\textbf{·}\code{elements}\textbf{·}
+\code{constants}\textbf{·}\code{blocklyconfig}\textbf{·}\code{romanize}는 어떤 모듈도
+\code{import} 하지 않는 \emph{기반 모듈}로, 변경 파급의 시작점이다. (2)
+\code{commandexecutor}와 \code{bluetooth}는 가장 많은 모듈에 의존하는
+\emph{허브}로, 실행 경로의 중심이다. (3) \code{simulation}은 \code{commandexecutor}를
+재사용하여 실기와 동일한 명령 생성 로직을 공유한다. (4) AI 파서는
+\code{ai\_helper\_grammar} $\to$ \code{ai\_helper} $\to$ \code{romanize}의
+선형 의존을 가진다.
+
+\begin{lstlisting}[style=json, caption={모듈 의존 관계 개요}]
+main.js
+ ├── state.js          (전역 상태 객체)
+ ├── elements.js       (DOM 참조 캐시)
+ ├── constants.js      (UUID, 타이밍, 기본 설정)
+ ├── blocklyconfig.js  (블록 정의/툴박스)
+ ├── commandexecutor.js  ─┬─ bluetooth.js, blocklyconfig.js,
+ │                        │   logger.js, constants.js, romanize.js, state.js
+ ├── bluetooth.js      ── state.js, elements.js, logger.js, constants.js
+ ├── simulation.js     (three.js 3D 시뮬레이터)
+ ├── ai_helper.js / ai_helper_grammar.js
+ └── logger.js
+\end{lstlisting}
+
+\subsection{상태 \textbf{·} DOM \textbf{·} 상수 관리}
+
+\subsubsection{\code{state.js} --- 전역 상태}
+
+BLE 연결 핸들(\code{bluetoothDevice}, \code{bluetoothServer},
+\code{characteristic}), 알림 사용 여부, 연결 진행 플래그, 마지막 명령,
+실행 상태, 사용자 변수(\code{variables}), 응답 대기 프라미스
+(\code{pendingResolve}/\code{pendingReject}/\code{pendingTimeout}) 등을 보관한다.
+
+\subsubsection{\code{elements.js} --- DOM 참조}
+
+연결 버튼, 실행/비상정지 버튼, 저장/불러오기 버튼, 파일 입력, 로그 컨테이너
+등 자주 쓰는 DOM 요소를 캐시한다.
+
+\subsubsection{\code{constants.js} --- 상수}
+
+\begin{longtable}{L{4.6cm} L{9.8cm}}
+\toprule
+\rowcolor{tablehead}\textbf{상수} & \textbf{값/의미} \\
+\midrule
+\endhead
+\code{UART\_SERVICE\_UUID} & \code{0000ffe0-0000-1000-8000-00805f9b34fb} \\
+\code{UART\_CHARACTERISTIC\_UUID} & \code{0000ffe1-0000-1000-8000-00805f9b34fb} \\
+\code{MAX\_CHUNK\_SIZE} & 20 (바이트) \\
+\code{COMMAND\_DELAY} & 100\,ms (명령 간 간격) \\
+\code{CHUNK\_DELAY} & 100\,ms (청크 간 간격) \\
+\code{READ\_INTERVAL} & 500\,ms (폴링 폴백 주기) \\
+\code{RESPONSE\_TIMEOUT} & 5000\,ms (응답 대기 한계) \\
+\code{DEFAULT\_SYSTEM\_CONFIG} & 장치명, 최대속도, 충돌거리, 자동정지 등 기본값 \\
+\code{STATUS\_COLORS} & 연결 상태 표시 색상 \\
+\code{STORAGE\_KEYS} & \code{localStorage} 키(\code{ares-system-config}) \\
+\bottomrule
+\end{longtable}
+
+웹 측 사용자 설정은 \code{localStorage}에 저장되어, 일부 타이밍 상수를
+런타임에 사용자 정의값으로 덮어쓸 수 있다.
+
+\subsection{애플리케이션 컨트롤러 (\code{main.js})}
+
+\code{main.js}는 다음을 담당한다.
+
+\begin{itemize}
+  \item \textbf{차시 카탈로그}: 12개 차시 메타데이터(제목, 하드웨어, 개념, 태그)를
+        보유하고 개요 뷰를 구성.
+  \item \textbf{Blockly 초기화}: 한국어 메시지로 워크스페이스 생성, 어린이용
+        단순화 컨텍스트 메뉴(복사/삭제/전체삭제 등) 적용.
+  \item \textbf{라우팅}: URL 해시 기반 내비게이션(예: \code{\#lesson=3\&mission=2}).
+  \item \textbf{뷰 관리}: 개요 $\leftrightarrow$ 차시 $\leftrightarrow$ 미션 전환.
+  \item \textbf{미션 로딩}: 각 차시의 \code{lesson.json}을 불러와 설명\textbf{·}
+        미션 목록 구성.
+  \item \textbf{저장/불러오기}: 미션 작업물을 Blockly XML로 직렬화.
+  \item \textbf{예제 선택기}: 인사하기, 카운트다운 등 예제 프로그램 로딩.
+\end{itemize}
+
+\subsection{대시보드 (\code{dashboard.html})}
+
+\code{main.html} 내부에 iframe\footnote{\textbf{iframe(inline frame)}: 한 웹 페이지 안에 다른
+HTML 문서를 끼워 넣는 요소. 여기서는 대시보드를 본 화면 안에 임베드한다.}으로 임베드되며,
+다음 기능을 제공한다.
+
+\begin{itemize}
+  \item 연결 상태 표시(연결 시 녹색 점)
+  \item 센서 텔레메트리(거리, 자기장)
+  \item 수동 제어(전진/정지/좌/우, LED, 사운드)
+  \item 시스템 설정(최대 속도 슬라이더, 충돌 거리)
+  \item 모터 보정 및 진단
+\end{itemize}
+
+부모 창과 iframe은 \code{postMessage}\footnote{\textbf{postMessage}: 서로 다른 창\textbf{·}iframe
+사이에서 안전하게 메시지를 주고받게 하는 브라우저 API.}로 상태(\code{STATUS,...})를 주고받는다.
+
+\subsection{어린이 대상 UI 설계}
+
+\begin{itemize}
+  \item 이모지 기반 블록 카테고리(\smash{\emj{🚗}}, \smash{\emj{⚡}}, \smash{\emj{💡}}, \smash{\emj{🔊}} 등)로
+        직관성 강화.
+  \item 평이한 한국어 블록 문구(예: ``서보 전진 \%1 초'').
+  \item 어린이용 단순화 컨텍스트 메뉴(고급 옵션 제거).
+  \item 모바일(폭 $\le$ 768px)에서는 카테고리명을 이모지 위주로 축약.
+\end{itemize}
+
+\begin{teachbox}{웹 모듈의 책임 분리}
+\teachhead{설계 의도}
+\begin{itemize}
+  \item ES 모듈로 책임을 나누고 \code{state.js}를 공유 데이터 허브로 둔다.
+  \item \emph{기반(무의존) 모듈}과 \emph{허브 모듈}을 구분해 변경 파급을 관리한다.
+\end{itemize}
+\teachhead{분석할 때 핵심 질문}
+\begin{itemize}
+  \item \code{commandexecutor}\textbf{·}\code{bluetooth}가 가장 많은 모듈에 의존하는 이유는?
+  \item \code{state.js}를 바꾸면 영향 범위가 왜 넓은가?
+\end{itemize}
+\teachhead{점검 요소}
+\begin{itemize}
+  \item 의존 그래프(그림 참고)를 보고 ``이 파일을 수정하면 어디가 영향받는가''를 먼저 예측한 뒤 코드로 검증하라.
+\end{itemize}
+\end{teachbox}
+

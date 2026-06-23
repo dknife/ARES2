@@ -1,0 +1,173 @@
+\section{Web 소스 코드별 API Reference}
+
+본 부록은 \code{Web/} 디렉터리 JavaScript 소스(최상위, \code{vendor/}\textbf{·}
+\code{Mesh/} 제외)의 공개 객체\textbf{·}함수 시그니처를 파일별로 정리한다.
+
+\subsection{constants.js}
+
+설정 객체를 export 한다.
+\begin{itemize}
+  \item \code{BLUETOOTH\_CONFIG} --- \{ \code{UART\_SERVICE\_UUID},
+        \code{UART\_CHARACTERISTIC\_UUID}, \code{MAX\_CHUNK\_SIZE},
+        \code{COMMAND\_DELAY}, \code{CHUNK\_DELAY}, \code{READ\_INTERVAL},
+        \code{RESPONSE\_TIMEOUT} \}
+  \item \code{DEFAULT\_SYSTEM\_CONFIG} --- \{ \code{device\_name},
+        \code{max\_speed}, \code{collision\_distance}, \code{auto\_stop\_enabled},
+        \code{left\_calibration}, \code{right\_calibration},
+        \code{connection\_timeout}, \code{reconnect\_attempts},
+        \code{chunk\_size}, \code{command\_delay} \}
+  \item \code{STATUS\_COLORS} --- \{ \code{GREEN}, \code{RED}, \code{ORANGE} \}
+  \item \code{STORAGE\_KEYS} --- \{ \code{SYSTEM\_CONFIG} \}
+\end{itemize}
+
+\subsection{state.js}
+
+\begin{itemize}
+  \item \code{DEBUG} --- 상세 로깅 플래그(boolean).
+  \item \code{state} --- 전역 상태 객체. 블루투스 핸들(\code{bluetoothDevice},
+        \code{bluetoothServer}, \code{uartService}, \code{characteristic},
+        \code{notificationsEnabled}, \code{readIntervalId}, \code{isConnecting},
+        \code{connectFailed}, \code{lastCommand}), 실행(\code{isExecuting}),
+        변수 맵(\code{variables}), 프라미스 상태(\code{pendingResolve},
+        \code{pendingReject}, \code{pendingTimeout}).
+\end{itemize}
+
+\subsection{elements.js}
+
+\code{elements} 객체로 DOM 참조 캐시: \code{connectButton}, \code{runButton},
+\code{saveButton}, \code{loadButton}, \code{fileInput}, \code{logContent},
+\code{logContainer}, \code{clearLogBtn}.
+
+\subsection{logger.js}
+
+\noindent export 모듈 \code{Logger}.
+
+\begin{longtable}{S{8.2cm} L{5.8cm}}
+\toprule
+\rowcolor{tablehead}\normalfont\sffamily\bfseries 시그니처 & \normalfont\sffamily\bfseries 설명 \\
+\midrule
+\endhead
+Logger.add(message, type = 'info', options = \{\}) & 로그 항목 추가(type, verbose/detail) \\
+Logger.clear() & 전체 로그 비우기 \\
+Logger.refresh() & 로그 표시 재렌더 \\
+\bottomrule
+\end{longtable}
+
+\subsection{romanize.js}
+
+\begin{longtable}{S{7.4cm} L{6.6cm}}
+\toprule
+\rowcolor{tablehead}\normalfont\sffamily\bfseries 시그니처 & \normalfont\sffamily\bfseries 설명 \\
+\midrule
+\endhead
+romanizeKorean(input) & 한글→로마자 변환(OLED용) \\
+hasKorean(input) & 한글 포함 여부 반환(boolean) \\
+\bottomrule
+\end{longtable}
+
+\subsection{blocklyconfig.js}
+
+\begin{itemize}
+  \item \code{BATCH\_FORBIDDEN\_TYPES} --- batch\_block 내부 금지 블록 타입 Set.
+  \item \code{BlocklyConfig} --- \code{blocks} 배열(블록 JSON 정의).
+  \item \code{attachBatchBlockValidator(BlocklyLib)} --- batch\_block에
+        \code{onchange} 검증기 부착.
+\end{itemize}
+
+\subsection{bluetooth.js}
+
+\noindent export 모듈 \code{BluetoothManager}.
+
+\begin{longtable}{S{8.4cm} L{5.6cm}}
+\toprule
+\rowcolor{tablehead}\normalfont\sffamily\bfseries 시그니처 & \normalfont\sffamily\bfseries 설명 \\
+\midrule
+\endhead
+async connect() & BLE 장치 페어링\textbf{·}서비스 탐색 \\
+async disconnect() & 연결 종료\textbf{·}정리 \\
+async cleanup() & 리스너\textbf{·}타이머\textbf{·}버퍼 정리 \\
+onDeviceDisconnected() & 비정상 연결 해제 처리 \\
+handleRxData(event) & 수신 알림 처리 \\
+processReceivedData(receivedData) & 수신 응답 파싱\textbf{·}분배 \\
+\_handleSysValues(data) & SYS\_VALUES 응답 파싱 \\
+\_handleCalibValues(data) & CALIB\_VALUES 응답 파싱 \\
+\_resolvePromise(data) & 대기 프라미스 해소 \\
+\_updateBlocklyVariable(data) & DIST/MAG 추출 후 변수 갱신 \\
+async readCharacteristic() & 단일 특성 읽기(폴링 폴백) \\
+startPeriodicReads() & 폴링 타이머 시작 \\
+updateConnectionStatus(connected) & 연결 UI\textbf{·}이벤트 갱신 \\
+updateStatus(message, \_color) & 상태 메시지 로깅(폐기 예정) \\
+async sendData(data, waitForResponse = false) & 20바이트 청크 전송, 응답 반환 \\
+delay(ms) & 프라미스 슬립 유틸 \\
+\bottomrule
+\end{longtable}
+
+\subsection{commandexecutor.js}
+
+\noindent export 모듈 \code{CommandExecutor}.
+
+\begin{longtable}{S{8.8cm} L{5.2cm}}
+\toprule
+\rowcolor{tablehead}\normalfont\sffamily\bfseries 시그니처 & \normalfont\sffamily\bfseries 설명 \\
+\midrule
+\endhead
+FIRE\_AND\_FORGET\_HEADS & 응답 불필요 명령 헤드 Set \\
+\_isFireAndForget(command) & 응답 불필요 여부 판단 \\
+async \_dispatch(command, waitForResponse) & BLE/시뮬레이션 라우팅 \\
+\_parseSensorReply(data) & 센서값 추출\textbf{·}캐시 \\
+evaluateValueBlock(block) & 값 블록 재귀 평가 \\
+async processBlock(block) & 단일 블록 실행 후 다음 블록 재귀 \\
+async \_processBatch(block) & batch\_block 평탄화 후 BATCH 전송 \\
+generateCommand(block) & 블록 타입→명령 문자열 \\
+async sendCommand(command) & 쿨다운 포함 단일 명령 전송 \\
+async handleLogicBlock(block) & 변수\textbf{·}반복\textbf{·}조건\textbf{·}함수 등 처리 \\
+\_findProcedureDefinition(workspace, name, hasReturn) & 함수 정의 블록 탐색 \\
+async \_setupProcedureArgs(callBlock, defBlock) & 호출 인자→지역변수 바인딩 \\
+async executeWorkspace(workspace) & 워크스페이스 전체 실행 \\
+async simulateWorkspace(workspace, sink) & 명령을 sink로 보내 시뮬레이션 \\
+\bottomrule
+\end{longtable}
+
+\subsection{ai\_helper.js}
+
+규칙 기반(오프라인) 자연어→Blockly XML 변환.
+\begin{itemize}
+  \item \code{parse(rawText)} --- \{ \code{ok}, \code{replace}, \code{xml},
+        \code{added}, \code{unmatched}, \code{error}, \code{suggest} \} 반환.
+  \item \code{\_internal} --- grammar.js 재사용용 내부 함수
+        (\code{splitClauses}, \code{splitMeasureBoundary}, \code{matchAction},
+        \code{parseClause}, \code{detectComparison}, \code{detectOutputVar},
+        \code{KNOWN\_TYPES}).
+\end{itemize}
+
+\subsection{ai\_helper\_grammar.js}
+
+재귀 하강 파싱 기반 자연어→Blockly XML(if/else, while/until, 중첩 지원).
+\begin{itemize}
+  \item \code{parse(rawText)} --- \code{ai\_helper.parse}와 동일 형식 반환.
+  \item \code{\_grammar} --- 내부 함수(\code{parseInline}, \code{parseClauseAt},
+        \code{parseProgram}, \code{matchRepeatHeader}).
+\end{itemize}
+
+\subsection{simulation.js}
+
+three.js 기반 3D 시뮬레이션 초기화\textbf{·}관리.
+\begin{itemize}
+  \item \code{setupSimulation(\{ workspace, onOpen, onClose \})} --- 시뮬레이션
+        UI 핸들러 등록 후 컨트롤러 객체 \{ \code{close()} \} 반환.
+  \item 내부 헬퍼(\code{OLED\_ICONS}, \code{TOPICS}, \code{buildSim},
+        \code{recolorLaunchpadAntenna} 등)는 공개 API 아님.
+\end{itemize}
+
+\subsection{main.js}
+
+애플리케이션 진입점. 라우팅\textbf{·}뷰 전환\textbf{·}Blockly 초기화\textbf{·}이벤트
+리스너\textbf{·}버튼 콜백을 담당하며 대부분 내부 함수이다. 페이지 로드 시
+\code{main()}이 1회 호출되어 Blockly\textbf{·}이벤트\textbf{·}내비게이션\textbf{·}뷰를
+초기화한다.
+
+\subsection{mobile-preview.js}
+
+자기실행 IIFE. 공개 export 없음. \code{?mobile=true}일 때 페이지를 모바일
+기기 프레임(iframe)으로 감싸 반응형 미리보기를 제공하며, 내부 링크에
+\code{mobile=true\&framed=1}을 전파한다.

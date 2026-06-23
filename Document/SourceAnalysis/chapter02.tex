@@ -1,0 +1,182 @@
+\section{구성요소 --- 하드웨어 및 소프트웨어 요소}
+
+본 장은 ARES 시스템을 이루는 하드웨어 요소와 소프트웨어 요소를 조감한다.
+세부 분석은 3장(하드웨어 핀)과 4장(펌웨어), 5\textasciitilde 8장(웹 계층)에서
+이어진다.
+
+\subsection{시스템 계층 구조}
+
+ARES는 ``웹 클라이언트 --- 무선 링크 --- 임베디드 펌웨어 --- 물리 하드웨어''의
+4계층으로 볼 수 있다.
+
+\begin{longtable}{L{3.0cm} L{5.2cm} L{6.3cm}}
+\toprule
+\rowcolor{tablehead}\textbf{계층} & \textbf{구성요소} & \textbf{핵심 기술} \\
+\midrule
+\endhead
+프레젠테이션 & 블록 편집기, 대시보드, 3D 랜딩/시뮬레이터 & HTML5, CSS, Google Blockly, three.js \\
+애플리케이션 & 명령 생성기, 상태 관리, 로거, AI 도우미 & ES 모듈 JavaScript \\
+통신 & Web Bluetooth $\leftrightarrow$ BLE UART & GATT UART 서비스(0xFFE0/0xFFE1), 20바이트 청크 \\
+펌웨어 & 명령 처리기, 하드웨어 추상화, 설정 & MicroPython, 싱글턴 패턴 \\
+물리 & 모터/센서/표시/음향/발사 & RP2040 GPIO, PWM, I2C, ADC \\
+\bottomrule
+\end{longtable}
+
+각 계층은 바로 아래 계층에만 의존하며, 인접하지 않은 계층과 직접 결합하지
+않는다. 예컨대 프레젠테이션 계층의 블록은 통신 계층의 BLE 세부를 알지 못하고,
+통신 계층은 펌웨어 핸들러의 구현을 알지 못한다. 이 단방향 의존(그림~\ref{fig:layers})은
+계층별 교체\textbf{·}시험을 쉽게 한다. 특히 통신 계층은 ``전송 가능한 텍스트 명령''만
+다루므로, 실기(BLE) 대신 시뮬레이터(3D)로 대상을 바꿔도 상위 계층이 동일하게
+동작한다(9장 시뮬레이션 분기 참조).
+
+\begin{diagram}{4계층 단방향 의존 구조}{fig:layers}
+\node[dom, text width=95mm] (l1) {프레젠테이션 — 블록 편집기 · 대시보드 · 3D 시뮬레이터};
+\node[dom, text width=95mm, below=6mm of l1] (l2) {애플리케이션 — 명령 생성 · 상태 관리 · 로거 · AI 도우미};
+\node[dom, text width=95mm, below=6mm of l2] (l3) {통신 — Web Bluetooth $\leftrightarrow$ BLE UART (0xFFE0/0xFFE1, 20B 청크)};
+\node[dom, text width=95mm, below=6mm of l3] (l4) {펌웨어 — CommandProcessor · 하드웨어 추상화 · 설정};
+\node[hw, text width=95mm, below=6mm of l4] (l5) {물리 — RP2040 GPIO · PWM · I2C · ADC};
+\foreach \a/\b in {l1/l2, l2/l3, l3/l4, l4/l5}
+  \draw[dep] (\a) -- (\b);
+\node[font=\scriptsize\sffamily\color{accentcopper}, right=2mm of l3.east, anchor=west, text width=18mm]
+  {텍스트 명령 계약};
+\end{diagram}
+
+\subsection{하드웨어 요소}
+
+로버에 탑재되는 하드웨어 모듈은 모두 \emph{선택적}이며, 펌웨어 설정 파일
+\code{system.json}을 통해 개별적으로 활성화\textbf{·}비활성화할 수 있다.
+
+\begin{longtable}{L{2.6cm} L{2.6cm} L{8.8cm}}
+\toprule
+\rowcolor{tablehead}\textbf{모듈} & \textbf{드라이버 클래스} & \textbf{역할} \\
+\midrule
+\endhead
+서보 휠 & \code{KSWheel} & 좌\textbf{·}우 연속회전 서보로 전진/후진/회전 (차동 구동) \\
+DC 모터 & \code{KSDCMotor} & 메인 구동 모터, PWM H-브리지 속도 제어 \\
+부저 & \code{KSBuzzer} & PWM 톤 생성, 비차단(non-blocking) 재생, 멜로디 지원 \\
+LED 배열 & \code{KSLeds} & 6개 LED, PWM 밝기 제어(0.0\textasciitilde 1.0), 스와이프 효과 \\
+거리 센서 & \code{KSDistance} & HC-SR04 초음파, cm 단위 거리 측정 \\
+자기 센서 & \code{KSMagSensor} & 자기장 검출(디지털, 풀업) \\
+발사기 & \code{KSGun} & BB탄 발사 모터, 소프트 스타트 \\
+OLED & \code{SSD1306\_I2C} & 128$\times$64 I2C 디스플레이, 텍스트/아이콘 출력 \\
+\bottomrule
+\end{longtable}
+
+\subsection{소프트웨어 요소}
+
+\subsubsection{웹 클라이언트 (\code{Web/})}
+
+ES 모듈로 분리된 JavaScript 파일들이 명확한 책임 경계를 가진다.
+
+\begin{longtable}{L{3.4cm} L{11.0cm}}
+\toprule
+\rowcolor{tablehead}\textbf{파일} & \textbf{역할} \\
+\midrule
+\endhead
+\code{main.js} & 앱 초기화, 라우팅, Blockly 워크스페이스 구성, 차시/미션 로딩 \\
+\code{blocklyconfig.js} & 커스텀 블록 정의 및 카테고리(툴박스) \\
+\code{commandexecutor.js} & 블록 $\to$ 명령 문자열 변환 및 전송, 제어흐름 처리 \\
+\code{bluetooth.js} & \code{BluetoothManager}: BLE 연결, 청크 송수신, 응답 처리 \\
+\code{constants.js} & UUID, 타이밍 상수, 기본 시스템 설정 \\
+\code{state.js} & 전역 상태(연결, 변수, 실행 플래그) \\
+\code{elements.js} & DOM 요소 참조 캐시 \\
+\code{logger.js} & 통신 로그 UI \\
+\code{simulation.js} & three.js 기반 3D 시뮬레이터 \\
+\code{ai\_helper.js}, \code{ai\_helper\_grammar.js} & 자연어 $\to$ 블록 변환(문법 기반) \\
+\code{romanize.js} & 한글 $\to$ 로마자 변환(OLED 텍스트용) \\
+\code{mobile-preview.js} & 모바일 프레임 미리보기 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{피코 펌웨어 (\code{Pico/})}
+
+\begin{longtable}{L{3.4cm} L{11.0cm}}
+\toprule
+\rowcolor{tablehead}\textbf{파일} & \textbf{역할} \\
+\midrule
+\endhead
+\code{main.py} & 부팅 시퀀스, UART 수신 메인 루프, 응답 전송 \\
+\code{process\_data.py} & \code{CommandProcessor}: 명령 파싱 및 하드웨어 분배 \\
+\code{hardware.py} & \code{RobotHardware} 싱글턴: 모듈 초기화/수명 관리 \\
+\code{system\_config.py} & \code{SystemConfig}: \code{system.json} 입출력, 설정 관리 \\
+\code{pins.py} & GPIO 핀 중앙 정의 \\
+\code{wheel.py}, \code{dcmotor.py}, \code{buzzer.py}, \code{leds.py}, \code{gun.py} & 구동/출력 드라이버 \\
+\code{ultrasonic.py}, \code{magsensor.py} & 센서 드라이버 \\
+\code{ssd1306.py}, \code{icon.py} & OLED 드라이버 및 아이콘 비트맵 \\
+\code{system.json} & 모듈 활성 플래그, 핀 할당, 보정값 저장 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{외부 라이브러리 및 자산}
+
+\begin{itemize}
+  \item \textbf{Google Blockly} (v11) --- 시각적 블록 코딩 엔진.
+        오프라인 빌드 시 \code{vendor/}에 로컬 사본으로 동봉.
+  \item \textbf{three.js}\footnote{\textbf{three.js}: 웹 브라우저에서 WebGL을 쉽게 다루도록
+        해주는 자바스크립트 3D 그래픽 라이브러리.} --- WebGL\footnote{\textbf{WebGL(Web
+        Graphics Library)}: 웹 브라우저에서 별도 플러그인 없이 GPU 가속으로 3D\textbf{·}2D
+        그래픽을 렌더링하는 표준 API.} 3D 렌더링.
+        \code{vendor/three-bundle.min.js}로 사전 번들(로컬, CDN 비의존).
+  \item \textbf{meshopt decoder}\footnote{\textbf{meshopt}: 3D 메시(정점\textbf{·}면) 데이터를
+        작게 압축하고 빠르게 복원하는 기법\textbf{·}라이브러리. 모델 파일 용량을 줄여 로딩을
+        앞당긴다.} --- \code{EXT\_meshopt\_compression}으로 압축된
+        GLB\footnote{\textbf{GLB}: glTF 3D 모델을 하나의 바이너리 파일로 담은 포맷. 형상\textbf{·}
+        재질\textbf{·}애니메이션을 함께 포함한다.} 모델 디코딩.
+  \item \textbf{GLB 3D 모델} (\code{Web/Mesh/}) --- 로버, 알비, 신호등, 발사대 등
+        미션 환경 모델.
+\end{itemize}
+
+\subsection{모듈 활성화 패턴}
+
+모든 하드웨어 모듈은 동일한 안전 초기화 패턴을 따른다. 이는 일부 부품이
+없거나 고장 난 상태에서도 시스템 전체가 부팅되도록 보장한다.
+
+\begin{lstlisting}[style=py, caption={hardware.py의 모듈 초기화 패턴}]
+if sys_config.is_module_enabled('wheel'):
+    try:
+        from wheel import KSWheel
+        self.wheel = KSWheel()
+    except Exception as e:
+        print("Wheel init failed:", e)
+        self.wheel = None   # 실패 시 None -> 사용 측에서 건너뜀
+\end{lstlisting}
+
+명령 처리 측(\code{process\_data.py})은 사용 전 \code{if not robot.wheel: return 0}와
+같이 모듈 존재 여부를 확인하므로, 비활성 모듈에 대한 명령은 조용히 무시된다.
+이 ``설정 검사 $\to$ 안전 초기화 $\to$ 사용 측 널 검사''의 3단 방어
+(그림~\ref{fig:modinit})가 부분 고장\textbf{·}부분 구성 상황에서도 시스템 부팅과
+운용을 보장하는 핵심 패턴이다.
+
+\begin{diagram}{모듈 활성화 \textbf{·} 안전 초기화 연계 흐름}{fig:modinit}
+\node[store, text width=20mm] (json) {system.json};
+\node[boxw, right=12mm of json] (check) {is\_module\_\\enabled()};
+\node[boxw, right=12mm of check] (try) {try: import\\+ 인스턴스화};
+\node[hw, right=12mm of try, text width=20mm] (ok) {self.\textsl{mod}\\= 객체};
+\node[boxw, below=8mm of try] (fail) {except:\\self.\textsl{mod}=None};
+\node[boxw, right=12mm of ok, text width=24mm] (use) {process\_data:\\if not robot.\textsl{mod}: return 0};
+
+\draw[flow] (json) -- node[lbl,above]{플래그} (check);
+\draw[flow] (check) -- node[lbl,above]{ON} (try);
+\draw[flow] (try) -- node[lbl,above]{성공} (ok);
+\draw[flow] (try) -- node[lbl,right]{실패} (fail);
+\draw[flow] (ok) -- (use);
+\draw[back] (fail.east) to[bend right=20] node[lbl,below]{None $\Rightarrow$ 무시} (use.south west);
+\end{diagram}
+
+\begin{teachbox}{선택적 모듈과 안전 초기화}
+\teachhead{설계 의도}
+\begin{itemize}
+  \item 모든 하드웨어를 \emph{선택적}으로 만들어, 부품 구성이 다른 로버도 같은 펌웨어로 돌린다.
+  \item ``설정 검사 $\to$ try/except 초기화 $\to$ 사용 측 None 검사''의 3단 방어로 일부 부품이 없거나 고장 나도 전체가 부팅된다.
+\end{itemize}
+\teachhead{분석할 때 핵심 질문}
+\begin{itemize}
+  \item 어떤 모듈이 빠졌을 때 시스템은 멈추는가, 무시하는가? 왜 그렇게 했는가?
+  \item 이 3단 방어가 없다면 어떤 문제가 생길까?
+\end{itemize}
+\teachhead{점검 요소}
+\begin{itemize}
+  \item \code{system.json}에서 한 모듈을 꺼 보고, 관련 명령이 어떻게 조용히 무시되는지 직렬 로그로 확인하라.
+\end{itemize}
+\end{teachbox}
+

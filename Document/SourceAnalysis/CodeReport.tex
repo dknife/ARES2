@@ -1,0 +1,65 @@
+%% ============================================================
+%% CodeReport.tex — ARES 프로젝트 코드 분석 종합 보고서 (메인)
+%% 대상 저장소: https://github.com/dknife/ARES2.git
+%% XeLaTeX 컴파일:  xelatex CodeReport.tex  (2회 실행 → 목차/참조)
+%% ============================================================
+\documentclass[11pt, oneside]{article}
+
+\input{preamble}
+
+\title{%
+  {\sffamily\bfseries\fontsize{24}{28}\selectfont\color{deepblue}ARES 프로젝트 코드 분석 종합 보고서}\\[8pt]
+  {\rmfamily\normalsize\color{accentcopper}Autonomous Rover Exploration System --- 소스 코드 구조 및 기술 분석}%
+}
+\author{\sffamily (주)코리아사이언스\quad/\quad 동명대학교 게임공학과}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{plain}
+
+\begin{abstract}
+\noindent
+본 보고서는 ARES(Autonomous Rover Exploration System) 교육용 로봇 플랫폼의
+소스 코드 저장소(\href{https://github.com/dknife/ARES2}{\code{github.com/dknife/ARES2}})를
+대상으로 한 종합 기술 분석 문서이다. ARES는 초등학생을 대상으로 한 블록 코딩
+교육 플랫폼으로, (1) Google Blockly 기반 웹 애플리케이션, (2) 라즈베리파이 피코
+MicroPython 펌웨어, (3) 보조 AI 모듈의 세 가지 런타임 도메인으로 구성된다.
+본 문서는 하드웨어 구성과 핀 배치, 펌웨어 명령 처리 구조, 웹 서비스 계층,
+Web Bluetooth 통신, 블록 코딩 구현 방식, WebGL 기반 3D 시뮬레이션, 코드 간
+연계 구조를 코드 수준에서 분석하고, 네이티브 앱 패키징 방안과 향후 개선·확장
+계획을 제시한다.
+\end{abstract}
+
+\vspace{0.5em}
+{\color{rulegray}\hrule height 0.6pt}
+\vspace{1.0em}
+
+\tableofcontents
+\newpage
+
+\input{chapter01.tex}
+\input{chapter02.tex}
+\input{chapter03.tex}
+\input{chapter04.tex}
+\input{chapter05.tex}
+\input{chapter06.tex}
+\input{chapter07.tex}
+\input{chapter08.tex}
+\input{chapter09.tex}
+\input{chapter10.tex}
+\input{chapter11.tex}
+\input{chapter12.tex}
+\input{chapter13.tex}
+\input{chapter14.tex}
+
+\appendix
+\renewcommand{\thesection}{A\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\newpage
+\input{appendixA1.tex}
+\input{appendixA2.tex}
+\input{appendixA3.tex}
+
+\end{document}

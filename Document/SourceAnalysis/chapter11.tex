@@ -1,0 +1,122 @@
+\section{주요 기술 요소 및 개선 계획}
+
+본 장은 ARES의 핵심 기술 요소를 요약하고, 코드 분석에서 관찰된 사항을
+바탕으로 한 개선 계획을 제시한다.
+
+\subsection{핵심 기술 요소 요약}
+
+\begin{longtable}{L{3.6cm} L{10.8cm}}
+\toprule
+\rowcolor{tablehead}\textbf{기술 요소} & \textbf{내용} \\
+\midrule
+\endhead
+시각적 블록 코딩 & Google Blockly 기반 커스텀 블록 + 한국어 UI + 어린이용 단순화 \\
+텍스트 명령 프로토콜 & 개행 종단\textbf{·}쉼표 구분의 단순 텍스트 계약(웹$\leftrightarrow$펌웨어) \\
+Web Bluetooth 통신 & GATT UART(0xFFE0/0xFFE1), 20바이트 청크, 응답 대기/Fire-and-forget \\
+모듈식 펌웨어 & 싱글턴 하드웨어 추상화 + \code{system.json} 기반 모듈\textbf{·}핀 런타임 구성 \\
+WebGL 시뮬레이터 & three.js로 실기 없이 동일 명령을 3D 시연 \\
+오프라인 단독 실행 & esbuild 번들 + 자산 인라인 + fetch 심으로 \code{file://} 지원 \\
+자연어 보조 & 문법 기반 NL$\to$블록 파서 + 로컬 LLM PoC \\
+\bottomrule
+\end{longtable}
+
+\subsection{개선 계획}
+
+\subsubsection{1. 통신 계층 추상화}
+
+현재 \code{bluetooth.js}는 \code{navigator.bluetooth}에 직접 결합되어 있다.
+이를 전송 인터페이스로 추상화하면 (1) 네이티브 앱(10장)으로의 확장,
+(2) 시뮬레이션/실기 전환 일원화, (3) 단위 테스트용 목(mock) 전송 주입이
+용이해진다. 명령 생성과 UI는 변경 없이 유지된다.
+
+\subsubsection{2. 명령 프로토콜의 단일 출처화}
+
+웹과 펌웨어가 명령 문자열만으로 결합되어 있어, 한쪽 변경 시 다른 쪽 누락이
+회귀(regression)를 유발할 수 있다. 명령 명세를 기계가 읽을 수 있는 단일
+정의(예: 명령\textbf{·}인자\textbf{·}응답 여부를 담은 표)에서 양측 코드 일부를
+생성하거나 검증하도록 하면 정합성이 강화된다. 최소한
+\code{FIRE\_AND\_FORGET\_HEADS}와 \code{NO\_RESPONSE\_CMDS}의 일치를 자동
+점검하는 절차를 둔다. 목표 구조는 그림~\ref{fig:singlesrc}와 같다. 현재는
+두 코드베이스가 명령 형식을 각자 보유(점선)하지만, 단일 명세에서 양측 일부를
+생성\textbf{·}검증(실선)하도록 바꾸면 회귀를 구조적으로 차단할 수 있다.
+
+\begin{diagram}{명령 프로토콜 단일 출처화 목표 구조}{fig:singlesrc}
+\node[store, text width=34mm] (spec) {명령 명세(단일 정의)\\{\scriptsize 명령·인자·응답여부}};
+\node[dom, above left=10mm and 6mm of spec, text width=34mm] (web) {commandexecutor.js\\{\scriptsize FIRE\_AND\_FORGET\_HEADS}};
+\node[dom, above right=10mm and 6mm of spec, text width=34mm] (fw) {process\_data.py\\{\scriptsize NO\_RESPONSE\_CMDS}};
+\node[box, below=9mm of spec, text width=34mm] (check) {정합성 자동 점검\\{\scriptsize CI 검증}};
+\draw[flow] (spec) -- node[lbl,left]{생성/검증} (web);
+\draw[flow] (spec) -- node[lbl,right]{생성/검증} (fw);
+\draw[dep] (web) to[bend left=12] node[lbl,above]{현재: 각자 보유(불일치 위험)} (fw);
+\draw[flow] (spec) -- (check);
+\draw[flow] (check.west) to[bend left=40] (web.south);
+\draw[flow] (check.east) to[bend right=40] (fw.south);
+\end{diagram}
+
+\subsubsection{3. 펌웨어 비차단화}
+
+\code{tFORWARD} 등 시간 지정 명령은 메인 루프를 점유하여, 그 동안 비상정지
+(\code{STOP\_ALL})를 포함한 다른 명령 처리가 지연된다. 시간 명령을 타이머
+기반 비차단 상태 기계로 전환하면 반응성과 안전성이 향상된다. 부저는 이미
+비차단 패턴을 채택하고 있어 동일한 모델을 구동계로 확장할 수 있다.
+
+\subsubsection{4. 설정 정합성 관리}
+
+설정이 펌웨어 \code{system.json}과 웹 \code{localStorage}에 이중으로 존재한다.
+연결 시 \code{GET\_SYS}로 펌웨어 값을 신뢰 기준으로 동기화하는 흐름을 명확히
+하고, 불일치 시 사용자에게 알리는 정책을 정립한다.
+
+\subsubsection{5. 안전성 \textbf{·} 견고성}
+
+\begin{itemize}
+  \item 장시간 운용 시 메모리 단편화를 고려한 주기적 \code{gc.collect()} 검토.
+  \item 멈춘 명령에 대비한 워치독\textbf{·}타임아웃 정책.
+  \item 빠른 연속 명령 전송 시의 웹 측 프라미스 경쟁 상태 점검.
+\end{itemize}
+
+\subsubsection{6. AI 보조 기능 통합}
+
+문법 기반 NL$\to$블록 파서(\code{ai\_helper*.js})와 로컬 LLM PoC
+(\code{AI/ai.py})를 블록 편집기 UI에 정식 통합하여, 자연어 입력으로 블록을
+생성하거나 코딩 질문에 답하는 도우미 패널을 제공한다. 오프라인\textbf{·}어린이
+대상 특성을 고려해, 경량 문법 파서를 기본 경로로 두고 LLM은 선택적
+보강으로 둔다.
+
+\subsubsection{7. 접근성 \textbf{·} 다국어}
+
+\begin{itemize}
+  \item OLED 한글 출력의 로마자 변환 한계를 보완할 한글 비트맵 폰트 검토.
+  \item 블록 문구\textbf{·}UI의 다국어(i18n) 분리로 해외 보급 대비.
+  \item 색약\textbf{·}저시력 대비 카테고리 색상 대비 점검.
+\end{itemize}
+
+\subsubsection{8. 테스트 \textbf{·} 빌드 자동화}
+
+\begin{itemize}
+  \item 명령 생성기\textbf{·}NL 파서에 대한 단위 테스트 도입.
+  \item \code{build.ps1}/\code{build.sh}의 산출물 검증(스모크 테스트) 추가.
+  \item 펌웨어 \code{CommandProcessor}에 대한 호스트 측 시뮬레이션 테스트.
+\end{itemize}
+
+\begin{infobox}[title=우선순위 제언]
+파급효과 대비 비용을 고려하면, \textbf{(1) 통신 계층 추상화}와
+\textbf{(2) 프로토콜 단일 출처화}가 가장 우선순위가 높다. 전자는 네이티브
+확장의 전제이며, 후자는 두 코드베이스의 회귀를 구조적으로 차단한다.
+\end{infobox}
+
+\begin{teachbox}{무엇부터 고칠 것인가}
+\teachhead{설계 의도}
+\begin{itemize}
+  \item 파급효과 대비 비용으로 개선 우선순위를 매겼다(전송 추상화\textbf{·}프로토콜 단일화가 최우선).
+\end{itemize}
+\teachhead{분석할 때 핵심 질문}
+\begin{itemize}
+  \item 회귀를 ``구조적으로'' 막는다는 말은 무슨 뜻인가?
+  \item 어떤 개선이 다른 개선의 \emph{토대}가 되는가?
+\end{itemize}
+\teachhead{점검 요소}
+\begin{itemize}
+  \item 개선 항목 하나를 골라 ``변경 파일\textbf{·}필요한 테스트\textbf{·}예상 위험''을 담은 한 쪽짜리 계획서를 작성하라.
+\end{itemize}
+\end{teachbox}
+

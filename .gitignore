@@ -9,6 +9,8 @@ Document/*
 !Document/.gitignore
 !Document/CodeChange*.tex
 !Document/CodeChange*.pdf
+# 소스 코드 분석 보고서(LaTeX 원본·PDF·폰트)는 추적한다.
+!Document/SourceAnalysis/
 
 # WebGL 폴더는 개인 개발용 — 공유하지 않음
 WebGL/
