@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARES 진행 보고 — 1~3일차</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: #F8F8F8; color: #222;
+            font-family: 'Inter Tight', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header.report-head {
+            background: #222; color: #fff;
+            padding: 72px 0 60px;
+        }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+        .eyebrow {
+            font-size: 0.85em; font-weight: 600; letter-spacing: 3px;
+            text-transform: uppercase; color: #FA5D29; margin-bottom: 18px;
+        }
+        header.report-head h1 {
+            font-size: clamp(30px, 5vw, 52px); font-weight: 800;
+            letter-spacing: -1px; line-height: 1.1; margin-bottom: 18px;
+        }
+        header.report-head h1 .accent { color: #FA5D29; }
+        header.report-head p.sub { color: rgba(255,255,255,0.72); font-size: 1.05em; max-width: 640px; }
+
+        .stat-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+        .stat {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px; padding: 14px 22px;
+        }
+        .stat b { display: block; font-size: 1.5em; font-weight: 800; color: #fff; }
+        .stat span { font-size: 0.8em; color: rgba(255,255,255,0.6); letter-spacing: 1px; }
+
+        /* Day section */
+        section.day { padding: 56px 0 8px; }
+        .day-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+        .day-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #FA5D29; color: #fff; font-weight: 800;
+            border-radius: 10px; padding: 6px 16px; font-size: 0.95em; letter-spacing: 1px;
+        }
+        .day-head h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 700; }
+        .day-date { color: #999; font-weight: 500; font-size: 0.9em; }
+        .day-summary {
+            color: #444; font-size: 1.02em; margin: 4px 0 28px;
+            border-left: 3px solid #FA5D29; padding-left: 16px;
+        }
+
+        /* Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        figure {
+            background: #fff; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        figure:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
+        figure .imgbox { position: relative; aspect-ratio: 4 / 3; background: #EDEDED; cursor: zoom-in; }
+        figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        figure .time {
+            position: absolute; bottom: 8px; right: 8px;
+            background: rgba(0,0,0,0.6); color: #fff; font-size: 0.72em; font-weight: 600;
+            padding: 3px 9px; border-radius: 100px; letter-spacing: 0.5px;
+        }
+        figcaption { padding: 14px 16px 16px; font-size: 0.9em; color: #313131; }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.92); display: none;
+            align-items: center; justify-content: center; padding: 24px;
+            cursor: zoom-out;
+        }
+        .lightbox.open { display: flex; }
+        .lightbox img { max-width: 100%; max-height: 86vh; border-radius: 8px; }
+        .lightbox .lb-cap {
+            position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;
+            color: rgba(255,255,255,0.85); font-size: 0.9em; padding: 0 24px;
+        }
+        .lightbox .lb-close {
+            position: absolute; top: 18px; right: 24px; color: #fff;
+            font-size: 2em; font-weight: 300; cursor: pointer; line-height: 1;
+        }
+
+        footer {
+            text-align: center; padding: 48px 32px 60px; margin-top: 40px;
+            color: #999; font-size: 0.85em; border-top: 1px solid #EDEDED;
+        }
+        footer a { color: #FA5D29; text-decoration: none; }
+
+        @media (max-width: 600px) {
+            .wrap { padding: 0 20px; }
+            header.report-head { padding: 56px 0 44px; }
+            .gallery { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="report-head">
+        <div class="wrap">
+            <div class="eyebrow">ARES Project · Progress Report</div>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 3일차</span></h1>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 제작 협력업체 방문, 웹 서비스 시연.</p>
+            <div class="stat-row">
+                <div class="stat"><b>3</b><span>DAYS</span></div>
+                <div class="stat"><b>14</b><span>PHOTOS</span></div>
+                <div class="stat"><b>06.23~25</b><span>2026 · KST</span></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="wrap">
+        <!-- ============ Day 1 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 1</span>
+                <h2>컴퓨터실 개발 착수</h2>
+                <span class="day-date">2026.06.23 (월) · 10:32–15:40 KST</span>
+            </div>
+            <p class="day-summary">컴퓨터실에서 개발에 착수했다. 로버 하드웨어(섀시·모터 컨트롤러 보드)를 조립하고, 발사대·로켓·LED 모형을 제작했으며, 블록 코딩과 펌웨어 작업을 병행했다.</p>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2948.jpg" alt="컴퓨터실 개발 작업">
+                        <span class="time">10:32</span></div>
+                    <figcaption>팀원들이 각자 워크스테이션에서 로버 제어 개발에 집중하고 있다. 책상 위에 부품 키트(BINDER 박스)가 놓여 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2949.jpg" alt="로버 섀시와 컨트롤러 보드">
+                        <span class="time">11:09</span></div>
+                    <figcaption>조립 중인 4륜 로버 섀시와 모터 컨트롤러 보드(VCC·GND·SIG 단자). 서보·배선 연결 작업 중이다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2951.jpg" alt="페어 작업">
+                        <span class="time">13:30</span></div>
+                    <figcaption>모니터 앞에서 팀원이 다른 팀원의 작업을 도우며 페어 작업을 진행하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2952.jpg" alt="컴퓨터실 전경">
+                        <span class="time">13:58</span></div>
+                    <figcaption>컴퓨터실 전경 — 팀원들이 나란히 앉아 블록 코딩·펌웨어 작업에 몰두하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2955.jpg" alt="발사대 모형">
+                        <span class="time">15:40</span></div>
+                    <figcaption>레이저 커팅 목재로 만든 발사대(launchpad) 모형 — 3D 프린팅 로켓·LED 링·컨트롤러 보드가 연결된 하드웨어 프로토타입.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 2 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 2</span>
+                <h2>제작 협력업체 방문 &amp; 웹 서비스 시연</h2>
+                <span class="day-date">2026.06.24 (화) · 10:44–11:20 KST</span>
+            </div>
+            <p class="day-summary">제작 협력업체(D‑RISE)의 레이저 커팅 공장을 방문해 키트 부품 생산 공정을 견학했다. 이어 회의실에서 ARES 웹 서비스를 시연하고 부품·앱을 함께 검토했다.</p>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2961.jpg" alt="협력업체 부품 설명">
+                        <span class="time">10:44</span></div>
+                    <figcaption>제작 협력업체(D‑RISE) 레이저 커팅 공장 방문 — 담당자가 가공된 부품을 설명하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2962.jpg" alt="레이저 커팅기 견학">
+                        <span class="time">10:44</span></div>
+                    <figcaption>GPL.TECH 레이저 커팅기 앞에서 키트 부품 생산 공정을 견학하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2963.jpg" alt="커팅 부품 확인">
+                        <span class="time">10:44</span></div>
+                    <figcaption>레이저로 커팅된 목재 시트(키트 부품)를 확인하는 모습.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2964.jpg" alt="커팅기 작동 참관">
+                        <span class="time">10:44</span></div>
+                    <figcaption>레이저 커팅기 작동 과정을 참관하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2965.jpg" alt="부품 창고 논의">
+                        <span class="time">10:47</span></div>
+                    <figcaption>부품 재고·포장이 보관된 창고에서 생산·물류 과정을 논의하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2966.jpg" alt="ARES 웹 서비스 시연">
+                        <span class="time">11:10</span></div>
+                    <figcaption>회의실 모니터에 ARES 웹 서비스("블록 코딩으로 화성을 탐사하다") 랜딩 페이지를 띄우고 시연·리뷰하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2967.jpg" alt="웹 서비스 발표">
+                        <span class="time">11:10</span></div>
+                    <figcaption>협력업체 관계자들에게 ARES 블록 코딩 웹 서비스를 시연하는 모습.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2968.jpg" alt="부품과 앱 검토">
+                        <span class="time">11:20</span></div>
+                    <figcaption>레이저 커팅 부품과 태블릿의 블록 코딩 앱을 함께 검토하고 있다.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 3 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 3</span>
+                <h2>컴퓨터실 복귀 · 개발 지속</h2>
+                <span class="day-date">2026.06.25 (수) · 11:19 KST</span>
+            </div>
+            <p class="day-summary">컴퓨터실로 복귀해 개발을 이어갔다. 책상마다 부품 키트를 두고 통합·검증 작업을 진행했다.</p>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/3일차_IMG_2998.jpg" alt="컴퓨터실 개발 지속">
+                        <span class="time">11:19</span></div>
+                    <figcaption>컴퓨터실로 복귀해 개발을 이어가는 팀 — 책상마다 부품 키트(투명 박스)가 놓여 있다.</figcaption>
+                </figure>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
+        <p style="margin-top:6px;">사진 14매 · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+    </footer>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lb-close" id="lbClose">&times;</span>
+        <img id="lbImg" src="" alt="">
+        <div class="lb-cap" id="lbCap"></div>
+    </div>
+
+    <script>
+    (function () {
+        const lb = document.getElementById('lightbox');
+        const lbImg = document.getElementById('lbImg');
+        const lbCap = document.getElementById('lbCap');
+        document.querySelectorAll('figure').forEach(fig => {
+            const box = fig.querySelector('.imgbox');
+            const img = fig.querySelector('img');
+            const cap = fig.querySelector('figcaption');
+            box.addEventListener('click', () => {
+                lbImg.src = img.src;
+                lbImg.alt = img.alt;
+                lbCap.textContent = cap ? cap.textContent : '';
+                lb.classList.add('open');
+            });
+        });
+        function close() { lb.classList.remove('open'); lbImg.src = ''; }
+        lb.addEventListener('click', close);
+        document.getElementById('lbClose').addEventListener('click', close);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    })();
+    </script>
+</body>
+</html>
