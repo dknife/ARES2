@@ -1,4 +1,4 @@
-// Web/sim/rocket.js
+// Web/Sim_Parts/rocket.js
 // Rocket launching animation, camera tracking, and exhaust cloud particles.
 
 const ROCKET_RISE = 10;

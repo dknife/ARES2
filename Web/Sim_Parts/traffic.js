@@ -1,4 +1,4 @@
-// Web/sim/traffic.js
+// Web/Sim_Parts/traffic.js
 // Traffic light slots calculation, lamp loading, and hand switching.
 
 const TRAFFIC_LAMP_COLORS = [0xff0000, 0xffcc00, 0x00c030];

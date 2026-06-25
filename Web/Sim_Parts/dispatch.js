@@ -1,4 +1,4 @@
-// Web/sim/dispatch.js
+// Web/Sim_Parts/dispatch.js
 // Command dispatcher (applyTopicEffect) and execution simulation sink (simSink).
 
 export class CommandDispatcher {

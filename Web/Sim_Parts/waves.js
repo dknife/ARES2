@@ -1,4 +1,4 @@
-// Web/sim/waves.js
+// Web/Sim_Parts/waves.js
 // Sound wave ring dome animations for Launchpad and Rover buzzers.
 
 const WAVE_SPAWN_INTERVAL = 0.18;

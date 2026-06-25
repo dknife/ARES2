@@ -1,4 +1,4 @@
-// Web/sim/gun.js
+// Web/Sim_Parts/gun.js
 // Rover Gun muzzle flash, spark animation, and powder smoke trailing.
 
 const MUZZLE_DUR = 0.35;

@@ -1,10 +1,7 @@
-// Simulation_Main.js
-// Common entry and orchestrator for the 3D Simulation.
-
-import { initAresRobot } from './Simulation_AresRobot.js';
-import { initLauncher, playRocketLaunch, recolorLaunchpadAntenna } from './Simulation_Launcher.js';
-import { initRover, playGunFire } from './Simulation_Rover.js';
-import { initTraffic } from './Simulation_Traffic.js';
+import { AresRobotSubsystem } from './Simulation_AresRobot.js';
+import { LauncherSubsystem, playRocketLaunch, recolorLaunchpadAntenna } from './Simulation_Launcher.js';
+import { RoverSubsystem, playGunFire } from './Simulation_Rover.js';
+import { TrafficSubsystem } from './Simulation_Traffic.js';
 
 // Constants
 export const TOPICS = {
@@ -145,11 +142,11 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
     worldGroup: null
   };
 
-  // Subsystems
-  const ares = (cfg.eyes || cfg.chest) ? initAresRobot(ctx) : null;
-  const launcher = cfg.launch ? initLauncher(ctx) : null;
-  const rover = cfg.parts ? initRover(ctx, makeGLTFLoader, OLED_ICONS) : null;
-  const traffic = cfg.traffic ? initTraffic(ctx, makeGLTFLoader) : null;
+  // Subsystems (Instantiated as OOP Classes)
+  const ares = (cfg.eyes || cfg.chest) ? new AresRobotSubsystem(ctx) : null;
+  const launcher = cfg.launch ? new LauncherSubsystem(ctx) : null;
+  const rover = cfg.parts ? new RoverSubsystem(ctx, makeGLTFLoader, OLED_ICONS) : null;
+  const traffic = cfg.traffic ? new TrafficSubsystem(ctx, makeGLTFLoader) : null;
 
   const frame = (cy, dist) => {
     camera.position.set(0, cy, dist);

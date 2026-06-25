@@ -1,4 +1,4 @@
-// Web/sim/leds.js
+// Web/Sim_Parts/leds.js
 // LED setup and control logic (makeLed, applyLed, setEye, setChest, setLaunchLed, setRoverLed).
 
 import { LED_PALETTES } from './topics.js';

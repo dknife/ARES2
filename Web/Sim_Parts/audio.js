@@ -1,4 +1,4 @@
-// Web/sim/audio.js
+// Web/Sim_Parts/audio.js
 // Procedural audio synthesis for Beep, Rocket Launch, and Gun Fire sounds.
 
 export class AudioSynthesizer {

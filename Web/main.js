@@ -728,7 +728,7 @@ function setupContentToggle() {
     //   coding/simulation 모드: 개요·차시·미션 선택을 숨겨 단순화.
     document.body.setAttribute('data-content-mode', mode);
 
-    // 시뮬레이션 → 다른 모드로 전환할 때는 sim 도 정리
+    // 시뮬레이션 → 다른 모드로 전환할 때는 Sim_Parts 도 정리
     // (렌더 루프 중지 + simToggle 버튼 '열기' 로 복귀).
     // simController.close() 내부 가드(card.hidden/closing) 가 있어 중복 호출은 안전하다.
     if (wasSimulation && mode !== 'simulation' && simController) {

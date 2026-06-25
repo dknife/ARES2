@@ -1,4 +1,4 @@
-// Web/sim/context.js
+// Web/Sim_Parts/context.js
 // Shared state container and Three.js scene setup.
 
 import { AssetLoader, makeGLTFLoader } from './assets.js';
