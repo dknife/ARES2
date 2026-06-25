@@ -50,9 +50,36 @@
         .day-head h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 700; }
         .day-date { color: #999; font-weight: 500; font-size: 0.9em; }
         .day-summary {
-            color: #444; font-size: 1.02em; margin: 4px 0 28px;
+            color: #444; font-size: 1.02em; margin: 4px 0 22px;
             border-left: 3px solid #FA5D29; padding-left: 16px;
         }
+
+        /* 주요 업무 (문서 산출물) */
+        .tasks {
+            background: #fff; border-radius: 14px; padding: 24px 26px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-top: 3px solid #FA5D29; margin-bottom: 28px;
+        }
+        .tasks h3 {
+            font-size: 1.05em; font-weight: 700; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tasks .lead { color: #444; font-size: 0.95em; margin-bottom: 14px; }
+        .tasks .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .tasks .chip { background: #F2F2F2; border-radius: 100px; padding: 5px 13px; font-size: 0.78em; color: #444; }
+        .tasks .chip.t { background: rgba(250,93,41,0.1); color: #d8431b; font-weight: 600; }
+        .tasks ul { margin: 0 0 16px 18px; }
+        .tasks li { font-size: 0.9em; color: #313131; margin-bottom: 6px; }
+        .tasks li b { color: #222; }
+        .tasks .doclink {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #222; color: #fff; text-decoration: none;
+            padding: 10px 18px; border-radius: 100px; font-size: 0.85em; font-weight: 600;
+            transition: background 0.25s ease; margin-right: 8px;
+        }
+        .tasks .doclink:hover { background: #FA5D29; }
+        .tasks .doclink.alt { background: transparent; color: #222; border: 1.5px solid #222; }
+        .tasks .doclink.alt:hover { background: #222; color: #fff; }
 
         /* Gallery */
         .gallery {
@@ -129,6 +156,31 @@
                 <span class="day-date">2026.06.23 (월) · 10:32–15:40 KST</span>
             </div>
             <p class="day-summary">컴퓨터실에서 개발에 착수했다. 로버 하드웨어(섀시·모터 컨트롤러 보드)를 조립하고, 발사대·로켓·LED 모형을 제작했으며, 블록 코딩과 펌웨어 작업을 병행했다.</p>
+
+            <div class="tasks">
+                <h3>📄 주요 업무 — 코드 분석 종합 보고서 작성</h3>
+                <p class="lead">ARES 저장소(<code>github.com/dknife/ARES2</code>) 전체를 코드 수준에서 분석한 <b>「ARES 프로젝트 코드 분석 종합 보고서」(전 14장)</b>를 작성했다. 웹·펌웨어·AI 세 런타임 도메인이 <em>개행 구분 텍스트 명령</em>이라는 단일 계약으로 느슨하게 결합되는 구조를 중심으로, 하드웨어부터 향후 연구 방향까지 망라했다.</p>
+                <div class="chips">
+                    <span class="chip">개요·구성요소</span>
+                    <span class="chip">하드웨어·핀 배치</span>
+                    <span class="chip">피코 펌웨어(CommandProcessor)</span>
+                    <span class="chip">웹 서비스 계층</span>
+                    <span class="chip">Web Bluetooth</span>
+                    <span class="chip">블록 코딩 구현</span>
+                    <span class="chip">WebGL 3D 시뮬레이션</span>
+                    <span class="chip">코드 연계 구조</span>
+                    <span class="chip">네이티브 앱 패키징</span>
+                    <span class="chip">개선 계획·연구 주제</span>
+                </div>
+                <ul>
+                    <li><b>대상 시스템</b> — 초등학생용 블록 코딩 화성 탐사 로버 ‘알비’: Blockly 웹앱 + 라즈베리파이 피코(MicroPython) 펌웨어 + AI 보조 모듈.</li>
+                    <li><b>핵심 발견</b> — 웹과 펌웨어는 코드를 공유하지 않고 <em>텍스트 명령 프로토콜</em>만으로 통신해 독립 개발·교체가 쉬운 반면, 프로토콜 변경 시 양측 동시 반영 의존이 생긴다.</li>
+                    <li><b>범위</b> — 블록 1개가 ‘블록 → 명령 문자열 → BLE → 펌웨어 핸들러 → 하드웨어’로 도달하는 전 경로를 코드로 추적, 오프라인 <code>file://</code> 단독 실행 구조까지 분석.</li>
+                </ul>
+                <a class="doclink" href="../SourceAnalysis/CodeReport.pdf" target="_blank">코드 분석 보고서 (PDF) ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/main/Document/SourceAnalysis" target="_blank">LaTeX 원본 ↗</a>
+            </div>
+
             <div class="gallery">
                 <figure>
                     <div class="imgbox"><img src="img/1일차_IMG_2948.jpg" alt="컴퓨터실 개발 작업">
@@ -218,6 +270,27 @@
                 <span class="day-date">2026.06.25 (수) · 11:19 KST</span>
             </div>
             <p class="day-summary">컴퓨터실로 복귀해 개발을 이어갔다. 책상마다 부품 키트를 두고 통합·검증 작업을 진행했다.</p>
+
+            <div class="tasks">
+                <h3>🧩 주요 업무 — 1차 Refactoring 계획 수립</h3>
+                <p class="lead">지나치게 큰 함수·파일로 분석이 어려운 소스를 기능 단위로 분할하기 위한 <b>「1차 Refactoring 계획」</b>을 수립했다. <em>동작 보존(behavior-preserving)</em>을 원칙으로, 비대 지점을 네 가지 문제 유형으로 분류하고 6단계 로드맵을 도출했다.</p>
+                <div class="chips">
+                    <span class="chip t">A · 거대 클로저</span>
+                    <span class="chip t">B · 거대 디스패처</span>
+                    <span class="chip t">C · 데이터 덩어리</span>
+                    <span class="chip t">D · 인라인 자산</span>
+                </div>
+                <ul>
+                    <li><b>유형 A</b> — 거대 클로저(<code>simulation.js</code> 2333줄)를 공유 컨텍스트(ctx) + 서브시스템 14개로 분할.</li>
+                    <li><b>유형 B</b> — 거대 디스패처(<code>process_data.py</code> 170줄 if/elif)를 도메인 핸들러 + dict 디스패치로 전환.</li>
+                    <li><b>유형 C</b> — 한 배열·만능 함수(<code>blocklyconfig.js</code>)를 카테고리별 파일로 분리.</li>
+                    <li><b>유형 D</b> — 인라인 자산(<code>dashboard.html</code> 828줄)의 CSS·JS를 외부 파일로 추출.</li>
+                    <li><b>로드맵</b> — 위험 낮은 D·C부터 시작해 가장 어려운 A(simulation.js)를 마지막에 두는 6단계 점진 분할.</li>
+                </ul>
+                <a class="doclink" href="../../dev.html" target="_blank">1차 Refactoring 계획 (개발 페이지) ↗</a>
+                <a class="doclink alt" href="../REFACTORING_PLAN.md" target="_blank">계획 원문 (Markdown) ↗</a>
+            </div>
+
             <div class="gallery">
                 <figure>
                     <div class="imgbox"><img src="img/3일차_IMG_2998.jpg" alt="컴퓨터실 개발 지속">
