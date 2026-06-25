@@ -28,6 +28,12 @@ const LESSON_CATALOG = [
 const lessonCache = new Map(); // n -> lesson.json 객체
 let workspace = null;          // Blockly 워크스페이스 (한 번만 inject)
 let currentView = 'overview';
+let currentLesson = null;
+let currentMission = null;
+let mobileBottomNavBound = false;
+let pendingDashboardOpen = false;
+let mobileDashboardReturnHash = null;
+let mobileAiReturnHash = null;
 
 // 미션 뷰는 description / coding / simulation 세 모드 중 하나만 표시한다.
 // _preSimMode 는 시뮬을 닫았을 때 복귀할 모드(description 또는 coding)를 기억.
@@ -338,7 +344,10 @@ function updateBlockCodingButtonUI() {
   const btn = document.getElementById('blockCodingButton');
   if (!btn) return;
 
-  if (isInBlockCodingStage()) {
+  if (isDashboardVisible()) {
+    btn.textContent = '🧩 코딩';
+    btn.title = '점검을 닫고 코딩 화면으로 이동';
+  } else if (isInBlockCodingStage()) {
     btn.textContent = '🏠 메인';
     btn.title = '개요 화면으로 돌아가기';
   } else {
@@ -357,7 +366,7 @@ function openBlockCodingWorkspace() {
     const dashboardFrame = document.getElementById('dashboardFrame');
     if (currentView !== 'mission') return false;
     if (dashboardFrame && dashboardFrame.style.display === 'block') {
-      toggleDashboard();
+      closeDashboardToCoding();
     } else if (setContentMode) {
       setContentMode('coding');
     }
@@ -381,12 +390,187 @@ function openBlockCodingWorkspace() {
   setTimeout(poll, 50);
 }
 
+function closeDashboardToCoding() {
+  const blocklyDiv = document.getElementById('blocklyDiv');
+  const dashboardFrame = document.getElementById('dashboardFrame');
+  const dashboardButton = document.getElementById('dashboardButton');
+  const contentToggleBtn = document.getElementById('contentToggleBtn');
+  if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
+
+  blocklyDiv.style.display = 'block';
+  dashboardFrame.style.display = 'none';
+  if (contentToggleBtn) contentToggleBtn.style.display = '';
+  dashboardButton.textContent = '🔍 점검';
+
+  if (elements.saveButton) elements.saveButton.disabled = false;
+  if (elements.loadButton) elements.loadButton.disabled = false;
+  if (setContentMode) setContentMode('coding');
+  updateRunButtonUI();
+  updateBlockCodingButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 블록코딩 전환', 'info');
+}
+
 function handleBlockCodingButtonClick() {
+  if (isDashboardVisible()) {
+    closeDashboardToCoding();
+    return;
+  }
   if (isInBlockCodingStage()) {
     navigate({});
     return;
   }
   openBlockCodingWorkspace();
+}
+
+function openDashboardFromAnywhere() {
+  const parsed = parseHash();
+  const lesson = currentLesson ?? parsed.lesson ?? 1;
+  const mission = currentMission ?? parsed.mission ?? 1;
+
+  if (isDashboardVisible()) return;
+
+  pendingDashboardOpen = true;
+  if (currentView !== 'mission') {
+    navigate({ lesson, mission });
+    return;
+  }
+
+  toggleDashboard();
+}
+
+function isDashboardVisible() {
+  const dashboardFrame = document.getElementById('dashboardFrame');
+  return currentView === 'mission' && !!dashboardFrame && dashboardFrame.style.display === 'block';
+}
+
+function isAiPanelOpen() {
+  const aiPanel = document.getElementById('aiPanel');
+  return !!aiPanel && !aiPanel.hasAttribute('hidden');
+}
+
+function isLogExpanded() {
+  const logContainer = document.getElementById('logContainer');
+  return !!logContainer && logContainer.classList.contains('expanded');
+}
+
+function getMobileActiveAction() {
+  return isAiPanelOpen()
+    ? 'ai'
+    : isLogExpanded()
+      ? 'log'
+      : isDashboardVisible()
+        ? 'dashboard'
+        : currentView === 'mission'
+          ? 'mission'
+          : currentView === 'lesson'
+            ? 'lesson'
+            : 'overview';
+}
+
+function restoreHash(hash) {
+  if (typeof hash !== 'string') return;
+  const current = window.location.hash || '';
+  if (hash === current) return;
+  window.location.hash = hash;
+}
+
+function updateMobileBottomNav() {
+  const nav = document.getElementById('mobileBottomNav');
+  if (!nav) return;
+
+  const activeAction = getMobileActiveAction();
+
+  nav.querySelectorAll('[data-mobile-action]').forEach((btn) => {
+    const active = btn.dataset.mobileAction === activeAction;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function bindMobileBottomNav() {
+  const nav = document.getElementById('mobileBottomNav');
+  if (!nav || mobileBottomNavBound) return;
+  mobileBottomNavBound = true;
+
+  nav.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-mobile-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.mobileAction;
+    const activeAction = getMobileActiveAction();
+    const parsed = parseHash();
+    const lesson = currentLesson ?? parsed.lesson ?? 1;
+    const mission = currentMission ?? parsed.mission ?? 1;
+
+    // 하단바 재클릭 시 토글 해제
+    if (action === activeAction) {
+      if (action === 'dashboard' && isDashboardVisible()) {
+        closeDashboardToCoding();
+        if (mobileDashboardReturnHash !== null) {
+          const backHash = mobileDashboardReturnHash;
+          mobileDashboardReturnHash = null;
+          restoreHash(backHash);
+        }
+      } else if (action === 'ai' && isAiPanelOpen()) {
+        document.getElementById('aiPanel')?.setAttribute('hidden', '');
+        if (mobileAiReturnHash !== null) {
+          const backHash = mobileAiReturnHash;
+          mobileAiReturnHash = null;
+          restoreHash(backHash);
+        }
+      } else if (action === 'log' && isLogExpanded()) {
+        document.getElementById('logHeader')?.click();
+      }
+      updateMobileBottomNav();
+      btn.blur?.();
+      return;
+    }
+
+    switch (action) {
+      case 'overview':
+        mobileDashboardReturnHash = null;
+        mobileAiReturnHash = null;
+        navigate({});
+        break;
+      case 'lesson':
+        mobileDashboardReturnHash = null;
+        mobileAiReturnHash = null;
+        navigate({ lesson });
+        break;
+      case 'mission':
+        mobileDashboardReturnHash = null;
+        mobileAiReturnHash = null;
+        navigate({ lesson, mission });
+        break;
+      case 'dashboard':
+        if (currentView !== 'mission') {
+          mobileDashboardReturnHash = window.location.hash || '';
+        } else {
+          mobileDashboardReturnHash = null;
+        }
+        openDashboardFromAnywhere();
+        break;
+      case 'ai':
+        if (currentView !== 'mission') {
+          mobileAiReturnHash = window.location.hash || '';
+          navigate({ lesson, mission });
+          pendingDashboardOpen = false;
+          setTimeout(() => document.getElementById('aiHelpButton')?.click(), 450);
+        } else {
+          mobileAiReturnHash = null;
+          document.getElementById('aiHelpButton')?.click();
+        }
+        break;
+      case 'log':
+        document.getElementById('logHeader')?.click();
+        break;
+    }
+
+    btn.blur?.();
+  });
+
+  updateMobileBottomNav();
 }
 
 // ============================================================
@@ -476,6 +660,8 @@ function showView(view) {
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
   }
   updateBlockCodingButtonUI();
+  if (!inMission) pendingDashboardOpen = false;
+  updateMobileBottomNav();
 }
 
 // ============================================================
@@ -483,6 +669,8 @@ function showView(view) {
 // ============================================================
 async function enterOverview() {
   showView('overview');
+  currentLesson = null;
+  currentMission = null;
   document.getElementById('lessonSelect').value = '';
   populateMissionSelect(null);
   updateBreadcrumb(null, null);
@@ -527,6 +715,8 @@ async function enterLesson(n) {
     return;
   }
   showView('lesson');
+  currentLesson = n;
+  currentMission = null;
   document.getElementById('lessonSelect').value = String(n);
   populateMissionSelect(n, data);
   updateBreadcrumb(n, null);
@@ -572,6 +762,8 @@ async function enterMission(n, m) {
   if (!mission) { enterLesson(n); return; }
 
   showView('mission');
+  currentLesson = n;
+  currentMission = m;
   document.getElementById('lessonSelect').value = String(n);
   populateMissionSelect(n, data);
   document.getElementById('missionSelect').value = String(m);
@@ -616,6 +808,15 @@ async function enterMission(n, m) {
   // Blockly 리사이즈
   if (workspace) {
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
+  }
+
+  if (pendingDashboardOpen) {
+    pendingDashboardOpen = false;
+    setTimeout(() => {
+      if (currentView === 'mission' && !isDashboardVisible()) {
+        toggleDashboard();
+      }
+    }, 0);
   }
 }
 
@@ -711,42 +912,39 @@ function toggleDashboard() {
 
   if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
 
-  // 미션 뷰가 아닌 경우 미션 뷰로 보내고, 대시보드 모드는 유지
+  // 미션 뷰가 아닌 경우 미션 뷰로 보내고 점검 화면을 연다.
   if (currentView !== 'mission') {
-    // 가장 최근 미션 또는 1차시 미션1로 이동 후 대시보드 켜기
-    navigate({ lesson: 1, mission: 1 });
-    setTimeout(() => toggleDashboard(), 100);
+    const parsed = parseHash();
+    const targetLesson = currentLesson ?? parsed.lesson ?? 1;
+    const targetMission = currentMission ?? parsed.mission ?? 1;
+    pendingDashboardOpen = true;
+    navigate({ lesson: targetLesson, mission: targetMission });
+    return;
+  }
+
+  const isDashboardHidden = dashboardFrame.style.display === 'none' || dashboardFrame.style.display === '';
+
+  // 점검 버튼은 열기 전용으로 동작한다.
+  if (!isDashboardHidden) {
+    updateBlockCodingButtonUI();
+    updateMobileBottomNav();
     return;
   }
 
   // 대시보드는 mission-workspace 안에 있으므로 coding 모드여야 보인다.
   if (setContentMode) setContentMode('coding');
 
-  const isDashboardHidden = dashboardFrame.style.display === 'none' || dashboardFrame.style.display === '';
+  blocklyDiv.style.display = 'none';
+  dashboardFrame.style.display = 'block';
+  if (contentToggleBtn) contentToggleBtn.style.display = 'none';
+  dashboardButton.textContent = '🔍 점검';
 
-  if (isDashboardHidden) {
-    blocklyDiv.style.display = 'none';
-    dashboardFrame.style.display = 'block';
-    if (contentToggleBtn) contentToggleBtn.style.display = 'none';
-    dashboardButton.textContent = '🧩 코딩';
-
-    if (elements.saveButton) elements.saveButton.disabled = true;
-    if (elements.loadButton) elements.loadButton.disabled = true;
-    updateRunButtonUI();
-    updateBlockCodingButtonUI();
-    Logger.add('[모드] 대시보드 전환', 'info');
-  } else {
-    blocklyDiv.style.display = 'block';
-    dashboardFrame.style.display = 'none';
-    if (contentToggleBtn) contentToggleBtn.style.display = '';
-    dashboardButton.textContent = '🔍 점검';
-
-    if (elements.saveButton) elements.saveButton.disabled = false;
-    if (elements.loadButton) elements.loadButton.disabled = false;
-    updateRunButtonUI();
-    updateBlockCodingButtonUI();
-    Logger.add('[모드] 블록코딩 전환', 'info');
-  }
+  if (elements.saveButton) elements.saveButton.disabled = true;
+  if (elements.loadButton) elements.loadButton.disabled = true;
+  updateRunButtonUI();
+  updateBlockCodingButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 대시보드 전환', 'info');
 }
 
 // ============================================================
@@ -765,6 +963,7 @@ function setupLogToggle() {
     const expanded = logContainer.classList.toggle('expanded');
     logContainer.classList.toggle('compact', !expanded);
     Logger.refresh();
+    updateMobileBottomNav();
   });
 }
 
@@ -843,32 +1042,43 @@ function setupContentToggle() {
 // ============================================================
 function initializeAlwaysOnListeners() {
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
-  elements.connectButton?.addEventListener('click', () => {
+  elements.connectButton?.addEventListener('click', (e) => {
     if (isBleConnected()) {
       BluetoothManager.disconnect();
     } else {
       BluetoothManager.connect();
     }
+    e.currentTarget?.blur?.();
   });
 
   // 로그 지우기
-  elements.clearLogBtn?.addEventListener('click', () => {
+  elements.clearLogBtn?.addEventListener('click', (e) => {
     Logger.clear();
     Logger.refresh();
+    e.currentTarget?.blur?.();
   });
 
   // 대시보드
-  document.getElementById('dashboardButton')?.addEventListener('click', toggleDashboard);
+  document.getElementById('dashboardButton')?.addEventListener('click', (e) => {
+    toggleDashboard();
+    e.currentTarget?.blur?.();
+  });
 
   // 블록코딩 바로가기
-  document.getElementById('blockCodingButton')?.addEventListener('click', handleBlockCodingButtonClick);
+  document.getElementById('blockCodingButton')?.addEventListener('click', (e) => {
+    handleBlockCodingButtonClick();
+    e.currentTarget?.blur?.();
+  });
 
   // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
   window.addEventListener('ares:connection', updateRunButtonUI);
   window.addEventListener('ares:execution',  updateRunButtonUI);
 
   // 홈(개요)
-  document.getElementById('homeButton')?.addEventListener('click', () => navigate({}));
+  document.getElementById('homeButton')?.addEventListener('click', (e) => {
+    navigate({});
+    e.currentTarget?.blur?.();
+  });
 
   // 미션 드롭다운
   document.getElementById('missionSelect')?.addEventListener('change', (e) => {
@@ -1090,7 +1300,7 @@ function initializeMissionListeners(ws) {
     Logger.add(`[AI] 블록 ${result.added.length}개 생성 — "${text}"`, 'info');
   }
 
-  document.getElementById('aiHelpButton')?.addEventListener('click', () => {
+  document.getElementById('aiHelpButton')?.addEventListener('click', (e) => {
     if (!aiPanel) return;
     const open = aiPanel.hasAttribute('hidden');
     if (open) {
@@ -1102,8 +1312,14 @@ function initializeMissionListeners(ws) {
     } else {
       aiPanel.setAttribute('hidden', '');
     }
+    updateMobileBottomNav();
+    e.currentTarget?.blur?.();
   });
-  document.getElementById('aiCloseButton')?.addEventListener('click', () => aiPanel?.setAttribute('hidden', ''));
+  document.getElementById('aiCloseButton')?.addEventListener('click', (e) => {
+    aiPanel?.setAttribute('hidden', '');
+    updateMobileBottomNav();
+    e.currentTarget?.blur?.();
+  });
   aiForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = aiInput.value;
@@ -1142,10 +1358,10 @@ function initializeMissionListeners(ws) {
     }
     if (data.type === 'exit_dashboard') {
       // dashboard iframe 안의 "점검완료 관제실로 복귀" 버튼.
-      // 현재 대시보드가 표시 중이면 블록 코딩 뷰로 토글.
+      // 현재 대시보드가 표시 중이면 블록 코딩 뷰로 복귀.
       const dashboardFrame = document.getElementById('dashboardFrame');
       if (dashboardFrame && dashboardFrame.style.display === 'block') {
-        toggleDashboard();
+        closeDashboardToCoding();
       }
       return;
     }
@@ -1183,6 +1399,7 @@ function main() {
   if (logContainer) logContainer.classList.add('compact');
   setupLogToggle();
   setupContentToggle();
+  bindMobileBottomNav();
   simController = setupSimulation({
     workspace,
     onOpen: () => {
@@ -1202,6 +1419,7 @@ function main() {
   // 6) 상태 초기화 + 라우팅
   BluetoothManager.updateConnectionStatus(false);
   updateBlockCodingButtonUI();
+  updateMobileBottomNav();
   Logger.add('[시작] ARES 준비 완료 - BLE 연결을 시작하세요', 'info');
   Logger.refresh();
 

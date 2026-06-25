@@ -173,6 +173,34 @@
         </section>
     </div>
 
+    <!-- 모바일 하단바: 빠른 이동/도구 버튼 -->
+    <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="모바일 빠른 메뉴">
+        <button type="button" class="mobile-nav-btn active" data-mobile-action="overview" aria-label="개요로 이동">
+            <span class="mobile-nav-icon" aria-hidden="true">🏠</span>
+            <span class="mobile-nav-label">개요</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="lesson" aria-label="차시로 이동">
+            <span class="mobile-nav-icon" aria-hidden="true">📘</span>
+            <span class="mobile-nav-label">차시</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="mission" aria-label="미션으로 이동">
+            <span class="mobile-nav-icon" aria-hidden="true">🧩</span>
+            <span class="mobile-nav-label">미션</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="dashboard" aria-label="점검 화면 열기 또는 닫기">
+            <span class="mobile-nav-icon" aria-hidden="true">🔍</span>
+            <span class="mobile-nav-label">점검</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="ai" aria-label="AI 도움 열기 또는 닫기">
+            <span class="mobile-nav-icon" aria-hidden="true">🤖</span>
+            <span class="mobile-nav-label">AI</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="log" aria-label="로그 펼치기 또는 접기">
+            <span class="mobile-nav-icon" aria-hidden="true">📝</span>
+            <span class="mobile-nav-label">로그</span>
+        </button>
+    </nav>
+
     <!-- ===== 🤖 AI 도움 채팅 패널 (오프라인 규칙 기반, 외부 통신 없음) ===== -->
     <div id="aiPanel" class="ai-panel" hidden role="dialog" aria-label="AI 도움">
         <div class="ai-panel-head">
