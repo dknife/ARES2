@@ -393,14 +393,12 @@ function openBlockCodingWorkspace() {
 function closeDashboardToCoding() {
   const blocklyDiv = document.getElementById('blocklyDiv');
   const dashboardFrame = document.getElementById('dashboardFrame');
-  const dashboardButton = document.getElementById('dashboardButton');
   const contentToggleBtn = document.getElementById('contentToggleBtn');
-  if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
+  if (!blocklyDiv || !dashboardFrame) return;
 
   blocklyDiv.style.display = 'block';
   dashboardFrame.style.display = 'none';
   if (contentToggleBtn) contentToggleBtn.style.display = '';
-  dashboardButton.textContent = '🔍 점검';
 
   if (elements.saveButton) elements.saveButton.disabled = false;
   if (elements.loadButton) elements.loadButton.disabled = false;
@@ -902,50 +900,13 @@ function escapeHtml(s) {
 }
 
 // ============================================================
-// 대시보드 전환
+// 대시보드 전환 (비활성화됨)
 // ============================================================
 function toggleDashboard() {
-  const blocklyDiv = document.getElementById('blocklyDiv');
-  const dashboardFrame = document.getElementById('dashboardFrame');
-  const dashboardButton = document.getElementById('dashboardButton');
-  const contentToggleBtn = document.getElementById('contentToggleBtn');
-
-  if (!blocklyDiv || !dashboardFrame || !dashboardButton) return;
-
-  // 미션 뷰가 아닌 경우 미션 뷰로 보내고 점검 화면을 연다.
-  if (currentView !== 'mission') {
-    const parsed = parseHash();
-    const targetLesson = currentLesson ?? parsed.lesson ?? 1;
-    const targetMission = currentMission ?? parsed.mission ?? 1;
-    pendingDashboardOpen = true;
-    navigate({ lesson: targetLesson, mission: targetMission });
-    return;
-  }
-
-  const isDashboardHidden = dashboardFrame.style.display === 'none' || dashboardFrame.style.display === '';
-
-  // 점검 버튼은 열기 전용으로 동작한다.
-  if (!isDashboardHidden) {
-    updateBlockCodingButtonUI();
-    updateMobileBottomNav();
-    return;
-  }
-
-  // 대시보드는 mission-workspace 안에 있으므로 coding 모드여야 보인다.
-  if (setContentMode) setContentMode('coding');
-
-  blocklyDiv.style.display = 'none';
-  dashboardFrame.style.display = 'block';
-  if (contentToggleBtn) contentToggleBtn.style.display = 'none';
-  dashboardButton.textContent = '🔍 점검';
-
-  if (elements.saveButton) elements.saveButton.disabled = true;
-  if (elements.loadButton) elements.loadButton.disabled = true;
-  updateRunButtonUI();
-  updateBlockCodingButtonUI();
-  updateMobileBottomNav();
-  Logger.add('[모드] 대시보드 전환', 'info');
+  // 점검 버튼이 제거되었습니다.
+  return;
 }
+
 
 // ============================================================
 // 로그 컨테이너 토글
@@ -1055,12 +1016,6 @@ function initializeAlwaysOnListeners() {
   elements.clearLogBtn?.addEventListener('click', (e) => {
     Logger.clear();
     Logger.refresh();
-    e.currentTarget?.blur?.();
-  });
-
-  // 대시보드
-  document.getElementById('dashboardButton')?.addEventListener('click', (e) => {
-    toggleDashboard();
     e.currentTarget?.blur?.();
   });
 
