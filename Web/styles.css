@@ -13,20 +13,18 @@
     --info-color: #FA5D29;
     --border-color: #EDEDED;
     --log-background: #FFFFFF;
+    --mobile-bottom-nav-height: 72px;
 }
 
 body {
     margin: 0;
     padding: 0;
     height: 100dvh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: block;
     background: var(--background-main);
     color: var(--text-primary);
     font-family: 'Inter Tight', sans-serif;
     overflow: hidden;
-    padding: 12px;
 }
 
 /* ===== Blockly Drilldown (카테고리 숨김 + 블록 목록을 그 자리로) ===== */
@@ -122,33 +120,34 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 .container {
-    background: var(--background-white);
-    padding: 16px;
-    border-radius: 16px;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-    max-width: 95%;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: 100%;
     width: 100%;
-    height: calc(100dvh - 24px);
-    max-height: calc(100dvh - 24px);
+    height: 100dvh;
+    max-height: 100dvh;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--border-color);
+    border: none;
     overflow: hidden;
     min-height: 0;
 }
 
 .header {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .header-main {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 6px 12px;
+    padding: 8px 16px;
     background: var(--background-main);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
 }
 
 .header-main h1 {
@@ -214,6 +213,105 @@ button:disabled {
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
+}
+
+button:focus {
+    outline: none;
+}
+
+button:focus-visible {
+    outline: 2px solid rgba(250, 93, 41, 0.55);
+    outline-offset: 2px;
+}
+
+/* ===== 모바일 하단 내비게이션 ===== */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0;
+    height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    margin: 0;
+    background: rgba(255, 255, 255, 0.94);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.mobile-bottom-nav .mobile-nav-btn {
+    margin: 0;
+    padding: 6px 2px 4px;
+    min-width: 0;
+    height: auto;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.74em;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.mobile-bottom-nav .mobile-nav-btn,
+.mobile-bottom-nav .mobile-nav-btn:hover,
+.mobile-bottom-nav .mobile-nav-btn:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.mobile-bottom-nav .mobile-nav-btn:not(.active),
+.mobile-bottom-nav .mobile-nav-btn:not(.active):hover,
+.mobile-bottom-nav .mobile-nav-btn:not(.active):active {
+    background: transparent;
+}
+
+.mobile-bottom-nav .mobile-nav-btn:focus,
+.mobile-bottom-nav .mobile-nav-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .mobile-bottom-nav .mobile-nav-btn:hover {
+        transform: none;
+        box-shadow: none;
+        background: rgba(250, 93, 41, 0.06);
+    }
+}
+
+.mobile-bottom-nav .mobile-nav-btn.active {
+    color: var(--accent-color);
+    background: rgba(250, 93, 41, 0.1);
+}
+
+.mobile-bottom-nav .mobile-nav-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.mobile-bottom-nav .mobile-nav-label {
+    font-size: 0.92em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+    .mobile-bottom-nav {
+        display: none !important;
+    }
 }
 
 /* ===== 로그 표시/숨김 토글 ===== */
@@ -375,7 +473,7 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
   .container {
     max-width: 100%;
     width: 100%;
-    padding: 12px;
+    padding: 0;
     height: 100dvh;
     min-height: 100dvh;
   }
@@ -383,9 +481,10 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
   .header-main {
     flex-direction: column;
     align-items: stretch;
-    background: transparent;
+    background: var(--background-main);
     border: none;
-    padding: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 10px;
     gap: 6px;
   }
 
@@ -1251,15 +1350,29 @@ details.mission-section summary {
         min-height: 100dvh;
         overflow: visible;
         align-items: stretch;
-        padding: 8px;
+        padding: 0 0 calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom)) 0;
     }
     .container {
         height: auto;
         max-height: none;
-        min-height: calc(100dvh - 16px);
+        min-height: 100dvh;
         max-width: 100%;
-        padding: 12px;
+        padding: 0;
         overflow: visible;
+    }
+    .header {
+        position: sticky;
+        top: 0;
+        z-index: 120;
+        margin-bottom: 8px;
+        background: var(--background-main);
+    }
+    .header-main {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding: 8px 8px;
     }
     .main-content {
         overflow: visible;
@@ -1371,6 +1484,10 @@ details.mission-section summary {
     }
     .blocklyTreeIcon {
         display: none !important;
+    }
+
+    .mobile-bottom-nav {
+        display: grid;
     }
 }
 
@@ -1505,5 +1622,11 @@ details.mission-section summary {
 .ai-form button:hover { filter: brightness(1.08); }
 
 @media (max-width: 768px) {
-    .ai-panel { right: 8px; left: 8px; bottom: 8px; width: auto; max-height: 75vh; }
+    .ai-panel {
+        right: 8px;
+        left: 8px;
+        bottom: calc(8px + var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+        width: auto;
+        max-height: calc(75vh - var(--mobile-bottom-nav-height));
+    }
 }
