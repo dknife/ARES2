@@ -147,7 +147,8 @@
       let ready = false;
 
       const loader = new GLTFLoader();
-      // ares_robot.glb 가 meshopt 압축본이라 디코더 필수 ([[project_glb_optimization_todo]])
+      // ares_robot.glb 는 meshopt + WebP 압축본이므로 디코더 필수
+      // (2026-06-25 최적화: 7.2MB→0.56MB, EXT_meshopt_compression + EXT_texture_webp + KHR_mesh_quantization)
       if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
       function onModelLoad(gltf) {
         const root = gltf.scene;
