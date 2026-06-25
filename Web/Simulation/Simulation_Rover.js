@@ -55,320 +55,332 @@ export function playGunFire(audioCtx) {
   }
 }
 
-export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
-  const THREE = ctx.THREE;
-  const scene = ctx.scene;
-  const camera = ctx.camera;
-  const controls = ctx.controls;
-  const cfg = ctx.cfg;
+export class RoverSubsystem {
+  constructor(ctx, makeGLTFLoader, OLED_ICONS) {
+    this.ctx = ctx;
+    this.makeGLTFLoader = makeGLTFLoader;
+    this.OLED_ICONS = OLED_ICONS;
 
-  let roverGroup = new THREE.Group();
-  roverGroup.position.y = 0.4;
-  scene.add(roverGroup);
+    const THREE = ctx.THREE;
+    const scene = ctx.scene;
+    const camera = ctx.camera;
+    const controls = ctx.controls;
+    const cfg = ctx.cfg;
 
-  let worldGroup = ctx.worldGroup;
-  const boxes = [];
-  const roverLeds = [];
-  let magSensorBall = null;
-  const irSensorBalls = [];
-  let wheelR = null;
-  let wheelL = null;
-  let antennaPivot = null;
+    this.roverGroup = new THREE.Group();
+    this.roverGroup.position.y = 0.4;
+    scene.add(this.roverGroup);
 
-  // Obstacle constants
-  const BOX_SPAWN_RANGE = 50;
-  const BOX_CLEAR_R = 5;
-  let obstaclesOn = true;
+    this.worldGroup = ctx.worldGroup;
+    this.boxes = [];
+    this.roverLeds = [];
+    this.magSensorBall = null;
+    this.irSensorBalls = [];
+    this.wheelR = null;
+    this.wheelL = null;
+    this.antennaPivot = null;
 
-  // OLED state
-  const OLED_W = 128, OLED_H = 64;
-  const OLED_SCALE = 4;
-  const OLED_CHAR_W = 8, OLED_CHAR_H = 8;
-  let oledCanvas = null;
-  let oledCtx = null;
-  let oledTex = null;
+    // Obstacle constants
+    this.BOX_SPAWN_RANGE = 50;
+    this.BOX_CLEAR_R = 5;
+    this.obstaclesOn = true;
+    this.BOX_COLLIDE_R = 1.5;
 
-  // Gun state
-  let gunMesh = null;
-  let muzzleFlash = null;
-  let muzzleFlashSphere = null;
-  let muzzleFlashLight = null;
-  const muzzleSparks = [];
-  let muzzleFlashT = 0;
-  const MUZZLE_DUR = 0.35;
-  const muzzleWorldPos = new THREE.Vector3();
-  const muzzleForward = new THREE.Vector3();
+    // OLED state
+    this.OLED_W = 128;
+    this.OLED_H = 64;
+    this.OLED_SCALE = 4;
+    this.OLED_CHAR_W = 8;
+    this.OLED_CHAR_H = 8;
+    this.oledCanvas = null;
+    this.oledCtx = null;
+    this.oledTex = null;
 
-  // Gun smoke
-  let gunSmokeGroup = null;
-  let smokeTex = null;
-  const gunSmokePool = [];
-  const GUN_SMOKE_POOL = 18;
-  const GUN_SMOKE_BURST = 12;
-  const GUN_SMOKE_BURST_DUR = 0.18;
-  let gunSmokeRemaining = 0;
-  let gunSmokeAcc = 0;
+    // Gun state
+    this.gunMesh = null;
+    this.muzzleFlash = null;
+    this.muzzleFlashSphere = null;
+    this.muzzleFlashLight = null;
+    this.muzzleSparks = [];
+    this.muzzleFlashT = 0;
+    this.MUZZLE_DUR = 0.35;
+    this.muzzleWorldPos = new THREE.Vector3();
+    this.muzzleForward = new THREE.Vector3();
 
-  // Movement state
-  const SERVO_WORLD_SPEED = 1.2;
-  const SERVO_WHEEL_SPIN  = 4.0;
-  const SERVO_TURN_SPEED  = 0.9;
-  const SERVO_X_AXIS = new THREE.Vector3(1, 0, 0);
-  const SERVO_Y_AXIS = new THREE.Vector3(0, 1, 0);
-  const SERVO_TURN_PIVOT = new THREE.Vector3(0, 0, -0.3);
-  let servoOn = false;
-  let servoDir = 1;
-  let servoTurnOn = false;
-  let servoTurnDir = 1;
+    // Gun smoke
+    this.gunSmokeGroup = null;
+    this.smokeTex = null;
+    this.gunSmokePool = [];
+    this.GUN_SMOKE_POOL = 18;
+    this.GUN_SMOKE_BURST = 12;
+    this.GUN_SMOKE_BURST_DUR = 0.18;
+    this.gunSmokeRemaining = 0;
+    this.gunSmokeAcc = 0;
 
-  // Distance Sensor state
-  const DIST_RAY = new THREE.Raycaster();
-  const DIST_DIR = new THREE.Vector3(0, 0, 1);
-  const _distOrigin = new THREE.Vector3();
-  const DIST_NO_HIT = 999;
-  const DIST_BOX_INFLATE = 2.0;
+    // Movement state
+    this.SERVO_WORLD_SPEED = 1.2;
+    this.SERVO_WHEEL_SPIN  = 4.0;
+    this.SERVO_TURN_SPEED  = 0.9;
+    this.SERVO_X_AXIS = new THREE.Vector3(1, 0, 0);
+    this.SERVO_Y_AXIS = new THREE.Vector3(0, 1, 0);
+    this.SERVO_TURN_PIVOT = new THREE.Vector3(0, 0, -0.3);
+    this.servoOn = false;
+    this.servoDir = 1;
+    this.servoTurnOn = false;
+    this.servoTurnDir = 1;
 
-  // Radar state
-  let radarOn = false;
-  let radarDir = 1;
+    // Distance Sensor state
+    this.DIST_RAY = new THREE.Raycaster();
+    this.DIST_DIR = new THREE.Vector3(0, 0, 1);
+    this._distOrigin = new THREE.Vector3();
+    this.DIST_NO_HIT = 999;
+    this.DIST_BOX_INFLATE = 2.0;
 
-  // Rover Waves state
-  const ROVER_SPEAKERS = [
-    new THREE.Vector3(-0.5, 0.3, 0.6),
-    new THREE.Vector3( 0.5, 0.3, 0.6),
-  ];
-  const ROVER_WAVE_BASE_R    = 0.15;
-  const ROVER_WAVE_MAX_SCALE = 7;
-  const WAVE_SPAWN_INTERVAL = 0.18;
-  const WAVE_LIFETIME       = 1.4;
-  const WAVE_OPACITY        = 0.16;
-  const WAVE_COLOR          = 0x88ddff;
-  let roverWaveOn = false;
-  let roverWaveSpawnTimer = 0;
-  const roverWaveRings = [];
+    // Radar state
+    this.radarOn = false;
+    this.radarDir = 1;
 
-  // Helper setup (Grid floor, boxes, etc.)
-  if (cfg.helpers) {
-    const FLOOR_SIZE = 100;
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE),
-      new THREE.MeshStandardMaterial({
-        color: 0x3a3a3a, roughness: 0.95, metalness: 0.0,
-        polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
-      }),
-    );
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.001;
-    floor.receiveShadow = true;
-    floor.renderOrder = -1;
+    // Rover Waves state
+    this.ROVER_SPEAKERS = [
+      new THREE.Vector3(-0.5, 0.3, 0.6),
+      new THREE.Vector3( 0.5, 0.3, 0.6),
+    ];
+    this.ROVER_WAVE_BASE_R    = 0.15;
+    this.ROVER_WAVE_MAX_SCALE = 7;
+    this.WAVE_SPAWN_INTERVAL = 0.18;
+    this.WAVE_LIFETIME       = 1.4;
+    this.WAVE_OPACITY        = 0.16;
+    this.WAVE_COLOR          = 0x88ddff;
+    this.roverWaveOn = false;
+    this.roverWaveSpawnTimer = 0;
+    this.roverWaveRings = [];
 
-    const grid = new THREE.GridHelper(FLOOR_SIZE, FLOOR_SIZE, 0x444444, 0x666666);
-    grid.position.y = 0.002;
-
-    worldGroup = new THREE.Group();
-    worldGroup.add(floor, grid);
-    ctx.worldGroup = worldGroup; // update main context
-
-    // Random boxes
-    const BOX_COUNT = 150;
-    const boxGeom = new THREE.BoxGeometry(1, 2, 1);
-    for (let i = 0; i < BOX_COUNT; i++) {
-      let x = 0, z = 0;
-      do {
-        x = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
-        z = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
-      } while (Math.hypot(x, z) < BOX_CLEAR_R);
-      const box = new THREE.Mesh(
-        boxGeom,
-        new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.55, 0.5), roughness: 0.8, metalness: 0.0 }),
+    // Helper setup (Grid floor, boxes, etc.)
+    if (cfg.helpers) {
+      const FLOOR_SIZE = 100;
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE),
+        new THREE.MeshStandardMaterial({
+          color: 0x3a3a3a, roughness: 0.95, metalness: 0.0,
+          polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
+        }),
       );
-      box.position.set(x, 1, z);
-      box.castShadow = true;
-      box.receiveShadow = true;
-      worldGroup.add(box);
-      boxes.push(box);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.001;
+      floor.receiveShadow = true;
+      floor.renderOrder = -1;
+
+      const grid = new THREE.GridHelper(FLOOR_SIZE, FLOOR_SIZE, 0x444444, 0x666666);
+      grid.position.y = 0.002;
+
+      this.worldGroup = new THREE.Group();
+      this.worldGroup.add(floor, grid);
+      ctx.worldGroup = this.worldGroup; // update main context
+
+      // Random boxes
+      const BOX_COUNT = 150;
+      const boxGeom = new THREE.BoxGeometry(1, 2, 1);
+      for (let i = 0; i < BOX_COUNT; i++) {
+        let x = 0, z = 0;
+        do {
+          x = (Math.random() * 2 - 1) * this.BOX_SPAWN_RANGE;
+          z = (Math.random() * 2 - 1) * this.BOX_SPAWN_RANGE;
+        } while (Math.hypot(x, z) < this.BOX_CLEAR_R);
+        const box = new THREE.Mesh(
+          boxGeom,
+          new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.55, 0.5), roughness: 0.8, metalness: 0.0 }),
+        );
+        box.position.set(x, 1, z);
+        box.castShadow = true;
+        box.receiveShadow = true;
+        this.worldGroup.add(box);
+        this.boxes.push(box);
+      }
+      scene.add(this.worldGroup);
+
+      const axes = new THREE.AxesHelper(1);
+      axes.position.y = 0.003;
+      scene.add(axes);
     }
-    scene.add(worldGroup);
 
-    const axes = new THREE.AxesHelper(1);
-    axes.position.y = 0.003;
-    scene.add(axes);
-  }
+    // Setup sensor balls
+    {
+      const LED_COUNT = 6, LED_X0 = -0.4, LED_X1 = 0.4, LED_Y = 0.4, LED_Z = 0.25, LED_R = 0.05;
+      const step = (LED_X1 - LED_X0) / (LED_COUNT - 1);
+      const ledGeom = new THREE.SphereGeometry(LED_R, 16, 12);
+      for (let i = 0; i < LED_COUNT; i++) {
+        const ball = new THREE.Mesh(
+          ledGeom,
+          new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
+        );
+        ball.position.set(LED_X0 + step * i, LED_Y, LED_Z);
+        this.roverGroup.add(ball);
+        this.roverLeds.push(ball);
+      }
 
-  // Setup sensor balls
-  {
-    const LED_COUNT = 6, LED_X0 = -0.4, LED_X1 = 0.4, LED_Y = 0.4, LED_Z = 0.25, LED_R = 0.05;
-    const step = (LED_X1 - LED_X0) / (LED_COUNT - 1);
-    const ledGeom = new THREE.SphereGeometry(LED_R, 16, 12);
-    for (let i = 0; i < LED_COUNT; i++) {
-      const ball = new THREE.Mesh(
+      this.magSensorBall = new THREE.Mesh(
         ledGeom,
         new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
       );
-      ball.position.set(LED_X0 + step * i, LED_Y, LED_Z);
-      roverGroup.add(ball);
-      roverLeds.push(ball);
+      this.magSensorBall.position.set(0, -0.3, 0.9);
+      this.roverGroup.add(this.magSensorBall);
+
+      [-0.22, 0.22].forEach((x) => {
+        const ball = new THREE.Mesh(
+          ledGeom,
+          new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
+        );
+        ball.position.set(x, 0.58, 0.1);
+        this.roverGroup.add(ball);
+        this.irSensorBalls.push(ball);
+      });
     }
 
-    magSensorBall = new THREE.Mesh(
-      ledGeom,
-      new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
-    );
-    magSensorBall.position.set(0, -0.3, 0.9);
-    roverGroup.add(magSensorBall);
+    // Load GLTF Parts
+    const loader = makeGLTFLoader();
+    let remaining = cfg.parts.length;
+    cfg.parts.forEach((url) => {
+      loader.load(url, (gltf) => {
+        if (ctx.disposed) {
+          gltf.scene.traverse((o) => {
+            if (o.isMesh || o.isSprite) {
+              o.geometry?.dispose?.();
+              const m = o.material;
+              (Array.isArray(m) ? m : [m]).forEach((mm) => { mm?.map?.dispose?.(); mm?.dispose?.(); });
+            }
+          });
+          return;
+        }
+        const root = gltf.scene;
+        if (!/RoverBody\.glb$/.test(url)) root.scale.setScalar(0.5);
+        root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
 
-    [-0.22, 0.22].forEach((x) => {
-      const ball = new THREE.Mesh(
-        ledGeom,
-        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
-      );
-      ball.position.set(x, 0.58, 0.1);
-      roverGroup.add(ball);
-      irSensorBalls.push(ball);
-    });
-  }
-
-  // Load GLTF Parts
-  const loader = makeGLTFLoader();
-  let remaining = cfg.parts.length;
-  cfg.parts.forEach((url) => {
-    loader.load(url, (gltf) => {
-      if (ctx.disposed) {
-        gltf.scene.traverse((o) => {
-          if (o.isMesh || o.isSprite) {
-            o.geometry?.dispose?.();
-            const m = o.material;
-            (Array.isArray(m) ? m : [m]).forEach((mm) => { mm?.map?.dispose?.(); mm?.dispose?.(); });
+        if (/RoverWheel\.glb$/.test(url)) {
+          root.scale.multiplyScalar(0.8);
+          this.wheelR = root;
+          this.wheelL = root.clone();
+          this.wheelR.rotation.y = Math.PI / 2;
+          this.wheelL.rotation.y = Math.PI / 2;
+          this.wheelR.position.set( 0.7, 0, -0.3);
+          this.wheelL.position.set(-0.7, 0, -0.3);
+          this.roverGroup.add(this.wheelR, this.wheelL);
+        } else if (/RoverRadar\.glb$/.test(url)) {
+          root.scale.multiplyScalar(0.5);
+          root.scale.multiplyScalar(0.8);
+          root.position.set(0, 0.5, -0.9);
+          this.antennaPivot = root;
+          this.roverGroup.add(root);
+        } else if (/RoverLED\.glb$/.test(url)) {
+          root.position.set(0, 0.35, 0.2);
+          root.rotation.x = Math.PI / 4;
+          this.roverGroup.add(root);
+        } else if (/RoverHead\.glb$/.test(url)) {
+          root.position.set(0, 0.6, -0.3);
+          root.rotation.y = Math.PI;
+          this.roverGroup.add(root);
+        } else if (/RoverGun\.glb$/.test(url)) {
+          root.position.set(0.55, 0.5, -0.5);
+          root.rotation.y = Math.PI / 2;
+          this.roverGroup.add(root);
+          this.gunMesh = root;
+          {
+            const bbox = new THREE.Box3().setFromObject(root);
+            const size = bbox.getSize(new THREE.Vector3());
+            const center = bbox.getCenter(new THREE.Vector3());
+            let ax = 0;
+            if (size.y > size.x && size.y > size.z) ax = 1;
+            else if (size.z > size.x) ax = 2;
+            const minV = bbox.min.getComponent(ax);
+            const maxV = bbox.max.getComponent(ax);
+            const muzzleEnd = Math.abs(maxV) > Math.abs(minV) ? minV : maxV;
+            this.muzzleWorldPos.copy(center);
+            this.muzzleWorldPos.setComponent(ax, muzzleEnd);
+            this.muzzleForward.set(0, 0, 0);
+            this.muzzleForward.setComponent(ax, Math.sign(muzzleEnd - center.getComponent(ax)) || -1);
           }
-        });
-        return;
-      }
-      const root = gltf.scene;
-      if (!/RoverBody\.glb$/.test(url)) root.scale.setScalar(0.5);
-      root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+        } else if (/RoverOLED\.glb$/.test(url)) {
+          root.position.set(0, 0.1, 0.5);
+          root.rotation.x = -Math.PI / 6;
+          {
+            const probe = root.clone(true);
+            probe.position.set(0, 0, 0); probe.rotation.set(0, 0, 0); probe.scale.set(1, 1, 1);
+            const box = new THREE.Box3().setFromObject(probe);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
 
-      if (/RoverWheel\.glb$/.test(url)) {
-        root.scale.multiplyScalar(0.8);
-        wheelR = root;
-        wheelL = root.clone();
-        wheelR.rotation.y = Math.PI / 2;
-        wheelL.rotation.y = Math.PI / 2;
-        wheelR.position.set( 0.7, 0, -0.3);
-        wheelL.position.set(-0.7, 0, -0.3);
-        roverGroup.add(wheelR, wheelL);
-      } else if (/RoverRadar\.glb$/.test(url)) {
-        root.scale.multiplyScalar(0.5);
-        root.scale.multiplyScalar(0.8);
-        root.position.set(0, 0.5, -0.9);
-        antennaPivot = root;
-        roverGroup.add(root);
-      } else if (/RoverLED\.glb$/.test(url)) {
-        root.position.set(0, 0.35, 0.2);
-        root.rotation.x = Math.PI / 4;
-        roverGroup.add(root);
-      } else if (/RoverHead\.glb$/.test(url)) {
-        root.position.set(0, 0.6, -0.3);
-        root.rotation.y = Math.PI;
-        roverGroup.add(root);
-      } else if (/RoverGun\.glb$/.test(url)) {
-        root.position.set(0.55, 0.5, -0.5);
-        root.rotation.y = Math.PI / 2;
-        roverGroup.add(root);
-        gunMesh = root;
-        {
-          const bbox = new THREE.Box3().setFromObject(root);
-          const size = bbox.getSize(new THREE.Vector3());
-          const center = bbox.getCenter(new THREE.Vector3());
-          let ax = 0;
-          if (size.y > size.x && size.y > size.z) ax = 1;
-          else if (size.z > size.x) ax = 2;
-          const minV = bbox.min.getComponent(ax);
-          const maxV = bbox.max.getComponent(ax);
-          const muzzleEnd = Math.abs(maxV) > Math.abs(minV) ? minV : maxV;
-          muzzleWorldPos.copy(center);
-          muzzleWorldPos.setComponent(ax, muzzleEnd);
-          muzzleForward.set(0, 0, 0);
-          muzzleForward.setComponent(ax, Math.sign(muzzleEnd - center.getComponent(ax)) || -1);
+            this.oledCanvas = document.createElement('canvas');
+            this.oledCanvas.width = this.OLED_W * this.OLED_SCALE;
+            this.oledCanvas.height = this.OLED_H * this.OLED_SCALE;
+            this.oledCtx = this.oledCanvas.getContext('2d');
+            this.oledClear();
+            this.oledText(0, 0, 'ARES READY');
+            this.oledTex = new THREE.CanvasTexture(this.oledCanvas);
+            this.oledTex.colorSpace = THREE.SRGBColorSpace;
+            this.oledTex.magFilter = THREE.NearestFilter;
+            this.oledTex.minFilter = THREE.NearestFilter;
+            const w = size.x * 0.85 * 0.95 * 0.95 * 0.9;
+            const h = w * (this.oledCanvas.height / this.oledCanvas.width);
+            const screen = new THREE.Mesh(
+              new THREE.PlaneGeometry(w, h),
+              new THREE.MeshBasicMaterial({ map: this.oledTex, side: THREE.DoubleSide })
+            );
+            const pivot = new THREE.Group();
+            pivot.position.set(center.x, center.y - h / 2, box.max.z + 0.001);
+            pivot.rotation.x = -Math.PI / 12;
+            screen.position.set(0, h / 2, 0);
+            pivot.add(screen);
+            root.add(pivot);
+            root.userData.oledScreen = screen;
+          }
+          this.roverGroup.add(root);
+        } else {
+          this.roverGroup.add(root);
         }
-      } else if (/RoverOLED\.glb$/.test(url)) {
-        root.position.set(0, 0.1, 0.5);
-        root.rotation.x = -Math.PI / 6;
-        {
-          const probe = root.clone(true);
-          probe.position.set(0, 0, 0); probe.rotation.set(0, 0, 0); probe.scale.set(1, 1, 1);
-          const box = new THREE.Box3().setFromObject(probe);
-          const size = box.getSize(new THREE.Vector3());
-          const center = box.getCenter(new THREE.Vector3());
-
-          oledCanvas = document.createElement('canvas');
-          oledCanvas.width = OLED_W * OLED_SCALE;
-          oledCanvas.height = OLED_H * OLED_SCALE;
-          oledCtx = oledCanvas.getContext('2d');
-          oledClear();
-          oledText(0, 0, 'ARES READY');
-          oledTex = new THREE.CanvasTexture(oledCanvas);
-          oledTex.colorSpace = THREE.SRGBColorSpace;
-          oledTex.magFilter = THREE.NearestFilter;
-          oledTex.minFilter = THREE.NearestFilter;
-          const w = size.x * 0.85 * 0.95 * 0.95 * 0.9;
-          const h = w * (oledCanvas.height / oledCanvas.width);
-          const screen = new THREE.Mesh(
-            new THREE.PlaneGeometry(w, h),
-            new THREE.MeshBasicMaterial({ map: oledTex, side: THREE.DoubleSide })
-          );
-          const pivot = new THREE.Group();
-          pivot.position.set(center.x, center.y - h / 2, box.max.z + 0.001);
-          pivot.rotation.x = -Math.PI / 12;
-          screen.position.set(0, h / 2, 0);
-          pivot.add(screen);
-          root.add(pivot);
-          root.userData.oledScreen = screen;
-        }
-        roverGroup.add(root);
-      } else {
-        roverGroup.add(root);
-      }
-      if (--remaining === 0 && ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
-    }, undefined, (err) => {
-      console.error('부속 로드 실패:', url, err);
-      if (--remaining === 0 && ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
+        if (--remaining === 0 && ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
+      }, undefined, (err) => {
+        console.error('부속 로드 실패:', url, err);
+        if (--remaining === 0 && ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
+      });
     });
-  });
+  }
 
   // OLED helpers
-  function oledClear() {
-    if (!oledCtx) return;
-    oledCtx.fillStyle = '#000814';
-    oledCtx.fillRect(0, 0, oledCanvas.width, oledCanvas.height);
-    if (oledTex) oledTex.needsUpdate = true;
+  oledClear() {
+    if (!this.oledCtx) return;
+    this.oledCtx.fillStyle = '#000814';
+    this.oledCtx.fillRect(0, 0, this.oledCanvas.width, this.oledCanvas.height);
+    if (this.oledTex) this.oledTex.needsUpdate = true;
   }
-  function oledClearRect(x, y, w, h) {
-    if (!oledCtx) return;
+
+  oledClearRect(x, y, w, h) {
+    if (!this.oledCtx) return;
     const x0 = Math.max(0, x), y0 = Math.max(0, y);
-    const x1 = Math.min(OLED_W, x + w), y1 = Math.min(OLED_H, y + h);
+    const x1 = Math.min(this.OLED_W, x + w), y1 = Math.min(this.OLED_H, y + h);
     if (x1 <= x0 || y1 <= y0) return;
-    oledCtx.fillStyle = '#000814';
-    oledCtx.fillRect(x0 * OLED_SCALE, y0 * OLED_SCALE, (x1 - x0) * OLED_SCALE, (y1 - y0) * OLED_SCALE);
-    if (oledTex) oledTex.needsUpdate = true;
+    this.oledCtx.fillStyle = '#000814';
+    this.oledCtx.fillRect(x0 * this.OLED_SCALE, y0 * this.OLED_SCALE, (x1 - x0) * this.OLED_SCALE, (y1 - y0) * this.OLED_SCALE);
+    if (this.oledTex) this.oledTex.needsUpdate = true;
   }
-  function oledText(x, y, text) {
-    if (!oledCtx) return;
-    oledCtx.fillStyle = '#7dffff';
-    oledCtx.font = `bold ${OLED_CHAR_H * OLED_SCALE}px monospace`;
-    oledCtx.textAlign = 'left'; oledCtx.textBaseline = 'top';
+
+  oledText(x, y, text) {
+    if (!this.oledCtx) return;
+    this.oledCtx.fillStyle = '#7dffff';
+    this.oledCtx.font = `bold ${this.OLED_CHAR_H * this.OLED_SCALE}px monospace`;
+    this.oledCtx.textAlign = 'left'; this.oledCtx.textBaseline = 'top';
     const s = String(text);
     for (let i = 0; i < s.length; i++) {
-      const ox = x + i * OLED_CHAR_W;
-      if (ox >= OLED_W) break;
-      oledCtx.fillText(s[i], ox * OLED_SCALE, y * OLED_SCALE);
+      const ox = x + i * this.OLED_CHAR_W;
+      if (ox >= this.OLED_W) break;
+      this.oledCtx.fillText(s[i], ox * this.OLED_SCALE, y * this.OLED_SCALE);
     }
-    if (oledTex) oledTex.needsUpdate = true;
+    if (this.oledTex) this.oledTex.needsUpdate = true;
   }
-  function oledIcon(name, x, y) {
-    if (!oledCtx) return;
-    const bm = OLED_ICONS[name];
+
+  oledIcon(name, x, y) {
+    if (!this.oledCtx) return;
+    const bm = this.OLED_ICONS[name];
     if (!bm) return;
-    oledCtx.fillStyle = '#7dffff';
+    this.oledCtx.fillStyle = '#7dffff';
     for (let row = 0; row < 32; row++) {
       for (let bc = 0; bc < 4; bc++) {
         const byte = bm[row * 4 + bc];
@@ -377,30 +389,31 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
           if (byte & (1 << (7 - bit))) {
             const px = x + bc * 8 + bit;
             const py = y + row;
-            if (px >= 0 && px < OLED_W && py >= 0 && py < OLED_H) {
-              oledCtx.fillRect(px * OLED_SCALE, py * OLED_SCALE, OLED_SCALE, OLED_SCALE);
+            if (px >= 0 && px < this.OLED_W && py >= 0 && py < this.OLED_H) {
+              this.oledCtx.fillRect(px * this.OLED_SCALE, py * this.OLED_SCALE, this.OLED_SCALE, this.OLED_SCALE);
             }
           }
         }
       }
     }
-    if (oledTex) oledTex.needsUpdate = true;
+    if (this.oledTex) this.oledTex.needsUpdate = true;
   }
 
   // Gun and muzzle flash
-  function ensureMuzzleFlash() {
-    if (muzzleFlash || !gunMesh) return;
-    muzzleFlash = new THREE.Group();
-    muzzleFlashSphere = new THREE.Mesh(
+  ensureMuzzleFlash() {
+    const THREE = this.ctx.THREE;
+    if (this.muzzleFlash || !this.gunMesh) return;
+    this.muzzleFlash = new THREE.Group();
+    this.muzzleFlashSphere = new THREE.Mesh(
       new THREE.SphereGeometry(0.15, 16, 12),
       new THREE.MeshBasicMaterial({
         color: 0xffd980, transparent: true, opacity: 0,
         depthWrite: false, blending: THREE.AdditiveBlending,
       })
     );
-    muzzleFlash.add(muzzleFlashSphere);
-    muzzleFlashLight = new THREE.PointLight(0xffaa44, 0, 3, 2);
-    muzzleFlash.add(muzzleFlashLight);
+    this.muzzleFlash.add(this.muzzleFlashSphere);
+    this.muzzleFlashLight = new THREE.PointLight(0xffaa44, 0, 3, 2);
+    this.muzzleFlash.add(this.muzzleFlashLight);
     for (let i = 0; i < 12; i++) {
       const spark = new THREE.Mesh(
         new THREE.SphereGeometry(0.025, 6, 6),
@@ -409,47 +422,48 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
-      muzzleFlash.add(spark);
-      muzzleSparks.push({ mesh: spark, vel: new THREE.Vector3(), age: 0 });
+      this.muzzleFlash.add(spark);
+      this.muzzleSparks.push({ mesh: spark, vel: new THREE.Vector3(), age: 0 });
     }
-    scene.add(muzzleFlash);
-    muzzleFlash.visible = false;
+    this.ctx.scene.add(this.muzzleFlash);
+    this.muzzleFlash.visible = false;
   }
 
-  function setGunFire() {
-    if (!gunMesh) return;
-    ensureMuzzleFlash();
-    muzzleFlash.position.copy(muzzleWorldPos);
-    for (const sp of muzzleSparks) {
+  setGunFire() {
+    if (!this.gunMesh)
+      return;
+    this.ensureMuzzleFlash();
+    this.muzzleFlash.position.copy(this.muzzleWorldPos);
+    for (const sp of this.muzzleSparks) {
       sp.mesh.position.set(0, 0, 0);
       const speed = 1.0 + Math.random() * 1.6;
-      sp.vel.copy(muzzleForward).multiplyScalar(speed);
+      sp.vel.copy(this.muzzleForward).multiplyScalar(speed);
       sp.vel.x += (Math.random() - 0.5) * 0.8;
       sp.vel.y += (Math.random() - 0.5) * 0.6;
       sp.vel.z += (Math.random() - 0.5) * 0.8;
       sp.age = 0;
       sp.mesh.material.opacity = 1;
     }
-    muzzleFlashT = 0.0001;
-    muzzleFlash.visible = true;
-    gunSmokeRemaining = GUN_SMOKE_BURST;
-    gunSmokeAcc = 0;
+    this.muzzleFlashT = 0.0001;
+    this.muzzleFlash.visible = true;
+    this.gunSmokeRemaining = this.GUN_SMOKE_BURST;
+    this.gunSmokeAcc = 0;
   }
 
-  function updateMuzzleFlash(dt) {
-    if (muzzleFlashT <= 0 || !muzzleFlash) return;
-    muzzleFlashT += dt;
-    if (muzzleFlashT >= MUZZLE_DUR) {
-      muzzleFlashT = 0;
-      muzzleFlash.visible = false;
+  updateMuzzleFlash(dt) {
+    if (this.muzzleFlashT <= 0 || !this.muzzleFlash) return;
+    this.muzzleFlashT += dt;
+    if (this.muzzleFlashT >= this.MUZZLE_DUR) {
+      this.muzzleFlashT = 0;
+      this.muzzleFlash.visible = false;
       return;
     }
-    const t = muzzleFlashT / MUZZLE_DUR;
+    const t = this.muzzleFlashT / this.MUZZLE_DUR;
     const flashI = (1 - t) * (1 - t);
-    muzzleFlashSphere.material.opacity = flashI * 0.95;
-    muzzleFlashSphere.scale.setScalar(0.7 + t * 1.8);
-    muzzleFlashLight.intensity = 5 * flashI;
-    for (const sp of muzzleSparks) {
+    this.muzzleFlashSphere.material.opacity = flashI * 0.95;
+    this.muzzleFlashSphere.scale.setScalar(0.7 + t * 1.8);
+    this.muzzleFlashLight.intensity = 5 * flashI;
+    for (const sp of this.muzzleSparks) {
       sp.age += dt;
       sp.mesh.position.add(sp.vel.clone().multiplyScalar(dt));
       sp.vel.multiplyScalar(0.92);
@@ -458,7 +472,8 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
     }
   }
 
-  const makeSmokeTex = () => {
+  makeSmokeTex() {
+    const THREE = this.ctx.THREE;
     const cv = document.createElement('canvas'); cv.width = cv.height = 128;
     const cx = cv.getContext('2d');
     const blob = (px, py, r, a) => {
@@ -474,37 +489,38 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
     const t = new THREE.CanvasTexture(cv);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
-  };
+  }
 
-  function ensureGunSmoke() {
-    if (gunSmokeGroup || !gunMesh) return;
-    smokeTex = makeSmokeTex();
-    gunSmokeGroup = new THREE.Group();
-    scene.add(gunSmokeGroup);
-    for (let i = 0; i < GUN_SMOKE_POOL; i++) {
+  ensureGunSmoke() {
+    const THREE = this.ctx.THREE;
+    if (this.gunSmokeGroup || !this.gunMesh) return;
+    this.smokeTex = this.makeSmokeTex();
+    this.gunSmokeGroup = new THREE.Group();
+    this.ctx.scene.add(this.gunSmokeGroup);
+    for (let i = 0; i < this.GUN_SMOKE_POOL; i++) {
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: smokeTex, color: 0xd8dde6, transparent: true,
+        map: this.smokeTex, color: 0xd8dde6, transparent: true,
         depthWrite: false, opacity: 0,
       }));
       sp.visible = false;
-      gunSmokeGroup.add(sp);
-      gunSmokePool.push({ sprite: sp, active: false, age: 0, life: 1, vel: new THREE.Vector3(),
+      this.gunSmokeGroup.add(sp);
+      this.gunSmokePool.push({ sprite: sp, active: false, age: 0, life: 1, vel: new THREE.Vector3(),
                           scale0: 0.06, scaleMax: 0.5, rot: 0, rotSpeed: 0 });
     }
   }
 
-  function spawnGunSmoke() {
-    const p = gunSmokePool.find((q) => !q.active);
+  spawnGunSmoke() {
+    const p = this.gunSmokePool.find((q) => !q.active);
     if (!p) return;
     p.active = true; p.age = 0;
     p.life = 1.2 + Math.random() * 0.9;
-    p.sprite.position.copy(muzzleWorldPos);
+    p.sprite.position.copy(this.muzzleWorldPos);
     p.sprite.position.x += (Math.random() - 0.5) * 0.06;
     p.sprite.position.y += (Math.random() - 0.5) * 0.06;
     p.sprite.position.z += (Math.random() - 0.5) * 0.06;
 
     const spd = 0.7 + Math.random() * 0.5;
-    p.vel.copy(muzzleForward).multiplyScalar(spd);
+    p.vel.copy(this.muzzleForward).multiplyScalar(spd);
     p.vel.x += (Math.random() - 0.5) * 0.45;
     p.vel.y += 0.15 + Math.random() * 0.25;
     p.vel.z += (Math.random() - 0.5) * 0.45;
@@ -518,20 +534,20 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
     p.sprite.visible = true;
   }
 
-  function updateGunSmoke(dt) {
-    ensureGunSmoke();
-    if (!gunSmokeGroup) return;
-    if (gunSmokeRemaining > 0) {
-      gunSmokeAcc += dt;
-      const alreadySpawned = GUN_SMOKE_BURST - gunSmokeRemaining;
-      const targetSpawned = Math.min(GUN_SMOKE_BURST, Math.ceil(GUN_SMOKE_BURST * gunSmokeAcc / GUN_SMOKE_BURST_DUR));
+  updateGunSmoke(dt) {
+    this.ensureGunSmoke();
+    if (!this.gunSmokeGroup) return;
+    if (this.gunSmokeRemaining > 0) {
+      this.gunSmokeAcc += dt;
+      const alreadySpawned = this.GUN_SMOKE_BURST - this.gunSmokeRemaining;
+      const targetSpawned = Math.min(this.GUN_SMOKE_BURST, Math.ceil(this.GUN_SMOKE_BURST * this.gunSmokeAcc / this.GUN_SMOKE_BURST_DUR));
       let toSpawn = targetSpawned - alreadySpawned;
-      while (toSpawn-- > 0 && gunSmokeRemaining > 0) {
-        spawnGunSmoke();
-        gunSmokeRemaining--;
+      while (toSpawn-- > 0 && this.gunSmokeRemaining > 0) {
+        this.spawnGunSmoke();
+        this.gunSmokeRemaining--;
       }
     }
-    for (const p of gunSmokePool) {
+    for (const p of this.gunSmokePool) {
       if (!p.active) continue;
       p.age += dt;
       const t = p.age / p.life;
@@ -549,8 +565,8 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
   }
 
   // Rover LEDs
-  function setRoverLed(num, value) {
-    const ball = roverLeds[num];
+  setRoverLed(num, value) {
+    const ball = this.roverLeds[num];
     if (!ball) return;
     const v = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : (value ? 1 : 0);
     const m = ball.material;
@@ -568,214 +584,193 @@ export function initRover(ctx, makeGLTFLoader, OLED_ICONS) {
   }
 
   // Servo movement and turning
-  function setServoMove(on, dir) {
-    servoOn = !!on;
-    if (servoOn) servoTurnOn = false;
-    if (dir !== undefined && dir !== null) servoDir = dir < 0 ? -1 : 1;
+  setServoMove(on, dir) {
+    this.servoOn = !!on;
+    if (this.servoOn) this.servoTurnOn = false;
+    if (dir !== undefined && dir !== null) this.servoDir = dir < 0 ? -1 : 1;
   }
 
-  function setServoTurn(on, dir) {
-    servoTurnOn = !!on;
-    if (servoTurnOn) servoOn = false;
-    if (dir !== undefined && dir !== null) servoTurnDir = dir < 0 ? -1 : 1;
+  setServoTurn(on, dir) {
+    this.servoTurnOn = !!on;
+    if (this.servoTurnOn) this.servoOn = false;
+    if (dir !== undefined && dir !== null) this.servoTurnDir = dir < 0 ? -1 : 1;
   }
 
-  function stopServo() {
-    servoOn = false;
-    servoTurnOn = false;
+  stopServo() {
+    this.servoOn = false;
+    this.servoTurnOn = false;
   }
 
-  // Collision
-  const BOX_COLLIDE_R = 1.5;
-  const _boxTmp = new THREE.Vector3();
-  function nearestBoxDist() {
-    if (!obstaclesOn) return Infinity;
+  nearestBoxDist() {
+    if (!this.obstaclesOn) return Infinity;
+    const THREE = this.ctx.THREE;
+    const boxTmp = new THREE.Vector3();
     let m = Infinity;
-    for (let i = 0; i < boxes.length; i++) {
-      boxes[i].getWorldPosition(_boxTmp);
-      const d = Math.hypot(_boxTmp.x, _boxTmp.z);
+    for (let i = 0; i < this.boxes.length; i++) {
+      this.boxes[i].getWorldPosition(boxTmp);
+      const d = Math.hypot(boxTmp.x, boxTmp.z);
       if (d < m) m = d;
     }
     return m;
   }
 
-  function respawnBoxes() {
-    if (!worldGroup) return;
-    worldGroup.position.set(0, 0, 0);
-    worldGroup.quaternion.identity();
-    for (let i = 0; i < boxes.length; i++) {
+  respawnBoxes() {
+    if (!this.worldGroup) return;
+    this.worldGroup.position.set(0, 0, 0);
+    this.worldGroup.quaternion.identity();
+    for (let i = 0; i < this.boxes.length; i++) {
       let x = 0, z = 0;
       do {
-        x = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
-        z = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
-      } while (Math.hypot(x, z) < BOX_CLEAR_R);
-      boxes[i].position.set(x, 1, z);
+        x = (Math.random() * 2 - 1) * this.BOX_SPAWN_RANGE;
+        z = (Math.random() * 2 - 1) * this.BOX_SPAWN_RANGE;
+      } while (Math.hypot(x, z) < this.BOX_CLEAR_R);
+      this.boxes[i].position.set(x, 1, z);
     }
   }
 
-  function setObstacles(on) {
-    obstaclesOn = !!on;
-    for (let i = 0; i < boxes.length; i++) boxes[i].visible = obstaclesOn;
+  setObstacles(on) {
+    this.obstaclesOn = !!on;
+    for (let i = 0; i < this.boxes.length; i++) this.boxes[i].visible = this.obstaclesOn;
   }
 
   // Distance Sensor
-  function setDistanceSensor(on) {
-    for (let i = 0; i < irSensorBalls.length; i++) {
-      const m = irSensorBalls[i].material;
+  setDistanceSensor(on) {
+    for (let i = 0; i < this.irSensorBalls.length; i++) {
+      const m = this.irSensorBalls[i].material;
       if (on) { m.color.setHex(0xff2222); m.emissive.setHex(0xff2222); m.emissiveIntensity = 2.6; m.opacity = 0.9; }
       else    { m.color.setHex(0xffffff); m.emissive.setHex(0x000000); m.emissiveIntensity = 0;   m.opacity = 0.25; }
     }
   }
 
-  function measureDistance() {
-    if (irSensorBalls.length === 0 || !obstaclesOn) return DIST_NO_HIT;
-    for (let i = 0; i < boxes.length; i++) boxes[i].scale.set(DIST_BOX_INFLATE, 1, DIST_BOX_INFLATE);
-    if (worldGroup) worldGroup.updateMatrixWorld(true);
+  measureDistance() {
+    if (this.irSensorBalls.length === 0 || !this.obstaclesOn) return this.DIST_NO_HIT;
+    for (let i = 0; i < this.boxes.length; i++) this.boxes[i].scale.set(this.DIST_BOX_INFLATE, 1, this.DIST_BOX_INFLATE);
+    if (this.worldGroup) this.worldGroup.updateMatrixWorld(true);
     let minDist = Infinity;
-    for (let i = 0; i < irSensorBalls.length; i++) {
-      irSensorBalls[i].getWorldPosition(_distOrigin);
-      DIST_RAY.set(_distOrigin, DIST_DIR);
-      const hits = DIST_RAY.intersectObjects(boxes, false);
+    for (let i = 0; i < this.irSensorBalls.length; i++) {
+      this.irSensorBalls[i].getWorldPosition(this._distOrigin);
+      this.DIST_RAY.set(this._distOrigin, this.DIST_DIR);
+      const hits = this.DIST_RAY.intersectObjects(this.boxes, false);
       if (hits.length && hits[0].distance < minDist) minDist = hits[0].distance;
     }
-    for (let i = 0; i < boxes.length; i++) boxes[i].scale.set(1, 1, 1);
-    if (!isFinite(minDist)) return DIST_NO_HIT;
+    for (let i = 0; i < this.boxes.length; i++) this.boxes[i].scale.set(1, 1, 1);
+    if (!isFinite(minDist)) return this.DIST_NO_HIT;
     return Math.round(minDist * 10);
   }
 
   // Radar
-  function setRadar(on, dir) {
-    radarOn = !!on;
-    if (dir !== undefined && dir !== null) radarDir = dir < 0 ? -1 : 1;
+  setRadar(on, dir) {
+    this.radarOn = !!on;
+    if (dir !== undefined && dir !== null) this.radarDir = dir < 0 ? -1 : 1;
   }
 
   // Rover buzzer waves
-  function setRoverWave(on) {
-    if (!worldGroup) return;
-    roverWaveOn = !!on;
-    if (!roverWaveOn) roverWaveSpawnTimer = 0;
+  setRoverWave(on) {
+    if (!this.worldGroup) return;
+    this.roverWaveOn = !!on;
+    if (!this.roverWaveOn) this.roverWaveSpawnTimer = 0;
   }
 
-  function spawnRoverWaves() {
-    for (let s = 0; s < ROVER_SPEAKERS.length; s++) {
-      const geom = new THREE.SphereGeometry(ROVER_WAVE_BASE_R, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+  spawnRoverWaves() {
+    const THREE = this.ctx.THREE;
+    for (let s = 0; s < this.ROVER_SPEAKERS.length; s++) {
+      const geom = new THREE.SphereGeometry(this.ROVER_WAVE_BASE_R, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
       const mat = new THREE.MeshBasicMaterial({
-        color: WAVE_COLOR, transparent: true, opacity: WAVE_OPACITY,
+        color: this.WAVE_COLOR, transparent: true, opacity: this.WAVE_OPACITY,
         side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
       });
       const mesh = new THREE.Mesh(geom, mat);
-      mesh.position.copy(ROVER_SPEAKERS[s]);
-      scene.add(mesh);
-      roverWaveRings.push({ mesh, age: 0 });
+      mesh.position.copy(this.ROVER_SPEAKERS[s]);
+      this.ctx.scene.add(mesh);
+      this.roverWaveRings.push({ mesh, age: 0 });
     }
   }
 
-  function updateRoverWaves(dt) {
-    if (roverWaveOn) {
-      roverWaveSpawnTimer += dt;
-      while (roverWaveSpawnTimer >= WAVE_SPAWN_INTERVAL) {
-        roverWaveSpawnTimer -= WAVE_SPAWN_INTERVAL;
-        spawnRoverWaves();
+  updateRoverWaves(dt) {
+    if (this.roverWaveOn) {
+      this.roverWaveSpawnTimer += dt;
+      while (this.roverWaveSpawnTimer >= this.WAVE_SPAWN_INTERVAL) {
+        this.roverWaveSpawnTimer -= this.WAVE_SPAWN_INTERVAL;
+        this.spawnRoverWaves();
       }
     }
-    for (let i = roverWaveRings.length - 1; i >= 0; i--) {
-      const r = roverWaveRings[i];
+    for (let i = this.roverWaveRings.length - 1; i >= 0; i--) {
+      const r = this.roverWaveRings[i];
       r.age += dt;
-      const t = r.age / WAVE_LIFETIME;
+      const t = r.age / this.WAVE_LIFETIME;
       if (t >= 1) {
         r.mesh.geometry.dispose();
         r.mesh.material.dispose();
-        scene.remove(r.mesh);
-        roverWaveRings.splice(i, 1);
+        this.ctx.scene.remove(r.mesh);
+        this.roverWaveRings.splice(i, 1);
         continue;
       }
-      const scale = 1 + t * (ROVER_WAVE_MAX_SCALE - 1);
+      const scale = 1 + t * (this.ROVER_WAVE_MAX_SCALE - 1);
       r.mesh.scale.setScalar(scale);
-      r.mesh.material.opacity = (1 - t) * WAVE_OPACITY;
+      r.mesh.material.opacity = (1 - t) * this.WAVE_OPACITY;
     }
   }
 
   // Update loop
-  function update(dt) {
-    if (radarOn && antennaPivot) {
-      antennaPivot.rotation.y += 0.15 * radarDir;
+  update(dt) {
+    if (this.radarOn && this.antennaPivot) {
+      this.antennaPivot.rotation.y += 0.15 * this.radarDir;
     }
 
-    if (servoOn && worldGroup) {
-      const dTheta = SERVO_WHEEL_SPIN * dt * servoDir;
-      if (wheelR) wheelR.rotateOnWorldAxis(SERVO_X_AXIS, dTheta);
-      if (wheelL) wheelL.rotateOnWorldAxis(SERVO_X_AXIS, dTheta);
+    if (this.servoOn && this.worldGroup) {
+      const dTheta = this.SERVO_WHEEL_SPIN * dt * this.servoDir;
+      if (this.wheelR) this.wheelR.rotateOnWorldAxis(this.SERVO_X_AXIS, dTheta);
+      if (this.wheelL) this.wheelL.rotateOnWorldAxis(this.SERVO_X_AXIS, dTheta);
 
-      const before = nearestBoxDist();
-      const savedZ = worldGroup.position.z;
-      worldGroup.position.z -= SERVO_WORLD_SPEED * dt * servoDir;
-      const after = nearestBoxDist();
-      if (after < BOX_COLLIDE_R && after < before) worldGroup.position.z = savedZ;
+      const before = this.nearestBoxDist();
+      const savedZ = this.worldGroup.position.z;
+      this.worldGroup.position.z -= this.SERVO_WORLD_SPEED * dt * this.servoDir;
+      const after = this.nearestBoxDist();
+      if (after < this.BOX_COLLIDE_R && after < before) this.worldGroup.position.z = savedZ;
     }
 
-    if (servoTurnOn && worldGroup) {
-      const dSpin = SERVO_WHEEL_SPIN * dt * servoTurnDir;
-      if (wheelR) wheelR.rotateOnWorldAxis(SERVO_X_AXIS, -dSpin);
-      if (wheelL) wheelL.rotateOnWorldAxis(SERVO_X_AXIS,  dSpin);
+    if (this.servoTurnOn && this.worldGroup) {
+      const dSpin = this.SERVO_WHEEL_SPIN * dt * this.servoTurnDir;
+      if (this.wheelR) this.wheelR.rotateOnWorldAxis(this.SERVO_X_AXIS, -dSpin);
+      if (this.wheelL) this.wheelL.rotateOnWorldAxis(this.SERVO_X_AXIS,  dSpin);
 
-      const before = nearestBoxDist();
-      const savedQ = worldGroup.quaternion.clone();
-      const savedX = worldGroup.position.x, savedZ = worldGroup.position.z;
-      const dYaw = -SERVO_TURN_SPEED * dt * servoTurnDir;
-      worldGroup.rotateOnWorldAxis(SERVO_Y_AXIS, dYaw);
-      worldGroup.position.sub(SERVO_TURN_PIVOT).applyAxisAngle(SERVO_Y_AXIS, dYaw).add(SERVO_TURN_PIVOT);
-      const after = nearestBoxDist();
-      if (after < BOX_COLLIDE_R && after < before) {
-        worldGroup.quaternion.copy(savedQ);
-        worldGroup.position.x = savedX; worldGroup.position.z = savedZ;
+      const before = this.nearestBoxDist();
+      const savedQ = this.worldGroup.quaternion.clone();
+      const savedX = this.worldGroup.position.x, savedZ = this.worldGroup.position.z;
+      const dYaw = -this.SERVO_TURN_SPEED * dt * this.servoTurnDir;
+      this.worldGroup.rotateOnWorldAxis(this.SERVO_Y_AXIS, dYaw);
+      this.worldGroup.position.sub(this.SERVO_TURN_PIVOT).applyAxisAngle(this.SERVO_Y_AXIS, dYaw).add(this.SERVO_TURN_PIVOT);
+      const after = this.nearestBoxDist();
+      if (after < this.BOX_COLLIDE_R && after < before) {
+        this.worldGroup.quaternion.copy(savedQ);
+        this.worldGroup.position.x = savedX; this.worldGroup.position.z = savedZ;
       }
     }
 
-    if (worldGroup) updateRoverWaves(dt);
-    updateMuzzleFlash(dt);
-    if (gunMesh) updateGunSmoke(dt);
+    if (this.worldGroup) this.updateRoverWaves(dt);
+    this.updateMuzzleFlash(dt);
+    if (this.gunMesh) this.updateGunSmoke(dt);
   }
 
-  function dispose() {
+  dispose() {
     try {
-      gunSmokePool.forEach((p) => p.sprite?.material?.dispose?.());
-      smokeTex?.dispose?.();
-      oledTex?.dispose?.();
+      this.gunSmokePool.forEach((p) => p.sprite?.material?.dispose?.());
+      this.smokeTex?.dispose?.();
+      this.oledTex?.dispose?.();
     } catch {}
-    roverWaveRings.forEach((r) => {
+    this.roverWaveRings.forEach((r) => {
       r.mesh.geometry.dispose();
       r.mesh.material.dispose();
     });
   }
 
-  return {
-    update,
-    dispose,
-    get hasRoverLeds() { return roverLeds.length > 0; },
-    setRoverLed,
-    get hasServo() { return !!worldGroup; },
-    setServoMove,
-    setServoTurn,
-    stopServo,
-    get servoActive() { return servoOn || servoTurnOn; },
-    get hasDistanceSensor() { return irSensorBalls.length > 0; },
-    setDistanceSensor,
-    measureDistance,
-    get hasBoxes() { return boxes.length > 0; },
-    respawnBoxes,
-    get obstaclesOn() { return obstaclesOn; },
-    setObstacles,
-    get hasRadar() { return !!antennaPivot; },
-    setRadar,
-    get radarOn() { return radarOn; },
-    get hasRoverWave() { return !!worldGroup; },
-    setRoverWave,
-    get hasOled() { return !!oledCanvas; },
-    oledClear,
-    oledClearRect,
-    oledText,
-    oledIcon,
-    get hasGun() { return !!gunMesh; },
-    setGunFire
-  };
+  get hasRoverLeds() { return this.roverLeds.length > 0; }
+  get hasServo() { return !!this.worldGroup; }
+  get servoActive() { return this.servoOn || this.servoTurnOn; }
+  get hasDistanceSensor() { return this.irSensorBalls.length > 0; }
+  get hasBoxes() { return this.boxes.length > 0; }
+  get hasRadar() { return !!this.antennaPivot; }
+  get hasRoverWave() { return !!this.worldGroup; }
+  get hasOled() { return !!this.oledCanvas; }
+  get hasGun() { return !!this.gunMesh; }
 }

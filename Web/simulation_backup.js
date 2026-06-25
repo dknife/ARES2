@@ -1681,11 +1681,11 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const card = document.getElementById('simCard');
   const stage = document.getElementById('simStage');
   const loadingEl = document.getElementById('simLoading');
-  const ledWrap = card ? card.querySelector('.sim-led-buttons') : null;
-  const trafficWrap = card ? card.querySelector('.sim-traffic-buttons') : null;
-  const launchWrap = card ? card.querySelector('.sim-launch-buttons') : null;
-  const launchLedWrap = card ? card.querySelector('.sim-launch-led-buttons') : null;
-  const roverWrap = card ? card.querySelector('.sim-rover-buttons') : null;
+  const ledWrap = card ? card.querySelector('.Sim_Parts-led-buttons') : null;
+  const trafficWrap = card ? card.querySelector('.Sim_Parts-traffic-buttons') : null;
+  const launchWrap = card ? card.querySelector('.Sim_Parts-launch-buttons') : null;
+  const launchLedWrap = card ? card.querySelector('.Sim_Parts-launch-led-buttons') : null;
+  const roverWrap = card ? card.querySelector('.Sim_Parts-rover-buttons') : null;
   const radarBtn  = document.getElementById('simRadar');
   const rocketBtn = document.getElementById('simRocket');
   const obstacleBtn = document.getElementById('simObstacle');
@@ -1730,16 +1730,16 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
     if (sim) { sim.dispose(); sim = null; }
     const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
     if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
-    card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
-    card.querySelectorAll('.sim-launch-led-btn').forEach((b) => b.classList.remove('on'));
-    card.querySelectorAll('.sim-traffic-btn').forEach((b) => {
+    card.querySelectorAll('.Sim_Parts-led-btn').forEach((b) => b.classList.remove('on'));
+    card.querySelectorAll('.Sim_Parts-launch-led-btn').forEach((b) => b.classList.remove('on'));
+    card.querySelectorAll('.Sim_Parts-traffic-btn').forEach((b) => {
       // 우주 신호등은 디폴트가 "신호등(램프 배치)" 상태이므로 lamps 버튼을 on 으로 표시
       b.classList.toggle('on', !!cfg.traffic && b.dataset.action === 'lamps');
     });
     if (ledWrap) {
       ledWrap.style.display = (cfg.eyes || cfg.chest) ? '' : 'none';
       // 버튼 단위 표시 — 눈/가슴 중 설정된 쪽만 보이게.
-      ledWrap.querySelectorAll('.sim-led-btn').forEach((b) => {
+      ledWrap.querySelectorAll('.Sim_Parts-led-btn').forEach((b) => {
         const part = b.dataset.part || 'eye';
         b.style.display = (part === 'chest' ? !!cfg.chest : !!cfg.eyes) ? '' : 'none';
       });
@@ -1765,7 +1765,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const open = () => {
     card.hidden = false;
     // onOpen 은 호스트(main.js)에서 미션 뷰 data-mode 를 'simulation' 으로
-    // 전환해 sim-card 가 실제로 레이아웃되도록 만든다.
+    // 전환해 Sim_Parts-card 가 실제로 레이아웃되도록 만든다.
     // 빌드/리사이즈가 stage.clientWidth 를 읽기 *전에* 호출해야 카메라 종횡비가 맞는다.
     if (typeof onOpen === 'function') {
       try { onOpen(); } catch {}
@@ -1822,7 +1822,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
 
   btn.addEventListener('click', () => { ensureAudio(); card.hidden ? open() : close(); });
 
-  card.querySelectorAll('.sim-led-btn').forEach((b) => {
+  card.querySelectorAll('.Sim_Parts-led-btn').forEach((b) => {
     b.addEventListener('click', () => {
       if (!sim) return;
       const part = b.dataset.part || 'eye';
@@ -1855,11 +1855,11 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
 
   // 우주 신호등 액션 — 라디오처럼 동작: 신호등(LampGeneral 3개) ↔ 가위바위보(Hand1/2/3가 슬롯 대체)
   const setTrafficBtn = (which) => {
-    card.querySelectorAll('.sim-traffic-btn').forEach((b) => {
+    card.querySelectorAll('.Sim_Parts-traffic-btn').forEach((b) => {
       b.classList.toggle('on', b.dataset.action === which);
     });
   };
-  card.querySelectorAll('.sim-traffic-btn').forEach((b) => {
+  card.querySelectorAll('.Sim_Parts-traffic-btn').forEach((b) => {
     b.addEventListener('click', () => {
       if (!sim || !sim.hasTraffic) return;
       const action = b.dataset.action;
@@ -1915,7 +1915,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const logLine = (text, cls) => {
     if (!simLog) return;
     const d = document.createElement('div');
-    d.className = 'sim-log-line' + (cls ? ' ' + cls : '');
+    d.className = 'Sim_Parts-log-line' + (cls ? ' ' + cls : '');
     d.textContent = text;
     simLog.appendChild(d);
     simLog.scrollTop = simLog.scrollHeight;

@@ -6,13 +6,13 @@
 // ============================================================
 import { CommandExecutor } from './commandexecutor.js';
 import { state } from './state.js';
-import { buildSim } from './sim/context.js';
+import { buildSim } from './Sim_Parts/context.js';
 import {
   TOPICS,
   TOPIC_ORDER,
   DEFAULT_TOPIC,
   defaultTopicForMission
-} from './sim/topics.js';
+} from './Sim_Parts/topics.js';
 
 // 시뮬레이션 모듈 초기화 — main.js 의 워크스페이스를 받아 컨트롤러 { close } 를 반환.
 // 필수 DOM 또는 three.js 라이브러리가 없으면 null 반환.

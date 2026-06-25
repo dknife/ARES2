@@ -1,4 +1,4 @@
-// Web/sim/oled.js
+// Web/Sim_Parts/oled.js
 // OLED screen clearing, rect wiping, text rendering, and icon drawing.
 
 import { OLED_ICONS } from './topics.js';

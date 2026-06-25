@@ -186,86 +186,84 @@ export function playRocketLaunch(audioCtx) {
   }
 }
 
-export function initLauncher(ctx) {
-  const THREE = ctx.THREE;
-  const scene = ctx.scene;
-  const camera = ctx.camera;
-  const controls = ctx.controls;
-  const cfg = ctx.cfg;
+const ROCKET_RISE  = 10;
+const ROCKET_SPEED = 0.00267;
+const SMOKE_POOL = 80;
+const SMOKE_RATE = 42;
+const WAVE_SPAWN_INTERVAL = 0.18;
+const WAVE_LIFETIME       = 1.4;
+const WAVE_MAX_SCALE      = 5;
+const WAVE_COLOR          = 0x88ddff;
+const WAVE_OPACITY        = 0.16;
 
-  let rootNode = null;
-  const launchLeds = [];
-  
-  // Radar state
-  let radarOn = false;
-  let radarDir = 1;
-  let antennaPivot = null;
+const LAUNCH_STRIP_PALETTE = {
+  sphereBase: 0x031a0a, emissive: 0x00ff33,
+  glowStops: ['rgba(20,255,80,1)', 'rgba(0,230,50,0.78)', 'rgba(0,255,40,0)'],
+  glowTint: 0x00ff44, lightColor: 0x00ff44,
+  intensityScale: 0.12, opacityOn: 0.99, glowScale: 0.55,
+};
+const LAUNCH_TORUS_PALETTE = {
+  sphereBase: 0x1f0204, emissive: 0xff0a1e,
+  glowStops: ['rgba(255,80,70,1)', 'rgba(255,20,25,0.78)', 'rgba(255,0,0,0)'],
+  glowTint: 0xff1828, lightColor: 0xff1422,
+  intensityScale: 0.45, opacityOn: 0.99, glowScale: 0.55,
+};
 
-  // Rocket state
-  let rocketGroup = null;
-  let rocketFlameSprite = null;
-  let rocketFlameLight = null;
-  let rocketCentroidLocal = null;
-  let rocketMeshRef = null;
-  let rocketBottomLocal = null;
-  let rocketLaunchOn = false;
-  let rocketAnimT = 0;
-  let savedCamPos = null;
-  let savedTarget = null;
-  let rocketCentroidWorld = null;
+export class LauncherSubsystem {
+  constructor(ctx) {
+    this.ctx = ctx;
+    this.rootNode = null;
+    this.launchLeds = [];
+    
+    // Radar state
+    this.radarOn = false;
+    this.radarDir = 1;
+    this.antennaPivot = null;
 
-  const ROCKET_RISE  = 10;
-  const ROCKET_SPEED = 0.00267;
+    // Rocket state
+    this.rocketGroup = null;
+    this.rocketFlameSprite = null;
+    this.rocketFlameLight = null;
+    this.rocketCentroidLocal = null;
+    this.rocketMeshRef = null;
+    this.rocketBottomLocal = null;
+    this.rocketLaunchOn = false;
+    this.rocketAnimT = 0;
+    this.savedCamPos = null;
+    this.savedTarget = null;
+    this.rocketCentroidWorld = null;
 
-  // Rocket smoke state
-  let smokeGroup = null;
-  let smokeTex = null;
-  const smokePool = [];
-  let smokeSpawnAcc = 0;
-  const SMOKE_POOL = 80;
-  const SMOKE_RATE = 42;
+    // Rocket smoke state
+    this.smokeGroup = null;
+    this.smokeTex = null;
+    this.smokePool = [];
+    this.smokeSpawnAcc = 0;
 
-  // Buzzer wave rings state
-  let launchWaveOn = false;
-  let launchWaveSpawnTimer = 0;
-  let launchFootprintSize = 1;
-  const launchWaveRings = [];
-  const WAVE_SPAWN_INTERVAL = 0.18;
-  const WAVE_LIFETIME       = 1.4;
-  const WAVE_MAX_SCALE      = 5;
-  const WAVE_COLOR          = 0x88ddff;
-  const WAVE_OPACITY        = 0.16;
+    // Buzzer wave rings state
+    this.launchWaveOn = false;
+    this.launchWaveSpawnTimer = 0;
+    this.launchFootprintSize = 1;
+    this.launchWaveRings = [];
 
-  // Palettes
-  const LAUNCH_STRIP_PALETTE = {
-    sphereBase: 0x031a0a, emissive: 0x00ff33,
-    glowStops: ['rgba(20,255,80,1)', 'rgba(0,230,50,0.78)', 'rgba(0,255,40,0)'],
-    glowTint: 0x00ff44, lightColor: 0x00ff44,
-    intensityScale: 0.12, opacityOn: 0.99, glowScale: 0.55,
-  };
-  const LAUNCH_TORUS_PALETTE = {
-    sphereBase: 0x1f0204, emissive: 0xff0a1e,
-    glowStops: ['rgba(255,80,70,1)', 'rgba(255,20,25,0.78)', 'rgba(255,0,0,0)'],
-    glowTint: 0xff1828, lightColor: 0xff1422,
-    intensityScale: 0.45, opacityOn: 0.99, glowScale: 0.55,
-  };
+    const THREE = ctx.THREE;
+    const makeGlowTex = (stops) => {
+      const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+      const gx = gc.getContext('2d');
+      const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gg.addColorStop(0.0,  stops[0]);
+      gg.addColorStop(0.25, stops[1]);
+      gg.addColorStop(1.0,  stops[2]);
+      gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
+      const tex = new THREE.CanvasTexture(gc); tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    };
 
-  const makeGlowTex = (stops) => {
-    const gc = document.createElement('canvas'); gc.width = gc.height = 128;
-    const gx = gc.getContext('2d');
-    const gg = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    gg.addColorStop(0.0,  stops[0]);
-    gg.addColorStop(0.25, stops[1]);
-    gg.addColorStop(1.0,  stops[2]);
-    gx.fillStyle = gg; gx.fillRect(0, 0, 128, 128);
-    const tex = new THREE.CanvasTexture(gc); tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
+    this.launchGlowTex = makeGlowTex(LAUNCH_TORUS_PALETTE.glowStops);
+    this.launchStripGlowTex = makeGlowTex(LAUNCH_STRIP_PALETTE.glowStops);
+  }
 
-  const launchGlowTex = makeGlowTex(LAUNCH_TORUS_PALETTE.glowStops);
-  const launchStripGlowTex = makeGlowTex(LAUNCH_STRIP_PALETTE.glowStops);
-
-  const makeLed = (radius, pos, palette, glowTex, geometry) => {
+  makeLed(radius, pos, palette, glowTex, geometry) {
+    const THREE = this.ctx.THREE;
     const grp = new THREE.Group(); grp.position.fromArray(pos);
     const sphere = new THREE.Mesh(
       geometry || new THREE.SphereGeometry(radius, 28, 28),
@@ -279,9 +277,9 @@ export function initLauncher(ctx) {
              intensityScale: palette.intensityScale ?? 1,
              opacityOn: palette.opacityOn ?? 0.92,
              glowScale: palette.glowScale ?? 1 };
-  };
+  }
 
-  function applyLed(e, value) {
+  applyLed(e, value) {
     const v = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : (value ? 1 : 0);
     const s = e.intensityScale ?? 1;
     const opOn  = e.opacityOn ?? 0.92;
@@ -294,11 +292,12 @@ export function initLauncher(ctx) {
     e.light.intensity = 1.8 * v * s;
   }
 
-  function attachToRoot(root, box, sz) {
-    rootNode = root;
-    const LAUNCH = cfg.launch;
+  attachToRoot(root, box, sz) {
+    const THREE = this.ctx.THREE;
+    this.rootNode = root;
+    const LAUNCH = this.ctx.cfg.launch;
     if (LAUNCH) {
-      launchFootprintSize = Math.max(sz.x, sz.z);
+      this.launchFootprintSize = Math.max(sz.x, sz.z);
       const lx = box.min.x + sz.x * LAUNCH.stripXFrac;
       const lz = box.min.z + sz.z * LAUNCH.stripZFrac;
       const yTop = box.min.y + sz.y * LAUNCH.stripYRange[0];
@@ -307,9 +306,9 @@ export function initLauncher(ctx) {
       for (let i = 0; i < n; i++) {
         const t = n === 1 ? 0 : i / (n - 1);
         const ly = yTop + (yBot - yTop) * t;
-        const led = makeLed(LAUNCH.stripRadius, [lx, ly, lz], LAUNCH_STRIP_PALETTE, launchStripGlowTex);
+        const led = this.makeLed(LAUNCH.stripRadius, [lx, ly, lz], LAUNCH_STRIP_PALETTE, this.launchStripGlowTex);
         root.add(led.group);
-        launchLeds[i + 1] = led;
+        this.launchLeds[i + 1] = led;
       }
       
       const rb = root.userData.rocketBottomLocal;
@@ -317,53 +316,54 @@ export function initLauncher(ctx) {
       if (rb && rmesh) {
         const torusGeom = new THREE.TorusGeometry(LAUNCH.torusRadius, LAUNCH.torusTube, 16, 48);
         torusGeom.rotateX(Math.PI / 2);
-        const led0 = makeLed(LAUNCH.torusRadius, [rb.x, rb.y + LAUNCH.torusYOffset, rb.z], LAUNCH_TORUS_PALETTE, launchGlowTex, torusGeom);
+        const led0 = this.makeLed(LAUNCH.torusRadius, [rb.x, rb.y + LAUNCH.torusYOffset, rb.z], LAUNCH_TORUS_PALETTE, this.launchGlowTex, torusGeom);
         rmesh.add(led0.group);
-        launchLeds[0] = led0;
+        this.launchLeds[0] = led0;
       }
     }
 
     // Cache rocket group refs from root userData
-    rocketGroup = root.userData.rocketGroup;
-    rocketFlameSprite = root.userData.rocketFlameSprite;
-    rocketFlameLight = root.userData.rocketFlameLight;
-    rocketCentroidLocal = root.userData.rocketCentroidLocal;
-    rocketMeshRef = root.userData.rocketMeshRef;
-    rocketBottomLocal = root.userData.rocketBottomLocal;
+    this.rocketGroup = root.userData.rocketGroup;
+    this.rocketFlameSprite = root.userData.rocketFlameSprite;
+    this.rocketFlameLight = root.userData.rocketFlameLight;
+    this.rocketCentroidLocal = root.userData.rocketCentroidLocal;
+    this.rocketMeshRef = root.userData.rocketMeshRef;
+    this.rocketBottomLocal = root.userData.rocketBottomLocal;
 
     // Cache antennaPivot
-    antennaPivot = root.userData.antennaPivot;
+    this.antennaPivot = root.userData.antennaPivot;
   }
 
-  function setLaunchLed(i, value) {
-    if (!launchLeds || !launchLeds[i]) return;
-    applyLed(launchLeds[i], value);
+  setLaunchLed(i, value) {
+    if (!this.launchLeds || !this.launchLeds[i]) return;
+    this.applyLed(this.launchLeds[i], value);
   }
 
-  function setRadar(on, dir) {
-    radarOn = !!on;
-    if (dir !== undefined && dir !== null) radarDir = dir < 0 ? -1 : 1;
+  setRadar(on, dir) {
+    this.radarOn = !!on;
+    if (dir !== undefined && dir !== null) this.radarDir = dir < 0 ? -1 : 1;
   }
 
-  function setRocketLaunch(on, followCamera) {
+  setRocketLaunch(on, followCamera) {
     const follow = followCamera !== false;
-    rocketLaunchOn = !!on;
-    if (rocketLaunchOn && !savedCamPos && follow) {
-      savedCamPos = camera.position.clone();
-      savedTarget = controls.target.clone();
-      if (rocketCentroidLocal && rocketMeshRef) {
-        rocketMeshRef.updateMatrixWorld(true);
-        rocketCentroidWorld = rocketCentroidLocal.clone().applyMatrix4(rocketMeshRef.matrixWorld);
+    this.rocketLaunchOn = !!on;
+    if (this.rocketLaunchOn && !this.savedCamPos && follow) {
+      this.savedCamPos = this.ctx.camera.position.clone();
+      this.savedTarget = this.ctx.controls.target.clone();
+      if (this.rocketCentroidLocal && this.rocketMeshRef) {
+        this.rocketMeshRef.updateMatrixWorld(true);
+        this.rocketCentroidWorld = this.rocketCentroidLocal.clone().applyMatrix4(this.rocketMeshRef.matrixWorld);
       }
     }
   }
 
-  function setLaunchWave(on) {
-    launchWaveOn = !!on;
-    if (!launchWaveOn) launchWaveSpawnTimer = 0;
+  setLaunchWave(on) {
+    this.launchWaveOn = !!on;
+    if (!this.launchWaveOn) this.launchWaveSpawnTimer = 0;
   }
 
-  const makeSmokeTex = () => {
+  makeSmokeTex() {
+    const THREE = this.ctx.THREE;
     const cv = document.createElement('canvas'); cv.width = cv.height = 128;
     const cx = cv.getContext('2d');
     const blob = (px, py, r, a) => {
@@ -379,36 +379,38 @@ export function initLauncher(ctx) {
     const t = new THREE.CanvasTexture(cv);
     t.colorSpace = THREE.SRGBColorSpace;
     return t;
-  };
+  }
 
-  function ensureSmoke() {
-    if (smokeGroup || !rocketMeshRef || !rocketBottomLocal) return;
-    smokeTex = makeSmokeTex();
-    smokeGroup = new THREE.Group();
-    rocketMeshRef.add(smokeGroup);
+  ensureSmoke() {
+    const THREE = this.ctx.THREE;
+    if (this.smokeGroup || !this.rocketMeshRef || !this.rocketBottomLocal) return;
+    this.smokeTex = this.makeSmokeTex();
+    this.smokeGroup = new THREE.Group();
+    this.rocketMeshRef.add(this.smokeGroup);
     for (let i = 0; i < SMOKE_POOL; i++) {
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: smokeTex, color: 0xeef1f6, transparent: true,
+        map: this.smokeTex, color: 0xeef1f6, transparent: true,
         depthWrite: false, opacity: 0,
       }));
       sp.visible = false;
-      smokeGroup.add(sp);
-      smokePool.push({ sprite: sp, active: false, age: 0, life: 1, vel: new THREE.Vector3(),
+      this.smokeGroup.add(sp);
+      this.smokePool.push({ sprite: sp, active: false, age: 0, life: 1, vel: new THREE.Vector3(),
                        scale0: 0.18, scaleMax: 1.4, rot: 0, rotSpeed: 0 });
     }
   }
 
-  function spawnSmoke(baseY) {
-    const p = smokePool.find((q) => !q.active);
+  spawnSmoke(baseY) {
+    const THREE = this.ctx.THREE;
+    const p = this.smokePool.find((q) => !q.active);
     if (!p) return;
     const ang = Math.random() * Math.PI * 2;
     const rad = Math.random() * 0.12;
     p.active = true; p.age = 0;
     p.life = 1.6 + Math.random() * 1.3;
     p.sprite.position.set(
-      rocketBottomLocal.x + Math.cos(ang) * rad,
+      this.rocketBottomLocal.x + Math.cos(ang) * rad,
       baseY - 0.05 - Math.random() * 0.06,
-      rocketBottomLocal.z + Math.sin(ang) * rad,
+      this.rocketBottomLocal.z + Math.sin(ang) * rad,
     );
     const spd = 0.5 + Math.random() * 0.8;
     p.vel.set(Math.cos(ang) * spd, -0.15 - Math.random() * 0.25, Math.sin(ang) * spd);
@@ -422,18 +424,18 @@ export function initLauncher(ctx) {
     p.sprite.visible = true;
   }
 
-  function updateSmoke(dt) {
-    ensureSmoke();
-    if (!smokeGroup) return;
-    if (rocketLaunchOn) {
-      const rate = SMOKE_RATE * (1 + (1 - rocketAnimT));
-      smokeSpawnAcc += dt * rate;
-      const baseY = rocketBottomLocal.y + rocketGroup.position.y;
-      while (smokeSpawnAcc >= 1) { smokeSpawnAcc -= 1; spawnSmoke(baseY); }
+  updateSmoke(dt) {
+    this.ensureSmoke();
+    if (!this.smokeGroup) return;
+    if (this.rocketLaunchOn) {
+      const rate = SMOKE_RATE * (1 + (1 - this.rocketAnimT));
+      this.smokeSpawnAcc += dt * rate;
+      const baseY = this.rocketBottomLocal.y + this.rocketGroup.position.y;
+      while (this.smokeSpawnAcc >= 1) { this.smokeSpawnAcc -= 1; this.spawnSmoke(baseY); }
     } else {
-      smokeSpawnAcc = 0;
+      this.smokeSpawnAcc = 0;
     }
-    for (const p of smokePool) {
+    for (const p of this.smokePool) {
       if (!p.active) continue;
       p.age += dt;
       const t = p.age / p.life;
@@ -450,8 +452,9 @@ export function initLauncher(ctx) {
     }
   }
 
-  function spawnWaveRing() {
-    const baseR = launchFootprintSize * 0.5;
+  spawnWaveRing() {
+    const THREE = this.ctx.THREE;
+    const baseR = this.launchFootprintSize * 0.5;
     const geom = new THREE.SphereGeometry(baseR, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({
       color: WAVE_COLOR, transparent: true, opacity: WAVE_OPACITY,
@@ -459,27 +462,27 @@ export function initLauncher(ctx) {
     });
     const mesh = new THREE.Mesh(geom, mat);
     mesh.position.set(0, 0, 0);
-    scene.add(mesh);
-    launchWaveRings.push({ mesh, age: 0 });
+    this.ctx.scene.add(mesh);
+    this.launchWaveRings.push({ mesh, age: 0 });
   }
 
-  function updateLaunchWaves(dt) {
-    if (launchWaveOn) {
-      launchWaveSpawnTimer += dt;
-      while (launchWaveSpawnTimer >= WAVE_SPAWN_INTERVAL) {
-        launchWaveSpawnTimer -= WAVE_SPAWN_INTERVAL;
-        spawnWaveRing();
+  updateLaunchWaves(dt) {
+    if (this.launchWaveOn) {
+      this.launchWaveSpawnTimer += dt;
+      while (this.launchWaveSpawnTimer >= WAVE_SPAWN_INTERVAL) {
+        this.launchWaveSpawnTimer -= WAVE_SPAWN_INTERVAL;
+        this.spawnWaveRing();
       }
     }
-    for (let i = launchWaveRings.length - 1; i >= 0; i--) {
-      const r = launchWaveRings[i];
+    for (let i = this.launchWaveRings.length - 1; i >= 0; i--) {
+      const r = this.launchWaveRings[i];
       r.age += dt;
       const t = r.age / WAVE_LIFETIME;
       if (t >= 1) {
         r.mesh.geometry.dispose();
         r.mesh.material.dispose();
-        scene.remove(r.mesh);
-        launchWaveRings.splice(i, 1);
+        this.ctx.scene.remove(r.mesh);
+        this.launchWaveRings.splice(i, 1);
         continue;
       }
       const scale = 1 + t * (WAVE_MAX_SCALE - 1);
@@ -488,92 +491,81 @@ export function initLauncher(ctx) {
     }
   }
 
-  function update(dt) {
-    if (radarOn && antennaPivot) {
-      antennaPivot.rotation.y += 0.15 * radarDir;
+  update(dt) {
+    if (this.radarOn && this.antennaPivot) {
+      this.antennaPivot.rotation.y += 0.15 * this.radarDir;
     }
 
-    updateLaunchWaves(dt);
+    this.updateLaunchWaves(dt);
 
-    if (rocketGroup) {
-      const targetT = rocketLaunchOn ? 1 : 0;
-      if (rocketAnimT !== targetT) {
-        const dir = Math.sign(targetT - rocketAnimT);
-        rocketAnimT = Math.max(0, Math.min(1, rocketAnimT + dir * ROCKET_SPEED));
+    if (this.rocketGroup) {
+      const targetT = this.rocketLaunchOn ? 1 : 0;
+      if (this.rocketAnimT !== targetT) {
+        const dir = Math.sign(targetT - this.rocketAnimT);
+        this.rocketAnimT = Math.max(0, Math.min(1, this.rocketAnimT + dir * ROCKET_SPEED));
       }
-      const eased = rocketLaunchOn
-        ? 1 - (1 - rocketAnimT) * (1 - rocketAnimT)
-        : rocketAnimT * rocketAnimT;
-      rocketGroup.position.y = ROCKET_RISE * eased;
+      const eased = this.rocketLaunchOn
+        ? 1 - (1 - this.rocketAnimT) * (1 - this.rocketAnimT)
+        : this.rocketAnimT * this.rocketAnimT;
+      this.rocketGroup.position.y = ROCKET_RISE * eased;
 
-      const showFlame = rocketLaunchOn || rocketAnimT > 0.01;
-      if (rocketFlameSprite) {
-        rocketFlameSprite.visible = showFlame;
+      const showFlame = this.rocketLaunchOn || this.rocketAnimT > 0.01;
+      if (this.rocketFlameSprite) {
+        this.rocketFlameSprite.visible = showFlame;
         if (showFlame) {
           const wob = 1 + 0.25 * Math.sin(performance.now() * 0.025);
-          rocketFlameSprite.scale.set(0.22 * wob, 0.50 * wob, 1);
-          rocketFlameSprite.material.opacity = Math.min(1, rocketAnimT * 4) * 0.95;
+          this.rocketFlameSprite.scale.set(0.22 * wob, 0.50 * wob, 1);
+          this.rocketFlameSprite.material.opacity = Math.min(1, this.rocketAnimT * 4) * 0.95;
         }
       }
-      if (rocketFlameLight) {
-        rocketFlameLight.intensity = showFlame ? Math.min(1, rocketAnimT * 4) * 1.8 : 0;
+      if (this.rocketFlameLight) {
+        this.rocketFlameLight.intensity = showFlame ? Math.min(1, this.rocketAnimT * 4) * 1.8 : 0;
       }
 
-      updateSmoke(dt);
+      this.updateSmoke(dt);
 
-      if (savedCamPos && savedTarget && rocketCentroidWorld) {
-        const rocketYNow = rocketCentroidWorld.y + ROCKET_RISE * eased;
-        if (rocketLaunchOn) {
-          controls.target.x = rocketCentroidWorld.x;
-          controls.target.y = rocketYNow;
-          controls.target.z = rocketCentroidWorld.z;
+      if (this.savedCamPos && this.savedTarget && this.rocketCentroidWorld) {
+        const rocketYNow = this.rocketCentroidWorld.y + ROCKET_RISE * eased;
+        if (this.rocketLaunchOn) {
+          this.ctx.controls.target.x = this.rocketCentroidWorld.x;
+          this.ctx.controls.target.y = rocketYNow;
+          this.ctx.controls.target.z = this.rocketCentroidWorld.z;
         } else {
-          controls.target.x = savedTarget.x + (rocketCentroidWorld.x - savedTarget.x) * eased;
-          controls.target.y = savedTarget.y + (rocketYNow            - savedTarget.y) * eased;
-          controls.target.z = savedTarget.z + (rocketCentroidWorld.z - savedTarget.z) * eased;
+          this.ctx.controls.target.x = this.savedTarget.x + (this.rocketCentroidWorld.x - this.savedTarget.x) * eased;
+          this.ctx.controls.target.y = this.savedTarget.y + (rocketYNow            - this.savedTarget.y) * eased;
+          this.ctx.controls.target.z = this.savedTarget.z + (this.rocketCentroidWorld.z - this.savedTarget.z) * eased;
         }
-        camera.position.y = savedCamPos.y + ROCKET_RISE * eased;
+        this.ctx.camera.position.y = this.savedCamPos.y + ROCKET_RISE * eased;
       }
 
-      if (!rocketLaunchOn && rocketAnimT === 0 && savedCamPos) {
-        camera.position.copy(savedCamPos);
-        controls.target.copy(savedTarget);
-        savedCamPos = null;
-        savedTarget = null;
-        rocketCentroidWorld = null;
+      if (!this.rocketLaunchOn && this.rocketAnimT === 0 && this.savedCamPos) {
+        this.ctx.camera.position.copy(this.savedCamPos);
+        this.ctx.controls.target.copy(this.savedTarget);
+        this.savedCamPos = null;
+        this.savedTarget = null;
+        this.rocketCentroidWorld = null;
       }
     }
   }
 
-  function dispose() {
-    launchGlowTex?.dispose();
-    launchStripGlowTex?.dispose();
+  dispose() {
+    this.launchGlowTex?.dispose();
+    this.launchStripGlowTex?.dispose();
     try {
-      smokePool.forEach((p) => p.sprite?.material?.dispose?.());
-      smokeTex?.dispose?.();
+      this.smokePool.forEach((p) => p.sprite?.material?.dispose?.());
+      this.smokeTex?.dispose?.();
     } catch {}
-    launchWaveRings.forEach((r) => {
+    this.launchWaveRings.forEach((r) => {
       r.mesh.geometry.dispose();
       r.mesh.material.dispose();
     });
   }
 
-  return {
-    attachToRoot,
-    setLaunchLed,
-    setRadar,
-    setRocketLaunch,
-    setLaunchWave,
-    update,
-    dispose,
-    get launchLeds() { return launchLeds; },
-    get hasLaunchLeds() { return !!launchLeds.length; },
-    get hasLaunchWave() { return true; },
-    get hasRadar() { return !!antennaPivot; },
-    get radarOn() { return radarOn; },
-    get hasRocket() { return !!rocketGroup; },
-    get rocketLaunchOn() { return rocketLaunchOn; },
-    get rocketAtRest() { return !rocketLaunchOn && rocketAnimT === 0; }
-  };
+  get hasLaunchLeds() { return !!this.launchLeds.length; }
+  get hasLaunchWave() { return true; }
+  get hasRadar() { return !!this.antennaPivot; }
+  get hasRocket() { return !!this.rocketGroup; }
+  get rocketAtRest() { return !this.rocketLaunchOn && this.rocketAnimT === 0; }
 }
+
 export { recolorLaunchpadAntenna };

@@ -1,4 +1,4 @@
-// Web/sim/movement.js
+// Web/Sim_Parts/movement.js
 // Servo movement, radar rotation, collision checking, and distance sensing.
 
 const BOX_COLLIDE_R = 1.5;

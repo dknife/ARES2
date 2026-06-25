@@ -1,4 +1,4 @@
-// Web/sim/assets.js
+// Web/Sim_Parts/assets.js
 // GLTF asset loading, model bounding box centering, and multi-part placement.
 
 import { recolorAntenna } from './rocket.js';

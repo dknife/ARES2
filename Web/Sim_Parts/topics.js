@@ -1,4 +1,4 @@
-// Web/sim/topics.js
+// Web/Sim_Parts/topics.js
 // Topic configurations, OLED icons, and palette constants.
 
 export const TOPICS = {
