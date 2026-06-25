@@ -26,3 +26,6 @@ Missions/*.aux
 Missions/*.log
 Missions/*.out
 Missions/*.toc
+
+# pico test 용 임ㅅ파일
+Development/
