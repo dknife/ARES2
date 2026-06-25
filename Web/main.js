@@ -328,6 +328,67 @@ function updateRunButtonUI() {
   btn.disabled = !inMission || inDashboard || !isBleConnected();
 }
 
+function isInBlockCodingStage() {
+  const dashboardFrame = document.getElementById('dashboardFrame');
+  const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
+  return currentView === 'mission' && _contentMode === 'coding' && !inDashboard;
+}
+
+function updateBlockCodingButtonUI() {
+  const btn = document.getElementById('blockCodingButton');
+  if (!btn) return;
+
+  if (isInBlockCodingStage()) {
+    btn.textContent = '🏠 메인';
+    btn.title = '개요 화면으로 돌아가기';
+  } else {
+    btn.textContent = '🧩 블록코딩';
+    btn.title = '미션 블록코딩 화면으로 이동';
+  }
+}
+
+function openBlockCodingWorkspace() {
+  const lessonValue = parseInt(document.getElementById('lessonSelect')?.value, 10);
+  const missionValue = parseInt(document.getElementById('missionSelect')?.value, 10);
+  const lesson = Number.isFinite(lessonValue) ? lessonValue : 1;
+  const mission = Number.isFinite(missionValue) ? missionValue : 1;
+
+  const ensureCodingMode = () => {
+    const dashboardFrame = document.getElementById('dashboardFrame');
+    if (currentView !== 'mission') return false;
+    if (dashboardFrame && dashboardFrame.style.display === 'block') {
+      toggleDashboard();
+    } else if (setContentMode) {
+      setContentMode('coding');
+    }
+    return true;
+  };
+
+  if (currentView === 'mission') {
+    ensureCodingMode();
+    return;
+  }
+
+  navigate({ lesson, mission });
+
+  let attempts = 0;
+  const poll = () => {
+    if (ensureCodingMode()) return;
+    if (attempts++ < 60) {
+      setTimeout(poll, 50);
+    }
+  };
+  setTimeout(poll, 50);
+}
+
+function handleBlockCodingButtonClick() {
+  if (isInBlockCodingStage()) {
+    navigate({});
+    return;
+  }
+  openBlockCodingWorkspace();
+}
+
 // ============================================================
 // 라우터 (URL hash 기반)
 //   #                       → overview
@@ -414,6 +475,7 @@ function showView(view) {
   if (inMission && workspace) {
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
   }
+  updateBlockCodingButtonUI();
 }
 
 // ============================================================
@@ -671,6 +733,7 @@ function toggleDashboard() {
     if (elements.saveButton) elements.saveButton.disabled = true;
     if (elements.loadButton) elements.loadButton.disabled = true;
     updateRunButtonUI();
+    updateBlockCodingButtonUI();
     Logger.add('[모드] 대시보드 전환', 'info');
   } else {
     blocklyDiv.style.display = 'block';
@@ -681,6 +744,7 @@ function toggleDashboard() {
     if (elements.saveButton) elements.saveButton.disabled = false;
     if (elements.loadButton) elements.loadButton.disabled = false;
     updateRunButtonUI();
+    updateBlockCodingButtonUI();
     Logger.add('[모드] 블록코딩 전환', 'info');
   }
 }
@@ -755,6 +819,8 @@ function setupContentToggle() {
       btn.disabled = true;
       btn.title = '시뮬레이션을 닫으면 이전 화면으로 돌아갑니다';
     }
+
+    updateBlockCodingButtonUI();
   };
 
   // 외부(showView/simController)에서 모드를 강제할 때 사용하는 setter
@@ -793,6 +859,9 @@ function initializeAlwaysOnListeners() {
 
   // 대시보드
   document.getElementById('dashboardButton')?.addEventListener('click', toggleDashboard);
+
+  // 블록코딩 바로가기
+  document.getElementById('blockCodingButton')?.addEventListener('click', handleBlockCodingButtonClick);
 
   // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
   window.addEventListener('ares:connection', updateRunButtonUI);
@@ -1132,6 +1201,7 @@ function main() {
 
   // 6) 상태 초기화 + 라우팅
   BluetoothManager.updateConnectionStatus(false);
+  updateBlockCodingButtonUI();
   Logger.add('[시작] ARES 준비 완료 - BLE 연결을 시작하세요', 'info');
   Logger.refresh();
 
