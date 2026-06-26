@@ -259,44 +259,68 @@ export const CommandExecutor = {
       }
       case 'gun_fire': return 'GUN_FIRE';
       
-      // 서보 모터 (시간 제한) - SERVO_t방향,초
+      // 서보 모터 (시간 제한) - SERVO_t방향,초,속도
       case 'timed_forward': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
-        return `SERVO_tFORWARD,${seconds}`;
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_tFORWARD,${seconds},${speed}`;
       }
       case 'timed_backward': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
-        return `SERVO_tBACKWARD,${seconds}`;
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_tBACKWARD,${seconds},${speed}`;
       }
       case 'timed_right': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
-        return `SERVO_tRIGHT,${seconds}`;
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_tRIGHT,${seconds},${speed}`;
       }
       case 'timed_left': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
-        return `SERVO_tLEFT,${seconds}`;
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_tLEFT,${seconds},${speed}`;
       }
       
-      // 서보 모터 (연속) - SERVO_방향
-      case 'move_forward': return 'SERVO_FORWARD';
-      case 'move_backward': return 'SERVO_BACKWARD';
-      case 'turn_left': return 'SERVO_LEFT';
-      case 'turn_right': return 'SERVO_RIGHT';
+      // 서보 모터 (연속) - SERVO_방향,속도
+      case 'move_forward': {
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_FORWARD,${speed}`;
+      }
+      case 'move_backward': {
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_BACKWARD,${speed}`;
+      }
+      case 'turn_left': {
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_LEFT,${speed}`;
+      }
+      case 'turn_right': {
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `SERVO_RIGHT,${speed}`;
+      }
       case 'stop_moving': return 'SERVO_STOP';
       
-      // DC 모터 (시간 제한) - DC_t방향,초
+      // DC 모터 (시간 제한) - DC_t방향,초,속도
       case 'main_motor_forward_timed': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
-        return `DC_tFORWARD,${seconds}`;
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `DC_tFORWARD,${seconds},${speed}`;
       }
       case 'main_motor_backward_timed': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
-        return `DC_tBACKWARD,${seconds}`;
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `DC_tBACKWARD,${seconds},${speed}`;
       }
       
-      // DC 모터 (연속) - DC_방향
-      case 'main_motor_forward': return 'DC_FORWARD';
-      case 'main_motor_backward': return 'DC_BACKWARD';
+      // DC 모터 (연속) - DC_방향,속도
+      case 'main_motor_forward': {
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `DC_FORWARD,${speed}`;
+      }
+      case 'main_motor_backward': {
+        const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+        return `DC_BACKWARD,${speed}`;
+      }
       case 'main_motor_stop': return 'DC_STOP';
       case 'time_sleep': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';

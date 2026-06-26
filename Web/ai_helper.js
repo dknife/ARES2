@@ -284,8 +284,8 @@ function matchAction(c, ctx) {
   if (/레이더|radar/i.test(c)) {
     if (/멈춰|멈추|정지|꺼|끄|스톱|그만/.test(c)) return { node: { type: 'main_motor_stop' }, label: '레이더 정지 (DC모터)' };
     const s = seconds(c, 2);
-    if (s.found && !/계속/.test(c)) return { node: { type: 'main_motor_forward_timed', values: { SECONDS: num(s.value) } }, label: `레이더 ${s.value}초 회전 (DC모터)` };
-    return { node: { type: 'main_motor_forward' }, label: '레이더 회전 (DC모터)' };
+    if (s.found && !/계속/.test(c)) return { node: { type: 'main_motor_forward_timed', values: { SECONDS: num(s.value), SPEED: num(100) } }, label: `레이더 ${s.value}초 회전 (DC모터)` };
+    return { node: { type: 'main_motor_forward', values: { SPEED: num(100) } }, label: '레이더 회전 (DC모터)' };
   }
 
   // 7) 연결 확인
@@ -311,15 +311,15 @@ function matchAction(c, ctx) {
     const cont = /계속|쭉|끝까지/.test(c);
     const s = seconds(c, 1);
     if (dc && (dir === 'forward' || dir === 'backward')) {
-      if (dir === 'forward') return cont ? { node: { type: 'main_motor_forward' }, label: 'DC모터 계속 전진' } : { node: { type: 'main_motor_forward_timed', values: { SECONDS: num(s.value) } }, label: `DC모터 전진 ${s.value}초` };
-      return cont ? { node: { type: 'main_motor_backward' }, label: 'DC모터 계속 후진' } : { node: { type: 'main_motor_backward_timed', values: { SECONDS: num(s.value) } }, label: `DC모터 후진 ${s.value}초` };
+      if (dir === 'forward') return cont ? { node: { type: 'main_motor_forward', values: { SPEED: num(100) } }, label: 'DC모터 계속 전진' } : { node: { type: 'main_motor_forward_timed', values: { SECONDS: num(s.value), SPEED: num(100) } }, label: `DC모터 전진 ${s.value}초` };
+      return cont ? { node: { type: 'main_motor_backward', values: { SPEED: num(100) } }, label: 'DC모터 계속 후진' } : { node: { type: 'main_motor_backward_timed', values: { SECONDS: num(s.value), SPEED: num(100) } }, label: `DC모터 후진 ${s.value}초` };
     }
     if (cont) {
       const map = { forward: 'move_forward', backward: 'move_backward', left: 'turn_left', right: 'turn_right' };
-      return { node: { type: map[dir] }, label: `서보 계속 ${ko}` };
+      return { node: { type: map[dir], values: { SPEED: num(100) } }, label: `서보 계속 ${ko}` };
     }
     const map = { forward: 'timed_forward', backward: 'timed_backward', left: 'timed_left', right: 'timed_right' };
-    return { node: { type: map[dir], values: { SECONDS: num(s.value) } }, label: `서보 ${ko} ${s.value}초` };
+    return { node: { type: map[dir], values: { SECONDS: num(s.value), SPEED: num(100) } }, label: `서보 ${ko} ${s.value}초` };
   }
 
   return null;

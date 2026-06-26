@@ -1,12 +1,12 @@
 // 블루투스 매니저
 
-import { state, DEBUG } from './state.js';
+import { state, DEBUG, DEFAULT_TAB_NAMES } from './state.js';
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BLUETOOTH_CONFIG, STATUS_COLORS } from './constants.js';
 
 // 수신 버퍼
-let receiveBuffer = '';
+let receiveByteBuffer = [];
 
 export const BluetoothManager = {
     // addEventListener/removeEventListener에 같은 참조를 넘기기 위한 bound 핸들러.
@@ -112,7 +112,7 @@ export const BluetoothManager = {
 
     // 리소스 정리
     async cleanup() {
-        receiveBuffer = '';
+        receiveByteBuffer = [];
         
         if (state.characteristic && state.notificationsEnabled) {
             try {
@@ -176,27 +176,32 @@ export const BluetoothManager = {
     // 데이터 수신 핸들러
     handleRxData(event) {
         const value = event.target.value;
-        const decoder = new TextDecoder('utf-8');
-        const chunk = decoder.decode(value);
         
-        receiveBuffer += chunk;
+        // 새 바이트 청크를 바이트 버퍼 배열에 추가
+        for (let i = 0; i < value.byteLength; i++) {
+            receiveByteBuffer.push(value.getUint8(i));
+        }
         
+        // 개행문자 (\n = ASCII 10) 기준으로 메시지 분할
         let newlineIndex;
-        while ((newlineIndex = receiveBuffer.indexOf('\n')) !== -1) {
-            const completeMessage = receiveBuffer.substring(0, newlineIndex).trim();
-            receiveBuffer = receiveBuffer.substring(newlineIndex + 1);
+        while ((newlineIndex = receiveByteBuffer.indexOf(10)) !== -1) {
+            // 개행문자 이전까지의 바이트를 모아 단일 Array로 생성
+            const lineBytes = new Uint8Array(receiveByteBuffer.slice(0, newlineIndex));
+            // 버퍼에서 소모된 바이트를 자르고 개행문자(10)를 건너뛰어 대치
+            receiveByteBuffer = receiveByteBuffer.slice(newlineIndex + 1);
+            
+            // 완성된 온전한 바이트 어레이를 한 번에 한글 디코딩! (비트 깨짐 완벽 방지)
+            const decoder = new TextDecoder('utf-8');
+            const completeMessage = decoder.decode(lineBytes).trim();
             
             if (completeMessage) {
                 this.processReceivedData(completeMessage);
             }
         }
         
-        if (receiveBuffer.length > 1024) {
-            const data = receiveBuffer.trim();
-            receiveBuffer = '';
-            if (data) {
-                this.processReceivedData(data);
-            }
+        // 비정상 패킷 방어로 버퍼가 너무 커지면 초기화
+        if (receiveByteBuffer.length > 2048) {
+            receiveByteBuffer = [];
         }
     },
 
@@ -218,6 +223,16 @@ export const BluetoothManager = {
 
         if (receivedData.startsWith('SYS_VALUES,')) {
             this._handleSysValues(receivedData);
+            return;
+        }
+
+        if (receivedData.startsWith('MODULES,')) {
+            this._handleModules(receivedData);
+            return;
+        }
+
+        if (receivedData.startsWith('NAMES,')) {
+            this._handleNames(receivedData);
             return;
         }
 
@@ -265,8 +280,73 @@ export const BluetoothManager = {
             }, '*');
         }
 
+        // 연결된 장치 이름에 따라 활성 모델 동적 설정
+        if (device_name.toLowerCase().includes('launchpad') || device_name.includes('발사대')) {
+            state.activeModel = 'launchpad';
+        } else {
+            state.activeModel = 'gun';
+        }
+        if (window.updateToolboxForActiveState) {
+            window.updateToolboxForActiveState();
+        }
+
         this._resolvePromise(data);
         Logger.add('[수신] 시스템 설정값', 'success');
+    },
+
+    // MODULES 처리
+    _handleModules(data) {
+        try {
+            // Format: MODULES,wheel:ON,dcmotor:ON,buzzer:ON,distance:ON,magsensor:ON,leds:ON,gun:ON,oled:ON
+            const parts = data.split(',');
+            const enabledModules = {};
+            for (let i = 1; i < parts.length; i++) {
+                const pair = parts[i].split(':');
+                if (pair.length === 2) {
+                    const moduleName = pair[0].trim();
+                    const status = pair[1].trim();
+                    enabledModules[moduleName] = (status === 'ON');
+                }
+            }
+            state.enabledModules = enabledModules;
+            if (window.updateToolboxForActiveState) {
+                window.updateToolboxForActiveState();
+            }
+        } catch (e) {
+            console.error('[Bluetooth] MODULES 파싱 오류:', e);
+        }
+        this._resolvePromise(data);
+        Logger.add('[수신] 활성화된 모듈 정보', 'success');
+    },
+
+    // NAMES 처리
+    _handleNames(data) {
+        try {
+            // Format: NAMES,model:rover,wheel:서보 모터,dcmotor:DC 모터,leds:신호등...
+            const parts = data.split(',');
+            const tabNames = Object.assign({}, DEFAULT_TAB_NAMES);
+            for (let i = 1; i < parts.length; i++) {
+                const pair = parts[i].split(':');
+                if (pair.length === 2) {
+                    const key = pair[0].trim();
+                    const val = pair[1].trim();
+                    
+                    if (key === 'model' || key === 'theme') {
+                        state.activeModel = val.toLowerCase();
+                    } else if (key in tabNames) {
+                        tabNames[key] = val;
+                    }
+                }
+            }
+            state.tabNames = tabNames;
+            if (window.updateToolboxForActiveState) {
+                window.updateToolboxForActiveState();
+            }
+        } catch (e) {
+            console.error('[Bluetooth] NAMES 파싱 오류:', e);
+        }
+        this._resolvePromise(data);
+        Logger.add('[수신] 블록코딩 탭 이름 정보', 'success');
     },
 
     // CALIB_VALUES 처리
@@ -343,6 +423,14 @@ export const BluetoothManager = {
     // 연결 상태 UI 업데이트 — connectButton 4-state 라벨/색을 갱신.
     // runButton 상태는 main.js 의 updateRunButtonUI 에 위임(이벤트로 통지).
     updateConnectionStatus(connected) {
+        if (!connected) {
+            state.enabledModules = null;
+            state.tabNames = Object.assign({}, DEFAULT_TAB_NAMES);
+            if (window.updateToolboxForActiveState) {
+                window.updateToolboxForActiveState();
+            }
+        }
+
         const btn = elements.connectButton;
         if (btn) {
             btn.classList.remove('btn-connected', 'btn-failed');

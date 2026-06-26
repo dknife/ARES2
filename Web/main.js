@@ -2,7 +2,7 @@
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BluetoothManager } from './bluetooth.js';
-import { BlocklyConfig, attachBatchBlockValidator } from './blocklyconfig.js';
+import { BlocklyConfig, attachBatchBlockValidator, attachDynamicNaming, updateWorkspaceBlocks } from './blocklyconfig.js';
 import { CommandExecutor } from './commandexecutor.js';
 import { setupSimulation } from './simulation.js';
 import { parse as aiParse } from './ai_helper.js';
@@ -36,6 +36,77 @@ let _preSimMode = 'description';
 let setContentMode = null;     // setupContentToggle() 에서 등록
 
 // ============================================================
+// 동적 툴박스 필터링 및 이름 변경
+// ============================================================
+function updateDynamicToolbox() {
+  if (!workspace) return;
+  const originalToolbox = document.getElementById('toolbox');
+  if (!originalToolbox) return;
+
+  // Clone original toolbox XML
+  const clonedToolbox = originalToolbox.cloneNode(true);
+  const names = state.tabNames;
+
+  // 1) Overwrite category names dynamically with correct emojis and names from pins.py / state.tabNames
+  const categoryConfig = {
+    wheel: { id: '#category_wheel', emoji: '🚗' },
+    dcmotor: { id: '#category_dcmotor', emoji: '⚡' },
+    leds: { id: '#category_leds', emoji: '💡' },
+    oled: { id: '#category_oled', emoji: '🖥️' },
+    buzzer: { id: '#category_buzzer', emoji: '🔊' },
+    gun: { id: '#category_gun', emoji: (state.activeModel === 'launchpad' ? '🚀' : '🔫') },
+    sensors: { id: '#category_sensors', emoji: '📡' }
+  };
+
+  for (const [key, cfg] of Object.entries(categoryConfig)) {
+    const cat = clonedToolbox.querySelector(cfg.id);
+    if (cat) {
+      const baseName = names[key] || (key === 'sensors' ? '센서' : key);
+      cat.setAttribute('name', `${cfg.emoji} ${baseName}`);
+    }
+  }
+
+  // 2) Hide/Filter modules
+  if (state.enabledModules) {
+    const modules = state.enabledModules;
+    const categoryMapping = {
+      wheel: '#category_wheel',
+      dcmotor: '#category_dcmotor',
+      leds: '#category_leds',
+      oled: '#category_oled',
+      buzzer: '#category_buzzer',
+      gun: '#category_gun'
+    };
+
+    // Remove disabled categories
+    for (const [moduleName, selector] of Object.entries(categoryMapping)) {
+      if (modules[moduleName] === false) {
+        const cat = clonedToolbox.querySelector(selector);
+        if (cat) {
+          cat.parentNode.removeChild(cat);
+        }
+      }
+    }
+
+    // Filter blocks inside categories
+    if (modules.distance === false) {
+      const block = clonedToolbox.querySelector('block[type="check_distance"]');
+      if (block) {
+        block.parentNode.removeChild(block);
+      }
+    }
+    if (modules.magsensor === false) {
+      const block = clonedToolbox.querySelector('block[type="check_magnetic"]');
+      if (block) {
+        block.parentNode.removeChild(block);
+      }
+    }
+  }
+
+  workspace.updateToolbox(clonedToolbox);
+}
+
+// ============================================================
 // Blockly 한글 메시지 + 워크스페이스 초기화
 // ============================================================
 function initializeBlockly() {
@@ -46,6 +117,7 @@ function initializeBlockly() {
 
   Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
   attachBatchBlockValidator(Blockly);
+  attachDynamicNaming(Blockly, state);
   applyKoreanMessages();
 
   // 모바일에서는 카테고리 이름을 emoji 1자로 줄여 글자가 절대 새어 나오지 않도록
@@ -76,6 +148,16 @@ function initializeBlockly() {
 
   Blockly.Python.init(workspace);
   setupBlockContextMenu(workspace);
+
+  // Register dynamic toolbox / workspace block updates on state change
+  window.updateToolboxForActiveState = function() {
+    updateDynamicToolbox();
+    updateWorkspaceBlocks(workspace, state.activeModel);
+  };
+  
+  // Apply initial dynamic toolbox / names
+  window.updateToolboxForActiveState();
+
   return workspace;
 }
 
@@ -514,6 +596,16 @@ async function enterMission(n, m) {
   populateMissionSelect(n, data);
   document.getElementById('missionSelect').value = String(m);
   updateBreadcrumb(n, m);
+
+  // Set active model based on lesson (9-12 are launchpad, 1-8 are gun)
+  if (n >= 9) {
+    state.activeModel = 'launchpad';
+  } else {
+    state.activeModel = 'gun';
+  }
+  if (window.updateToolboxForActiveState) {
+    window.updateToolboxForActiveState();
+  }
 
   document.getElementById('missionHeading').textContent = `${n}차시 미션 ${m} — ${mission.title}`;
   document.getElementById('missionTagBadge').textContent = mission.tag;
@@ -1052,7 +1144,7 @@ function initializeMissionListeners(ws) {
     if (data.type === 'command') {
       const cmd = data.data;
       Logger.add(`[대시보드] ${cmd}`, 'info');
-      const needsResponse = cmd === 'GET_SYS' || cmd === 'GET_STATUS';
+      const needsResponse = cmd === 'GET_SYS' || cmd === 'GET_STATUS' || cmd === 'GET_MODULES' || cmd === 'GET_NAMES';
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
           await BluetoothManager.sendData(cmd, needsResponse);
