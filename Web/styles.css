@@ -158,14 +158,15 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     margin: 0;
     padding: 0;
     width: 100%;
-    overflow-x: hidden !important;
+    overflow: visible;
 }
 
 .header-main {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    padding: 6px 8px;
+    padding: 8px 10px;
     background: var(--background-main);
     border: none;
     border-bottom: 1px solid var(--border-color);
@@ -173,7 +174,8 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     margin: 0;
     width: 100%;
     box-sizing: border-box;
-    overflow-x: hidden !important;
+    min-height: 52px;
+    overflow: visible;
 }
 
 .header-main h1 {
@@ -194,7 +196,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 #controls {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -206,15 +208,17 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     margin: 0;
     min-height: 0;
     box-sizing: border-box;
-    width: 100%;
-    overflow-x: auto;
+    width: auto;
+    min-width: 0;
+    overflow: visible;
 }
 
 #controls button {
-    height: 32px;
-    padding: 0 8px;
+    height: 36px;
+    padding: 0 10px;
     margin: 0;
     font-size: 0.75em;
+    line-height: 1.1;
     flex-shrink: 0;
 }
 
