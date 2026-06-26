@@ -5,6 +5,7 @@ import { BluetoothManager } from './bluetooth.js';
 import { BlocklyConfig, attachBatchBlockValidator } from './blocklyconfig.js';
 import { CommandExecutor } from './commandexecutor.js';
 import { setupSimulation } from './simulation.js';
+import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js';
 import { parse as aiParse } from './ai_helper.js';
 
 // ============================================================
@@ -340,22 +341,6 @@ function isInBlockCodingStage() {
   return currentView === 'mission' && _contentMode === 'coding' && !inDashboard;
 }
 
-function updateBlockCodingButtonUI() {
-  const btn = document.getElementById('blockCodingButton');
-  if (!btn) return;
-
-  if (isDashboardVisible()) {
-    btn.textContent = '🧩 코딩';
-    btn.title = '점검을 닫고 코딩 화면으로 이동';
-  } else if (isInBlockCodingStage()) {
-    btn.textContent = '🏠 메인';
-    btn.title = '개요 화면으로 돌아가기';
-  } else {
-    btn.textContent = '🧩 블록코딩';
-    btn.title = '미션 블록코딩 화면으로 이동';
-  }
-}
-
 function openBlockCodingWorkspace() {
   const lessonValue = parseInt(document.getElementById('lessonSelect')?.value, 10);
   const missionValue = parseInt(document.getElementById('missionSelect')?.value, 10);
@@ -428,9 +413,40 @@ function openDashboardFromAnywhere() {
 
   if (isDashboardVisible()) return;
 
+  // Request dashboard open. If we're not in mission view yet, navigate there
+  // and install a one-shot listener + timeout to ensure the dashboard opens
+  // after routing (some environments may not trigger the pending flag flow).
   pendingDashboardOpen = true;
   if (currentView !== 'mission') {
     navigate({ lesson, mission });
+
+    const tryOpen = () => {
+      if (currentView === 'mission') {
+        // consume the pending flag so enterMission won't double-toggle
+        if (pendingDashboardOpen) pendingDashboardOpen = false;
+        // only toggle if not already visible
+        if (!isDashboardVisible()) toggleDashboard();
+        return true;
+      }
+      return false;
+    };
+
+    const onHash = () => {
+      if (tryOpen()) {
+        window.removeEventListener('hashchange', onHash);
+        clearTimeout(fallbackT);
+      }
+    };
+
+    window.addEventListener('hashchange', onHash);
+    // Fallback: try after short delay in case hashchange already applied
+    const fallbackT = setTimeout(() => {
+      tryOpen();
+      window.removeEventListener('hashchange', onHash);
+    }, 300);
+
+    // Safety: clear pending flag after a few seconds to avoid stale state
+    setTimeout(() => { pendingDashboardOpen = false; }, 4000);
     return;
   }
 
@@ -900,34 +916,39 @@ function escapeHtml(s) {
 }
 
 // ============================================================
-// 대시보드 전환 (비활성화됨)
+// 대시보드 전환
 // ============================================================
 function toggleDashboard() {
-  // 점검 버튼이 제거되었습니다.
-  return;
+  const blocklyDiv = document.getElementById('blocklyDiv');
+  const dashboardFrame = document.getElementById('dashboardFrame');
+  const contentToggleBtn = document.getElementById('contentToggleBtn');
+  if (!blocklyDiv || !dashboardFrame) return;
+
+  const showing = dashboardFrame.style.display === 'block';
+  if (showing) {
+    // 이미 열려있다면 블록코딩으로 복귀
+    closeDashboardToCoding();
+    return;
+  }
+
+  // 대시보드 보이기: 블록 영역 숨기고 iframe 보이기
+  blocklyDiv.style.display = 'none';
+  dashboardFrame.style.display = 'block';
+  if (contentToggleBtn) contentToggleBtn.style.display = 'none';
+
+  // 저장/불러오기 등 블록 관련 UI 비활성화
+  if (elements.saveButton) elements.saveButton.disabled = true;
+  if (elements.loadButton) elements.loadButton.disabled = true;
+
+  updateRunButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 점검 화면 열기', 'info');
 }
 
 
 // ============================================================
 // 로그 컨테이너 토글
 // ============================================================
-function setupLogToggle() {
-  const logContainer = document.getElementById('logContainer');
-  const logHeader = document.getElementById('logHeader');
-  if (!logContainer || !logHeader) return;
-
-  logContainer.classList.add('compact');
-  logContainer.classList.remove('expanded');
-
-  logHeader.addEventListener('click', (e) => {
-    if (e.target?.id === 'clearLogBtn') return;
-    const expanded = logContainer.classList.toggle('expanded');
-    logContainer.classList.toggle('compact', !expanded);
-    Logger.refresh();
-    updateMobileBottomNav();
-  });
-}
-
 // ============================================================
 // 3D 시뮬레이션 컨트롤러 — 실제 구현은 simulation.js
 //   showView() 에서 미션 뷰를 떠날 때 close() 호출.
@@ -939,65 +960,6 @@ let simController = null;
 //   미션 뷰는 description / coding / simulation 중 하나만 표시한다.
 //   시뮬레이션은 simToggle 로 진입하며, 닫으면 직전 모드(description 또는 coding)로 복귀.
 // ============================================================
-function setupContentToggle() {
-  const btn = document.getElementById('contentToggleBtn');
-  const view = document.getElementById('missionView');
-  if (!btn || !view) return;
-
-  const applyMode = (mode) => {
-    const wasSimulation = _contentMode === 'simulation';
-    _contentMode = mode;
-    view.setAttribute('data-mode', mode);
-    // 네비게이션(#missionNav)은 #missionView 바깥이라 body 속성으로 모드를 전달해 제어.
-    //   coding/simulation 모드: 개요·차시·미션 선택을 숨겨 단순화.
-    document.body.setAttribute('data-content-mode', mode);
-
-    // 시뮬레이션 → 다른 모드로 전환할 때는 sim 도 정리
-    // (렌더 루프 중지 + simToggle 버튼 '열기' 로 복귀).
-    // simController.close() 내부 가드(card.hidden/closing) 가 있어 중복 호출은 안전하다.
-    if (wasSimulation && mode !== 'simulation' && simController) {
-      simController.close();
-    }
-
-    if (mode === 'coding') {
-      // 블럭코딩 모드 진입 시 툴박스도 함께 표시
-      const tb = workspace?.getToolbox?.();
-      try { tb?.show?.(); } catch {}
-      setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
-    }
-
-    if (mode === 'description') {
-      btn.textContent = '블록 코딩';
-      btn.title = '미션 설명을 닫고 블럭코딩 화면으로 전환';
-      btn.disabled = false;
-    } else if (mode === 'coding') {
-      btn.textContent = '미션 설명';
-      btn.title = '블럭코딩을 닫고 미션 설명으로 전환';
-      btn.disabled = false;
-    } else {
-      // simulation 모드에서는 시뮬레이션 닫기(simToggle)로만 빠져나간다.
-      btn.disabled = true;
-      btn.title = '시뮬레이션을 닫으면 이전 화면으로 돌아갑니다';
-    }
-
-    updateBlockCodingButtonUI();
-  };
-
-  // 외부(showView/simController)에서 모드를 강제할 때 사용하는 setter
-  setContentMode = (mode) => {
-    if (!['description', 'coding', 'simulation'].includes(mode)) return;
-    if (_contentMode === mode) return;
-    applyMode(mode);
-  };
-
-  btn.addEventListener('click', () => {
-    if (_contentMode === 'simulation') return; // 안전장치 (disabled)
-    applyMode(_contentMode === 'description' ? 'coding' : 'description');
-  });
-
-  applyMode('description');
-}
-
 // ============================================================
 // 항상 켜 있는 이벤트 리스너 (BLE, 비상 정지, 로그 등)
 // ============================================================
@@ -1022,6 +984,12 @@ function initializeAlwaysOnListeners() {
   // 블록코딩 바로가기
   document.getElementById('blockCodingButton')?.addEventListener('click', (e) => {
     handleBlockCodingButtonClick();
+    e.currentTarget?.blur?.();
+  });
+
+  // 상단 점검 버튼: 미션 뷰로 이동 후 대시보드(점검화면)를 토글
+  document.getElementById('inspectButton')?.addEventListener('click', (e) => {
+    openDashboardFromAnywhere();
     e.currentTarget?.blur?.();
   });
 
@@ -1351,9 +1319,30 @@ function main() {
 
   // 5) 로그 토글 + 콘텐츠 모드 토글
   const logContainer = document.getElementById('logContainer');
-  if (logContainer) logContainer.classList.add('compact');
-  setupLogToggle();
-  setupContentToggle();
+  const logHeader = document.getElementById('logHeader');
+  setupLogToggle({
+    logContainer,
+    logHeader,
+    onToggle: () => {
+      Logger.refresh();
+      updateMobileBottomNav();
+    },
+  });
+  setContentMode = setupContentToggle({
+    btn: document.getElementById('contentToggleBtn'),
+    view: document.getElementById('missionView'),
+    workspace,
+    getMode: () => _contentMode,
+    setMode: (mode) => {
+      const wasSimulation = _contentMode === 'simulation';
+      _contentMode = mode;
+      if (wasSimulation && mode !== 'simulation' && simController) {
+        simController.close();
+      }
+    },
+    getSimController: () => simController,
+    updateBlockCodingButtonUI: () => updateBlockCodingButtonUI(),
+  });
   bindMobileBottomNav();
   simController = setupSimulation({
     workspace,

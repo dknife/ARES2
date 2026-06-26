@@ -728,11 +728,10 @@ iframe, #dashboardFrame {
    (body[data-content-mode] 는 main.js applyMode 에서 설정)
    - coding     → 남는 것: 미션 설명 · 시뮬레이션 · 예제
    - simulation → 남는 것: 시뮬레이션 닫기 · 예제 */
-body[data-content-mode="coding"]     #missionNav > #homeButton,
 body[data-content-mode="coding"]     #missionNav > #lessonSelect,
 body[data-content-mode="coding"]     #missionSelect,
 body[data-content-mode="coding"]     #breadcrumb,
-body[data-content-mode="simulation"] #missionNav > #homeButton,
+body[data-content-mode="simulation"] #homeButton,
 body[data-content-mode="simulation"] #missionNav > #lessonSelect,
 body[data-content-mode="simulation"] #missionSelect,
 body[data-content-mode="simulation"] #breadcrumb {
