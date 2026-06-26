@@ -42,22 +42,17 @@ export class AssetLoader {
         let box = new THREE.Box3();
         let modelH = 0;
 
+        root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+        box.setFromObject(root);
+        box.getSize(sz);
+        const c = box.getCenter(new THREE.Vector3());
+        root.position.x -= c.x;
+        root.position.z -= c.z;
+        root.position.y -= box.min.y;
+        modelH = sz.y;
+
         if (cfg.postProcess || cfg.label === '발사대') {
-          root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-          box.setFromObject(root);
-          box.getSize(sz);
-          modelH = sz.y;
           recolorAntenna(root, THREE);
-        } else {
-          box.setFromObject(root);
-          box.getSize(sz);
-          const center = box.getCenter(new THREE.Vector3());
-          root.position.sub(center);
-          root.position.y += sz.y / 2;
-          root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-          box.setFromObject(root);
-          box.getSize(sz);
-          modelH = sz.y;
         }
 
         // Attach Albi eye/chest LEDs if available

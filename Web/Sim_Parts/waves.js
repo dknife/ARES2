@@ -16,6 +16,7 @@ export class WavesSubsystem {
     this.launchWaveSpawnTimer = 0;
     this.launchFootprintSize = 1;
     this.launchWaveRings = [];
+    this.launchWavePosition = null; // Wave center position in world space
     
     this.roverWaveOn = false;
     this.roverWaveSpawnTimer = 0;
@@ -41,7 +42,14 @@ export class WavesSubsystem {
       side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
     });
     const mesh = new THREE.Mesh(geom, mat);
-    mesh.position.set(0, 0, 0);
+    
+    // 외부에서 설정한 launchWavePosition이 있으면 사용하고, 없으면 원점(0, 0, 0)
+    if (this.launchWavePosition) {
+      mesh.position.copy(this.launchWavePosition);
+    } else {
+      mesh.position.set(0, 0, 0);
+    }
+
     this.ctx.scene.add(mesh);
     this.launchWaveRings.push({ mesh, age: 0 });
   }

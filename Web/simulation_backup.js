@@ -783,7 +783,8 @@ function buildSim(THREE, A, stage, loadingEl, cfg) {
       if (EYE)   root.add(eyeL.group, eyeR.group);
       if (CHEST) root.add(chestLed.group);
       // 주제별 후처리(예: 탐사선 발사대의 안테나 회색화). root 변환은 위에서 이미 끝났다.
-      try { cfg.postProcess?.(root, THREE); } catch (e) { console.warn('postProcess 실패:', e); }
+      try { cfg.postProcess?.(root, THREE); }
+      catch (e) { console.warn('postProcess 실패:', e); }
       // postProcess 가 심어둔 핸들을 render 루프 변수에 캐싱.
       antennaPivot        = root.userData.antennaPivot        || null;
       rocketGroup         = root.userData.rocketGroup         || null;
