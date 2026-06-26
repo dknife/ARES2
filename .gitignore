@@ -9,6 +9,8 @@ Document/*
 !Document/.gitignore
 !Document/CodeChange*.tex
 !Document/CodeChange*.pdf
+# 2차 Refactoring 계획은 마크다운과 함께 브라우저용 HTML도 추적한다.
+!Document/REFACTORING_PLAN_2.html
 # 소스 코드 분석 보고서(LaTeX 원본·PDF·폰트)는 추적한다.
 !Document/SourceAnalysis/
 # 진행보고: 웹 보고서(report.html)와 변환 이미지(img/*.jpg)는 추적.
@@ -17,6 +19,7 @@ Document/*
 Document/진행보고/1일차/
 Document/진행보고/2일차/
 Document/진행보고/3일차/
+Document/진행보고/4일차/
 
 # WebGL 폴더는 개인 개발용 — 공유하지 않음
 WebGL/
