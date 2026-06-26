@@ -120,6 +120,32 @@
             font-size: 2em; font-weight: 300; cursor: pointer; line-height: 1;
         }
 
+        /* Team & Roles */
+        section.team { padding: 48px 0 8px; }
+        .team .group-label {
+            font-size: 0.8em; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+            color: #FA5D29; margin: 24px 0 14px;
+        }
+        .role-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
+        }
+        .role-card {
+            background: #fff; border-radius: 14px; padding: 20px 22px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-left: 4px solid #FA5D29;
+            display: flex; align-items: flex-start; gap: 14px;
+        }
+        .role-card .avatar {
+            flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%;
+            background: #222; color: #fff; font-weight: 800; font-size: 1em;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .role-card.prof .avatar { background: #FA5D29; }
+        .role-card .who { display: flex; flex-direction: column; }
+        .role-card .name { font-size: 1.02em; font-weight: 700; color: #222; }
+        .role-card .name .tag { font-size: 0.72em; font-weight: 600; color: #999; margin-left: 6px; }
+        .role-card .role { font-size: 0.9em; color: #444; margin-top: 3px; line-height: 1.5; }
+
         footer {
             text-align: center; padding: 48px 32px 60px; margin-top: 40px;
             color: #999; font-size: 0.85em; border-top: 1px solid #EDEDED;
@@ -148,6 +174,79 @@
     </header>
 
     <div class="wrap">
+        <!-- ============ 팀 구성 및 주요 업무 ============ -->
+        <section class="team">
+            <div class="day-head">
+                <span class="day-badge">TEAM</span>
+                <h2>팀 구성 및 주요 업무</h2>
+            </div>
+            <p class="day-summary">교수진과 제품개발학기 참여 학생의 역할 분담 — 서비스 애플리케이션·시뮬레이션·펌웨어·UI/UX·실물 교구 디자인을 나누어 진행한다.</p>
+
+            <div class="group-label">교수진</div>
+            <div class="role-grid">
+                <div class="role-card prof">
+                    <div class="avatar">강</div>
+                    <div class="who">
+                        <span class="name">강영민<span class="tag">교수</span></span>
+                        <span class="role">서비스 애플리케이션 개발</span>
+                    </div>
+                </div>
+                <div class="role-card prof">
+                    <div class="avatar">서</div>
+                    <div class="who">
+                        <span class="name">서미라<span class="tag">교수</span></span>
+                        <span class="role">제품 디자인 지도 (실물 교구 및 온라인 서비스)</span>
+                    </div>
+                </div>
+                <div class="role-card prof">
+                    <div class="avatar">신</div>
+                    <div class="who">
+                        <span class="name">신원<span class="tag">교수</span></span>
+                        <span class="role">제품개발학기 총괄 진행 및 제품 수준의 서비스 관리</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group-label">학생</div>
+            <div class="role-grid">
+                <div class="role-card">
+                    <div class="avatar">김</div>
+                    <div class="who">
+                        <span class="name">김지훈<span class="tag">학생</span></span>
+                        <span class="role">시뮬레이션 모듈 고도화 및 디지털 트윈 시스템 구현</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이민혁<span class="tag">학생</span></span>
+                        <span class="role">시뮬레이션 모듈 고도화 및 디지털 트윈 시스템 구현</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이주현<span class="tag">학생</span></span>
+                        <span class="role">펌웨어 개발 및 블록코딩 서비스 연계</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이성빈<span class="tag">학생</span></span>
+                        <span class="role">제품 서비스 UI/UX 고도화</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이재훈<span class="tag">학생</span></span>
+                        <span class="role">실물 교구 디자인 기획 및 시작품 제작</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ============ Day 1 ============ -->
         <section class="day">
             <div class="day-head">
@@ -413,6 +512,63 @@
                     <li><b>모듈형 외형 결합</b> — 측면 외형 패널(도어)과 상단 발사대 모듈을 분리형으로 만들어, 배선 후 외형을 끼워 맞추는 조립·점검이 쉬운 구조로 검증.</li>
                     <li><b>조립성 검증</b> — 분해→배선→외형 결합→완성의 전 과정을 실물 시작품으로 재현해 양산 조립 흐름을 점검.</li>
                 </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🧩 주요 업무 — 시뮬레이션 모듈 분할 리팩터링 (유형 A 실행)</h3>
+                <p class="lead">「2차 Refactoring 계획」의 첫 실행으로, 가장 비대했던 <code>simulation.js</code>(2,407줄)의 <b>거대 클로저 <code>buildSim()</code></b>를 <em>동작 보존</em> 원칙 아래 <b>공유 컨텍스트(ctx) + 서브시스템 모듈</b> 구조로 분해했다. 그 결과 <code>simulation.js</code>는 <b>372줄의 얇은 오케스트레이터</b>로 줄고, 기능은 <code>Web/Sim_Parts/</code> 13개 모듈로 분리됐다.</p>
+                <div class="chips">
+                    <span class="chip t">유형 A · 거대 클로저</span>
+                    <span class="chip">공유 컨텍스트(ctx)</span>
+                    <span class="chip">Sim_Parts 13개 모듈</span>
+                    <span class="chip">2,407 → 372줄</span>
+                    <span class="chip">동작 보존</span>
+                </div>
+                <ul>
+                    <li><b>거대 클로저 분해</b> — <code>buildSim()</code>에 묶여 있던 ~50개 상태와 서브시스템을 <code>Sim_Parts/context.js</code>(씬·카메라·렌더러·ctx) 중심으로 끌어올리고, 각 기능을 모듈로 분리: <code>assets·leds·movement·gun·rocket·traffic·waves·oled·render·audio·dispatch·topics</code>.</li>
+                    <li><b>얇은 오케스트레이터화</b> — <code>simulation.js</code>는 <code>setupSimulation()</code>으로 ctx를 만들어 각 모듈에 넘기는 조립 역할만 남김(2,407→372줄). 외부 인터페이스는 그대로라 <code>main.js</code>는 주석 1줄 외 변경 없음.</li>
+                    <li><b>동작 수정 병행</b> — 음파 생성(<code>SpawnSoundWave</code>) 보정과 중복 코드 정리 등 소규모 버그 수정 2건 포함.</li>
+                </ul>
+                <a class="doclink" href="../../dev.html" target="_blank">리팩터링 계획 — 유형 A 상세 ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/Simulation_Minhyuck/Web/Sim_Parts" target="_blank">Sim_Parts 모듈 (브랜치) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🤖 주요 업무 — 피코 펌웨어 설정 개편 &amp; 속도 기능</h3>
+                <p class="lead">펌웨어의 설정 체계를 <b>교사·어린이가 메모장으로 직접 고치는 텍스트 설정</b>으로 바꾸고, 이동 블록에 <b>속도 조절</b>을 추가했다. 기존 <code>system.json</code>(JSON)을 주석·섹션이 달린 <code>ModelFactorySetting.txt</code>로 대체해, 코드를 몰라도 속도·핀·모듈·탭 이름을 직접 설정할 수 있게 했다.</p>
+                <div class="chips">
+                    <span class="chip t">JSON → 텍스트 설정</span>
+                    <span class="chip">ModelFactorySetting.txt</span>
+                    <span class="chip">속도 기능</span>
+                    <span class="chip">탭 한글 이름</span>
+                    <span class="chip">테마 모델(rover/launchpad)</span>
+                    <span class="chip">주석 보존 저장</span>
+                </div>
+                <ul>
+                    <li><b>설정 파일 텍스트화</b> — <code>system_config.py</code>에 텍스트 파서를 추가해 <code>키=값</code>(또는 <code>키:값</code>) 형식을 읽고, 첫 부팅 시 설명이 담긴 기본 템플릿을 자동 생성. 저장 시 <em>기존 주석·가이드라인을 그대로 보존</em>하고 값만 갱신.</li>
+                    <li><b>속도 기능</b> — 서보·DC 모터 이동 명령이 속도 인자를 받도록 형식을 확장(<code>SERVO_방향,속도</code>·<code>DC_t방향,초,속도</code> 등). <code>max_speed</code> 기준으로 스케일링하고 0~100%로 제한.</li>
+                    <li><b>커스터마이징 확장</b> — 블록코딩 카테고리 <b>탭 한글 이름</b>(<code>GET_NAMES</code>), <b>테마 모델</b>(로버/발사대), 모듈 활성화 토글, GP 핀 번호, 서보 좌우 보정치를 모두 설정 파일에서 제어.</li>
+                    <li><b>웹 연동</b> — 변경된 명령 프로토콜에 맞춰 <code>blocklyconfig.js</code>·<code>bluetooth.js</code>·<code>commandexecutor.js</code> 등 웹 측도 함께 갱신(펌웨어·웹 짝 반영 필요).</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/Piiiiiiiico/Pico" target="_blank">피코 펌웨어 (브랜치) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 주요 업무 — 웹 인터페이스 개선 (모바일 하단 내비 &amp; 버튼 동선)</h3>
+                <p class="lead">태블릿·휴대폰으로 수업하는 환경에 맞춰 <b>화면 하단 고정 내비게이션 바</b>를 새로 만들고, 상단 버튼(개요·블록코딩·점검)의 <b>이동 동선 버그</b>를 바로잡았다. 또한 UI 보조 로직을 <code>ui.js</code>로 분리해 <code>main.js</code>를 정리했다.</p>
+                <div class="chips">
+                    <span class="chip">모바일 하단 내비 바</span>
+                    <span class="chip">개요·차시·미션·AI·로그</span>
+                    <span class="chip">홈·점검 버튼 수정</span>
+                    <span class="chip">safe-area 대응</span>
+                    <span class="chip t">ui.js 분리</span>
+                </div>
+                <ul>
+                    <li><b>모바일 하단 내비게이션</b> — <code>개요·차시·미션·AI·로그</code> 5개 버튼의 하단 고정 바(<code>#mobileBottomNav</code>)를 추가. 노치/홈바를 피하는 <code>safe-area-inset</code> 대응과 반응형 처리로 태블릿에서 한 손 조작이 쉬워짐.</li>
+                    <li><b>상단 버튼 동선 정리</b> — 🏠 개요·🧩 블록코딩·🔍 점검 버튼을 재배치하고, <em>어디서든 점검(대시보드)·블록코딩·개요로 정확히 이동</em>하도록 보강(미션 화면이 아닐 때도 대시보드를 여는 일회성 리스너+타임아웃 등).</li>
+                    <li><b>UI 로직 분리</b> — <code>updateBlockCodingButtonUI·setupLogToggle·setupContentToggle</code>를 <code>ui.js</code>로 추출해 <code>main.js</code>의 책임을 줄임(웹 인터페이스 리팩터링의 일부).</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/LEE_SEONGBEEN/Web" target="_blank">웹 인터페이스 (브랜치) ↗</a>
             </div>
 
             <div class="gallery">
