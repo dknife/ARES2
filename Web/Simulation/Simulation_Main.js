@@ -171,22 +171,21 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
       let box = new THREE.Box3();
       let modelH = 0;
       
-      if (!cfg.postProcess) {
-        box.setFromObject(root);
-        box.getSize(sz);
-        const center = box.getCenter(new THREE.Vector3());
-        root.position.sub(center);
-        root.position.y += sz.y / 2;
-        root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-        box.setFromObject(root);
-        box.getSize(sz);
-        modelH = sz.y;
-      } else {
-        root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-        box.setFromObject(root);
-        box.getSize(sz);
-        modelH = sz.y;
-        cfg.postProcess(root, THREE);
+      root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+      box.setFromObject(root);
+      box.getSize(sz);
+      const c = box.getCenter(new THREE.Vector3());
+      root.position.x -= c.x;
+      root.position.z -= c.z;
+      root.position.y -= box.min.y;
+      modelH = sz.y;
+
+      if (cfg.postProcess) {
+        try {
+          cfg.postProcess(root, THREE);
+        } catch (e) {
+          console.warn('postProcess 실패:', e);
+        }
       }
 
       // Attach model to subsystems

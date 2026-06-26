@@ -247,6 +247,15 @@ export class RocketSubsystem {
   }
 
   updateRocket(dt) {
+    if (this.ctx.waves) {
+      const THREE = this.ctx.THREE;
+      if (!this.ctx.waves.launchWavePosition) {
+        this.ctx.waves.launchWavePosition = new THREE.Vector3(0, 0, 0);
+      } else {
+        this.ctx.waves.launchWavePosition.set(0, 0, 0);
+      }
+    }
+
     if (!this.rocketGroup) return;
 
     const targetT = this.rocketLaunchOn ? 1 : 0;
