@@ -30,11 +30,15 @@
             <div class="header-main">
                 <h1>ARES 관제실</h1>
                 <div id="controls">
+                    <!-- 개요 버튼을 상단바로 이동: 신호 연결 버튼 왼쪽에 배치 -->
+                    <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
                     <button id="connectButton">🔗 신호 연결</button>
                     <button id="runButton" disabled>▶️ 미션 전송</button>
                     <button id="saveButton" disabled>💾 미션 저장</button>
                     <button id="loadButton" disabled>📂 미션 읽기</button>
                     <button id="blockCodingButton">🧩 블록코딩</button>
+                    <!-- 상단바에 점검 화면으로 들어가는 버튼을 추가합니다 -->
+                    <button id="inspectButton">🔍 점검</button>
                     <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
                 </div>
             </div>
@@ -42,7 +46,6 @@
 
         <!-- ===== 차시/미션 네비게이터 ===== -->
         <nav id="missionNav">
-            <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
             <select id="lessonSelect" aria-label="차시 선택">
                 <option value="">차시 선택…</option>
             </select>
