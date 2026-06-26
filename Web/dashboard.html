@@ -935,8 +935,9 @@
         startConnectionMonitor();
 
         // 점검 완료 후 부모(main.html) 에 복귀 요청
-        document.getElementById('exit-dashboard-btn')?.addEventListener('click', () => {
+        document.getElementById('exit-dashboard-btn')?.addEventListener('click', (e) => {
             window.parent.postMessage({ type: 'exit_dashboard' }, '*');
+            e.currentTarget?.blur?.();
         });
 
         addLog('대시보드 준비 완료. 블루투스 연결 대기 중...', 'info');

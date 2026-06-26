@@ -30,11 +30,15 @@
             <div class="header-main">
                 <h1>ARES 관제실</h1>
                 <div id="controls">
+                    <!-- 개요 버튼을 상단바로 이동: 신호 연결 버튼 왼쪽에 배치 -->
+                    <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
                     <button id="connectButton">🔗 신호 연결</button>
                     <button id="runButton" disabled>▶️ 미션 전송</button>
                     <button id="saveButton" disabled>💾 미션 저장</button>
                     <button id="loadButton" disabled>📂 미션 읽기</button>
-                    <button id="dashboardButton">🔍 점검</button>
+                    <button id="blockCodingButton">🧩 블록코딩</button>
+                    <!-- 상단바에 점검 화면으로 들어가는 버튼을 추가합니다 -->
+                    <button id="inspectButton">🔍 점검</button>
                     <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
                 </div>
             </div>
@@ -42,7 +46,6 @@
 
         <!-- ===== 차시/미션 네비게이터 ===== -->
         <nav id="missionNav">
-            <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
             <select id="lessonSelect" aria-label="차시 선택">
                 <option value="">차시 선택…</option>
             </select>
@@ -171,6 +174,30 @@
             <div id="logContent"></div>
         </section>
     </div>
+
+    <!-- 모바일 하단바: 빠른 이동/도구 버튼 -->
+    <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="모바일 빠른 메뉴">
+        <button type="button" class="mobile-nav-btn active" data-mobile-action="overview" aria-label="개요로 이동">
+            <span class="mobile-nav-icon" aria-hidden="true">🏠</span>
+            <span class="mobile-nav-label">개요</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="lesson" aria-label="차시로 이동">
+            <span class="mobile-nav-icon" aria-hidden="true">📘</span>
+            <span class="mobile-nav-label">차시</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="mission" aria-label="미션으로 이동">
+             <span class="mobile-nav-icon" aria-hidden="true">🧩</span>
+             <span class="mobile-nav-label">미션</span>
+         </button>
+         <button type="button" class="mobile-nav-btn" data-mobile-action="ai" aria-label="AI 도움 열기 또는 닫기">
+            <span class="mobile-nav-icon" aria-hidden="true">🤖</span>
+            <span class="mobile-nav-label">AI</span>
+        </button>
+        <button type="button" class="mobile-nav-btn" data-mobile-action="log" aria-label="로그 펼치기 또는 접기">
+            <span class="mobile-nav-icon" aria-hidden="true">📝</span>
+            <span class="mobile-nav-label">로그</span>
+        </button>
+    </nav>
 
     <!-- ===== 🤖 AI 도움 채팅 패널 (오프라인 규칙 기반, 외부 통신 없음) ===== -->
     <div id="aiPanel" class="ai-panel" hidden role="dialog" aria-label="AI 도움">
