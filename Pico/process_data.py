@@ -39,6 +39,8 @@ class CommandProcessor:
             return self._handle_get_sys()
         elif data == "GET_MODULES":
             return self._handle_get_modules()
+        elif data == "GET_NAMES":
+            return self._handle_get_names()
         elif data.startswith("SYS_SET"):
             return self._handle_sys_set(data)
         elif data.startswith("SET_PIN"):
@@ -85,15 +87,15 @@ class CommandProcessor:
         elif data.startswith("tLEFT"):
             return self._handle_timed_wheel(data, "left")
             
-        # 서보 휠 (연속) - SERVO_방향
-        elif data == "SERVO_FORWARD":
-            return self._handle_continuous_wheel("forward")
-        elif data == "SERVO_BACKWARD":
-            return self._handle_continuous_wheel("backward")
-        elif data == "SERVO_LEFT":
-            return self._handle_continuous_wheel("left")
-        elif data == "SERVO_RIGHT":
-            return self._handle_continuous_wheel("right")
+        # 서보 휠 (연속) - SERVO_방향 또는 SERVO_방향,속도
+        elif data.startswith("SERVO_FORWARD"):
+            return self._handle_continuous_wheel(data, "forward")
+        elif data.startswith("SERVO_BACKWARD"):
+            return self._handle_continuous_wheel(data, "backward")
+        elif data.startswith("SERVO_LEFT"):
+            return self._handle_continuous_wheel(data, "left")
+        elif data.startswith("SERVO_RIGHT"):
+            return self._handle_continuous_wheel(data, "right")
         elif data == "SERVO_STOP":
             if not robot.wheel:
                 return 0
@@ -101,13 +103,13 @@ class CommandProcessor:
             return 1
         # 레거시 호환
         elif data == "FORWARD":
-            return self._handle_continuous_wheel("forward")
+            return self._handle_continuous_wheel(data, "forward")
         elif data == "BACKWARD":
-            return self._handle_continuous_wheel("backward")
+            return self._handle_continuous_wheel(data, "backward")
         elif data == "LEFT":
-            return self._handle_continuous_wheel("left")
+            return self._handle_continuous_wheel(data, "left")
         elif data == "RIGHT":
-            return self._handle_continuous_wheel("right")
+            return self._handle_continuous_wheel(data, "right")
         elif data == "STOP":
             if not robot.wheel:
                 return 0
@@ -119,10 +121,10 @@ class CommandProcessor:
             return self._handle_timed_dcmotor_new(data, "forward")
         elif data.startswith("DC_tBACKWARD"):
             return self._handle_timed_dcmotor_new(data, "backward")
-        elif data == "DC_FORWARD":
-            return self._handle_main_motor("forward")
-        elif data == "DC_BACKWARD":
-            return self._handle_main_motor("backward")
+        elif data.startswith("DC_FORWARD"):
+            return self._handle_main_motor(data, "forward")
+        elif data.startswith("DC_BACKWARD"):
+            return self._handle_main_motor(data, "backward")
         elif data == "DC_STOP":
             if not robot.dcmotor:
                 return 0
@@ -134,9 +136,9 @@ class CommandProcessor:
         elif data.startswith("tDCMOTOR"):
             return self._handle_timed_dcmotor(data)
         elif data == "MAIN_FORWARD":
-            return self._handle_main_motor("forward")
+            return self._handle_main_motor(data, "forward")
         elif data == "MAIN_BACKWARD":
-            return self._handle_main_motor("backward")
+            return self._handle_main_motor(data, "backward")
         elif data == "MAIN_STOP":
             if not robot.dcmotor:
                 return 0
@@ -220,7 +222,8 @@ class CommandProcessor:
         c = sys_config.config
         l_cal = c.get('left_calibration', 100)
         r_cal = c.get('right_calibration', 100)
-        return f"SYS_VALUES,{c['max_speed']},{c['collision_dist']},{c['auto_stop']},{c['device_name']},{l_cal},{r_cal}"
+        active_model = sys_config.get_active_model()
+        return f"SYS_VALUES,{c['max_speed']},{c['collision_dist']},{c['auto_stop']},{c['device_name']},{l_cal},{r_cal},{active_model}"
     
     def _handle_get_modules(self):
         """활성화된 모듈 정보 반환"""
@@ -234,6 +237,18 @@ class CommandProcessor:
         except Exception as e:
             print(f"GET_MODULES 오류: {e}")
             return "MODULES,ERROR"
+    
+    def _handle_get_names(self):
+        """model.txt에 적힌 커스텀 블록 탭 이름 및 설정을 그대로 반환"""
+        try:
+            custom_overrides = sys_config.get_custom_component_names()
+            result = "NAMES,"
+            for key, val in custom_overrides.items():
+                result += f"{key}:{val},"
+            return result.rstrip(',')
+        except Exception as e:
+            print(f"GET_NAMES 오류: {e}")
+            return "NAMES,ERROR"
     
     def _handle_set_pin(self, data):
         """핀 설정 변경: SET_PIN,pin_name,pin_number"""
@@ -338,13 +353,18 @@ class CommandProcessor:
     
     # 서보 휠 핸들러
     def _handle_timed_wheel(self, data, direction):
-        """시간 제한 휠 이동"""
+        """시간 제한 휠 이동 (새 형식: SERVO_t방향,초,속도)"""
         if not robot.wheel:
             return 0
         try:
             argv = data.split(',')
             sec = float(argv[1])
-            spd = sys_config.get('max_speed') / 100.0
+            if len(argv) >= 3:
+                spd = float(argv[2]) / 100.0
+            else:
+                spd = sys_config.get('max_speed') / 100.0
+            
+            spd = max(0.0, min(1.0, spd))
             
             if direction == "forward":
                 robot.wheel.forward(speed=spd)
@@ -362,22 +382,32 @@ class CommandProcessor:
             print(f"t{direction.upper()} 오류: {e}")
             return 0
     
-    def _handle_continuous_wheel(self, direction):
-        """연속 휠 이동"""
+    def _handle_continuous_wheel(self, data, direction):
+        """연속 휠 이동 (새 형식: SERVO_방향,속도)"""
         if not robot.wheel:
             return 0
-        spd = sys_config.get('max_speed') / 100.0
-        
-        if direction == "forward":
-            robot.wheel.forward(speed=spd)
-        elif direction == "backward":
-            robot.wheel.backward(speed=spd)
-        elif direction == "right":
-            robot.wheel.turn_right(speed=spd)
-        elif direction == "left":
-            robot.wheel.turn_left(speed=spd)
-        
-        return 1
+        try:
+            argv = data.split(',')
+            if len(argv) >= 2:
+                spd = float(argv[1]) / 100.0
+            else:
+                spd = sys_config.get('max_speed') / 100.0
+            
+            spd = max(0.0, min(1.0, spd))
+            
+            if direction == "forward":
+                robot.wheel.forward(speed=spd)
+            elif direction == "backward":
+                robot.wheel.backward(speed=spd)
+            elif direction == "right":
+                robot.wheel.turn_right(speed=spd)
+            elif direction == "left":
+                robot.wheel.turn_left(speed=spd)
+            
+            return 1
+        except Exception as e:
+            print(f"SERVO_{direction.upper()} 오류: {e}")
+            return 0
     
     # DC 모터 핸들러
     def _handle_dcmotor(self, data):
@@ -425,13 +455,18 @@ class CommandProcessor:
             return 0
     
     def _handle_timed_dcmotor_new(self, data, direction):
-        """시간 제한 DC 모터 (새 형식: DC_t방향,초)"""
+        """시간 제한 DC 모터 (새 형식: DC_t방향,초,속도)"""
         if not robot.dcmotor:
             return 0
         try:
             parts = data.split(',')
             sec = float(parts[1])
-            pwm_val = self._get_speed_pwm()
+            if len(parts) >= 3:
+                speed = int(float(parts[2]))
+                speed = max(0, min(100, speed))
+                pwm_val = int(speed * PWM_MAX / 100)
+            else:
+                pwm_val = self._get_speed_pwm()
             
             if direction == "forward":
                 robot.dcmotor.dc_forward(pwm_val)
@@ -445,16 +480,27 @@ class CommandProcessor:
             print(f"DC_t{direction.upper()} 오류: {e}")
             return 0
     
-    def _handle_main_motor(self, direction):
-        """DC 모터 연속 이동"""
+    def _handle_main_motor(self, data, direction):
+        """DC 모터 연속 이동 (새 형식: DC_방향,속도)"""
         if not robot.dcmotor:
             return 0
-        pwm_val = self._get_speed_pwm()
-        if direction == "forward":
-            robot.dcmotor.dc_forward(pwm_val)
-        elif direction == "backward":
-            robot.dcmotor.dc_backward(pwm_val)
-        return 1
+        try:
+            parts = data.split(',')
+            if len(parts) >= 2:
+                speed = int(float(parts[1]))
+                speed = max(0, min(100, speed))
+                pwm_val = int(speed * PWM_MAX / 100)
+            else:
+                pwm_val = self._get_speed_pwm()
+            
+            if direction == "forward":
+                robot.dcmotor.dc_forward(pwm_val)
+            elif direction == "backward":
+                robot.dcmotor.dc_backward(pwm_val)
+            return 1
+        except Exception as e:
+            print(f"DC_{direction.upper()} 오류: {e}")
+            return 0
     
     # 캘리브레이션 핸들러
     def _handle_calib_start(self):
