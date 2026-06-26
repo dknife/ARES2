@@ -826,6 +826,14 @@
         addLog('Pico에서 시스템 설정을 요청 중...', 'info');
     }
 
+    function requestModules() {
+        sendCommand('GET_MODULES');
+    }
+
+    function requestNames() {
+        sendCommand('GET_NAMES');
+    }
+
     function requestStatusOnce() {
         sendCommand('GET_STATUS');
     }
@@ -841,7 +849,9 @@
                     updateConnectionUI(true);
                     setDashboardInteractive(true);
                     setTimeout(requestSystemConfig, 500);
-                    setTimeout(requestStatusOnce, 700);
+                    setTimeout(requestModules, 600);
+                    setTimeout(requestNames, 650);
+                    setTimeout(requestStatusOnce, 750);
                 } else {
                     addLog('블루투스 연결 끊김', 'error');
                     updateConnectionUI(false);

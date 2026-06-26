@@ -1,0 +1,55 @@
+# 아레스 탐사선 모델 팩토리 설정 파일 (ModelFactorySetting.txt)
+# 이 파일을 메모장으로 편집하여 로봇의 동작 속도, 부품 연결 핀, 활성화 여부, 탭 한글 이름을 마음대로 설정할 수 있습니다.
+# '#'으로 시작하는 줄은 설명글이므로 무시됩니다.
+# '=' 이나 ':' 문자를 사용해 '키=값' 형태로 작성해 주세요.
+
+# [1. 기본 설정 및 테마]
+# device_name: 탐사선 블루투스 검색 이름
+# max_speed: 기본 속도 제한 (0 ~ 100 %)
+# collision_dist: 장애물 정지 거리 (cm)
+# auto_stop: 초음파 장애물 감지 시 자동 정지 여부 (1=켬, 0=끔)
+# model: 블럭코딩 테마 모델 (rover: 로버 테마, launchpad: 발사대 테마)
+device_name=rover
+max_speed=40
+collision_dist=10
+auto_stop=1
+model=rover
+
+# [2. 블럭 코딩 카테고리 탭 한글 이름 커스텀]
+# 각 블럭 코딩 카테고리 탭(사이드바)의 표시 이름을 한글로 자유롭게 커스터마이징 할 수 있습니다.
+wheel=바퀴
+dcmotor=안테나
+leds=LED
+oled=디스플레이
+buzzer=부저
+gun=총
+sensors=센서
+
+# [3. 모듈 활성화 여부 설정 (1=사용, 0=사용안함)]
+# 사용하지 않는 모듈을 0으로 설정하면 해당 블럭 탭이 화면에서 자동으로 숨겨집니다.
+enable_wheel=1
+enable_dcmotor=1
+enable_leds=1
+enable_oled=1
+enable_buzzer=1
+enable_gun=1
+enable_distance=1
+enable_magsensor=1
+
+# [4. 각 부품별 하드웨어 연결 GP 핀 번호]
+pin_wheel_left=13
+pin_wheel_right=12
+pin_dcmotor_dir=8
+pin_dcmotor_pwm=9
+pin_buzzer=15
+pin_gun=22
+pin_distance_trig=6
+pin_distance_echo=7
+pin_magsensor=26
+pin_i2c_sda=4
+pin_i2c_scl=5
+pin_leds=21,20,19,18,17,16
+
+# [5. 서보 모터 바퀴 정밀 보정치 (기본값 100)]
+left_calibration=100
+right_calibration=100

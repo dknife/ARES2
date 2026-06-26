@@ -39,6 +39,8 @@ class CommandProcessor:
             return self._handle_get_sys()
         elif data == "GET_MODULES":
             return self._handle_get_modules()
+        elif data == "GET_NAMES":
+            return self._handle_get_names()
         elif data.startswith("SYS_SET"):
             return self._handle_sys_set(data)
         elif data.startswith("SET_PIN"):
@@ -220,7 +222,8 @@ class CommandProcessor:
         c = sys_config.config
         l_cal = c.get('left_calibration', 100)
         r_cal = c.get('right_calibration', 100)
-        return f"SYS_VALUES,{c['max_speed']},{c['collision_dist']},{c['auto_stop']},{c['device_name']},{l_cal},{r_cal}"
+        active_model = sys_config.get_active_model()
+        return f"SYS_VALUES,{c['max_speed']},{c['collision_dist']},{c['auto_stop']},{c['device_name']},{l_cal},{r_cal},{active_model}"
     
     def _handle_get_modules(self):
         """활성화된 모듈 정보 반환"""
@@ -234,6 +237,18 @@ class CommandProcessor:
         except Exception as e:
             print(f"GET_MODULES 오류: {e}")
             return "MODULES,ERROR"
+    
+    def _handle_get_names(self):
+        """model.txt에 적힌 커스텀 블록 탭 이름 및 설정을 그대로 반환"""
+        try:
+            custom_overrides = sys_config.get_custom_component_names()
+            result = "NAMES,"
+            for key, val in custom_overrides.items():
+                result += f"{key}:{val},"
+            return result.rstrip(',')
+        except Exception as e:
+            print(f"GET_NAMES 오류: {e}")
+            return "NAMES,ERROR"
     
     def _handle_set_pin(self, data):
         """핀 설정 변경: SET_PIN,pin_name,pin_number"""

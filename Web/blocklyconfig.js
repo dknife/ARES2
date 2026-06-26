@@ -335,7 +335,14 @@ export const BlocklyConfig = {
     // 발사 블록 (빨강주황 #FF4500)
     {
       type: "gun_fire",
-      message0: "🔫 발사 실행",
+      message0: "%1",
+      args0: [
+        {
+          type: "field_label",
+          name: "LABEL",
+          text: "🔫 발사 실행"
+        }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF4500",
@@ -449,4 +456,46 @@ export function attachBatchBlockValidator(BlocklyLib) {
         : null);
     });
   };
+}
+
+// 모델별 동적 이름 변경 기능 부착
+export function attachDynamicNaming(BlocklyLib, state) {
+  const proto = BlocklyLib.Blocks['gun_fire'];
+  if (!proto) return;
+  const originalInit = proto.init;
+  proto.init = function() {
+    originalInit.call(this);
+    const labelField = this.getField('LABEL');
+    if (labelField) {
+      labelField.setValue(getGunBlockLabel(state.tabNames, state.activeModel));
+    }
+    this.setTooltip(() => getGunBlockTooltip(state.tabNames, state.activeModel));
+  };
+}
+
+export function getGunBlockLabel(tabNames, activeModel) {
+  const emoji = (activeModel === 'launchpad') ? '🚀' : '🔫';
+  const name = tabNames?.gun || '발사';
+  return `${emoji} ${name} 실행`;
+}
+
+export function getGunBlockTooltip(tabNames, activeModel) {
+  const name = tabNames?.gun || '발사';
+  if (activeModel === 'launchpad') {
+    return `${name}를 실행합니다.`;
+  }
+  return `BB탄을 한 발 발사합니다.`;
+}
+
+export function updateWorkspaceBlocks(workspace, state) {
+  if (!workspace) return;
+  const blocks = workspace.getAllBlocks(false);
+  blocks.forEach((block) => {
+    if (block.type === 'gun_fire') {
+      const labelField = block.getField('LABEL');
+      if (labelField) {
+        labelField.setValue(getGunBlockLabel(state.tabNames, state.activeModel));
+      }
+    }
+  });
 }
