@@ -22,7 +22,7 @@ export class AssetLoader {
     const scene = this.ctx.scene;
 
     // Base setup of LEDs
-    this.ctx.leds.init();
+    this.ctx.leds.init(cfg.eyes, cfg.chest, cfg.launch);
 
     if (cfg.model) {
       makeGLTFLoader(A).load(cfg.model, (gltf) => {
@@ -106,7 +106,7 @@ export class AssetLoader {
 
         // Attach traffic lights
         if (cfg.traffic) {
-          this.ctx.traffic.setupTraffic(root, () => makeGLTFLoader(A));
+          this.ctx.traffic.setupTraffic(root, () => makeGLTFLoader(A), cfg.traffic);
         }
 
         scene.add(root);
