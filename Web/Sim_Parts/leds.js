@@ -17,11 +17,14 @@ export class LedSubsystem {
     this.launchStripGlowTex = null;
   }
 
-  init() {
-    const cfg = this.ctx.cfg;
-    const EYE = cfg.eyes;
-    const CHEST = cfg.chest;
-    const LAUNCH = cfg.launch;
+  init(eyesConfig, chestConfig, launchConfig) {
+    this.eyesCfg = eyesConfig;
+    this.chestCfg = chestConfig;
+    this.launchCfg = launchConfig;
+
+    const EYE = this.eyesCfg;
+    const CHEST = this.chestCfg;
+    const LAUNCH = this.launchCfg;
 
     if (EYE) {
       this.eyeGlowTex = this.makeGlowTex(LED_PALETTES.eye.glowStops);
@@ -84,12 +87,12 @@ export class LedSubsystem {
   }
 
   setEye(side, value) {
-    if (!this.ctx.cfg.eyes) return;
+    if (!this.eyesCfg) return;
     this.applyLed(side === 'L' ? this.eyeL : this.eyeR, value);
   }
 
   setChest(value) {
-    if (!this.ctx.cfg.chest) return;
+    if (!this.chestCfg) return;
     this.applyLed(this.chestLed, value);
   }
 

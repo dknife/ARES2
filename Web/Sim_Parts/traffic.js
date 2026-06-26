@@ -112,7 +112,7 @@ export class TrafficSubsystem {
   }
 
   placeLamps(makeGLTFLoader) {
-    const TRAFFIC = this.ctx.cfg.traffic;
+    const TRAFFIC = this.trafficCfg;
     if (!TRAFFIC || !this.trafficRoot || !this.trafficSlots) return;
     
     this.clearAllSlots();
@@ -148,7 +148,7 @@ export class TrafficSubsystem {
   }
 
   placeHands(makeGLTFLoader) {
-    const TRAFFIC = this.ctx.cfg.traffic;
+    const TRAFFIC = this.trafficCfg;
     if (!TRAFFIC || !this.trafficRoot || !this.trafficSlots) return;
     
     this.clearAllSlots();
@@ -183,16 +183,16 @@ export class TrafficSubsystem {
     }
   }
 
-  setupTraffic(root, makeGLTFLoader) {
+  setupTraffic(root, makeGLTFLoader, trafficConfig) {
     const THREE = this.ctx.THREE;
-    const TRAFFIC = this.ctx.cfg.traffic;
+    this.trafficCfg = trafficConfig;
     this.trafficRoot = root;
     this.trafficBox = new THREE.Box3().setFromObject(root);
     const tsz = this.trafficBox.getSize(new THREE.Vector3());
     const tcn = this.trafficBox.getCenter(new THREE.Vector3());
     this.trafficTopY = this.trafficBox.max.y;
     
-    const n = Math.max(1, TRAFFIC.count || 3);
+    const n = Math.max(1, this.trafficCfg ? (this.trafficCfg.count || 3) : 3);
     const span  = tsz.x * 0.8;
     const start = tcn.x - span / 2;
     const step  = n === 1 ? 0 : span / (n - 1);
