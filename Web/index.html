@@ -16,13 +16,17 @@
             height: 300px;
             margin: -12px 0 4px;
             position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            /* WebGL 로드 전에도 우주처럼 보이도록 어두운 배경 */
+            background: radial-gradient(ellipse at 50% 38%, #161b33 0%, #07091a 62%, #03030c 100%);
         }
         #robot-stage canvas { display: block; cursor: grab; }
         #robot-stage canvas:active { cursor: grabbing; }
         #robot-stage .robot-loading {
             position: absolute; inset: 0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.85em; color: #bbb;
+            font-size: 0.85em; color: #c9d2ec;
             transition: opacity 0.4s; pointer-events: none;
         }
         #robot-stage .robot-loading.hidden { opacity: 0; }
@@ -76,7 +80,8 @@
         foreSwing: 0.3,            // 팔뚝(RightForeArm) 보조 흔들기 폭
       };
       // 카메라 프레이밍(모델 높이 배수) — 머리·안테나 위 여백 확보를 위해 충분히 멀리
-      const CAM = { y: 0.5, z: 7.5, lookY: 0.5 };
+      // pan: 카메라/타깃을 함께 위로 올려 시야를 위로 패닝 → 객체들이 화면 아래쪽에 놓인다
+      const CAM = { y: 0.5, z: 7.5, lookY: 0.5, pan: 0.75 };
 
       function size() {
         return { w: stage.clientWidth, h: stage.clientHeight };
@@ -97,10 +102,37 @@
       const pmrem = new THREE.PMREMGenerator(renderer);
       scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-      const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+      // ---- 우주 배경: 검은 하늘에 별이 빛난다 ----
+      scene.background = new THREE.Color(0x05060f);
+      // 별을 큰 구 껍질 위에 흩뿌린 THREE.Points. sizeAttenuation=false 로
+      // 거리와 무관하게 일정한 픽셀 크기의 또렷한 별빛으로 보이게 한다.
+      function makeStars(count, sizePx, opacity) {
+        const g = new THREE.BufferGeometry();
+        const p = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const r = 40 + Math.random() * 55;          // 반지름 40~95 (camera.far=200 안)
+          const th = Math.random() * Math.PI * 2;
+          const ph = Math.acos(2 * Math.random() - 1); // 구면 균등 분포
+          p[i * 3]     = r * Math.sin(ph) * Math.cos(th);
+          p[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+          p[i * 3 + 2] = r * Math.cos(ph);
+        }
+        g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+        const m = new THREE.PointsMaterial({
+          color: 0xffffff, size: sizePx, sizeAttenuation: false,
+          transparent: true, opacity, depthWrite: false,
+        });
+        return new THREE.Points(g, m);
+      }
+      const starField = new THREE.Group();
+      starField.add(makeStars(520, 1.6, 0.85));   // 작고 흐릿한 별 다수
+      starField.add(makeStars(120, 2.6, 1.0));    // 크고 밝은 별 소수
+      scene.add(starField);
+
+      const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 200);
       function applyCam() {
-        camera.position.set(0, modelH * CAM.y, modelH * CAM.z);
-        camera.lookAt(0, modelH * CAM.lookY, 0);
+        camera.position.set(0, modelH * (CAM.y + CAM.pan), modelH * CAM.z);
+        camera.lookAt(0, modelH * (CAM.lookY + CAM.pan), 0);
       }
 
       // 마우스 조작: 좌우 회전은 자유, 위·아래 기울기는 ±10°로 제한. 줌/이동은 비활성.
@@ -145,6 +177,9 @@
       const rest = { arm: new THREE.Quaternion(), fore: new THREE.Quaternion() };
       let modelH = 1.6;
       let ready = false;
+      const astronauts = [];   // ALBI 주위를 유영하는 우주인들
+      const albiFlames = [];   // ALBI 바닥에서 아래로 분사하는 추진 화염
+      let albiFlameBase = 0;
 
       const loader = new GLTFLoader();
       // ares_robot.glb 는 meshopt + WebP 압축본이므로 디코더 필수
@@ -166,9 +201,19 @@
         modelH = sz.y;
         group.add(root);
 
+        // ALBI 바닥(발/보드)에서 아래(-Y)로 분사하는 추진 화염 — 우주인과 같은 makeFlame 재사용
+        albiFlameBase = modelH * 0.45;
+        for (const sx of [-1, 1]) {
+          const fl = makeFlame(albiFlameBase);
+          fl.rotation.x = -Math.PI / 2;                    // -Z 분사를 -Y(아래)로 회전
+          fl.position.set(sx * modelH * 0.18, 0.05 * modelH, 0);
+          group.add(fl);
+          albiFlames.push(fl);
+        }
+
         // 카메라 — 윗부분 여백을 둬서 흔드는 손이 잘림 없이 보이도록
         applyCam();
-        controls.target.set(0, modelH * CAM.lookY, 0);
+        controls.target.set(0, modelH * (CAM.lookY + CAM.pan), 0);
         controls.update();
 
         // Idle 재생 (몸통의 자연스러운 미세 동작)
@@ -186,10 +231,116 @@
         ready = true;
         clock.start();
         loadingEl.classList.add('hidden');
+
+        // ALBI 등장 후, 주위에 우주인 유영 연출 추가
+        spawnAstronauts();
       }
       function onModelErr(err) {
         console.error('로봇 모델 로드 실패:', err);
         loadingEl.textContent = '로봇을 불러오지 못했어요';
+      }
+
+      // 제트팩 분사 화염 한 줄기: 노즐(원점)에서 넓게 시작해 -Z 로 갈수록 뾰족해지는
+      // 불꽃 혀 모양. 안쪽(밝은 노랑)·중간(주황)·바깥(짙은 주황) 3겹을 가산혼합으로 겹치되
+      // 알파를 낮춰 배경(검은 우주)에 은은히 섞이게 한다.
+      function makeFlame(scale) {
+        const grp = new THREE.Group();
+        const layers = [
+          { r: 0.18, h: 1.25, color: 0xff4500, opacity: 0.16 },  // 바깥 짙은 주황(길고 옅게)
+          { r: 0.11, h: 0.92, color: 0xff8c1a, opacity: 0.24 },  // 중간 주황
+          { r: 0.055, h: 0.60, color: 0xffd070, opacity: 0.34 }, // 안쪽 밝은 코어
+        ];
+        for (const L of layers) {
+          const cone = new THREE.Mesh(
+            new THREE.ConeGeometry(L.r, L.h, 16, 1, true),
+            new THREE.MeshBasicMaterial({
+              color: L.color, transparent: true, opacity: L.opacity,
+              blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+            })
+          );
+          cone.rotation.x = -Math.PI / 2;  // 원뿔축 +Y → -Z (꼭짓점이 뒤로), 밑면(넓은쪽)은 +Z
+          cone.position.z = -L.h / 2;      // 밑면(넓은쪽)을 노즐에, 꼭짓점을 -Z 끝으로 → 불꽃 혀
+          grp.add(cone);
+        }
+        grp.scale.setScalar(scale);
+        return grp;
+      }
+
+      // ---- ALBI 주위를 제트팩으로 유영하는 우주인들 ----
+      // Astronaut.glb(meshopt+WebP)를 한 번 읽어 복제하고, 각자 다른 궤도로 공전시킨다.
+      // 모델 정면 = +Z, 등(가방) = -Z. 진행방향(궤도 접선)을 향하게 돌리고 등 뒤로 화염을 뿜어
+      // "추진력으로 헤엄치는" 모습을 연출한다.
+      function spawnAstronauts() {
+        // file:// 에서는 fetch 불가(ALBI 는 임베드 사용) — 장식이므로 조용히 생략
+        if (location.protocol === 'file:') return;
+        loader.load('Mesh/EnvAssets/Astronaut.glb', (gltf) => {
+          const proto = gltf.scene;
+          // [반지름(modelH배수), 높이오프셋(modelH배수), 크기(modelH배수), 공전속도(rad/s), 시작각(rad)]
+          const FIELD = [
+            { r: 2.70, y:  0.55, s: 1.50, spin:  0.30, a: 0.4 },
+            { r: 2.35, y: -0.20, s: 1.28, spin: -0.38, a: 2.5 },
+            { r: 3.10, y:  0.18, s: 1.16, spin:  0.24, a: 4.6 },
+          ];
+          const orbitCenterY = modelH * 0.55;   // ALBI 가슴 높이 부근을 공전 중심으로
+
+          FIELD.forEach((cfg, i) => {
+            // pivot: 공전 중심(ALBI). y 회전으로 궤도를 돈다.
+            const pivot = new THREE.Object3D();
+            pivot.position.set(0, orbitCenterY + modelH * cfg.y, 0);
+            pivot.rotation.y = cfg.a;
+            scene.add(pivot);
+
+            // holder: 공전 반지름만큼 바깥 + 상하 부유 담당
+            const holder = new THREE.Object3D();
+            holder.position.x = modelH * cfg.r;
+            pivot.add(holder);
+
+            // glider: 진행방향(궤도 접선)으로 우주인을 향하게 한다.
+            // 접선 진행방향은 spin>0 이면 -Z, spin<0 이면 +Z. 정면(+Z)을 거기에 맞추려고
+            // spin>0 일 때 Y로 180° 돌린다. (이후 tick 에서 살짝 흔들어 유영감 추가)
+            const baseYaw = cfg.spin > 0 ? Math.PI : 0;
+            const glider = new THREE.Group();
+            glider.rotation.y = baseYaw;
+            holder.add(glider);
+
+            // 우주인 클론을 제 중심에 정렬·축소
+            const model = proto.clone(true);
+            const cbox = new THREE.Box3().setFromObject(model);
+            const csz = cbox.getSize(new THREE.Vector3());
+            const cc = cbox.getCenter(new THREE.Vector3());
+            model.position.sub(cc);
+            const natH = csz.y || 1;
+            const scl = (modelH * cfg.s) / natH;
+            const wrap = new THREE.Group();
+            wrap.scale.setScalar(scl);
+            wrap.add(model);
+            wrap.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+            glider.add(wrap);
+
+            // 등 가방(모델 -Z)에서 좌우 두 노즐로 -Z 로 분사하는 화염
+            const flameBase = scl * 1.15;
+            const fy = -0.05 * csz.y * scl;
+            const fz = -0.45 * csz.z * scl;
+            const dx = 0.16 * csz.x * scl;        // 등 좌우로 벌어진 두 노즐 간격
+            const fx = -0.18 * csz.x * scl;       // 두 화염을 우측(화면 기준)으로 약간 이동
+            const flames = [];
+            for (const sx of [-1, 1]) {
+              const fl = makeFlame(flameBase);
+              fl.position.set(fx + sx * dx, fy, fz);
+              glider.add(fl);
+              flames.push(fl);
+            }
+
+            astronauts.push({
+              pivot, holder, glider, flames, flameBase, baseYaw,
+              bobAmp: modelH * 0.05,
+              bobSpeed: 0.6 + i * 0.2,
+              bobPhase: cfg.a * 1.7,
+              swayPhase: cfg.a,
+              orbitSpeed: cfg.spin,
+            });
+          });
+        }, undefined, (e) => { console.warn('우주인 로드 실패(장식 생략):', e); });
       }
       // base64 → ArrayBuffer (file://에서 fetch 없이 parse 하기 위함)
       function b64ToBuffer(b64) {
@@ -269,6 +420,29 @@
 
         // 인사말 표시(흔들기 시작 시점)
         if (!greeted && g > 0.2) { greeted = true; greetEl.classList.add('show'); }
+
+        // 별빛 천천히 흐르기(미세한 우주 드리프트)
+        starField.rotation.y += dt * 0.008;
+
+        // ALBI 바닥 추진 화염 깜빡임(불꽃 너울)
+        for (let k = 0; k < albiFlames.length; k++) {
+          albiFlames[k].scale.z = albiFlameBase * (0.65 + 0.6 * Math.abs(Math.sin(t * 13 + k * 2.1)));
+        }
+
+        // 우주인: 제트팩 추진으로 진행방향을 향해 유영 + 분사 화염 깜빡임
+        for (const a of astronauts) {
+          a.pivot.rotation.y += a.orbitSpeed * dt;                               // 공전(추진 진행)
+          a.holder.position.y = Math.sin(t * a.bobSpeed + a.bobPhase) * a.bobAmp; // 상하 부유
+          // 진행방향을 기준으로 살짝 흔들리는 헤엄 자세
+          a.glider.rotation.y = a.baseYaw + Math.sin(t * 0.8 + a.swayPhase) * 0.12;
+          a.glider.rotation.x = Math.sin(t * 0.6 + a.swayPhase * 1.3) * 0.10;
+          a.glider.rotation.z = Math.sin(t * 0.7 + a.swayPhase * 0.7) * 0.10;
+          // 두 줄기 분사 화염 길이 깜빡임(좌우 위상 어긋나게 너울)
+          for (let k = 0; k < a.flames.length; k++) {
+            const ph = a.swayPhase * 3 + k * 1.7;
+            a.flames[k].scale.z = a.flameBase * (0.65 + 0.6 * Math.abs(Math.sin(t * 12 + ph)));
+          }
+        }
 
         controls.update();
         renderer.render(scene, camera);
