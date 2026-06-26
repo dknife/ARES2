@@ -13,20 +13,35 @@
     --info-color: #FA5D29;
     --border-color: #EDEDED;
     --log-background: #FFFFFF;
+    --mobile-bottom-nav-height: 72px;
+}
+
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden !important;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
     margin: 0;
     padding: 0;
     height: 100dvh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 100%;
+    display: block;
     background: var(--background-main);
     color: var(--text-primary);
     font-family: 'Inter Tight', sans-serif;
     overflow: hidden;
-    padding: 12px;
+    overflow-x: hidden !important;
+    max-width: 100%;
 }
 
 /* ===== Blockly Drilldown (카테고리 숨김 + 블록 목록을 그 자리로) ===== */
@@ -113,47 +128,59 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     background: #0576b9;
 }
 
-#dashboardButton {
-    background: #313131;
+#blockCodingButton {
+    background: #0693E3;
 }
 
-#dashboardButton:hover {
-    background: #484848;
+#blockCodingButton:hover {
+    background: #0576b9;
 }
 
 .container {
-    background: var(--background-white);
-    padding: 16px;
-    border-radius: 16px;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-    max-width: 95%;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: 100%;
     width: 100%;
-    height: calc(100dvh - 24px);
-    max-height: calc(100dvh - 24px);
+    height: 100dvh;
+    max-height: 100dvh;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--border-color);
+    border: none;
     overflow: hidden;
+    overflow-x: hidden !important;
     min-height: 0;
+    margin: 0;
 }
 
 .header {
-    margin-bottom: 10px;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: visible;
 }
 
 .header-main {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 6px 12px;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
     background: var(--background-main);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 52px;
+    overflow: visible;
 }
 
 .header-main h1 {
     font-family: 'Inter Tight', sans-serif;
-    font-size: 1.2em;
+    font-size: 0.95em;
     font-weight: 700;
     margin: 0;
     letter-spacing: -0.5px;
@@ -169,7 +196,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 #controls {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -180,13 +207,19 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     border: none;
     margin: 0;
     min-height: 0;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 0;
+    overflow: visible;
 }
 
 #controls button {
-    height: 34px;
-    padding: 0 12px;
-    margin: 2px;
-    font-size: 0.85em;
+    height: 36px;
+    padding: 0 10px;
+    margin: 0;
+    font-size: 0.75em;
+    line-height: 1.1;
+    flex-shrink: 0;
 }
 
 button {
@@ -216,24 +249,128 @@ button:disabled {
     box-shadow: none;
 }
 
+button:focus {
+    outline: none;
+}
+
+button:focus-visible {
+    outline: 2px solid rgba(250, 93, 41, 0.55);
+    outline-offset: 2px;
+}
+
+/* ===== 모바일 하단 내비게이션 ===== */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+    margin: 0;
+    background: rgba(255, 255, 255, 0.94);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mobile-bottom-nav .mobile-nav-btn {
+    margin: 0;
+    padding: 6px 2px 4px;
+    min-width: 0;
+    height: auto;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.74em;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.mobile-bottom-nav .mobile-nav-btn,
+.mobile-bottom-nav .mobile-nav-btn:hover,
+.mobile-bottom-nav .mobile-nav-btn:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.mobile-bottom-nav .mobile-nav-btn:not(.active),
+.mobile-bottom-nav .mobile-nav-btn:not(.active):hover,
+.mobile-bottom-nav .mobile-nav-btn:not(.active):active {
+    background: transparent;
+}
+
+.mobile-bottom-nav .mobile-nav-btn:focus,
+.mobile-bottom-nav .mobile-nav-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .mobile-bottom-nav .mobile-nav-btn:hover {
+        transform: none;
+        box-shadow: none;
+        background: rgba(250, 93, 41, 0.06);
+    }
+}
+
+.mobile-bottom-nav .mobile-nav-btn.active {
+    color: var(--accent-color);
+    background: rgba(250, 93, 41, 0.1);
+}
+
+.mobile-bottom-nav .mobile-nav-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.mobile-bottom-nav .mobile-nav-label {
+    font-size: 0.92em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+    .mobile-bottom-nav {
+        display: none !important;
+    }
+}
+
 /* ===== 로그 표시/숨김 토글 ===== */
 body.log-hidden #logContainer {
     display: none !important;
 }
 
 body.log-hidden .main-content {
-    margin-bottom: 12px;
+    margin-bottom: 0;
 }
 
 .main-content {
     flex-grow: 1;
-    background: var(--background-white);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    background: transparent; /* 전체 화면 흐름으로 표시: 박스 제거 */
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
     position: relative;
     min-height: 0;
-    border: 1px solid var(--border-color);
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
 }
 
 #blocklyDiv {
@@ -273,7 +410,7 @@ body.log-hidden .main-content {
 }
 
 #logContainer {
-    margin-top: 12px;
+    margin: 0;
     height: 120px;
     min-height: 100px;
     max-height: 120px;
@@ -333,7 +470,7 @@ body.log-hidden .main-content {
 
 @media (max-width: 600px) {
     .container {
-        padding: 8px;
+        padding: 0;
         height: 95vh;
     }
     .header h1 {
@@ -347,16 +484,7 @@ body.log-hidden .main-content {
         height: 36px;
         padding: 0 12px;
     }
-    #controls {
-        flex-direction: column;
-    }
-    #controls::-webkit-scrollbar {
-      height: 4px;
-    }
-    #controls::-webkit-scrollbar-thumb {
-        background: var(--accent-color);
-        border-radius: 10px;
-    }
+    /* 모바일에서는 가로 스크롤 하는 한 줄로 배치 — 아래 549라인 규칙에서 row로 재설정됨 */
     #logContainer {
         height: 15vh;
     }
@@ -375,7 +503,7 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
   .container {
     max-width: 100%;
     width: 100%;
-    padding: 12px;
+    padding: 0;
     height: 100dvh;
     min-height: 100dvh;
   }
@@ -383,9 +511,10 @@ button, .nav-tab, .action-btn { touch-action: manipulation; }
   .header-main {
     flex-direction: column;
     align-items: stretch;
-    background: transparent;
+    background: var(--background-main);
     border: none;
-    padding: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 10px;
     gap: 6px;
   }
 
@@ -461,21 +590,27 @@ iframe, #dashboardFrame {
 
     height: auto !important;
     min-height: fit-content !important;
-    padding: 10px 8px !important;
+    padding: 4px 2px !important;
+    margin: 0 !important;
     white-space: nowrap !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
   }
 
   #controls button {
       flex: 0 0 auto !important;
-      margin: 0 3px !important;
+      margin: 0 2px !important;
       display: inline-block !important;
+      padding: 0 8px !important;
+      font-size: 0.75em !important;
+      height: 32px !important;
   }
 
   #controls::-webkit-scrollbar {
-      height: 4px;
+      height: 2px;
   }
   #controls::-webkit-scrollbar-track {
-      background: var(--background-secondary);
+      background: transparent;
   }
   #controls::-webkit-scrollbar-thumb {
       background: var(--accent-color);
@@ -545,10 +680,10 @@ iframe, #dashboardFrame {
     flex-wrap: wrap;
     gap: 8px;
     padding: 8px 12px;
-    margin-bottom: 12px;
-    background: var(--background-main);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    margin: 0;
+    background: transparent; /* 박스 배경 제거 */
+    border: none;
+    border-radius: 0;
 }
 
 #missionNav .nav-btn {
@@ -593,14 +728,13 @@ iframe, #dashboardFrame {
    (body[data-content-mode] 는 main.js applyMode 에서 설정)
    - coding     → 남는 것: 미션 설명 · 시뮬레이션 · 예제
    - simulation → 남는 것: 시뮬레이션 닫기 · 예제 */
-body[data-content-mode="coding"]     #missionNav > #homeButton,
 body[data-content-mode="coding"]     #missionNav > #lessonSelect,
-body[data-content-mode="coding"]     #missionNav > #missionSelect,
-body[data-content-mode="coding"]     #missionNav > #breadcrumb,
-body[data-content-mode="simulation"] #missionNav > #homeButton,
+body[data-content-mode="coding"]     #missionSelect,
+body[data-content-mode="coding"]     #breadcrumb,
+body[data-content-mode="simulation"] #homeButton,
 body[data-content-mode="simulation"] #missionNav > #lessonSelect,
-body[data-content-mode="simulation"] #missionNav > #missionSelect,
-body[data-content-mode="simulation"] #missionNav > #breadcrumb {
+body[data-content-mode="simulation"] #missionSelect,
+body[data-content-mode="simulation"] #breadcrumb {
     display: none !important;
 }
 /* 시뮬레이션 모드에서는 '미션 설명' 토글도 숨김 (시뮬레이션 닫기로만 빠져나감) */
@@ -887,10 +1021,10 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 }
 
 .summary-box {
-    padding: 14px 18px;
+    padding: 14px 0;
     border-left: 4px solid var(--accent-color);
-    background: var(--background-main);
-    border-radius: 0 8px 8px 0;
+    background: transparent;
+    border-radius: 0;
 }
 
 .summary-box h4 {
@@ -1092,10 +1226,11 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .sim-log-line.err    { color: #ff8a8a; }
 
 #missionView .mission-panel {
-    background: var(--background-main);
+    background: transparent;
     padding: 16px 20px 16px;
     overflow-y: auto;
     box-sizing: border-box;
+    border: none;
 }
 
 .mission-panel-head h3 {
@@ -1111,11 +1246,11 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 }
 
 .mission-story {
-    background: var(--background-white);
-    border-radius: 8px;
-    padding: 10px 12px;
+    background: transparent;
+    border-radius: 0;
+    padding: 10px 0;
     margin-bottom: 14px;
-    border: 1px solid var(--border-color);
+    border: none;
 }
 
 .story-line {
@@ -1172,15 +1307,15 @@ details.mission-section summary {
 
 .sample-code {
     margin: 8px 0 0;
-    padding: 10px 12px;
-    background: #1e1e1e;
-    color: #f0f0f0;
-    border-radius: 6px;
+    padding: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 0;
     font-family: 'Courier New', Consolas, monospace;
     font-size: 0.78em;
     line-height: 1.45;
     overflow-x: auto;
-    white-space: pre;
+    white-space: pre-wrap;
 }
 
 .mission-prev-next {
@@ -1250,24 +1385,69 @@ details.mission-section summary {
         height: auto;
         min-height: 100dvh;
         overflow: visible;
+        overflow-x: hidden !important;
         align-items: stretch;
-        padding: 8px;
+        padding: 0 0 calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom)) 0;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
     }
     .container {
         height: auto;
         max-height: none;
-        min-height: calc(100dvh - 16px);
+        min-height: 100dvh;
         max-width: 100%;
-        padding: 12px;
+        width: 100%;
+        padding: 0;
+        /* extra 8px cushion so fixed bottom nav never overlaps content */
+        padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom) + 8px);
+        margin: 0;
         overflow: visible;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+    }
+    .header {
+        position: static;
+        top: auto;
+        z-index: 120;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        background: var(--background-main);
+    }
+    .header-main {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding: 4px 4px;
+        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
+        overflow-x: hidden !important;
+        gap: 4px !important;
+    }
+    .header-main h1 {
+        font-size: 0.95em;
+        flex-shrink: 0;
     }
     .main-content {
         overflow: visible;
         min-height: 0;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        background: transparent; /* 모바일에서 박스 스타일 제거 */
+        box-shadow: none;
     }
     #overviewView,
     #lessonView {
         overflow-y: visible;
+        padding: 16px;
+        margin: 0;
     }
 
     /* 미션 뷰: 절대 위치 풀-페인을 일반 흐름 + 모드별 충분한 높이로 전환 */
@@ -1305,6 +1485,15 @@ details.mission-section summary {
 
     /* 네비 버튼/셀렉트(코드확인·블록코딩·시뮬레이션·예제·AI 도움): 모바일에서
        글자가 두 줄로 넘치지 않도록 폰트를 기존의 80% 로 줄이고 줄바꿈을 막는다. */
+    #missionNav {
+        margin: 0;
+        padding: 6px 0;
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 0;
+        border: none;
+        background: transparent;
+    }
     #missionNav .nav-btn { font-size: 0.68em; }   /* 0.85 × 0.8 */
     #missionNav select   { font-size: 0.70em; }   /* 0.88 × 0.8 */
     #missionNav .nav-btn,
@@ -1331,25 +1520,29 @@ details.mission-section summary {
         min-width: 0;
     }
 
-    /* 로그 컨테이너: 페이지 스크롤로 끝부분에서 보이도록 */
-    #logContainer {
-        max-height: none;
-        height: auto;
-        min-height: 140px;
-    }
-    #logContent {
-        max-height: 220px;
-    }
-
-    /* Blockly 툴박스: 모바일에서는 카테고리 이름을 JS 에서 emoji 1자로 잘라 두므로
-       (initializeBlockly 참고) 라벨 자체에 별도 클립 처리가 필요 없다.
-       여기서는 폭만 좁히고 선택 시 가로 확장이 일어나지 않도록 row 폭을 고정한다. */
-    .blocklyToolboxDiv {
-        width: 30px !important;
-        min-width: 30px !important;
-        padding: 2px 0 !important;
-        overflow: hidden !important;
-    }
+     /* 로그 컨테이너: 페이지 스크롤로 끝부분에서 보이도록 */
+      #logContainer {
+          max-height: none;
+          height: auto;
+          min-height: 140px;
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          width: 100%;
+      }
+            #logContainer {
+                margin: 0;
+                height: 120px;
+                min-height: 100px;
+                max-height: 120px;
+                background: transparent; /* 박스 제거 */
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+                box-shadow: none;
+                overflow: hidden;
+                border: none;
+            }
     .blocklyTreeRow,
     .blocklyTreeSelected {
         width: 30px !important;
@@ -1372,6 +1565,10 @@ details.mission-section summary {
     .blocklyTreeIcon {
         display: none !important;
     }
+
+    .mobile-bottom-nav {
+        display: grid;
+    }
 }
 
 /* ===== 🤖 AI 도움 채팅 패널 ===== */
@@ -1380,7 +1577,7 @@ details.mission-section summary {
     right: 20px;
     bottom: 20px;
     width: 340px;
-    max-width: calc(100vw - 32px);
+    max-width: calc(100% - 32px);
     max-height: 70vh;
     /* 전체 폰트를 0.8배로 — 하위 em 글자들이 모두 비례 축소되어 여백이 생긴다 */
     font-size: 0.8em;
@@ -1505,5 +1702,11 @@ details.mission-section summary {
 .ai-form button:hover { filter: brightness(1.08); }
 
 @media (max-width: 768px) {
-    .ai-panel { right: 8px; left: 8px; bottom: 8px; width: auto; max-height: 75vh; }
+    .ai-panel {
+        right: 8px;
+        left: 8px;
+        bottom: calc(8px + var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+        width: auto;
+        max-height: calc(75vh - var(--mobile-bottom-nav-height));
+    }
 }
