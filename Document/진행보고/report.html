@@ -102,6 +102,20 @@
         }
         figcaption { padding: 14px 16px 16px; font-size: 0.9em; color: #313131; }
 
+        /* 스크린샷(웹 서비스 캡처) — 잘림 없이 전체 표시 */
+        figure.shot .imgbox { aspect-ratio: 16 / 10; background: #F4F4F4; }
+        figure.shot img { object-fit: contain; }
+        .live-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #FA5D29; color: #fff; font-weight: 800;
+            border-radius: 10px; padding: 6px 14px; font-size: 0.95em; letter-spacing: 1px;
+        }
+        .live-link {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            color: #FA5D29; text-decoration: none; font-weight: 600;
+        }
+        .live-link:hover { text-decoration: underline; }
+
         /* Lightbox */
         .lightbox {
             position: fixed; inset: 0; z-index: 200;
@@ -168,6 +182,7 @@
             <div class="stat-row">
                 <div class="stat"><b>4</b><span>DAYS</span></div>
                 <div class="stat"><b>27</b><span>PHOTOS</span></div>
+                <div class="stat"><b>10</b><span>LIVE SCREENS</span></div>
                 <div class="stat"><b>06.23~26</b><span>2026 · KST</span></div>
             </div>
         </div>
@@ -244,6 +259,83 @@
                         <span class="role">실물 교구 디자인 기획 및 시작품 제작</span>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ============ 배포된 웹 서비스 주요 기능 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="live-badge">● LIVE</span>
+                <h2>배포된 웹 서비스 주요 기능</h2>
+                <span class="day-date"><a class="live-link" href="https://dknife.github.io/ARES2" target="_blank">dknife.github.io/ARES2</a></span>
+            </div>
+            <p class="day-summary">GitHub Pages로 배포된 ARES 웹 서비스를 직접 구동하며 주요 기능을 점검했다. 설치 없이 브라우저만으로 <b>학습 콘텐츠 열람 · 블록 코딩 · 3D 시뮬레이션 · AI 도움 · 기기 모니터링</b>이 가능하다. 블록 1개가 명령 문자열로 변환돼 BLE로 로버에 전달되는 전체 경로를, 실물 기기 없이도 시뮬레이션으로 체험할 수 있다.</p>
+
+            <div class="tasks">
+                <h3>🚀 주요 기능 — 학습 관제실부터 3D 시뮬레이션까지</h3>
+                <p class="lead">랜딩 페이지에서 ‘서비스 시작’으로 학습 관제실에 진입하면 <b>12차시 × 4미션 = 48개 미션</b>의 커리큘럼(‘화성 탐사선 코딩 여정’)이 차시 카드와 표로 안내된다. 미션을 고르면 Google Blockly 기반 블록 코딩 화면이 열리고, ‘시뮬레이션’으로 탐사로봇 ‘알비’가 3D로 등장해 작성한 블록의 동작을 미리 보여 준다.</p>
+                <div class="chips">
+                    <span class="chip">랜딩 · 학습 관제실</span>
+                    <span class="chip">블록 코딩(Blockly)</span>
+                    <span class="chip">WebGL 3D 시뮬레이션</span>
+                    <span class="chip t">시뮬 모델 4종</span>
+                    <span class="chip">AI 도움</span>
+                    <span class="chip">점검 대시보드</span>
+                </div>
+                <a class="doclink" href="https://dknife.github.io/ARES2" target="_blank">웹 서비스 열기 ↗</a>
+                <a class="doclink alt" href="../../Web/main.html" target="_blank">학습 관제실(로컬) ↗</a>
+                <p style="margin-top:14px; font-size:0.85em; color:#777;">아래 화면은 <code>dknife.github.io/ARES2</code>를 데스크톱 브라우저로 구동해 캡처했다. 블루투스(BLE)는 사용자 제스처·실기기가 필요해 연결 상태는 ‘연결 끊김’으로 표시되며, 블록 코딩·3D 시뮬레이션·학습 콘텐츠는 기기 없이도 동작한다.</p>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_landing.jpg" alt="랜딩 페이지"></div>
+                    <figcaption><b>랜딩 페이지</b> — “블록 코딩으로 화성을 탐사하다”. 제품 정체성을 제시하고 ‘서비스 시작’으로 학습 관제실에 진입한다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_overview.jpg" alt="학습 관제실"></div>
+                    <figcaption><b>학습 관제실</b> — 12차시 커리큘럼(‘화성 탐사선 코딩 여정’)을 차시 카드와 ‘차시 한눈에 보기’ 표로 안내. 차시·미션을 골라 시작한다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_blockcoding.jpg" alt="블록 코딩 워크스페이스"></div>
+                    <figcaption><b>블록 코딩</b> — 좌측 툴박스(서보·DC·LED·디스플레이·소리·발사·센서·시간·제어·변수·수학·함수). ‘장애물 피하기’ 예제를 불러와 센서 분기·주행·LED·부저 블록이 조합된 모습.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_simulation.jpg" alt="3D 시뮬레이션"></div>
+                    <figcaption><b>3D 시뮬레이션</b> — 탐사로봇 ‘알비’가 3D로 등장해, 작성한 블록이 기기 없이 어떻게 동작하는지 보여 준다(WebGL).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_ai.jpg" alt="AI 도움 패널"></div>
+                    <figcaption><b>AI 도움</b> — 하고 싶은 일을 자연어로 적으면 블록 구성을 제안하는 보조 패널.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_dashboard.jpg" alt="점검 대시보드"></div>
+                    <figcaption><b>점검 대시보드</b>(ARES 미션 컨트롤) — BLE 연결 상태, 센서 텔레메트리(거리·자기장·온도), 시스템 자원, 수동 제어(전진·정지·LED·회전·소리)를 한눈에.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks" style="margin-top:24px;">
+                <h3>🎮 시뮬레이션 모델 4종 — 드롭다운 전환</h3>
+                <p class="lead">시뮬레이션 화면 좌측 상단의 <b>모델 선택 드롭다운</b>으로 4종의 모델을 전환할 수 있다. 같은 블록 코드라도 선택한 모델에 따라 서로 다른 3D 장면·동작이 연출되어, 미션 맥락(로봇·신호등·발사·주행)에 맞는 학습이 가능하다. 네 모델을 차례로 선택해 각각 다른 시뮬레이션이 이뤄짐을 확인했다.</p>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_albi.jpg" alt="시뮬레이션 — 알비와 함께"></div>
+                    <figcaption><b>① 알비와 함께</b> — 탐사로봇 ‘알비’와 LED(눈·가슴) 제어 중심의 입문 장면.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_traffic.jpg" alt="시뮬레이션 — 우주 신호등"></div>
+                    <figcaption><b>② 우주 신호등</b> — 신호등 슬롯·램프와 가위바위보 손동작(랜덤 함수 학습).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_launchpad.jpg" alt="시뮬레이션 — 발사대"></div>
+                    <figcaption><b>③ 발사대</b> — 로켓 발사 시퀀스(레이더·로켓·LED), 점화·발사 연출.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_rover.jpg" alt="시뮬레이션 — 로버"></div>
+                    <figcaption><b>④ 로버</b> — DC 모터 주행과 거리 센서·장애물 회피(격자 바닥의 장애물 박스).</figcaption>
+                </figure>
             </div>
         </section>
 
