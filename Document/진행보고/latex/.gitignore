@@ -1,0 +1,12 @@
+# LaTeX 빌드 보조 파일 (xelatex/bibtex 가 재생성)
+*.aux
+*.bbl
+*.blg
+*.bcf
+*.out
+*.toc
+*.log
+*.run.xml
+ProgressReport-blx.bib
+
+# 추적 대상: *.tex, references.bib, build.sh, ProgressReport.pdf

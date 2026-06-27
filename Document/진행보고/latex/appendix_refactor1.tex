@@ -1,0 +1,167 @@
+%% ============================================================
+%% appendix_refactor1.tex — 부록 B: 1차 Refactoring 계획 (전문)
+%% 원문: Document/REFACTORING_PLAN.md
+%% ============================================================
+\section{1차 Refactoring 계획 (전문)}
+\label{app:refactor1}
+
+\textit{작성일 2026-06-25.} 지나치게 큰 함수$\cdot$파일로 구성된 소스를 기능 분석을
+통해 체계적으로 분할하기 위한 설계 문서이다. 성격은 \textbf{동작 보존
+(behavior-preserving) 리팩터링}으로, 기능 변경$\cdot$버그 수정은 포함하지
+않는다~\cite{fowler2018refactoring, martin2008cleancode}. 원문:
+\code{Document/REFACTORING\_PLAN.md}.
+
+\subsection{진단 --- 무엇이 ``큰가''}
+정량 측정으로 드러난 실제 비대 지점이다(vendor 번들$\cdot$KSWeb은 별도 산출물로
+제외). 핵심은 줄수가 아니라 \textbf{한 단위가 짊어진 책임 수}이다.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l c L{0.34\linewidth} >{\footnotesize}L{0.26\linewidth}@{}}
+\toprule
+\sffamily 파일 & \sffamily 줄수 & \sffamily 핵심 문제 & \sffamily 가장 큰 단위 \\
+\midrule
+Web/simulation.js     & 2333 & 거대 클로저 2개에 10개 서브시스템이 엉킴 & \code{buildSim()} 1412, \code{setupSimulation()} 728 \\
+Web/main.js           & 1051 & 한 함수가 미션/저장/예제/AI/대시보드를 전부 처리 & \code{initializeMissionListeners()} 268 \\
+Web/dashboard.html    & 828  & HTML 안에 CSS 362 + JS 385 인라인 & \code{<style>} 362, \code{<script>} 385 \\
+Pico/process\_data.py & 653  & 거대 if/elif 디스패처 + 30개 핸들러 한 클래스 & \code{process()} 170 \\
+Web/commandexecutor.js& 495  & 생성$\cdot$평가$\cdot$실행 로직이 한 객체에 혼재 & \code{generateCommand()} 104 \\
+Web/ai\_helper.js     & 434  & 의도 매칭 한 함수가 모든 도메인 처리 & \code{matchAction()} 149 \\
+Web/blocklyconfig.js  & 416  & 21개 블록 정의가 한 배열 & 데이터 배열 385 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent\textbf{분할 우선순위 낮음:} \code{hardware.py}$\cdot$\code{system\_config.py}$\cdot$\code{main.py}(Pico)$\cdot$\code{bluetooth.js}는 줄수는 있어도 책임이 응집돼 있어
+무리한 분할은 오히려 손해다.
+
+\subsection{문제 유형과 대응 패턴}
+
+\subsubsection{유형 A --- 거대 클로저에 갇힌 서브시스템 (\code{simulation.js})}
+\code{buildSim()} 하나가 씬셋업$\cdot$모델로딩$\cdot$LED$\cdot$이동/충돌$\cdot$총$\cdot$로켓$\cdot$신호등$\cdot$음파$\cdot$OLED$\cdot$렌더루프를 전부 품고, 상태(약 50개 변수)가 전부
+클로저 스코프에 묶여 외부에서 보이지 않는다. 함수만 떼면 상태 공유가 깨진다.
+\textbf{대응 --- 공유 컨텍스트(ctx) + 서브시스템 모듈화.}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l L{0.52\linewidth} >{\footnotesize}c@{}}
+\toprule
+\sffamily 모듈 & \sffamily 추출 대상 & \sffamily 줄수 \\
+\midrule
+sim/context.js  & 씬$\cdot$카메라$\cdot$렌더러$\cdot$조명$\cdot$그리드$\cdot$공유 상태 컨테이너 & $\sim$180 \\
+sim/assets.js   & GLTF 로딩, 모델 마무리, 부품 배치 & $\sim$500 \\
+sim/leds.js     & makeLed/applyLed/setEye/setChest & $\sim$250 \\
+sim/movement.js & 서보$\cdot$레이더$\cdot$충돌$\cdot$거리센서 & $\sim$220 \\
+sim/gun.js      & 머즐 플래시$\cdot$연기 & $\sim$190 \\
+sim/rocket.js   & 발사 애니메이션$\cdot$연기$\cdot$카메라 추적 & $\sim$350 \\
+sim/traffic.js  & 신호등 슬롯$\cdot$램프$\cdot$가위바위보 손 & $\sim$180 \\
+sim/waves.js    & 부저 음파 링 & $\sim$180 \\
+sim/oled.js     & OLED 캔버스 텍스트/아이콘 & $\sim$130 \\
+sim/render.js   & 프레임 갱신 루프 & $\sim$110 \\
+sim/audio.js    & beep$\cdot$로켓$\cdot$총 사운드 합성 & $\sim$180 \\
+sim/dispatch.js & \code{applyTopicEffect}/\code{simSink} 명령 라우팅 & $\sim$180 \\
+sim/topics.js   & \code{TOPICS}$\cdot$\code{OLED\_ICONS}$\cdot$팔레트 상수 & $\sim$110 \\
+simulation.js   & \code{setupSimulation} UI 제어만 (얇은 오케스트레이터) & $\sim$250 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent\textbf{내부 결합(ctx로 끌어올려야 할 공유 상태):}
+\begin{itemize}
+  \item 이동 $\leftrightarrow$ 충돌: \code{servoOn/Off} 확인 후 이동, \code{nearestBoxDist} 호출.
+  \item 로켓 $\leftrightarrow$ 카메라: \code{savedCamPos}, \code{rocketCentroidWorld}를 렌더 루프에서 갱신.
+  \item 총 $\leftrightarrow$ 연기: \code{gunMesh} 확인 후 \code{gunSmoke} 보장.
+  \item LED 배열: \code{roverLeds}, \code{launchLeds}, \code{eyeL/R}, \code{chestLed} 다수 함수가 참조.
+  \item 신호등: \code{trafficSlotState}, \code{trafficBox}, \code{trafficSlots} 공유.
+  \item \code{buildSim}이 반환하는 약 50개 getter/setter를 \code{setupSimulation}이 사용 → ctx 인터페이스로 명시화.
+\end{itemize}
+
+\subsubsection{유형 B --- 거대 디스패처 + 핸들러 더미}
+\code{process\_data.py}, \code{commandexecutor.generateCommand} --- 하나의 if/elif(또는
+switch)가 50개 명령을 분기하고 핸들러가 같은 클래스/객체 안에 다 있다.
+\textbf{대응 --- 도메인별 핸들러 모듈 + 디스패치 위임.}
+
+\begin{lstlisting}[style=py]
+# process_data.py 는 라우팅만:  CommandProcessor.process() -> 도메인 핸들러 위임
+Pico/handlers/
+  movement.py   # 서보 timed/연속 (6 cmd, ~40줄)
+  dcmotor.py    # DC 모터 (6 cmd, ~75줄)
+  leds.py       # LED on/off/pattern (4 cmd, ~54줄)
+  display.py    # OLED msg/rect/xy/icon (5 cmd, ~100줄)  <- 가장 큼
+  system.py     # PING/STATUS/SYS_SET/SET_PIN/SET_MODULE/BATCH (~120줄)
+  buzzer.py / sensors.py / gun.py
+\end{lstlisting}
+
+\noindent prefix$\to$핸들러 dict로 바꾸면 170줄짜리 \code{process()}가 약 30줄로 준다.
+JS \code{generateCommand()}(104줄)도 동일하게 \code{commands/}로 블록타입→생성기 매핑.
+
+\begin{notebox}[MicroPython RAM 제약]
+파일 분할 시 import 오버헤드가 늘어난다. Pico에서는 \textbf{도메인 5$\sim$6개
+수준}으로만 나누고 과분할은 피한다.
+\end{notebox}
+
+\subsubsection{유형 C --- 데이터 덩어리 / 만능 함수}
+\code{blocklyconfig.js}, \code{ai\_helper.matchAction} --- 이미 주석으로 카테고리가
+갈려 있어 \textbf{물리적 파일 분리만} 하면 된다.
+
+\begin{lstlisting}[style=js]
+Web/blocks/
+  servo.js  dcmotor.js  led.js  display.js  buzzer.js
+  gun.js  sensor.js  time.js  math.js  batch.js
+  index.js   // 카테고리 합쳐 BlocklyConfig.blocks 구성
+// ai_helper.js -> match/movement.js, match/sensor.js, match/display.js …
+\end{lstlisting}
+
+\subsubsection{유형 D --- 인라인 자산}
+\code{dashboard.html}, \code{main.html} --- HTML 안에 CSS$\cdot$JS 인라인.
+\textbf{대응 --- CSS/JS 외부 파일로 추출}(가장 쉽고 위험 낮음, 즉시 효과). 예:
+\code{dashboard.html}(187줄, 순수 마크업) + \code{dashboard.css}(362) + \code{dashboard.js}(385).
+
+\subsection{권장 목표 디렉터리 구조 (Web)}
+\begin{lstlisting}[style=js]
+Web/
+  simulation.js          // 얇은 진입점 (setup/open/close)
+  sim/                   // 유형 A 서브시스템 14개
+  blocks/                // 유형 C 블록 정의 (카테고리별)
+  commands/              // generateCommand 분할
+  ai/                    // ai_helper 파이프라인 (preprocess/match/serialize)
+  ui/                    // main.js 분리: router · blockly-init ·
+                         //   mission-controls · ai-panel · dashboard-bridge
+  dashboard.html / dashboard.css / dashboard.js
+  (bluetooth.js, state.js, constants.js, logger.js — 유지)
+\end{lstlisting}
+
+\subsection{우선순위 로드맵 (위험 낮음 → 가치 높음)}
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}c L{0.56\linewidth} c >{\footnotesize}L{0.18\linewidth}@{}}
+\toprule
+\sffamily 단계 & \sffamily 작업 & \sffamily 위험 & \sffamily 효과 \\
+\midrule
+0 & 정적 테스트 기준선 확보(브라우저 로드$\cdot$펌웨어 부팅) & --- & 안전망 \\
+1 & dashboard/main.html 인라인 CSS$\cdot$JS 추출 (D) & 낮음 & 즉시 828→187 \\
+2 & blocklyconfig.js 카테고리 파일 분리 (C) & 낮음 & 블록 추가 쉬움 \\
+3 & process\_data.py 도메인 핸들러 + dict 디스패치 (B) & 중 & 확장성↑ \\
+4 & main.js → router/blockly-init/mission-controls/ai-panel & 중 & 1051→$\sim$400 \\
+5 & commandexecutor.js$\cdot$ai\_helper.js 파이프라인 분할 (B/C) & 중 & 실행/생성/평가 분리 \\
+6 & \textbf{simulation.js → sim/ 서브시스템화 (A)} & 높음 & 2333줄 해체 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent\textbf{설계 원칙:} 쉽고 위험 낮은 것부터(1→2) 패턴을 검증하고, 가장 어려운
+\code{simulation.js}(6)는 마지막에. 각 단계는 동작 보존 리팩터링으로 \textbf{한 번에 한
+모듈씩 이동 후 검증}한다.
+
+\subsection{횡단 주의점}
+\begin{itemize}
+  \item \textbf{블록 타입 이름 3중 결합} --- \code{blocklyconfig.js}의 \code{type}
+  $\leftrightarrow$ \code{generateCommand()}의 case $\leftrightarrow$ \code{ai\_helper.KNOWN\_TYPES}.
+  한곳(상수)으로 모아 단일 출처(SSOT)화하면 동기화 버그를 줄인다.
+  \item \textbf{\code{state.js} 전역 의존} --- 거의 모든 Web 모듈이 \code{state}를 직접
+  변이. 분할 시 누가 무엇을 쓰는지 드러나므로 이 기회에 접근 경로를 정리한다.
+  \item \textbf{firmware $\leftrightarrow$ web 문자열 프로토콜} --- 컴파일 검증이 안 됨.
+  \code{Document/API\_DOCUMENTATION.md}가 유일 계약 → 변경 시 동시 갱신.
+  \item \textbf{알려진 버그 동거} --- 기존 버그(wheel turn 로직, SYS\_SET 고아 코드 등)는
+  분할과 분리해서 다룬다. 리팩터링 커밋에 버그 수정을 섞으면 회귀 추적이 어렵다.
+\end{itemize}
