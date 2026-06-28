@@ -145,7 +145,7 @@ export function recolorLaunchpadAntenna(root, THREE) {
   }
 }
 
-export class RocketSubsystem {
+export class Rocket {
   constructor(ctx) {
     this.ctx = ctx;
     this.rocketGroup = null;
@@ -338,8 +338,12 @@ export class RocketSubsystem {
 
   dispose() {
     try {
-      this.smokePool.forEach((p) => p.sprite?.material?.dispose?.());
+      if (this.smokePool) {
+        this.smokePool.forEach((p) => p.sprite?.material?.dispose?.());
+        this.smokePool = [];
+      }
       this.smokeTex?.dispose?.();
+      this.smokeTex = null;
     } catch {}
   }
 }

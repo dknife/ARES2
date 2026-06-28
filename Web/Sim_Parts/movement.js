@@ -7,7 +7,7 @@ const BOX_CLEAR_R = 5;
 const DIST_NO_HIT = 999;
 const DIST_BOX_INFLATE = 2.0;
 
-export class MovementSubsystem {
+export class Movement {
   constructor(ctx) {
     this.ctx = ctx;
     this.radarOn = false;

@@ -6,7 +6,7 @@ const GUN_SMOKE_POOL = 18;
 const GUN_SMOKE_BURST = 12;
 const GUN_SMOKE_BURST_DUR = 0.18;
 
-export class GunSubsystem {
+export class Gun {
   constructor(ctx) {
     this.ctx = ctx;
     this.gunMesh = null;
@@ -202,8 +202,12 @@ export class GunSubsystem {
 
   dispose() {
     try {
-      this.gunSmokePool.forEach((p) => p.sprite?.material?.dispose?.());
+      if (this.gunSmokePool) {
+        this.gunSmokePool.forEach((p) => p.sprite?.material?.dispose?.());
+        this.gunSmokePool = [];
+      }
       this.smokeTex?.dispose?.();
+      this.smokeTex = null;
     } catch {}
   }
 }

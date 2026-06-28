@@ -1,19 +1,19 @@
 // Web/Sim_Parts/context.js
-// Shared state container and Three.js scene setup.
+// 시뮬레이션의 전역 상태 컨테이너 및 Three.js 씬 초기화(Context 클래스)를 담당하는 파일입니다.
 
-import { AssetLoader, makeGLTFLoader } from './assets.js';
-import { RenderEngine } from './render.js';
-import { LedSubsystem } from './leds.js';
-import { MovementSubsystem } from './movement.js';
-import { RocketSubsystem } from './rocket.js';
-import { TrafficSubsystem } from './traffic.js';
-import { WavesSubsystem } from './waves.js';
-import { OledSubsystem } from './oled.js';
-import { GunSubsystem } from './gun.js';
-import { AudioSynthesizer } from './audio.js';
-import { CommandDispatcher } from './dispatch.js';
+import { Assets, makeGLTFLoader } from './assets.js';
+import { Render } from './render.js';
+import { Leds } from './leds.js';
+import { Movement } from './movement.js';
+import { Rocket } from './rocket.js';
+import { Traffic } from './traffic.js';
+import { Waves } from './waves.js';
+import { Oled } from './oled.js';
+import { Gun } from './gun.js';
+import { Audio } from './audio.js';
+import { Dispatch } from './dispatch.js';
 
-export class SimContext {
+export class Context {
   constructor(THREE, A, stage, loadingEl, cfg, options = {}) {
     this.THREE = THREE;
     this.A = A;
@@ -26,7 +26,7 @@ export class SimContext {
     this.audioCtx = null;
     this.disposed = false;
 
-    // WebGL setup
+    // WebGL 렌더러 생성 및 고화질 설정
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -36,18 +36,20 @@ export class SimContext {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.stage.appendChild(this.renderer.domElement);
 
+    // 3D 씬 생성
     this.scene = new THREE.Scene();
     
-    // PMREM environment map
+    // PMREM 환경 맵 생성 (금속 반사광 효과 적용)
     this.pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = this.pmrem.fromScene(new A.RoomEnvironment(), 0.04).texture;
 
+    // 카메라 및 OrbitControls 컨트롤러 설정
     this.camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
     this.controls = new A.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
 
-    // Lighting
+    // 씬 조명 설정 (반구형 주 조명 + 방향성 보조등 2개)
     this.scene.add(new THREE.HemisphereLight(0xdfeaff, 0x32402f, 0.55));
     
     const key = new THREE.DirectionalLight(0xfff4e6, 2.0);
@@ -69,7 +71,7 @@ export class SimContext {
     fill.position.set(-4, 2, 4);
     this.scene.add(fill);
 
-    // Ground
+    // 그림자 표현을 위한 바닥 원판 생성
     this.ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.receiveShadow = true;
@@ -79,20 +81,21 @@ export class SimContext {
     this.planeGrids = null;
     this.lastRenderTime = 0;
 
-    // Shared subsystem refs (OOP Class instances)
-    this.leds = new LedSubsystem(this);
-    this.movement = new MovementSubsystem(this);
-    this.gun = new GunSubsystem(this);
-    this.rocket = new RocketSubsystem(this);
-    this.traffic = new TrafficSubsystem(this);
-    this.waves = new WavesSubsystem(this);
-    this.oled = new OledSubsystem(this);
-    this.audio = new AudioSynthesizer(this);
-    this.assets = new AssetLoader(this);
-    this.renderEngine = new RenderEngine(this);
-    this.dispatcher = new CommandDispatcher(this);
+    // 공유 서브시스템들 인스턴스 할당
+    this.leds = new Leds(this);
+    this.movement = new Movement(this);
+    this.gun = new Gun(this);
+    this.rocket = new Rocket(this);
+    this.traffic = new Traffic(this);
+    this.waves = new Waves(this);
+    this.oled = new Oled(this);
+    this.audio = new Audio(this);
+    this.assets = new Assets(this);
+    this.renderEngine = new Render(this);
+    this.dispatcher = new Dispatch(this);
   }
 
+  // 브라우저의 Web AudioContext 취득 및 락 해제 메서드
   getAudioCtx() {
     if (!this.audioCtx && this.ensureAudio) {
       this.audioCtx = this.ensureAudio();
@@ -103,6 +106,7 @@ export class SimContext {
     return this.audioCtx;
   }
 
+  // 시뮬레이터 크기 리사이즈 처리 메서드
   resize() {
     const w = this.stage.clientWidth || 360, h = this.stage.clientHeight || 300;
     this.renderer.setSize(w, h, false);
@@ -110,6 +114,7 @@ export class SimContext {
     this.camera.updateProjectionMatrix();
   }
 
+  // 지정한 위치(cy) 및 거리(dist) 기준 카메라 구도를 잡는 헬퍼 메서드
   frame(cy, dist) {
     this.camera.position.set(0, cy, dist);
     this.camera.near = dist / 100;
@@ -119,10 +124,12 @@ export class SimContext {
     this.controls.update();
   }
 
+  // 시뮬레이션 인스턴스를 파괴하고 GPU 상의 WebGL 지오메트리 및 재질 메모리를 해제합니다.
   dispose() {
     this.disposed = true;
     try { this.controls.dispose(); } catch {}
     
+    // 씬을 순회하며 지오메트리와 맵 텍스처 메모리 자원 해제
     this.scene.traverse((o) => {
       if (o.isMesh || o.isSprite) {
         o.geometry?.dispose?.();
@@ -142,7 +149,7 @@ export class SimContext {
       this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
     }
 
-    // Subsystem disposals
+    // 각 세부 파츠 인스턴스의 개별 자원 해제 호출
     this.leds?.dispose?.();
     this.gun?.dispose?.();
     this.traffic?.dispose?.();
@@ -151,10 +158,12 @@ export class SimContext {
   }
 }
 
+// 절차 지향 모드에서 사용되던 씬 빌더 함수입니다.
+// (현재는 OOP 리팩토링 설계에 따른 래퍼 객체가 Simulation_Main.js에 정의되어 있어 구버전 호환용으로 유지됩니다.)
 export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
-  const ctx = new SimContext(THREE, A, stage, loadingEl, cfg, options);
+  const ctx = new Context(THREE, A, stage, loadingEl, cfg, options);
 
-  // Load standard models or parts
+  // 기본 모델 또는 다중 조립식 파츠 로드 실행
   ctx.assets.loadAssets();
 
   return {
@@ -164,7 +173,7 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
       ctx.dispose();
     },
     
-    // Albi LEDs
+    // 알비 로봇 눈/가슴 LED 제어
     get hasEyes() { return !!ctx.cfg.eyes; },
     get eyeL() { return ctx.leds?.eyeL; },
     get eyeR() { return ctx.leds?.eyeR; },
@@ -173,7 +182,7 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
     get chestLed() { return ctx.leds?.chestLed; },
     setChest(val) { ctx.leds.setChest(val); },
 
-    // Launchpad
+    // 우주선 발사대 제어
     get hasLaunchLeds() { return !!ctx.cfg.launch && ctx.leds?.launchLeds?.length > 0; },
     get launchLeds() { return ctx.leds?.launchLeds; },
     setLaunchLed(i, val) { ctx.leds.setLaunchLed(i, val); },
@@ -184,7 +193,7 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
     get rocketAtRest() { return !ctx.rocket?.rocketLaunchOn && ctx.rocket?.rocketAnimT === 0; },
     setRocketLaunch(on, follow) { ctx.rocket.setRocketLaunch(on, follow); },
 
-    // Traffic light
+    // 우주 신호등 제어
     get hasTraffic() { return !!ctx.cfg.traffic; },
     placeLamps() { ctx.traffic.placeLamps(() => makeGLTFLoader(ctx.A)); },
     placeHands() { ctx.traffic.placeHands(() => makeGLTFLoader(ctx.A)); },
@@ -192,7 +201,7 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
     toggleSlot(idx) { ctx.traffic.toggleSlot(idx); },
     setSlot(idx, val) { ctx.traffic.setSlotOn(idx, val); },
 
-    // Rover
+    // 탐사선 로버 제어
     get hasRoverLeds() { return ctx.leds?.roverLeds?.length > 0; },
     setRoverLed(num, val) { ctx.leds.setRoverLed(num, val); },
     get hasServo() { return !!ctx.worldGroup; },
@@ -217,7 +226,7 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
     get hasGun() { return !!ctx.gun?.gunMesh; },
     setGunFire() { ctx.gun.setGunFire(); },
 
-    // Radar / Helpers
+    // 안테나 레이더 / 평면 그리드 보조선 제어
     get hasRadar() { return !!ctx.movement?.antennaPivot; },
     get radarOn() { return ctx.movement?.radarOn; },
     setRadar(on, dir) { ctx.movement.setRadar(on, dir); },
@@ -230,11 +239,11 @@ export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
       return false;
     },
 
-    // Audio triggers
+    // 오디오 효과 재생 작동
     playRocketLaunch() { ctx.audio.playRocketLaunch(); },
     playGunFire() { ctx.audio.playGunFire(); },
 
-    // Command sink API
+    // 비동기 커맨드 발송 대기 제어 API
     simSink(command, waitResp) { return ctx.dispatcher.simSink(command, waitResp); },
     cancelActiveWait() { ctx.dispatcher.cancelActiveWait(); }
   };

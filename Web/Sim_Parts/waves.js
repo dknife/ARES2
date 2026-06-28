@@ -9,7 +9,7 @@ const WAVE_COLOR          = 0x88ddff;
 const WAVE_OPACITY        = 0.16;
 const ROVER_WAVE_BASE_R    = 0.15;
 
-export class WavesSubsystem {
+export class Waves {
   constructor(ctx) {
     this.ctx = ctx;
     this.launchWaveOn = false;
@@ -87,9 +87,11 @@ export class WavesSubsystem {
       r.age += dt;
       const t = r.age / WAVE_LIFETIME;
       if (t >= 1) {
-        r.mesh.geometry.dispose();
-        r.mesh.material.dispose();
-        this.ctx.scene.remove(r.mesh);
+        try {
+          r.mesh.geometry.dispose();
+          r.mesh.material.dispose();
+          this.ctx.scene.remove(r.mesh);
+        } catch {}
         this.launchWaveRings.splice(i, 1);
         continue;
       }
@@ -111,9 +113,11 @@ export class WavesSubsystem {
       r.age += dt;
       const t = r.age / WAVE_LIFETIME;
       if (t >= 1) {
-        r.mesh.geometry.dispose();
-        r.mesh.material.dispose();
-        this.ctx.scene.remove(r.mesh);
+        try {
+          r.mesh.geometry.dispose();
+          r.mesh.material.dispose();
+          this.ctx.scene.remove(r.mesh);
+        } catch {}
         this.roverWaveRings.splice(i, 1);
         continue;
       }
@@ -124,13 +128,25 @@ export class WavesSubsystem {
   }
 
   dispose() {
-    this.launchWaveRings.forEach((r) => {
-      r.mesh.geometry.dispose();
-      r.mesh.material.dispose();
-    });
-    this.roverWaveRings.forEach((r) => {
-      r.mesh.geometry.dispose();
-      r.mesh.material.dispose();
-    });
+    if (this.launchWaveRings) {
+      this.launchWaveRings.forEach((r) => {
+        try {
+          r.mesh.geometry.dispose();
+          r.mesh.material.dispose();
+          this.ctx.scene.remove(r.mesh);
+        } catch {}
+      });
+      this.launchWaveRings = [];
+    }
+    if (this.roverWaveRings) {
+      this.roverWaveRings.forEach((r) => {
+        try {
+          r.mesh.geometry.dispose();
+          r.mesh.material.dispose();
+          this.ctx.scene.remove(r.mesh);
+        } catch {}
+      });
+      this.roverWaveRings = [];
+    }
   }
 }

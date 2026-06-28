@@ -9,7 +9,7 @@ const OLED_SCALE = 4;
 const OLED_CHAR_W = 8;
 const OLED_CHAR_H = 8;
 
-export class OledSubsystem {
+export class Oled {
   constructor(ctx) {
     this.ctx = ctx;
     this.oledCanvas = null;

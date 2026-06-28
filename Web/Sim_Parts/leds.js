@@ -3,7 +3,7 @@
 
 import { LED_PALETTES } from './topics.js';
 
-export class LedSubsystem {
+export class Leds {
   constructor(ctx) {
     this.ctx = ctx;
     this.eyeL = null;
@@ -120,9 +120,13 @@ export class LedSubsystem {
   }
 
   dispose() {
-    this.eyeGlowTex?.dispose();
-    this.chestGlowTex?.dispose();
-    this.launchGlowTex?.dispose();
-    this.launchStripGlowTex?.dispose();
+    try { this.eyeGlowTex?.dispose(); } catch {}
+    this.eyeGlowTex = null;
+    try { this.chestGlowTex?.dispose(); } catch {}
+    this.chestGlowTex = null;
+    try { this.launchGlowTex?.dispose(); } catch {}
+    this.launchGlowTex = null;
+    try { this.launchStripGlowTex?.dispose(); } catch {}
+    this.launchStripGlowTex = null;
   }
 }

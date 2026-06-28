@@ -1,8 +1,9 @@
 // Web/Sim_Parts/assets.js
-// GLTF asset loading, model bounding box centering, and multi-part placement.
+// 3D 자산 로딩(GLTF), 모델의 경계 상자(Bounding Box) 기준 센터 설정 및 개별 파츠 배치를 담당하는 파일입니다.
 
 import { recolorAntenna } from './rocket.js';
 
+// Three.js의 GLTFLoader 인스턴스를 생성하고 MeshoptDecoder가 사용 가능한 경우 바인딩하여 반환하는 팩토리 함수입니다.
 export function makeGLTFLoader(A) {
   const loader = new A.GLTFLoader();
   const md = window.MeshoptDecoder;
@@ -10,22 +11,26 @@ export function makeGLTFLoader(A) {
   return loader;
 }
 
-export class AssetLoader {
+export class Assets {
   constructor(ctx) {
     this.ctx = ctx;
   }
 
+  // 기존 절차 지향 방식에서 사용되던 통합 에셋 로딩 메서드입니다.
+  // (현재는 최신 OOP 리팩토링에 따라 각 테마 서브시스템 클래스 내부에서 직접 로딩을 처리하고 있어, 하위 호환성을 위해 유지됩니다.)
   loadAssets() {
     const THREE = this.ctx.THREE;
     const A = this.ctx.A;
     const cfg = this.ctx.cfg;
     const scene = this.ctx.scene;
 
-    // Base setup of LEDs
+    // LED 공통 기초 초기화
     this.ctx.leds.init(cfg.eyes, cfg.chest, cfg.launch);
 
+    // 1) 단일 통합 모델 파일이 정의된 테마의 경우 (알비 로봇, 발사대, 신호등)
     if (cfg.model) {
       makeGLTFLoader(A).load(cfg.model, (gltf) => {
+        // 이미 시뮬레이션 창이 닫혔거나 파괴된 경우(disposed), 리소스를 정리하고 리턴
         if (this.ctx.disposed) {
           gltf.scene.traverse((o) => {
             if (o.isMesh || o.isSprite) {
@@ -42,27 +47,31 @@ export class AssetLoader {
         let box = new THREE.Box3();
         let modelH = 0;
 
+        // 그림자 및 카메라 절단(Frustum Culling) 비활성화 설정 적용
         root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
         box.setFromObject(root);
         box.getSize(sz);
         const c = box.getCenter(new THREE.Vector3());
+        
+        // 모델을 원점 중심(X, Z축 기준)으로 정렬하고, 최하단 y높이를 바닥에 맞춥니다.
         root.position.x -= c.x;
         root.position.z -= c.z;
         root.position.y -= box.min.y;
         modelH = sz.y;
 
+        // 발사대 테마의 경우 안테나 부속 분리 및 로켓 채색을 위한 후처리 실행
         if (cfg.postProcess || cfg.label === '발사대') {
           recolorAntenna(root, THREE);
         }
 
-        // Attach Albi eye/chest LEDs if available
+        // 로봇용 눈/가슴 LED 그룹 노드를 모델에 결합
         if (this.ctx.leds) {
           if (this.ctx.leds.eyeL) root.add(this.ctx.leds.eyeL.group);
           if (this.ctx.leds.eyeR) root.add(this.ctx.leds.eyeR.group);
           if (this.ctx.leds.chestLed) root.add(this.ctx.leds.chestLed.group);
         }
 
-        // Attach Launchpad elements if available
+        // 발사대용 LED 스트립 및 로켓 도넛 LED 노드 결합
         const LAUNCH = cfg.launch;
         if (LAUNCH && this.ctx.leds) {
           this.ctx.waves.launchFootprintSize = Math.max(sz.x, sz.z);
@@ -95,6 +104,7 @@ export class AssetLoader {
             this.ctx.leds.launchLeds[0] = led0;
           }
 
+          // 로켓 및 레이더 안테나 작동 3D 그룹 레퍼런스를 연결합니다.
           this.ctx.rocket.rocketGroup = root.userData.rocketGroup;
           this.ctx.rocket.rocketFlameSprite = root.userData.rocketFlameSprite;
           this.ctx.rocket.rocketFlameLight = root.userData.rocketFlameLight;
@@ -104,13 +114,14 @@ export class AssetLoader {
           this.ctx.movement.antennaPivot = root.userData.antennaPivot;
         }
 
-        // Attach traffic lights
+        // 신호등 슬롯 및 모델 조립 수행
         if (cfg.traffic) {
           this.ctx.traffic.setupTraffic(root, () => makeGLTFLoader(A), cfg.traffic);
         }
 
         scene.add(root);
 
+        // 카메라 거리를 모델의 최대 크기 비율에 비례하여 초점 재설정
         const maxDim = Math.max(sz.x, sz.y, sz.z);
         const fov = this.ctx.camera.fov * Math.PI / 180;
         this.ctx.frame(modelH * 0.55, (maxDim / 2) / Math.tan(fov / 2) * 1.9);
@@ -120,13 +131,14 @@ export class AssetLoader {
         if (this.ctx.loadingEl && !this.ctx.disposed) this.ctx.loadingEl.textContent = '모델을 불러오지 못했어요';
       });
     } else if (cfg.parts) {
+      // 2) 다중 조립식 파츠 모델의 경우 (로버)
       const loader = makeGLTFLoader(A);
       const roverGroup = new THREE.Group();
       roverGroup.position.y = 0.4;
       scene.add(roverGroup);
       this.ctx.roverGroup = roverGroup;
 
-      // Helper setups
+      // 헬퍼 바닥, 격자 보조선, 장애물 박스 150개 생성
       if (cfg.helpers) {
         const FLOOR_SIZE = 100;
         const floor = new THREE.Mesh(
@@ -181,7 +193,7 @@ export class AssetLoader {
         scene.add(this.ctx.planeGrids);
       }
 
-      // Setup sensor indicator balls
+      // 로버 상단 LED 센서 구체 및 자기/적외선 센서 상태 구체 배치
       {
         const LED_COUNT = 6, LED_X0 = -0.4, LED_X1 = 0.4, LED_Y = 0.4, LED_Z = 0.25, LED_R = 0.05;
         const step = (LED_X1 - LED_X0) / (LED_COUNT - 1);
@@ -214,7 +226,7 @@ export class AssetLoader {
         });
       }
 
-      // Multi-part loading
+      // 로버 부속품 파일 순차 비동기 로딩
       let remaining = cfg.parts.length;
       cfg.parts.forEach((url) => {
         loader.load(url, (gltf) => {

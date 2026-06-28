@@ -152,7 +152,7 @@ export function playGunFire(audioCtx) {
   }
 }
 
-export class AudioSynthesizer {
+export class Audio {
   constructor(ctx) {
     this.ctx = ctx;
   }
