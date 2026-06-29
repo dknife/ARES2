@@ -753,6 +753,26 @@
             </div>
 
             <div class="tasks">
+                <h3>📝 주요 업무 — 주요 코드 변경 요약 (부록 D)</h3>
+                <p class="lead">통합 머지로 <b>main</b>에 반영된 주요 코드 변경을, 1일차 코드 분석 보고서(부록 A)가 기록한 머지 전 상태와 대조해 정리했다. 코드 도메인에서 <b>35개 파일 · +5,152/−2,563 라인</b>이 바뀌었고, 1·2차 Refactoring 계획이 실제 코드로 실행됐다. 트랙별 변경과 <b>실제 코드 발췌 전체</b>는 별도 문서(부록 D)에 담았다.</p>
+                <div class="chips">
+                    <span class="chip t">시뮬: simulation.js 2,300→383줄 + 모듈 19개</span>
+                    <span class="chip t">피코: system.json→ModelFactorySetting.txt</span>
+                    <span class="chip">모터 속도 0~100% 제한</span>
+                    <span class="chip t">웹: ui.js 분리·모바일 내비</span>
+                    <span class="chip">glb 7.21→0.58MB</span>
+                </div>
+                <ul>
+                    <li><b>시뮬레이터</b> — 거대 클로저 <code>simulation.js</code>를 공유 컨텍스트 + <code>Sim_Parts</code> 14모듈·<code>Simulation</code> 5래퍼로 분해(383줄 오케스트레이터, 공개 API 유지).</li>
+                    <li><b>피코 펌웨어</b> — JSON 설정을 텍스트 <code>ModelFactorySetting.txt</code>로 대체(주석 보존 저장), 서보·DC 속도 인자와 모터 속도 0~100% 제한, <code>GET_NAMES</code> 추가.</li>
+                    <li><b>웹 인터페이스</b> — <code>ui.js</code> 분리·모바일 하단 내비, 바뀐 명령 프로토콜에 맞춘 <code>blocklyconfig·bluetooth·commandexecutor</code> 동시 갱신.</li>
+                    <li><b>진입점·자산</b> — 랜딩/개발/메인 앱 페이지 확장, <code>ares_robot.glb</code> 7.21→0.58MB 경량화.</li>
+                </ul>
+                <a class="doclink" href="codechanges.html" target="_blank">변경 코드 상세 — 부록 D 전체 ↗</a>
+                <a class="doclink alt" href="../SourceAnalysis/CodeReport.pdf" target="_blank">기준선 — 코드 분석 보고서(부록 A) ↗</a>
+            </div>
+
+            <div class="tasks">
                 <h3>🩺 주요 업무 — 개요 로딩 이상 진단 (검증·디버깅)</h3>
                 <p class="lead">머지 직후 <b>“서비스 시작 → 학습 관제실 진입 시 개요가 안 뜬다”</b>는 보고를 받아, 머지가 코드를 깨뜨렸는지 전 계층에서 검증했다. 커밋·배포된 코드의 개요는 정상 동작함을 확인하고, 원인을 코드 결함이 아닌 <b>런타임 환경 요인</b>으로 규명했다.</p>
                 <div class="chips">
