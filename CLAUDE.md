@@ -24,7 +24,7 @@ ARES (Autonomous Rover Exploration System) — an educational robotics project w
 
 Three runtime domains:
 
-1. **Web UI** (`Web/`) — Static HTML/JS using Google Blockly for visual block coding and Web Bluetooth for BLE communication. Entry points: `main.html` (block editor), `dashboard.html` (system monitoring). Uses ES modules (`import`/`export`).
+1. **Web UI** (`Web/`) — Static HTML/JS using Google Blockly for visual block coding and Web Bluetooth for BLE communication. Entry points: `Web/index.html` (main app/overview), `main.html` (block editor), `dashboard.html` (system monitoring); repo-root `index.html`/`dev.html` are landing pages. A modular Three.js 3D simulation lives in `Web/Sim_Parts/` + `Web/Simulation/`. Uses ES modules (`import`/`export`).
 2. **MicroPython Firmware** (`Pico/`) — Runs on Raspberry Pi Pico. `main.py` → `AresRover` boots UART, then loops reading BLE commands → `CommandProcessor` (`process_data.py`) dispatches to hardware modules. Hardware is accessed via a singleton `robot` from `hardware.py`.
 3. **AI Assistant** (`AI/ai.py`) — Local LLM (EXAONE-3.5-2.4B) that answers children's questions about the block-coding interface. Uses PyTorch + Hugging Face transformers.
 
@@ -59,6 +59,25 @@ Modules (all optional via `system.json`): wheel, dcmotor, buzzer, distance, mags
 | `constants.js` | UUIDs, BLE timing, default config |
 | `state.js` | Global state |
 | `elements.js` | DOM element references |
+| `ui.js` | UI helper functions (button label/state, log toggle, etc.) |
+| `simulation.js` | Thin entry that wires the 3D simulation into the page; heavy logic now lives in `Sim_Parts/`/`Simulation/` (legacy monolith preserved in `simulation_backup.js`, do not edit) |
+
+#### 3D Simulation (`Web/Sim_Parts/`, `Web/Simulation/`)
+
+The 3D simulation was refactored from one monolithic `simulation.js` into a modular library. Build/wire it via `Simulation/Simulation_Main.js` (`buildSim`), which delegates to `Sim_Parts/context.js`.
+
+- **`Sim_Parts/`** — the actual subsystem library. `context.js` (`SimContext` — shared state + Three.js scene setup) composes the subsystems: `render.js`, `assets.js` (GLTF loading), `movement.js`, `leds.js`, `gun.js`, `oled.js`, `rocket.js`, `traffic.js`, `waves.js`, `audio.js` (`AudioSynthesizer`), `editor_controls.js`. `dispatch.js` (`CommandDispatcher`) parses command strings → simulated effects (`applyTopicEffect`/`simSink`). `topics.js` defines scene topics (albi/traffic/launchpad/rover), OLED icons, palette.
+- **`Simulation/`** — thin subsystem wrappers/orchestrators over `Sim_Parts/`: `Simulation_Main.js` (orchestrator, re-exports `buildSim`/topics/audio), `Simulation_Launcher.js`, `Simulation_Rover.js`, `Simulation_Traffic.js`, `Simulation_AresRobot.js`.
+
+#### HTML Entry Points
+
+| File | Role |
+|------|------|
+| `index.html` (repo root) | Public landing page for the project |
+| `dev.html` (repo root) | Developer landing page |
+| `Web/index.html` | Main app (코리아사이언스 화성 탐사선) — mission/overview + 3D hero; `?mobile=true` previews mobile layout on desktop |
+| `Web/main.html` | Blockly block editor |
+| `Web/dashboard.html` | System monitoring dashboard |
 
 ## Development Commands
 
@@ -79,7 +98,7 @@ Upload all `.py` files from `Pico/` to the Pico using Thonny, ampy, or rshell. S
 - **Device name max 10 chars** (BT05/HMSoft limitation)
 - **Hardware singleton** — never create a second `RobotHardware` instance
 - **GPIO pins** are centrally managed in `Pico/pins.py`; runtime pin changes require reboot
-- **Do not modify** legacy/backup files (`Pico/backup/`)
+- **Do not modify** legacy/backup files (`Pico/backup/`, `Web/simulation_backup.js`)
 
 ## Common Modification Paths
 
