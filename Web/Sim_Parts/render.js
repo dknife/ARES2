@@ -84,6 +84,9 @@ export class RenderEngine {
     if (ctx.gun && ctx.gun.gunMesh && typeof ctx.gun.updateGunSmoke === 'function') {
       ctx.gun.updateGunSmoke(dt);
     }
+    if (ctx.editor && typeof ctx.editor.update === 'function') {
+      ctx.editor.update();
+    }
 
     // 5) Actual Three.js render pass
     ctx.renderer.render(ctx.scene, ctx.camera);
