@@ -68,16 +68,24 @@
             <span id="breadcrumb" aria-live="polite"></span>
         </nav>
 
-        <!-- ===== 콘텐츠 영역: overview / lesson / mission 3-state ===== -->
+        <!-- ===== 콘텐츠 영역: 좌측 강의 리스트 + 중앙 수업/코딩 ===== -->
         <div class="main-content">
+            <aside id="courseSidebar" class="course-sidebar" aria-label="강의 리스트">
+                <div class="sidebar-head">
+                    <h2>강의 리스트</h2>
+                    <p>차시를 고르고 가운데에서 수업과 미션 코딩을 이어서 해요.</p>
+                </div>
+                <div id="courseSidebarContent" class="course-sidebar-content">불러오는 중…</div>
+            </aside>
 
-            <!-- 개요 뷰 (초기 진입 시 노출) -->
-            <section id="overviewView" class="content-view" data-view="overview">
-                <div id="overviewContent">불러오는 중…</div>
-            </section>
+            <div class="content-stage">
+                <!-- 개요 뷰 (초기 진입 시 노출) -->
+                <section id="overviewView" class="content-view" data-view="overview">
+                    <div id="overviewContent">불러오는 중…</div>
+                    </section>
 
-            <!-- 차시 소개 뷰 -->
-            <section id="lessonView" class="content-view" data-view="lesson" hidden>
+                <!-- 차시 소개 뷰 -->
+                <section id="lessonView" class="content-view" data-view="lesson" hidden>
                 <div class="lesson-header">
                     <span class="lesson-tag" id="lessonTagBadge"></span>
                     <h2 id="lessonHeading"></h2>
@@ -97,6 +105,29 @@
 
             <!-- 미션 코딩 뷰 (description / coding / simulation 모드 전환) -->
             <section id="missionView" class="content-view" data-view="mission" data-mode="description" hidden>
+                <!-- 미션 정보 헤더 (접고 펼칠 수 있음) -->
+                <div id="missionViewHeader" class="mission-view-header">
+                    <div class="mission-view-header-toggle">
+                        <div class="mission-view-header-title">
+                            <span id="missionViewHeaderBadge" class="mission-view-header-badge"></span>
+                            <h3 id="missionViewHeaderTitle"></h3>
+                        </div>
+                        <button type="button" class="mission-view-header-toggle-btn" id="missionViewHeaderToggleBtn" title="펼치기/접기">⌄</button>
+                    </div>
+                    <div id="missionViewHeaderContent" class="mission-view-header-content">
+                        <div class="mission-view-header-meta">
+                            <span id="missionViewHeaderHardware"></span>
+                        </div>
+                        <div id="missionViewHeaderStory" class="mission-view-header-story"></div>
+                        <div class="mission-view-header-goals">
+                            <h4>🎯 학습 목표</h4>
+                            <ul id="missionViewHeaderGoals"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 미션 콘텐츠 (Blockly, 대시보드, 시뮬레이션) -->
+                <div class="mission-view-main">
                 <aside id="missionPanel" class="mission-panel">
                     <div class="mission-panel-head">
                         <span class="lesson-tag" id="missionTagBadge"></span>
@@ -159,10 +190,12 @@
                             <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
                         </div>
                         <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기</p>
-                        <div class="sim-loading" id="simLoading">알비를 불러오는 중…</div>
-                    </div>
+                         <div class="sim-loading" id="simLoading">알비를 불러오는 중…</div>
+                     </div>
+                 </div>
                 </div>
             </section>
+            </div>
 
         </div>
 
