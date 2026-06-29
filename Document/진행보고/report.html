@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~4일차</title>
+    <title>ARES 진행 보고 — 1~5일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -177,13 +177,13 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 4일차</span></h1>
-            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 제작 협력업체 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검.</p>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 5일차</span></h1>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 제작 협력업체 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검.</p>
             <div class="stat-row">
-                <div class="stat"><b>4</b><span>DAYS</span></div>
-                <div class="stat"><b>27</b><span>PHOTOS</span></div>
-                <div class="stat"><b>10</b><span>LIVE SCREENS</span></div>
-                <div class="stat"><b>06.23~26</b><span>2026 · KST</span></div>
+                <div class="stat"><b>5</b><span>DAYS</span></div>
+                <div class="stat"><b>31</b><span>PHOTOS</span></div>
+                <div class="stat"><b>11</b><span>LIVE SCREENS</span></div>
+                <div class="stat"><b>06.23~29</b><span>2026 · KST</span></div>
             </div>
         </div>
     </header>
@@ -576,13 +576,13 @@
                     <span class="chip">WebGL 3D 시뮬레이션</span>
                     <span class="chip">사용성 리뷰</span>
                     <span class="chip t">2차 Refactoring 계획</span>
-                    <span class="chip">시제품 제작</span>
+                    <span class="chip t">조립 가능한 시작품 제작 완료</span>
                 </div>
                 <ul>
                     <li><b>웹 인터페이스 점검</b> — 컴퓨터실에서 팀원들이 함께 ARES 웹 페이지를 띄워 화면 구성과 동작을 점검.</li>
                     <li><b>3D 시뮬레이션 점검</b> — 홈 화면의 WebGL 3D 연출(탐사로봇 ‘알비’의 우주 유영, 제트팩 우주인)을 확인.</li>
                     <li><b>2차 Refactoring 계획 수립</b> — 점검 결과를 바탕으로 <b>시뮬레이터·피코+블록코딩·웹 인터페이스</b> 세 트랙의 「2차 Refactoring 계획」을 수립. (1차 동작 보존 분할의 연장선)</li>
-                    <li><b>시제품 제작</b> — Bambu Lab 3D 프린터로 디자인 부품의 시제품을 출력.</li>
+                    <li><b>조립 가능한 시작품 제작 완료</b> — Bambu Lab 3D 프린터로 디자인 부품을 출력해, 분해·결합이 되는 <b>조립 가능한 시작품 제작을 완료</b>.</li>
                 </ul>
                 <a class="doclink" href="../REFACTORING_PLAN_2.html" target="_blank">2차 Refactoring 계획 ↗</a>
                 <a class="doclink alt" href="../REFACTORING_PLAN_2.md" target="_blank">계획 원문 (Markdown) ↗</a>
@@ -691,7 +691,7 @@
                 </figure>
                 <figure>
                     <div class="imgbox"><img src="img/4일차_시제품제작.jpg" alt="3D 프린터 시제품 제작"></div>
-                    <figcaption>Bambu Lab 3D 프린터로 디자인 부품의 시제품을 출력하고 있다.</figcaption>
+                    <figcaption>Bambu Lab 3D 프린터로 디자인 부품을 출력해 조립 가능한 시작품 제작을 완료했다.</figcaption>
                 </figure>
                 <figure>
                     <div class="imgbox"><img src="img/4일차_조립형모델_내부배선.jpg" alt="조립형 모델 내부 배선·구동부 배치">
@@ -715,11 +715,209 @@
                 </figure>
             </div>
         </section>
+
+        <!-- ============ Day 5 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 5</span>
+                <h2>작업 브랜치 통합 머지 · 서비스 점검 · 인터페이스·펌웨어·시뮬레이션 개선</h2>
+                <span class="day-date">2026.06.29 (월) · 원격 개발 KST</span>
+            </div>
+            <p class="day-summary">팀원별로 나뉘어 진행되던 여러 작업 브랜치를 <b>main 한 곳으로 통합</b>했다. 통합 직전 상태를 백업 브랜치로 보존한 뒤 순차 병합했고, 통합 후 “학습 관제실(개요 화면)이 안 뜬다”는 신고를 받아 <b>전 계층 검증</b>으로 원인을 규명했다(머지된 코드의 개요는 정상 동작 — 원인을 런타임 환경 요인으로 규명). 또한 트랙별 개선을 정리했다 — <b>웹 인터페이스</b>(목차 간략화·미션 설명 토글화·중복 메뉴 제거), <b>피코(Pico) 펌웨어</b>(모터 속도 제한 코드 추가, 미션 맥락 블록 제한 방향), <b>3D 시뮬레이션</b>(객체 배치 완료, property 기반 명령 연동 방향). 이어 팀 토론으로 트랙별 <b>다음 개선 방향</b>(웹 사이드 인터페이스·피코 블록 직관성·시뮬 메시 hierarchy)을 구체화했다. 하드웨어로는 측면 패널을 밀어 끼우는 <b>슬라이드형 조립 시작품 제작을 완성</b>했다.</p>
+
+            <div class="tasks">
+                <h3>🔀 주요 업무 — 작업 브랜치 통합 머지 (Git 통합)</h3>
+                <p class="lead">분산 개발되던 브랜치(시뮬레이션·펌웨어·UI/UX)를 <code>main</code>으로 모으는 통합 머지를 수행했다. 되돌릴 수 있는 <b>안전장치(백업 브랜치)</b>를 먼저 마련하고, 브랜치별 선후 관계를 확인한 뒤 충돌 없이 순차 병합했다.</p>
+                <div class="chips">
+                    <span class="chip">원격 브랜치 6개 점검</span>
+                    <span class="chip t">main_20260629 백업</span>
+                    <span class="chip">Jihun 머지</span>
+                    <span class="chip">test/merge-검증 머지</span>
+                    <span class="chip">충돌 0건</span>
+                </div>
+                <ul>
+                    <li><b>브랜치 현황 점검</b> — 원격(<code>dknife/ARES2</code>)의 6개 브랜치(<code>main·Jihun·LEE_SEONGBEEN·Piiiiiiiico·Simulation_Minhyuck·test/merge-검증</code>)의 최신 커밋과 <code>main</code> 대비 선행/후행 커밋 수를 확인하고, 로컬 <code>main</code>을 원격과 동기화.</li>
+                    <li><b>백업 브랜치 생성</b> — 통합 직전의 <code>main</code>을 그대로 보존하는 <code>main_20260629</code> 백업 브랜치를 만들어 원격에 push(문제 발생 시 즉시 되돌릴 안전장치).</li>
+                    <li><b>Jihun 브랜치 머지</b> — <b>3D 오브젝트 조작</b>과 시뮬레이션 모듈 분리(<code>Web/Sim_Parts/·Web/Simulation/</code>) 작업을 <code>main</code>에 병합(충돌 없음).</li>
+                    <li><b>누락 발견·보완</b> — Jihun이 <em>force-push</em>로 재정리되며 통합 브랜치 <code>test/merge-검증</code>(이성빈·피코·민혁 작업의 통합본)이 빠진 것을 확인하고, <code>test/merge-검증</code>을 다시 <code>main</code>에 병합해 <code>ui.js</code>·펌웨어(<code>process_data·system_config</code>)·블록코딩 등 누락분을 복구(충돌 없음).</li>
+                </ul>
+                <a class="doclink" href="https://github.com/dknife/ARES2/tree/main" target="_blank">통합된 main 브랜치 ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/branches" target="_blank">브랜치 목록 ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🩺 주요 업무 — 개요 로딩 이상 진단 (검증·디버깅)</h3>
+                <p class="lead">머지 직후 <b>“서비스 시작 → 학습 관제실 진입 시 개요가 안 뜬다”</b>는 보고를 받아, 머지가 코드를 깨뜨렸는지 전 계층에서 검증했다. 커밋·배포된 코드의 개요는 정상 동작함을 확인하고, 원인을 코드 결함이 아닌 <b>런타임 환경 요인</b>으로 규명했다.</p>
+                <div class="chips">
+                    <span class="chip">정적 점검(문법·중복·충돌마커)</span>
+                    <span class="chip">헤드리스 렌더링 검증</span>
+                    <span class="chip">배포본 대조</span>
+                    <span class="chip t"><code>file://</code> · 브라우저 캐시</span>
+                    <span class="chip">캐시버스팅 제안</span>
+                </div>
+                <ul>
+                    <li><b>코드 정적 점검</b> — 머지 결과물의 문법 검사(<code>node --check</code>), 중복 선언·머지 충돌 마커, 중복 <code>id</code>를 점검 → 이상 없음.</li>
+                    <li><b>실제 렌더링 검증</b> — 로컬 서버 + 헤드리스 브라우저로 <code>main.html</code>을 렌더해 개요(히어로·‘차시 한눈에 보기’ 12행 표)가 정상 표시됨을 <b>스크린샷으로 확인</b>. 문서 표준 셋업(<code>cd Web; http.server</code>)과 직전 머지 상태에서도 동일하게 정상.</li>
+                    <li><b>배포본 대조</b> — 배포된 GitHub Pages의 <code>main.js</code>·<code>overview.html</code>이 최신 머지본이며 정상 응답(HTTP 200)임을 확인.</li>
+                    <li><b>원인 규명</b> — 코드 결함이 아니라 <em>(1) <code>file://</code> 직접 실행 시 ES module·<code>fetch()</code> 차단, (2) 캐시버스팅 없는 <code>main.js</code>의 브라우저 캐시</em> 가능성으로 좁힘. 재발 방지로 모듈 로드에 버전 쿼리(<code>main.js?v=…</code>) 적용을 제안.</li>
+                </ul>
+                <a class="doclink" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 열기(검증 대상) ↗</a>
+                <a class="doclink alt" href="../../Web/main.html" target="_blank">학습 관제실(로컬) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 주요 업무 — 웹 인터페이스 개선계획 수립 (목차·미션 설명·메뉴 정리)</h3>
+                <p class="lead">학습 관제실(개요)부터 미션 화면까지의 화면 동선을 점검해, 어린이가 더 단순하고 직관적으로 쓸 수 있도록 <b>인터페이스 개선계획</b>을 수립했다. 핵심은 세 가지 — <b>목차 간략화</b>, <b>미션 설명의 제목 노출 + 상세 토글화</b>, <b>중복 메뉴 제거</b>로, 화면을 덜 복잡하게 하고 코딩 영역을 더 넓게 확보하는 방향이다.</p>
+                <div class="chips">
+                    <span class="chip t">목차 간략화</span>
+                    <span class="chip">미션 제목 상시 노출</span>
+                    <span class="chip">상세 설명 토글(펼침/접힘)</span>
+                    <span class="chip">중복 메뉴 삭제</span>
+                    <span class="chip">화면 동선 단순화</span>
+                </div>
+                <ul>
+                    <li><b>목차 간략화</b> — 개요(학습 관제실)의 ‘차시 한눈에 보기’ 표·차시 안내를 핵심 정보 위주로 압축해, 한눈에 들어오고 차시 선택까지의 동선이 짧아지도록 정리.</li>
+                    <li><b>미션 설명 개선</b> — 미션 화면에서 <em>미션 제목은 항상 노출</em>하고, 상세 설명(스토리·학습 목표)은 <em>펼침/접힘 토글</em>로 나타났다 사라지게 한다. 처음엔 제목만 보여 화면을 단순하게, 필요할 때만 상세를 펼쳐 코딩 영역을 넓게 쓴다.</li>
+                    <li><b>중복 메뉴 삭제</b> — 같은 기능을 가리키는 중복 버튼(예: 상단바 ‘🧩 블록코딩’과 네비게이터 ‘블록 코딩’ 전환 버튼)을 하나로 정리해 메뉴 혼선을 없앤다.</li>
+                </ul>
+                <a class="doclink" href="../../Web/main.html" target="_blank">개선 대상 — 학습 관제실 ↗</a>
+                <a class="doclink alt" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🤖 주요 업무 — 피코(Pico) 펌웨어 개선 (모터 속도 제한 · 미션 맥락 블록 제한)</h3>
+                <p class="lead">펌웨어(라즈베리파이 피코) 측 개선으로, 안전하고 다루기 쉬운 주행을 위해 <b>모터 속도 제한 코드를 추가</b>했다(개선 결과). 나아가 어린이가 미션에 집중하도록 <b>미션 맥락에 따라 노출 블록을 제한</b>하는 개념을 실현하는 것을 다음 개선 방향으로 설정했다.</p>
+                <div class="chips">
+                    <span class="chip t">모터 속도 제한 (완료)</span>
+                    <span class="chip">max_speed 스케일·0~100% 제한</span>
+                    <span class="chip t">미션별 블록 제한 (방향)</span>
+                    <span class="chip">학습 스캐폴딩</span>
+                    <span class="chip">펌웨어·웹 툴박스 연계</span>
+                </div>
+                <ul>
+                    <li><b>[개선 결과] 모터 속도 제한 코드 추가</b> — DC·서보 모터 이동 명령이 받는 속도를 <code>max_speed</code> 기준으로 스케일링하고 <b>0~100% 범위로 제한</b>해, 과속으로 인한 이탈·안전 문제를 막고 어린이가 다루기 쉬운 일정한 주행을 보장.</li>
+                    <li><b>[개선 방향] 미션 맥락에 따른 노출 블록 제한</b> — 각 차시·미션의 학습 목표에 필요한 블록만 블록코딩 툴박스에 노출하고 나머지는 숨기는 개념을 실현. 어린이가 해당 미션에 집중하도록 돕는 <em>학습 스캐폴딩</em>으로, 펌웨어의 미션/모델 설정과 웹 툴박스를 연계해 단계적으로 적용할 계획.</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/Piiiiiiiico/Pico" target="_blank">피코 펌웨어 (브랜치) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🎮 주요 업무 — 시뮬레이션 개선 (객체 배치 완료 · property 기반 명령 연동)</h3>
+                <p class="lead">3D 시뮬레이션에서 장면에 <b>객체(로봇·장치·소품 등)를 배치하는 작업을 완성</b>했다(개선 결과). 다음 단계로, 각 객체에 <b>property로 ‘연동 명령’을 지정</b>해 두고 <b>해당 명령이 들어오면 그 명령에 맞는 동작을 수행</b>하도록 하는 데이터 주도 방식을 개선 방향으로 잡았다.</p>
+                <div class="chips">
+                    <span class="chip t">객체 배치 완료</span>
+                    <span class="chip t">property 기반 명령 연동 (방향)</span>
+                    <span class="chip">명령 → 동작 매핑</span>
+                    <span class="chip">선언적·데이터 주도 구성</span>
+                    <span class="chip">블록 명령 ↔ 시뮬 동작 일치</span>
+                </div>
+                <ul>
+                    <li><b>[개선 결과] 시뮬레이션 객체 배치 완성</b> — 시뮬레이션 장면에 필요한 객체(탐사로봇·장치·소품 등)를 원하는 위치에 배치하는 작업을 완료.</li>
+                    <li><b>[개선 방향] property 기반 명령 연동</b> — 각 객체에 <em>property로 연동 명령을 지정</em>할 수 있게 하여, 그 명령이 수신되면 객체가 그에 맞는 동작(점등·회전·이동·발사 등)을 수행하도록 한다. 객체마다 코드를 따로 짜지 않고 <b>property 설정만으로 ‘명령 → 동작’을 매핑</b>하는 선언적 구조라, 새 객체·미션을 추가하기 쉽고 블록 명령과 시뮬레이션 동작의 일관성도 높아진다.</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/main/Web/Sim_Parts" target="_blank">시뮬레이션 모듈 (Sim_Parts) ↗</a>
+                <a class="doclink alt" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_시뮬_객체배치.png" alt="모바일 시뮬레이션 — 객체 배치(Move/Rotate/Scale)"></div>
+                    <figcaption><b>시뮬레이션 객체 배치 — 모바일 화면</b> — 배포 서비스(<code>dknife.github.io/ARES2</code>)를 모바일(갤럭시 A51/71) 화면으로 구동한 모습. 탐사로봇 ‘알비’가 바운딩 박스(기즈모)와 함께 배치되고, 하단의 <b>Move·Rotate·Scale</b>로 객체를 이동·회전·크기 조절할 수 있다(객체 배치 작업 완료 결과).</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🗣️ 주요 업무 — 개선계획 토론 결과 (트랙별 다음 개선 방향)</h3>
+                <p class="lead">팀 토론을 통해 세 트랙(<b>웹 · 피코 · 시뮬레이션</b>)의 다음 개선 방향을 구체화했다. 어린이가 더 빠르게 블록코딩에 몰입하고, 블록이 직관적이며, 시뮬레이션 객체를 효율적으로 다루도록 하는 데 초점을 맞췄다.</p>
+                <div class="chips">
+                    <span class="chip t">웹 · 사이드 인터페이스</span>
+                    <span class="chip">블록코딩으로 빠른 유도</span>
+                    <span class="chip t">피코 · 블록 직관성(수학·논리)</span>
+                    <span class="chip">제어 블록 개선</span>
+                    <span class="chip t">시뮬 · 메시 hierarchy</span>
+                </div>
+                <ul>
+                    <li><b>[웹] 사이드 인터페이스 구현</b> — 차시(목차)를 길게 노출하기보다, <b>사이드 형태의 인터페이스</b>로 <b>블록코딩 화면에 빠르게 유도·집중</b>시키는 인터페이스 개발이 필요. (앞선 ‘목차 간략화·중복 메뉴 제거’의 연장선)</li>
+                    <li><b>[피코] 펌웨어 거의 완성 — 블록코딩 보완 필요</b> — 피코 펌웨어는 거의 완성 단계. 다만 블록코딩에서 <b>수학/논리 탭의 블록들이 직관적이지 않아</b> 개선이 필요하고, <b>제어 관련 블록들</b>도 더 다듬어야 한다.</li>
+                    <li><b>[시뮬레이션] 메시 배치 기능 개선</b> — 시뮬레이션 <b>메시 배치 기능</b>을 개선하되, <b>메시 hierarchy(계층 구조)를 도입</b>해 객체를 효율적으로 모델링할 수 있는 도구를 완성. (객체별 ‘property 기반 명령 연동’ 방향과 함께 추진)</li>
+                </ul>
+                <a class="doclink" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/branches" target="_blank">작업 브랜치 ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🧱 주요 업무 — 슬라이드형 조립 시작품 제작 완성</h3>
+                <p class="lead">Day 4의 모듈형 조립 시작품을 발전시켜, 측면 외형 패널을 <b>슬라이드 방식으로 밀어 끼웠다 빼는</b> 조립 구조의 시작품을 완성했다. 내부 구동부·배선을 배치한 뒤 슬라이드 패널을 밀어 마감하는 방식으로, <b>나사 없이</b> 분해·재조립이 되어 양산 시 조립·점검·유지보수가 한층 쉬워진다. (아래는 제작 영상에서 캡처한 주요 장면)</p>
+                <div class="chips">
+                    <span class="chip t">슬라이드형 외형 패널</span>
+                    <span class="chip">내부 구동부·배선 배치</span>
+                    <span class="chip">밀어 끼우는 조립(나사 없음)</span>
+                    <span class="chip">점검·유지보수 용이</span>
+                    <span class="chip t">제작 완성</span>
+                </div>
+                <ul>
+                    <li><b>측면 개방·내부 배치</b> — 발사대 하우징의 측면을 열어 DC 기어모터·구동축·배선을 내부에 배치.</li>
+                    <li><b>슬라이드 패널 결합</b> — 측면 외형 패널(도어)을 레일을 따라 <b>슬라이드로 끼워</b> 내부를 마감. 나사 없이 밀어 끼우는 구조라 분해·재조립이 쉽다.</li>
+                    <li><b>조립 완성</b> — 본체·슬라이드 패널·상단 발사대 타워까지 결합한 완성 형태를 실물로 확인.</li>
+                </ul>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_내부노출.jpg" alt="측면 개방 — 내부 구동부·배선 노출"></div>
+                    <figcaption><b>① 측면 개방</b> — 발사대 하우징의 측면을 연 상태. 내부에 DC 기어모터·구동축과 배선이 배치돼 있다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_슬라이드결합.jpg" alt="슬라이드형 측면 패널 결합"></div>
+                    <figcaption><b>② 슬라이드 패널 결합</b> — 측면 외형 패널(도어)을 레일을 따라 슬라이드로 끼워 내부를 마감하는 모습.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_패널닫음.jpg" alt="슬라이드 패널을 밀어 끼워 마감"></div>
+                    <figcaption><b>③ 밀어 끼워 마감</b> — 슬라이드 패널을 손으로 밀어 끼워 닫는 과정. 나사 없이 조립된다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_완성.jpg" alt="조립 완성 — 발사대 타워까지 결합한 전체 모습"></div>
+                    <figcaption><b>④ 조립 완성</b> — 본체·슬라이드 패널·상단 발사대 타워까지 결합한 완성 형태.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>📊 주요 업무 — 개발 활동·협업 현황 점검 (GitHub Insights)</h3>
+                <p class="lead">통합 작업 전후의 저장소 활동을 GitHub Insights로 점검했다. 최근 1주(<b>6/21~6/28</b>) 동안 머지를 제외하고 <b>6명</b>이 <code>main</code>에 <b>30커밋</b>(전 브랜치 31커밋)을 푸시했고, <code>main</code> 기준 <b>128개 파일</b>에서 <b>+14,363 / −2,564</b> 라인이 변동됐다. 연간 커밋·코드 변동 그래프에서 <b>4~6월 집중 개발</b>이 뚜렷하며, 네트워크 그래프에는 이번에 통합한 작업 브랜치들과 백업 브랜치(<code>main_20260629</code>)가 <code>main</code>으로 모이는 흐름이 그대로 나타난다.</p>
+                <div class="chips">
+                    <span class="chip t">6 authors</span>
+                    <span class="chip">main 30 commits</span>
+                    <span class="chip">+14,363 additions</span>
+                    <span class="chip">−2,564 deletions</span>
+                    <span class="chip">128 files</span>
+                    <span class="chip t">브랜치 통합 흐름</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_pulse.png" alt="GitHub Insights — Pulse(주간 요약)"></div>
+                    <figcaption><b>주간 활동 요약(Pulse)</b> — 6/21~6/28 동안 6명이 <code>main</code>에 30커밋(전 브랜치 31커밋)을 푸시, 128파일에서 +14,363/−2,564 변동. 우측은 Top committers.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_commits.png" alt="GitHub Insights — 최근 1년 주간 커밋"></div>
+                    <figcaption><b>최근 1년 주간 커밋</b> — 제품개발학기가 시작된 <b>4~6월에 개발이 집중</b>됐음을 보여 준다(주당 최대 35커밋).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_codefreq.png" alt="GitHub Insights — Code frequency(주간 가감산)"></div>
+                    <figcaption><b>코드 변동(Code frequency)</b> — 주간 추가/삭제 라인. 5~6월의 대규모 추가와, 리팩터링·통합 과정의 삭제가 함께 나타난다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_network.png" alt="GitHub Insights — 브랜치 네트워크 그래프"></div>
+                    <figcaption><b>브랜치 네트워크</b> — 작업 브랜치들(<code>Jihun·test/merge-검증·Simulation_Minhyuck·Piiiiiiiico·LEE_SEONGBEEN</code>)과 백업 브랜치(<code>main_20260629</code>)가 <code>main</code>으로 통합되는 이번 작업의 흐름이 보인다.</figcaption>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 27매 (조립형 모델 4매는 제작 영상에서 캡처) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 31매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->
