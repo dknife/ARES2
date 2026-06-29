@@ -21,71 +21,87 @@ export const BlocklyConfig = {
     // 서보 모터 블록 (주황색 #FF8C00)
     {
       type: "timed_forward",
-      message0: "🚗 서보 전진 %1 초",
-      args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
+      message0: "🚗 서보 전진 %1 초 (속도 %2 %%)",
+      args0: [
+        { type: "input_value", name: "SECONDS", check: "Number" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "서보 모터로 지정한 시간(초)만큼 전진합니다."
+      tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 전진합니다."
     },
     {
       type: "timed_backward",
-      message0: "🚗 서보 후진 %1 초",
-      args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
+      message0: "🚗 서보 후진 %1 초 (속도 %2 %%)",
+      args0: [
+        { type: "input_value", name: "SECONDS", check: "Number" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "서보 모터로 지정한 시간(초)만큼 후진합니다."
+      tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 후진합니다."
     },
     {
       type: "timed_left",
-      message0: "🚗 서보 좌회전 %1 초",
-      args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
+      message0: "🚗 서보 좌회전 %1 초 (속도 %2 %%)",
+      args0: [
+        { type: "input_value", name: "SECONDS", check: "Number" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "서보 모터로 지정한 시간(초)만큼 좌회전합니다."
+      tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 좌회전합니다."
     },
     {
       type: "timed_right",
-      message0: "🚗 서보 우회전 %1 초",
-      args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
+      message0: "🚗 서보 우회전 %1 초 (속도 %2 %%)",
+      args0: [
+        { type: "input_value", name: "SECONDS", check: "Number" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "서보 모터로 지정한 시간(초)만큼 우회전합니다."
+      tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 우회전합니다."
     },
     {
       type: "move_forward",
-      message0: "🚗 서보 계속 전진",
+      message0: "🚗 서보 계속 전진 (속도 %1 %%)",
+      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "정지 명령 전까지 서보 모터로 계속 전진합니다."
+      tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 전진합니다."
     },
     {
       type: "move_backward",
-      message0: "🚗 서보 계속 후진",
+      message0: "🚗 서보 계속 후진 (속도 %1 %%)",
+      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "정지 명령 전까지 서보 모터로 계속 후진합니다."
+      tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 후진합니다."
     },
     {
       type: "turn_left",
-      message0: "🚗 서보 계속 좌회전",
+      message0: "🚗 서보 계속 좌회전 (속도 %1 %%)",
+      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "정지 명령 전까지 서보 모터로 계속 좌회전합니다."
+      tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 좌회전합니다."
     },
     {
       type: "turn_right",
-      message0: "🚗 서보 계속 우회전",
+      message0: "🚗 서보 계속 우회전 (속도 %1 %%)",
+      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
-      tooltip: "정지 명령 전까지 서보 모터로 계속 우회전합니다."
+      tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 우회전합니다."
     },
     {
       type: "stop_moving",
@@ -99,37 +115,45 @@ export const BlocklyConfig = {
     // DC 모터 블록 (노랑색 #FFCC00)
     {
       type: "main_motor_forward_timed",
-      message0: "⚡ DC모터 전진 %1 초",
-      args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
+      message0: "⚡ DC모터 전진 %1 초 (속도 %2 %%)",
+      args0: [
+        { type: "input_value", name: "SECONDS", check: "Number" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
-      tooltip: "DC 모터를 지정한 시간만큼 전진시킵니다."
+      tooltip: "DC 모터를 지정한 시간만큼 지정한 속도(0~100%)로 전진시킵니다."
     },
     {
       type: "main_motor_backward_timed",
-      message0: "⚡ DC모터 후진 %1 초",
-      args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
+      message0: "⚡ DC모터 후진 %1 초 (속도 %2 %%)",
+      args0: [
+        { type: "input_value", name: "SECONDS", check: "Number" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
-      tooltip: "DC 모터를 지정한 시간만큼 후진시킵니다."
+      tooltip: "DC 모터를 지정한 시간만큼 지정한 속도(0~100%)로 후진시킵니다."
     },
     {
       type: "main_motor_forward",
-      message0: "⚡ DC모터 계속 전진",
+      message0: "⚡ DC모터 계속 전진 (속도 %1 %%)",
+      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
-      tooltip: "정지 명령 전까지 DC 모터를 계속 전진시킵니다."
+      tooltip: "정지 명령 전까지 DC 모터를 지정한 속도(0~100%)로 계속 전진시킵니다."
     },
     {
       type: "main_motor_backward",
-      message0: "⚡ DC모터 계속 후진",
+      message0: "⚡ DC모터 계속 후진 (속도 %1 %%)",
+      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
-      tooltip: "정지 명령 전까지 DC 모터를 계속 후진시킵니다."
+      tooltip: "정지 명령 전까지 DC 모터를 지정한 속도(0~100%)로 계속 후진시킵니다."
     },
     {
       type: "main_motor_stop",
@@ -311,7 +335,14 @@ export const BlocklyConfig = {
     // 발사 블록 (빨강주황 #FF4500)
     {
       type: "gun_fire",
-      message0: "🔫 발사 실행",
+      message0: "%1",
+      args0: [
+        {
+          type: "field_label",
+          name: "LABEL",
+          text: "🔫 발사 실행"
+        }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF4500",
@@ -425,4 +456,46 @@ export function attachBatchBlockValidator(BlocklyLib) {
         : null);
     });
   };
+}
+
+// 모델별 동적 이름 변경 기능 부착
+export function attachDynamicNaming(BlocklyLib, state) {
+  const proto = BlocklyLib.Blocks['gun_fire'];
+  if (!proto) return;
+  const originalInit = proto.init;
+  proto.init = function() {
+    originalInit.call(this);
+    const labelField = this.getField('LABEL');
+    if (labelField) {
+      labelField.setValue(getGunBlockLabel(state.tabNames, state.activeModel));
+    }
+    this.setTooltip(() => getGunBlockTooltip(state.tabNames, state.activeModel));
+  };
+}
+
+export function getGunBlockLabel(tabNames, activeModel) {
+  const emoji = (activeModel === 'launchpad') ? '🚀' : '🔫';
+  const name = tabNames?.gun || '발사';
+  return `${emoji} ${name} 실행`;
+}
+
+export function getGunBlockTooltip(tabNames, activeModel) {
+  const name = tabNames?.gun || '발사';
+  if (activeModel === 'launchpad') {
+    return `${name}를 실행합니다.`;
+  }
+  return `BB탄을 한 발 발사합니다.`;
+}
+
+export function updateWorkspaceBlocks(workspace, state) {
+  if (!workspace) return;
+  const blocks = workspace.getAllBlocks(false);
+  blocks.forEach((block) => {
+    if (block.type === 'gun_fire') {
+      const labelField = block.getField('LABEL');
+      if (labelField) {
+        labelField.setValue(getGunBlockLabel(state.tabNames, state.activeModel));
+      }
+    }
+  });
 }
