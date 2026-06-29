@@ -67,6 +67,17 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
   const build = (topicKey) => {
     cancelAnimationFrame(raf); raf = 0;
     if (sim) { sim.dispose(); sim = null; }
+
+    // 시뮬레이션 선택 주제에 맞춰 activeModel 설정
+    if (topicKey === 'launchpad') {
+      state.activeModel = 'launchpad';
+    } else {
+      state.activeModel = 'gun';
+    }
+    if (window.updateToolboxForActiveState) {
+      window.updateToolboxForActiveState();
+    }
+
     const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
     if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
     card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
