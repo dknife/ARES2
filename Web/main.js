@@ -5,7 +5,7 @@ import { BluetoothManager } from './bluetooth.js';
 import { BlocklyConfig, attachBatchBlockValidator, attachDynamicNaming, updateWorkspaceBlocks } from './blocklyconfig.js';
 import { CommandExecutor } from './commandexecutor.js';
 import { setupSimulation } from './simulation.js';
-import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js';
+import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle, escapeHtml, renderCourseSidebar, updateBreadcrumb, updateRunButtonUI } from './ui.js';
 import { parse as aiParse } from './ai_helper.js';
 
 // ============================================================
@@ -395,27 +395,7 @@ function validateConnection() {
   return true;
 }
 
-// 미션 전송 ↔ 비상정지 통합 버튼의 라벨·색·활성 상태를 한곳에서 갱신.
-//   - state.isExecuting=true 면 비상정지(빨강, 항상 활성)
-//   - 그 외에는 미션 뷰 + BLE 연결 + 대시보드 모드가 아닐 때만 활성
-function updateRunButtonUI() {
-  const btn = elements.runButton;
-  if (!btn) return;
-  if (state.isExecuting) {
-    btn.textContent = '🛑 비상정지';
-    btn.title = '실행 중인 미션을 즉시 멈춥니다';
-    btn.classList.add('btn-stop');
-    btn.disabled = false;
-    return;
-  }
-  btn.textContent = '▶️ 미션 전송';
-  btn.title = '블록코딩 내용을 피코로 전송해 실행';
-  btn.classList.remove('btn-stop');
-  const inMission = currentView === 'mission';
-  const dashboardFrame = document.getElementById('dashboardFrame');
-  const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
-  btn.disabled = !inMission || inDashboard || !isBleConnected();
-}
+// ...existing code...
 
 function isInBlockCodingStage() {
   const dashboardFrame = document.getElementById('dashboardFrame');
@@ -470,7 +450,7 @@ function closeDashboardToCoding() {
   if (elements.saveButton) elements.saveButton.disabled = false;
   if (elements.loadButton) elements.loadButton.disabled = false;
   if (setContentMode) setContentMode('coding');
-  updateRunButtonUI();
+  updateRunButtonUI(currentView, state.isExecuting, isBleConnected());
   updateBlockCodingButtonUI();
   updateMobileBottomNav();
   Logger.add('[모드] 블록코딩 전환', 'info');
@@ -699,12 +679,19 @@ function navigate({ lesson = null, mission = null } = {}) {
   }
 }
 
+// 전역 네비게이트 함수 (UI에서 접근 가능하도록)
+window.aresNavigate = navigate;
+
 async function applyRoute() {
   const { lesson, mission } = parseHash();
+  // 초기 진입 시(해시가 비어있으면) 기본값으로 lesson=1, mission=1 설정
   if (lesson && mission) {
     await enterMission(lesson, mission);
   } else if (lesson) {
     await enterLesson(lesson);
+  } else if (window.location.hash === '' || window.location.hash === '#') {
+    // 초기 진입: 블록코딩 화면(미션 1-1)으로 바로 이동
+    await enterMission(1, 1);
   } else {
     enterOverview();
   }
@@ -732,7 +719,7 @@ function showView(view) {
   const aiHelpButton = document.getElementById('aiHelpButton');
   if (aiHelpButton) aiHelpButton.hidden = !inMission;
   if (!inMission) document.getElementById('aiPanel')?.setAttribute('hidden', '');
-  updateRunButtonUI();
+  updateRunButtonUI(currentView, state.isExecuting, isBleConnected());
 
   // 콘텐츠 토글 버튼은 미션 뷰에서만 노출
   const contentBtn = document.getElementById('contentToggleBtn');
@@ -770,6 +757,7 @@ async function enterOverview() {
   document.getElementById('lessonSelect').value = '';
   populateMissionSelect(null);
   updateBreadcrumb(null, null);
+  renderCourseSidebar(LESSON_CATALOG, null, null);
 
   // 개요 콘텐츠 로드 (한 번만)
   const container = document.getElementById('overviewContent');
@@ -823,6 +811,7 @@ async function enterLesson(n) {
   document.getElementById('lessonHardware').textContent = `🔧 ${data.hardware}`;
   document.getElementById('lessonConcept').textContent = `💡 ${data.concept}`;
   document.getElementById('lessonIntro').textContent = data.intro;
+  renderCourseSidebar(LESSON_CATALOG, n, null);
 
   const ml = document.getElementById('lessonMissionList');
   ml.innerHTML = data.missions.map(m => `
@@ -879,8 +868,27 @@ async function enterMission(n, m) {
   document.getElementById('missionTagBadge').textContent = mission.tag;
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
   document.getElementById('missionHardware').textContent = `🔧 ${mission.hardware}`;
+  renderCourseSidebar(LESSON_CATALOG, n, m);
 
-  // 스토리
+  // 새로운 헤더에도 미션 정보 렌더링
+  document.getElementById('missionViewHeaderTitle').textContent = `${n}차시 미션 ${m} — ${mission.title}`;
+  document.getElementById('missionViewHeaderBadge').textContent = mission.tag;
+  document.getElementById('missionViewHeaderBadge').className = `mission-view-header-badge tag-${mission.tag}`;
+  document.getElementById('missionViewHeaderHardware').textContent = `🔧 ${mission.hardware}`;
+
+  // 스토리 (헤더)
+  const storyHeaderEl = document.getElementById('missionViewHeaderStory');
+  storyHeaderEl.innerHTML = (mission.story || []).map(line => `
+    <div class="mission-view-header-story-line">
+      <strong>${line.speaker === 'ares' ? '🧑‍🚀 아레스' : '🤖 알비'}:</strong> ${escapeHtml(line.text)}
+    </div>
+  `).join('');
+
+  // 학습 목표 (헤더)
+  const goalsHeaderEl = document.getElementById('missionViewHeaderGoals');
+  goalsHeaderEl.innerHTML = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
+
+  // 스토리 (기존 패널)
   const storyEl = document.getElementById('missionStory');
   storyEl.innerHTML = (mission.story || []).map(line => `
     <div class="story-line story-${line.speaker}">
@@ -890,7 +898,7 @@ async function enterMission(n, m) {
     </div>
   `).join('');
 
-  // 학습 목표
+  // 학습 목표 (기존 패널)
   const goalsEl = document.getElementById('missionGoals');
   goalsEl.innerHTML = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
 
@@ -990,22 +998,9 @@ function populateMissionSelect(n, data = null) {
   }
 }
 
-function updateBreadcrumb(n, m) {
-  const bc = document.getElementById('breadcrumb');
-  if (!bc) return;
-  if (n && m) bc.textContent = `${n}차시 › 미션 ${m}`;
-  else if (n) bc.textContent = `${n}차시`;
-  else bc.textContent = '';
-}
+// ...existing code...
 
-function escapeHtml(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// ...existing code...// ...existing code...
 
 // ============================================================
 // 대시보드 전환
@@ -1032,7 +1027,7 @@ function toggleDashboard() {
   if (elements.saveButton) elements.saveButton.disabled = true;
   if (elements.loadButton) elements.loadButton.disabled = true;
 
-  updateRunButtonUI();
+  updateRunButtonUI(currentView, state.isExecuting, isBleConnected());
   updateMobileBottomNav();
   Logger.add('[모드] 점검 화면 열기', 'info');
 }
@@ -1085,9 +1080,9 @@ function initializeAlwaysOnListeners() {
     e.currentTarget?.blur?.();
   });
 
-  // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
-  window.addEventListener('ares:connection', updateRunButtonUI);
-  window.addEventListener('ares:execution',  updateRunButtonUI);
+   // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
+   window.addEventListener('ares:connection', () => updateRunButtonUI(currentView, state.isExecuting, isBleConnected()));
+   window.addEventListener('ares:execution',  () => updateRunButtonUI(currentView, state.isExecuting, isBleConnected()));
 
   // 홈(개요)
   document.getElementById('homeButton')?.addEventListener('click', (e) => {
@@ -1119,7 +1114,28 @@ function initializeAlwaysOnListeners() {
 // 미션 뷰 전용 이벤트 (Blockly 워크스페이스 의존)
 // ============================================================
 function initializeMissionListeners(ws) {
-  // 미션 전송 / 비상정지 통합 버튼
+   // 미션 헤더 토글 버튼
+   const missionViewHeader = document.getElementById('missionViewHeader');
+   const missionViewHeaderToggleBtn = document.getElementById('missionViewHeaderToggleBtn');
+   if (missionViewHeaderToggleBtn) {
+     missionViewHeaderToggleBtn.addEventListener('click', (e) => {
+       e.stopPropagation();
+       missionViewHeader.classList.toggle('collapsed');
+       missionViewHeaderToggleBtn.textContent = missionViewHeader.classList.contains('collapsed') ? '⌃' : '⌄';
+     });
+   }
+
+   // 미션 헤더 클릭 시에도 토글
+   const missionViewHeaderToggle = document.querySelector('.mission-view-header-toggle');
+   if (missionViewHeaderToggle) {
+     missionViewHeaderToggle.addEventListener('click', () => {
+       if (event && event.target === missionViewHeaderToggleBtn) return; // 버튼 더블 토글 방지
+       missionViewHeader.classList.toggle('collapsed');
+       missionViewHeaderToggleBtn.textContent = missionViewHeader.classList.contains('collapsed') ? '⌃' : '⌄';
+     });
+   }
+
+   // 미션 전송 / 비상정지 통합 버튼
   elements.runButton?.addEventListener('click', async () => {
     if (state.isExecuting) {
       // 비상정지 모드 — 실행 중인 명령 흐름을 중단하고 STOP_ALL 전송
@@ -1406,8 +1422,9 @@ function main() {
   // 3) Blockly 의존 이벤트
   initializeMissionListeners(workspace);
 
-  // 4) 네비게이션 UI
-  buildLessonSelect();
+   // 4) 네비게이션 UI
+   buildLessonSelect();
+   renderCourseSidebar(LESSON_CATALOG, null, null);
 
   // 5) 로그 토글 + 콘텐츠 모드 토글
   const logContainer = document.getElementById('logContainer');
@@ -1452,14 +1469,15 @@ function main() {
     },
   });
 
-  // 6) 상태 초기화 + 라우팅
-  BluetoothManager.updateConnectionStatus(false);
-  updateBlockCodingButtonUI();
-  updateMobileBottomNav();
-  Logger.add('[시작] ARES 준비 완료 - BLE 연결을 시작하세요', 'info');
-  Logger.refresh();
+   // 6) 상태 초기화 + 라우팅
+   BluetoothManager.updateConnectionStatus(false);
+   updateBlockCodingButtonUI();
+   updateRunButtonUI(currentView, state.isExecuting, isBleConnected());
+   updateMobileBottomNav();
+   Logger.add('[시작] ARES 준비 완료 - BLE 연결을 시작하세요', 'info');
+   Logger.refresh();
 
-  applyRoute();
+   applyRoute();
 }
 
 // 최상위 ?mobile=true 진입 시에는 모바일 미리보기 프레임이 화면을 대체하므로
@@ -1471,3 +1489,4 @@ if (window.__ARES_MOBILE_FRAME__) {
 } else {
   main();
 }
+
