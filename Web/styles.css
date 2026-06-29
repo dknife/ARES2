@@ -1036,8 +1036,62 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .sim-stage canvas {
     position: absolute; inset: 0; z-index: 1;
     display: block; width: 100% !important; height: 100% !important; cursor: grab;
+    touch-action: none;
 }
 .sim-stage canvas:active { cursor: grabbing; }
+.sim-editor-toolbar {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    display: flex; align-items: center; gap: 6px;
+    max-width: calc(100% - 188px);
+    padding: 6px;
+    background: rgba(12, 13, 42, 0.58);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+}
+.sim-editor-toolbar button {
+    flex: 0 0 auto;
+    min-width: 54px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 0.74em;
+    font-weight: 700;
+    color: #eef3fb;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+.sim-editor-toolbar button[aria-pressed="true"] {
+    color: #1f2430;
+    background: #FFC400;
+    border-color: #FFB300;
+}
+.sim-editor-selection {
+    min-width: 92px;
+    max-width: 150px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: rgba(238, 243, 251, 0.78);
+    font-size: 0.72em;
+    font-weight: 600;
+}
+@media (max-width: 760px) {
+    .sim-editor-toolbar {
+        top: auto; right: 10px; bottom: 86px; left: 10px;
+        max-width: none;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .sim-editor-selection {
+        flex: 1 1 100%;
+        max-width: none;
+        text-align: center;
+    }
+}
 .sim-loading {
     position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
     color: #9aa6bf; font-size: 0.85em; pointer-events: none; text-align: center; padding: 12px;
