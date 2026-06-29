@@ -8,16 +8,18 @@
 \usepackage{fontspec}
 \defaultfontfeatures{Mapping=tex-text}
 
-%% ----- 폰트 -----
-%% 기본값: macOS 시스템 폰트(Apple SD Gothic Neo).
-%% Windows(개발 정본 환경)에서 컴파일할 경우 아래를
-%%   \setmainhangulfont{Malgun Gothic} 등으로 교체할 것.
-\setmainfont{Apple SD Gothic Neo}
-\setsansfont{Apple SD Gothic Neo}
-\setmonofont{Menlo}[Scale=0.86]
-\setmainhangulfont{Apple SD Gothic Neo}[Scale=1.0]
-\setsanshangulfont{Apple SD Gothic Neo}
-\setmonohangulfont{Apple SD Gothic Neo}[Scale=0.86]
+%% ----- 폰트 (KoPub 계열) -----
+%% KoPub 글꼴(무료·크로스플랫폼)을 기본으로 사용한다. 디자인이 고딕 기반이므로
+%% 본문·제목 모두 KoPubDotum(돋움)을 쓰고, 굵기는 Medium(보통)/Bold(굵게)로 둔다.
+%% (이탤릭 페이스가 없어 \emph/\textit 는 AutoFakeSlant 로 기울인다.)
+%% 본문을 바탕(serif)으로 하려면 main 만 KoPubBatang 으로 교체할 것.
+%% 설치: https://www.kopus.org (KoPubWorld/KoPub 글꼴). macOS 도 동일 이름.
+\setmainfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
+\setsansfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
+\setmonofont{Consolas}[Scale=0.86]
+\setmainhangulfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2, Scale=1.0]
+\setsanshangulfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
+\setmonohangulfont{KoPubDotum Medium}[Scale=0.86]
 %% 이모지(흑백) — 부록(코드 분석 전문)이 \emj{}와 raw 이모지를 사용.
 %% xetexko가 상위 평면 이모지를 한자(hanja) 부류로 라우팅하므로 한자 폰트를
 %% Noto Emoji로 지정해 🚗🔊🚀 등을 렌더한다(본문엔 한자 없음 → 안전).
