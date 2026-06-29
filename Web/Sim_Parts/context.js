@@ -12,6 +12,7 @@ import { OledSubsystem } from './oled.js';
 import { GunSubsystem } from './gun.js';
 import { AudioSynthesizer } from './audio.js';
 import { CommandDispatcher } from './dispatch.js';
+import { EditorControls } from './editor_controls.js';
 
 export class SimContext {
   constructor(THREE, A, stage, loadingEl, cfg, options = {}) {
@@ -91,6 +92,7 @@ export class SimContext {
     this.assets = new AssetLoader(this);
     this.renderEngine = new RenderEngine(this);
     this.dispatcher = new CommandDispatcher(this);
+    this.editor = new EditorControls(this);
   }
 
   getAudioCtx() {
@@ -143,6 +145,7 @@ export class SimContext {
     }
 
     // Subsystem disposals
+    this.editor?.dispose?.();
     this.leds?.dispose?.();
     this.gun?.dispose?.();
     this.traffic?.dispose?.();

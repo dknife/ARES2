@@ -110,6 +110,7 @@ export class AssetLoader {
         }
 
         scene.add(root);
+        this.ctx.editor?.register(root, cfg.label || 'Model');
 
         const maxDim = Math.max(sz.x, sz.y, sz.z);
         const fov = this.ctx.camera.fov * Math.PI / 180;
@@ -164,8 +165,10 @@ export class AssetLoader {
           box.receiveShadow = true;
           this.ctx.worldGroup.add(box);
           this.ctx.movement.boxes.push(box);
+          this.ctx.editor?.register(box, `Obstacle ${i + 1}`);
         }
         scene.add(this.ctx.worldGroup);
+        this.ctx.editor?.register(this.ctx.worldGroup, 'Rover World');
 
         const axes = new THREE.AxesHelper(1);
         axes.position.y = 0.003;
@@ -230,6 +233,7 @@ export class AssetLoader {
           }
           
           const root = gltf.scene;
+          const label = (url.split('/').pop() || 'Rover Part').replace(/\.glb$/i, '');
           if (!/RoverBody\.glb$/.test(url)) root.scale.setScalar(0.5);
           root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
           
@@ -242,23 +246,29 @@ export class AssetLoader {
             this.ctx.movement.wheelR.position.set( 0.7, 0, -0.3);
             this.ctx.movement.wheelL.position.set(-0.7, 0, -0.3);
             roverGroup.add(this.ctx.movement.wheelR, this.ctx.movement.wheelL);
+            this.ctx.editor?.register(this.ctx.movement.wheelR, 'RoverWheel R');
+            this.ctx.editor?.register(this.ctx.movement.wheelL, 'RoverWheel L');
           } else if (/RoverRadar\.glb$/.test(url)) {
             root.scale.multiplyScalar(0.5).multiplyScalar(0.8);
             root.position.set(0, 0.5, -0.9);
             this.ctx.movement.antennaPivot = root;
             roverGroup.add(root);
+            this.ctx.editor?.register(root, label);
           } else if (/RoverLED\.glb$/.test(url)) {
             root.position.set(0, 0.35, 0.2);
             root.rotation.x = Math.PI / 4;
             roverGroup.add(root);
+            this.ctx.editor?.register(root, label);
           } else if (/RoverHead\.glb$/.test(url)) {
             root.position.set(0, 0.6, -0.3);
             root.rotation.y = Math.PI;
             roverGroup.add(root);
+            this.ctx.editor?.register(root, label);
           } else if (/RoverGun\.glb$/.test(url)) {
             root.position.set(0.55, 0.5, -0.5);
             root.rotation.y = Math.PI / 2;
             roverGroup.add(root);
+            this.ctx.editor?.register(root, label);
             this.ctx.gun.gunMesh = root;
             {
               const bbox = new THREE.Box3().setFromObject(root);
@@ -312,8 +322,10 @@ export class AssetLoader {
               root.add(pivot);
             }
             roverGroup.add(root);
+            this.ctx.editor?.register(root, label);
           } else {
             roverGroup.add(root);
+            this.ctx.editor?.register(root, label);
           }
           
           if (--remaining === 0 && this.ctx.loadingEl && !this.ctx.disposed) {
