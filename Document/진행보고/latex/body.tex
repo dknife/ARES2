@@ -1,5 +1,5 @@
 %% ============================================================
-%% body.tex — 팀 구성 + 1~5일차 진행 (사진 전수 + 부록 발췌)
+%% body.tex — 팀 구성 + 1~6일차 진행 (사진 전수 + 부록 발췌)
 %% ============================================================
 
 \section{팀 구성 및 주요 업무}
@@ -598,4 +598,73 @@ Day 4의 모듈형 조립 시작품을 발전시켜, 측면 외형 패널을 \te
     \caption{브랜치 네트워크 — 작업$\cdot$백업 브랜치가 \code{main}으로 통합}
   \end{subfigure}
   \caption{5일차 — 개발 활동$\cdot$협업 현황(GitHub Insights): Pulse$\cdot$커밋$\cdot$코드 변동$\cdot$브랜치 네트워크}
+\end{figure}
+
+\section{6일차 — 서비스 디자인 논의 · 디자인 고도화 운영계획 정리}
+\textit{2026.06.30 (화) · 원격 개발 KST}
+
+\begin{summarybox}
+\textbf{온라인 서비스(웹)와 실물 교구}를 하나의 화성 탐사 수업 경험으로 잇는
+\textbf{디자인 고도화 운영계획}을 팀이 함께 논의$\cdot$정리했다(코리아사이언스 $\times$
+동명대 게임공학$\cdot$게임그래픽학과). 그동안의 디자인 활동(요구사항 분석 $\to$
+개선계획 $\to$ 구체화$\cdot$스티커 $\to$ 통합 사용성 테스트)을 되짚고, \textbf{디자인
+콘셉트$\cdot$5일 운영 흐름$\cdot$온라인 UX/UI 개선안$\cdot$실물 교구 제품화$\cdot$컬러
+시스템$\cdot$산출물 패키지}로 디자인 개발 계획을 구체화했다.
+\end{summarybox}
+
+\subsection{주요 업무 — 서비스 디자인 논의 (디자인 고도화 운영계획 정리)}
+개발 트랙과 별개로 진행된 \textbf{디자인 트랙}의 운영계획을 팀이 함께 검토$\cdot$논의했다.
+온라인 서비스와 실물 교구가 하나의 화성 탐사 수업 경험으로 이어지도록, \textbf{디자인
+콘셉트$\cdot$컬러 시스템$\cdot$온라인 UX/UI$\cdot$실물 교구 제품화$\cdot$산출물 패키지}로
+디자인 개발 계획을 정리했다.
+
+\smallskip
+\noindent\chip{조립형 코딩 어드벤처}~\chip{온라인 $\leftrightarrow$ 실물 경험 연결}~%
+\chip{5일 디자인 운영 흐름}~\chip{UX/UI 개선안}~\chip{교구 제품화$\cdot$스티커}~%
+\chip{제작 가이드$\cdot$운영 매뉴얼}
+
+\begin{itemize}
+  \item \textbf{디자인 콘셉트} — ``화성 탐사 미션을 따라가며 \emph{온라인 서비스와 실물
+  교구를 함께 완성하는 조립형 코딩 어드벤처}''. 다섯 축으로 정리 — \textbf{화성 탐사}(주황
+  화성 톤$\cdot$로켓/로버/발사대), \textbf{관제실 경험}(차시$\cdot$미션$\cdot$시뮬$\cdot$점검 화면
+  연결), \textbf{조립형 제품}(3D 프린팅$\cdot$교체형 부품$\cdot$스티커), \textbf{학생 친화성}(단순$\cdot$%
+  명확한 버튼$\cdot$아이콘$\cdot$모듈명), \textbf{수업 운영성}(교사 설명$\to$학생 수행 오류 최소화).
+  설계 우선 기준은 \emph{``수업에서 바로 이해$\cdot$조립$\cdot$작동 확인이 되는가''}.
+  \item \textbf{5일 디자인 운영 흐름} — \textbf{Day 1} 코리아사이언스 특강$\cdot$요구사항
+  분석$\cdot$디자인 방향 설정(온라인=‘화성 미션 관제실’, 실물=‘직접 조립하는 화성 탐사
+  장비’) $\to$ \textbf{Day 2} 5개 화면 UX/UI 개선계획 + 4개 모듈 조립 점검(현황 점수화로
+  수정 우선순위 도출) $\to$ \textbf{Day 3} 화면 Before/After 구체화$\cdot$기능적 스티커
+  방향$\cdot$3D 프린팅 검토 $\to$ \textbf{Day 4} 수업 상황 기반 통합 사용성 테스트(화면$\to$%
+  조립$\to$코드$\to$실물 반응 연결성 점검) $\to$ \textbf{Day 5} 최종 보완$\cdot$제작 가이드$\cdot$%
+  운영 매뉴얼$\cdot$사진 기록 정리.
+  \item \textbf{온라인 서비스 UX/UI 개선안 (게임공학)} — \textbf{랜딩}: 기능 나열 $\to$
+  ``블록 코딩으로 화성을 탐사하다'' 스토리 Hero + 탐사 시작 CTA. \textbf{학습 관제실}:
+  12차시 일괄 나열의 압도감을 줄여 ‘오늘의 미션 카드’ 최상단 고정 + 분기 진행 바 +
+  전체 차시 접기. \textbf{모바일}: 하단 4탭 고정$\cdot$safe-area 대응$\cdot$터치 타겟 44pt
+  확보. \textbf{블록 코딩 진입}: 아이콘+텍스트 레이블$\cdot$온보딩 투어로 1클릭 진입.
+  \textbf{AI 도움(알비)}: 코딩 화면 상시 노출 플로팅 버튼.
+  \item \textbf{실물 교구 제품화 방향 (게임그래픽)} — 4개 모듈별 디자인 — \textbf{룰렛}(원형$\cdot$%
+  주황 포인터 유지, 의미는 교체형 스티커로 전달, 중심축 나사 고정), \textbf{알비 \& 알비카트}(조형
+  유지 + \emph{Silk Metallic Blue PLA} 소재감$\cdot$블랙/차콜 카트$\cdot$배선 정리), \textbf{화성신호등$\cdot$%
+  RPS}(공용 베이스 + 아크릴 슬롯 교체로 신호등$\leftrightarrow$가위바위보 모드 전환, 전구 색상 대신
+  아이콘 실루엣+라벨), \textbf{화성발사대}(둔탁한 박스형 $\to$ 다크 네이비$\cdot$차콜 슬림 박스형
+  재설계 + 유지보수 패널). \textbf{스티커는 장식이 아닌 기능적 그래픽}(모듈명$\cdot$조작 방향$\cdot$%
+  경고$\cdot$미션 의미)으로 통일하고, 학생 커스터마이징(이름$\cdot$감정 아이콘) 영역을 둔다.
+  \item \textbf{컬러 시스템} — 실물 교구와 웹을 통합하는 스티커$\cdot$스타일 가이드.
+  \textbf{화성 주황 \#FF6A00}(강조$\cdot$발사대 포인트$\cdot$경고), 다크 네이비 \textbf{\#0D1117}$\cdot$%
+  차콜 \textbf{\#4A515C}(본체$\cdot$패널), 화이트 \textbf{\#FFFFFF}$\cdot$라이트 그레이 \textbf{\#D9DDE2}(텍스트$\cdot$%
+  정보 구조), 알비 \textbf{메탈릭 블루 \#1F6FAE}(기술$\cdot$신뢰).
+  \item \textbf{산출물 패키지} — 별도 발표 없이 \emph{제작$\cdot$운영 기준 자료}로 정리해
+  ProgressReport에 활용 — \textcircled{1} UX/UI 개선안(랜딩$\cdot$관제실$\cdot$모바일$\cdot$AI 버튼),
+  \textcircled{2} 3D 프린팅 제작 가이드(출력 파트$\cdot$권장 재질$\cdot$결합 구조$\cdot$스티커 위치),
+  \textcircled{3} 운영 매뉴얼(학생 조립 체크리스트$\cdot$교사 점검$\cdot$오류 대응$\cdot$재조립),
+  \textcircled{4} 사진 기록(전$\cdot$후 비교).
+\end{itemize}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.8\linewidth}\centering
+    \fbox{\includegraphics[width=\linewidth]{../img/6일차_디자인논의.jpg}}
+    \caption{서비스 디자인 논의 — 학생$\cdot$지도진이 컴퓨터실에 모여 온라인 서비스와 실물 교구를 아우르는 디자인 고도화 운영계획을 함께 검토$\cdot$논의(화면 개선안$\cdot$교구 제품화$\cdot$스티커$\cdot$컬러 방향 정리).}
+  \end{subfigure}
+  \caption{6일차 — 서비스 디자인 논의(디자인 고도화 운영계획)}
 \end{figure}
