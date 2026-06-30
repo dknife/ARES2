@@ -933,8 +933,8 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
      display: flex;
      flex-direction: column;
      align-items: flex-start;
-     gap: 6px;
-     padding: 14px 16px;
+     gap: 4px;
+     padding: 12px 14px;
      background: var(--background-secondary);
      border: 1px solid var(--border-color);
      border-radius: 8px;
@@ -966,6 +966,13 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
      box-shadow: 0 2px 8px rgba(250, 93, 41, 0.3);
 }
 
+.course-lesson-item.active .course-lesson-num,
+.course-lesson-item.active .course-lesson-title,
+.course-lesson-item.active .course-lesson-meta {
+     color: #fff;
+     opacity: 1;
+}
+
 .course-lesson-num {
      font-size: 0.78em;
      font-weight: 700;
@@ -976,7 +983,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .course-lesson-title {
      font-weight: 600;
      font-size: 0.88em;
-     line-height: 1.3;
+     line-height: 1.25;
 }
 
 .course-lesson-meta {
@@ -1974,26 +1981,26 @@ details.mission-section summary {
     #missionView {
         overflow: visible;
     }
-    #missionView > .mission-panel,
-    #missionView > .mission-workspace,
-    #missionView > .sim-card {
+    #missionView > .mission-view-main > .mission-panel,
+    #missionView > .mission-view-main > .mission-workspace,
+    #missionView > .mission-view-main > .sim-card {
         position: relative;
         inset: auto;
         width: 100%;
         height: auto;
     }
     /* 미션 설명: 콘텐츠 자연 높이로 흐른다(페이지 스크롤로 본다) */
-    #missionView[data-mode="description"] > .mission-panel {
+    #missionView[data-mode="description"] > .mission-view-main > .mission-panel {
         overflow: visible;
     }
     /* 블럭코딩: 고정 뷰포트 높이로 작업 공간 확보 */
-    #missionView[data-mode="coding"] > .mission-workspace {
+    #missionView[data-mode="coding"] > .mission-view-main > .mission-workspace {
         height: 75dvh;
         min-height: 480px;
     }
     /* 시뮬레이션: 카드 전체가 하나의 렌더링 영역. 확정 높이를 줘서(스테이지가 채움)
        캔버스(height:100%)가 정확히 창에 맞게 풀리도록 한다. */
-    #missionView[data-mode="simulation"] > .sim-card {
+    #missionView[data-mode="simulation"] > .mission-view-main > .sim-card {
         height: 62dvh;   /* 기존 78dvh 의 0.8배 — 모바일에서 한 눈에 보이도록 */
         min-height: 0;
     }

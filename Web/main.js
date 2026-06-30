@@ -461,10 +461,6 @@ function handleBlockCodingButtonClick() {
     closeDashboardToCoding();
     return;
   }
-  if (isInBlockCodingStage()) {
-    navigate({});
-    return;
-  }
   openBlockCodingWorkspace();
 }
 
