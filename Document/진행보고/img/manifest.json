@@ -255,6 +255,78 @@
       "h": 900,
       "bytes": 169891,
       "date": null
+    },
+    {
+      "file": "img/6일차_가이드_표지.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p1",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 40038,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_개요.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p2",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 71932,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_대상환경컨셉.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p3",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 70456,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_메인메뉴.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p5",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 101142,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_홈화면.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p6",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 116999,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_미션화면.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p7",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 106897,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_코딩화면.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p8",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 91637,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_미리보기.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p9",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 79935,
+      "date": null
+    },
+    {
+      "file": "img/6일차_가이드_AI알비.jpg",
+      "orig": "화성탐사블록코딩_UIUX개발가이드11.pdf p10",
+      "w": 1600,
+      "h": 1131,
+      "bytes": 77025,
+      "date": null
     }
   ]
 }
