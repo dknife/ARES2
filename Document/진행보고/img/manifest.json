@@ -207,6 +207,54 @@
       "h": 1200,
       "bytes": 336073,
       "date": "2026-06-30T01:14:22.000Z"
+    },
+    {
+      "file": "img/6일차_발표_표지.jpg",
+      "orig": "ARES_design_plan_0630.pdf p1",
+      "w": 1600,
+      "h": 900,
+      "bytes": 69849,
+      "date": null
+    },
+    {
+      "file": "img/6일차_발표_팀구성.jpg",
+      "orig": "ARES_design_plan_0630.pdf p2",
+      "w": 1600,
+      "h": 900,
+      "bytes": 127402,
+      "date": null
+    },
+    {
+      "file": "img/6일차_발표_콘셉트.jpg",
+      "orig": "ARES_design_plan_0630.pdf p17",
+      "w": 1600,
+      "h": 900,
+      "bytes": 147662,
+      "date": null
+    },
+    {
+      "file": "img/6일차_발표_컬러시스템.jpg",
+      "orig": "ARES_design_plan_0630.pdf p18",
+      "w": 1600,
+      "h": 900,
+      "bytes": 126013,
+      "date": null
+    },
+    {
+      "file": "img/6일차_발표_알비소재.jpg",
+      "orig": "ARES_design_plan_0630.pdf p19",
+      "w": 1600,
+      "h": 900,
+      "bytes": 144652,
+      "date": null
+    },
+    {
+      "file": "img/6일차_발표_모듈디자인.jpg",
+      "orig": "ARES_design_plan_0630.pdf p20",
+      "w": 1600,
+      "h": 900,
+      "bytes": 169891,
+      "date": null
     }
   ]
 }
