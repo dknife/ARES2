@@ -41,7 +41,6 @@ export function renderCourseSidebar(lessonCatalog, activeLesson = null, activeMi
           <button type="button" class="course-lesson-item${activeLesson === lesson.n ? ' active' : ''}" data-lesson="${lesson.n}">
             <span class="course-lesson-num">${lesson.n}차시</span>
             <span class="course-lesson-title">${escapeHtml(lesson.title)}</span>
-            <span class="course-lesson-meta">${escapeHtml(lesson.hardware)}</span>
           </button>
         `).join('')}
       </div>
