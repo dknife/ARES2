@@ -1111,6 +1111,41 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     padding-left: 12px;
 }
 
+/* 아코디언 여닫이 애니메이션 — 실제 콘텐츠 높이(--acc-h)까지 부드럽게 펼치고 접음.
+   열림/닫힘은 main.js 의 openAccordion()/closeAccordion() 이 클래스로 제어한다. */
+@keyframes accordionExpand {
+    from { opacity: 0; max-height: 0;                 transform: translateY(-6px); }
+    to   { opacity: 1; max-height: var(--acc-h, 1800px); transform: translateY(0); }
+}
+@keyframes accordionCollapse {
+    from { opacity: 1; max-height: var(--acc-h, 1800px); transform: translateY(0); }
+    to   { opacity: 0; max-height: 0;                 transform: translateY(-6px); }
+}
+
+/* 펼쳐질 때: 2초 (천천히 열림) */
+.lesson-panel.accordion-opening,
+.inline-mission-detail.accordion-opening {
+    overflow: hidden;
+    animation: accordionExpand 2s ease-out;
+}
+
+/* 접힐 때: 1초 (천천히 닫힘) */
+.lesson-panel.accordion-closing,
+.inline-mission-detail.accordion-closing {
+    overflow: hidden;
+    animation: accordionCollapse 1s ease-in forwards;
+}
+
+/* 모션 최소화 설정 사용자는 애니메이션 생략 (JS 폴백 타이머가 상태를 마무리) */
+@media (prefers-reduced-motion: reduce) {
+    .lesson-panel.accordion-opening,
+    .lesson-panel.accordion-closing,
+    .inline-mission-detail.accordion-opening,
+    .inline-mission-detail.accordion-closing {
+        animation: none;
+    }
+}
+
 @media (max-width: 520px) {
     .flow-step-btn {
         grid-template-columns: 36px minmax(0, 1fr) 14px;
