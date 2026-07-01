@@ -6,7 +6,7 @@ body {
     justify-content: center;
     align-items: center;
     background: #F8F8F8;
-    color: #222222;
+    color: #0D1117;
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 1.12em;   /* 강원교육튼튼 기준 — 적당히 크게 */
     font-weight: 700;    /* 대체로 굵게 */
@@ -28,12 +28,12 @@ body {
     font-size: 1.6em;
     font-weight: 800;
     letter-spacing: 2px;
-    color: #222;
+    color: #0D1117;
     margin-bottom: 24px;
 }
 
 .brand .dot {
-    color: #FA5D29;
+    color: #FF6A00;
 }
 
 .intro-title {
@@ -42,14 +42,14 @@ body {
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 16px;
-    color: #222;
+    color: #0D1117;
 }
 
 .intro-desc {
     font-size: 1em;
     line-height: 1.7;
     margin-bottom: 32px;
-    color: #313131;
+    color: #4A515C;
 }
 
 .start-btn {
@@ -60,7 +60,7 @@ body {
     padding: 0 32px;
     border: none;
     border-radius: 8px;
-    background: #222;
+    background: #0D1117;
     color: #fff;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -80,25 +80,25 @@ body {
     display: block;
     margin-top: 20px;
     font-size: 0.85em;
-    color: #999;
+    color: #8A929E;
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .back-link:hover {
-    color: #FA5D29;
+    color: #FF6A00;
 }
 
 .status {
     margin-top: 20px;
     font-size: 0.95em;
     font-weight: 500;
-    color: #999;
+    color: #8A929E;
     transition: color 0.3s;
 }
 
 .status.connecting {
-    color: #FA5D29;
+    color: #FF6A00;
 }
 
 .status.connected {
