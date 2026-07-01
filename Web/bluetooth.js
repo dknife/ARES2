@@ -1,6 +1,6 @@
 // 블루투스 매니저
 
-import { state, DEBUG, DEFAULT_TAB_NAMES } from './state.js';
+import { state, DEBUG, DEFAULT_BLOCK_NAMES } from './state.js';
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BLUETOOTH_CONFIG, STATUS_COLORS } from './constants.js';
@@ -337,7 +337,7 @@ export const BluetoothManager = {
         try {
             // Format: NAMES,model:rover,wheel:서보 모터,dcmotor:DC 모터,leds:신호등...
             const parts = data.split(',');
-            const tabNames = Object.assign({}, DEFAULT_TAB_NAMES);
+            const blockNames = Object.assign({}, DEFAULT_BLOCK_NAMES);
             for (let i = 1; i < parts.length; i++) {
                 const pair = parts[i].split(':');
                 if (pair.length === 2) {
@@ -346,12 +346,12 @@ export const BluetoothManager = {
                     
                     if (key === 'model' || key === 'theme') {
                         state.activeModel = val.toLowerCase();
-                    } else if (key in tabNames) {
-                        tabNames[key] = val;
+                    } else if (key in blockNames) {
+                        blockNames[key] = val;
                     }
                 }
             }
-            state.tabNames = tabNames;
+            state.blockNames = blockNames;
             if (window.updateToolboxForActiveState) {
                 window.updateToolboxForActiveState();
             }
@@ -359,7 +359,7 @@ export const BluetoothManager = {
             console.error('[Bluetooth] NAMES 파싱 오류:', e);
         }
         this._resolvePromise(data);
-        Logger.add('[수신] 블록코딩 탭 이름 정보', 'success');
+        Logger.add('[수신] 블록 이름 정보', 'success');
     },
 
     // CALIB_VALUES 처리
@@ -441,7 +441,7 @@ export const BluetoothManager = {
     updateConnectionStatus(connected) {
         if (!connected) {
             state.enabledModules = null;
-            state.tabNames = Object.assign({}, DEFAULT_TAB_NAMES);
+            state.blockNames = Object.assign({}, DEFAULT_BLOCK_NAMES);
             if (window.updateToolboxForActiveState) {
                 window.updateToolboxForActiveState();
             }
