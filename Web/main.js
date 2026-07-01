@@ -578,17 +578,11 @@ function isLogExpanded() {
 }
 
 function getMobileActiveAction() {
-  return isAiPanelOpen()
-    ? 'ai'
-    : isLogExpanded()
-      ? 'log'
-      : isDashboardVisible()
-        ? 'dashboard'
-        : currentView === 'mission'
-          ? 'mission'
-          : currentView === 'lesson'
-            ? 'lesson'
-            : 'overview';
+  if (isAiPanelOpen()) return 'ai';
+  if (isLogExpanded()) return 'log';
+  if (isDashboardVisible()) return 'dashboard';
+  // 개요·차시·미션(코딩)을 하나의 "미션" 탭으로 통합
+  return 'mission';
 }
 
 function restoreHash(hash) {
@@ -644,6 +638,11 @@ function bindMobileBottomNav() {
         }
       } else if (action === 'log' && isLogExpanded()) {
         document.getElementById('logHeader')?.click();
+      } else if (action === 'mission' && currentView !== 'overview') {
+        // 차시/미션 코딩 화면에서 "미션" 탭을 다시 누르면 메뉴(개요 아코디언)로 복귀
+        mobileDashboardReturnHash = null;
+        mobileAiReturnHash = null;
+        navigate({});
       }
       updateMobileBottomNav();
       btn.blur?.();
@@ -651,20 +650,11 @@ function bindMobileBottomNav() {
     }
 
     switch (action) {
-      case 'overview':
+      case 'mission':
+        // 통합된 "미션" 탭 → 개요 메뉴(차시·미션 아코디언) 화면을 표시
         mobileDashboardReturnHash = null;
         mobileAiReturnHash = null;
         navigate({});
-        break;
-      case 'lesson':
-        mobileDashboardReturnHash = null;
-        mobileAiReturnHash = null;
-        navigate({ lesson });
-        break;
-      case 'mission':
-        mobileDashboardReturnHash = null;
-        mobileAiReturnHash = null;
-        navigate({ lesson, mission });
         break;
       case 'dashboard':
         if (currentView !== 'mission') {
@@ -836,56 +826,57 @@ async function enterOverview() {
                <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
                <span class="flow-arrow" aria-hidden="true">▶</span>
              </button>
-             <div id="inlineMissions${lesson.n}" class="inline-mission-list" hidden></div>
+             <div id="inlineMissions${lesson.n}" class="lesson-panel" hidden></div>
            </section>
          `).join('');
 
          flowContainer.addEventListener('click', async (event) => {
-           const missionButton = event.target.closest('[data-inline-mission]');
-           if (missionButton) {
-             navigate({
-               lesson: Number(missionButton.dataset.lesson),
-               mission: Number(missionButton.dataset.inlineMission),
-             });
+           // (1) 미션 코딩 버튼 → 해당 미션 선택 + 블록코딩 모드로 전환
+           const codeBtn = event.target.closest('.mission-code-btn');
+           if (codeBtn) {
+             openMissionCoding(Number(codeBtn.dataset.lesson), Number(codeBtn.dataset.mission));
              return;
            }
 
+           // (2) 미션 버튼 → 미션 상세 정보를 아래로 펼침 (개요를 떠나지 않음)
+           const missionButton = event.target.closest('.inline-mission-btn');
+           if (missionButton) {
+             toggleInlineMissionDetail(missionButton);
+             return;
+           }
+
+           // (3) 차시 버튼 → 미션 리스트 + 차시 정보를 펼침
            const lessonButton = event.target.closest('.flow-step-btn');
            if (!lessonButton) return;
            const lessonNum = Number(lessonButton.dataset.lesson);
            const item = lessonButton.closest('.lesson-accordion-item');
-           const missionList = item?.querySelector('.inline-mission-list');
-           if (!missionList) return;
+           const panel = item?.querySelector('.lesson-panel');
+           if (!panel) return;
 
-           const willOpen = missionList.hasAttribute('hidden');
-           flowContainer.querySelectorAll('.inline-mission-list:not([hidden])').forEach(openList => {
-             if (openList !== missionList) {
-               openList.setAttribute('hidden', '');
-               openList.previousElementSibling?.setAttribute('aria-expanded', 'false');
+           const willOpen = panel.hasAttribute('hidden');
+           flowContainer.querySelectorAll('.lesson-panel:not([hidden])').forEach(openPanel => {
+             if (openPanel !== panel) {
+               openPanel.setAttribute('hidden', '');
+               openPanel.previousElementSibling?.setAttribute('aria-expanded', 'false');
              }
            });
 
            if (!willOpen) {
-             missionList.setAttribute('hidden', '');
+             panel.setAttribute('hidden', '');
              lessonButton.setAttribute('aria-expanded', 'false');
              return;
            }
 
            const data = await loadLesson(lessonNum);
            if (!data?.missions) return;
-           missionList.innerHTML = data.missions.map(mission => {
-             const completed = isMissionCompleted(lessonNum, mission.id);
-             return `
-               <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}" data-lesson="${lessonNum}" data-inline-mission="${mission.id}">
-                 <span class="inline-mission-num">${mission.id}</span>
-                 <span class="inline-mission-main">
-                   <strong>${escapeHtml(mission.title)} <span class="inline-mission-check" ${completed ? '' : 'hidden'}>✓</span></strong>
-                   <small>${escapeHtml(mission.hardware || '')}</small>
-                 </span>
-                 <span class="inline-mission-arrow" aria-hidden="true">›</span>
-               </button>`;
-           }).join('');
-           missionList.removeAttribute('hidden');
+           // 미션 리스트 + (그 아래) 차시 정보
+           panel.innerHTML = `
+             <div class="inline-mission-list">
+               ${data.missions.map(m => renderInlineMissionItem(lessonNum, m)).join('')}
+             </div>
+             ${renderInlineLessonInfo(data)}
+           `;
+           panel.removeAttribute('hidden');
            lessonButton.setAttribute('aria-expanded', 'true');
            item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
          });
@@ -895,6 +886,107 @@ async function enterOverview() {
       Logger.add(`[오류] overview.html 로드 실패: ${e.message}`, 'error');
     }
   }
+}
+
+// ============================================================
+// 개요 인라인 렌더 헬퍼 (차시 → 미션 → 미션 상세 아코디언)
+// ============================================================
+function renderInlineMissionDetail(n, mission) {
+  const story = (mission.story || []).map(line => `
+      <div class="story-line story-${line.speaker}">
+        <span class="story-avatar">${line.speaker === 'ares' ? '🧑‍🚀' : '🤖'}</span>
+        <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
+        <span class="story-text">${escapeHtml(line.text)}</span>
+      </div>`).join('');
+  const goals = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
+  return `
+    <div id="missionDetail${n}_${mission.id}" class="inline-mission-detail" hidden>
+      <div class="mission-story">${story}</div>
+      <div class="mission-section">
+        <h4>🎯 학습 목표</h4>
+        <ul class="inline-goal-list">${goals}</ul>
+      </div>
+      <details class="mission-section">
+        <summary>💡 샘플 코드 보기</summary>
+        <pre class="sample-code">${escapeHtml(mission.sampleCode || '')}</pre>
+      </details>
+      <button type="button" class="mission-code-btn" data-lesson="${n}" data-mission="${mission.id}">🧩 미션 코딩 시작 →</button>
+    </div>`;
+}
+
+function renderInlineMissionItem(n, mission) {
+  const completed = isMissionCompleted(n, mission.id);
+  return `
+    <div class="inline-mission-item" data-mission-item="${mission.id}">
+      <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}"
+              data-lesson="${n}" data-inline-mission="${mission.id}"
+              aria-expanded="false" aria-controls="missionDetail${n}_${mission.id}">
+        <span class="inline-mission-num">${mission.id}</span>
+        <span class="inline-mission-main">
+          <strong>${escapeHtml(mission.title)} <span class="inline-mission-check" ${completed ? '' : 'hidden'}>✓</span></strong>
+          <small>${escapeHtml(mission.hardware || '')}</small>
+        </span>
+        <span class="inline-mission-arrow" aria-hidden="true">›</span>
+      </button>
+      ${renderInlineMissionDetail(n, mission)}
+    </div>`;
+}
+
+function renderInlineLessonInfo(data) {
+  const summary = data.summary ? `
+      <div class="summary-box summary-${data.summary.type}">
+        <h4>${escapeHtml(data.summary.title)}</h4>
+        <p>${escapeHtml(data.summary.text)}</p>
+      </div>` : '';
+  return `
+    <div class="inline-lesson-info">
+      <h4 class="inline-lesson-info-title">📘 차시 정보</h4>
+      <div class="inline-lesson-info-head">
+        <span class="lesson-tag tag-${data.tag}">${escapeHtml(data.tag)}</span>
+        <span class="inline-lesson-meta">🔧 ${escapeHtml(data.hardware)} <span class="dot-sep">·</span> 💡 ${escapeHtml(data.concept)}</span>
+      </div>
+      <p class="inline-lesson-intro">${escapeHtml(data.intro)}</p>
+      ${summary}
+    </div>`;
+}
+
+// 미션 버튼 클릭 → 그 미션 상세를 아래로 펼치고, 같은 차시의 다른 미션 상세는 접는다
+function toggleInlineMissionDetail(btn) {
+  const item = btn.closest('.inline-mission-item');
+  const detail = item?.querySelector('.inline-mission-detail');
+  if (!detail) return;
+  const list = item.closest('.inline-mission-list');
+  const willOpen = detail.hasAttribute('hidden');
+  list?.querySelectorAll('.inline-mission-detail:not([hidden])').forEach(d => {
+    if (d !== detail) {
+      d.setAttribute('hidden', '');
+      d.previousElementSibling?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  if (willOpen) {
+    detail.removeAttribute('hidden');
+    btn.setAttribute('aria-expanded', 'true');
+    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } else {
+    detail.setAttribute('hidden', '');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+}
+
+// 미션 코딩 시작 → 해당 미션으로 이동 후 블록코딩 모드로 전환
+function openMissionCoding(lesson, mission) {
+  if (!Number.isFinite(lesson) || !Number.isFinite(mission)) return;
+  navigate({ lesson, mission });
+  // 미션 뷰 진입은 해시 변경 후 비동기로 이뤄지므로, 진입을 확인한 뒤 코딩 모드로 전환
+  let attempts = 0;
+  const poll = () => {
+    if (currentView === 'mission') {
+      if (setContentMode) setContentMode('coding');
+      return;
+    }
+    if (attempts++ < 60) setTimeout(poll, 50);
+  };
+  setTimeout(poll, 50);
 }
 
 // ============================================================
