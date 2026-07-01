@@ -7,7 +7,9 @@ body {
     align-items: center;
     background: #F8F8F8;
     color: #222222;
-    font-family: 'GangwonEduAll', 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 1.12em;   /* 강원교육튼튼 기준 — 적당히 크게 */
+    font-weight: 700;    /* 대체로 굵게 */
     overflow: hidden;
 }
 
@@ -22,7 +24,7 @@ body {
 }
 
 .brand {
-    font-family: 'GangwonEduTeun', 'GangwonEduAll', sans-serif;
+    font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif;
     font-size: 1.6em;
     font-weight: 800;
     letter-spacing: 2px;
@@ -35,7 +37,7 @@ body {
 }
 
 .intro-title {
-    font-family: 'GangwonEduTeun', 'GangwonEduAll', sans-serif;
+    font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif;
     font-size: 2em;
     font-weight: 700;
     line-height: 1.2;
@@ -51,7 +53,7 @@ body {
 }
 
 .start-btn {
-    font-family: 'GangwonEduAll', 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 1em;
     font-weight: 600;
     height: 48px;

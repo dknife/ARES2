@@ -1,30 +1,12 @@
 /* ------------------------------------------------------------------
- * 강원교육 폰트 — ARES 서비스 기본 서체 (자체 호스팅 woff2)
- *   본문·UI : GangwonEduAll  (강원교육모두, Light/Bold 두 굵기)
- *   제목·로고: GangwonEduTeun (강원교육튼튼)
- * 원본(ttf/otf, 저장소 밖 Fonts/)을 woff2 로 변환해 Web/fonts/ 에 둔다.
+ * 강원교육튼튼 — ARES 서비스 단일 기본 서체 (자체 호스팅 woff2)
+ * 초등 대상에 맞춰 두툼한 강원교육튼튼으로 본문·제목을 통일한다.
+ * 원본(ttf, 저장소 밖 Fonts/)을 Win .ttf(glyf) 기준으로 재빌드하고
+ * 비표준 kern 테이블을 제거해 브라우저 폰트 검사기(OTS)를 통과시킨 woff2.
  * 강원특별자치도교육청 무료 배포 글꼴(임베딩 허용).
  * ------------------------------------------------------------------ */
 
-/* Win .ttf(glyf) 기준으로 재빌드하고 비표준 kern 테이블을 제거해
-   브라우저 폰트 검사기(OTS)를 통과하도록 만든 woff2. */
-/* 강원교육모두 Light → 얇음~보통(100–500) 구간 */
-@font-face {
-  font-family: 'GangwonEduAll';
-  font-style: normal;
-  font-weight: 100 500;
-  font-display: swap;
-  src: url('GangwonEduAll-Light.woff2') format('woff2');
-}
-/* 강원교육모두 Bold → 세미볼드~볼드(600–900) 구간 */
-@font-face {
-  font-family: 'GangwonEduAll';
-  font-style: normal;
-  font-weight: 600 900;
-  font-display: swap;
-  src: url('GangwonEduAll-Bold.woff2') format('woff2');
-}
-/* 강원교육튼튼 → 제목용(모든 굵기 요청을 이 한 벌로) */
+/* 단일 벌이므로 모든 굵기 요청(400~900)을 이 한 벌로 매핑 */
 @font-face {
   font-family: 'GangwonEduTeun';
   font-style: normal;

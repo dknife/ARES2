@@ -122,7 +122,7 @@
     style.textContent = [
       'body.ares-mp{margin:0;min-height:100vh;display:flex;flex-direction:column;',
       'align-items:center;justify-content:center;gap:14px;overflow:auto;',
-      'background:#e9ebef;font-family:"GangwonEduAll","Inter Tight",system-ui,sans-serif;padding:20px;box-sizing:border-box;}',
+      'background:#e9ebef;font-family:"GangwonEduTeun","Inter Tight",system-ui,sans-serif;padding:20px;box-sizing:border-box;}',
       '.ares-mp-bar{display:flex;align-items:center;gap:14px;font-size:14px;color:#444;flex-wrap:wrap;justify-content:center;}',
       '.ares-mp-bar strong{color:#222;font-weight:700;letter-spacing:.5px;}',
       '.ares-mp-bar .dot{color:#FA5D29;}',
