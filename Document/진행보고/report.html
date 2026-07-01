@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~6일차</title>
+    <title>ARES 진행 보고 — 1~7일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -177,7 +177,7 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 6일차</span></h1>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 7일차</span></h1>
             <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검.</p>
             <div class="stat-row">
                 <div class="stat"><b>5</b><span>DAYS</span></div>
@@ -1113,11 +1113,102 @@
                 </figure>
             </div>
         </section>
+
+        <!-- ============ Day 7 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 7</span>
+                <h2>펌웨어 서보 중립 조정 · 모바일 테마 통일(폰트·UI) · 시뮬레이터 기즈모 통합</h2>
+                <span class="day-date">2026.07.01 (수) · 원격 개발 KST</span>
+            </div>
+            <p class="day-summary">세 트랙을 병행했다. <b>펌웨어</b>는 정지 명령에도 연속회전 서보 바퀴가 미세하게 도는 문제를 <b>중립 듀티</b>를 <b>5000 → 4900</b>으로 조정해 해결하고 좌·우 서보 동작을 확인했다. <b>웹 인터페이스</b>는 화면 전체를 <b>모바일 테마로 통일</b>하는 과정에서 발생한 <code>ui.js</code> 충돌을 <b>통합 main 동작 확인 → 재-pull로 각 브랜치 갱신</b> 절차로 정리하고, 강원교육튼튼 폰트·관제실 차시 버튼화·개요 모바일 노출·코딩 환경 블록 카테고리 색상을 적용했다. <b>시뮬레이터</b>는 통합 관제실 환경에서 <b>기즈모(이동·회전·크기)</b> 동작을 확인하고, 다음 단계로 <b>컴포넌트 기반 객체 동작</b> 삽입 계획을 세웠다.</p>
+
+            <div class="tasks">
+                <h3>🔧 펌웨어(Pico) — 서보 모터 중립 펄스 조정</h3>
+                <p class="lead">정지 명령을 보내도 연속회전 서보 바퀴가 완전히 멈추지 않고 미세하게 도는 문제가 있었다. 정지 기준인 <b>중립 듀티</b>(<code>system_config.py</code>의 <code>left_neutral_duty</code>·<code>right_neutral_duty</code>, <code>wheel.py</code>에서 사용)를 정확한 값으로 <b>5000 → 4900</b>으로 조정해 바퀴가 완전히 정지하도록 맞추고, <b>좌·우 서보</b>를 각각 동작 확인했다.</p>
+                <div class="chips">
+                    <span class="chip t">중립 듀티 5000→4900</span>
+                    <span class="chip">정지 미세 회전 해결</span>
+                    <span class="chip">좌·우 서보 동작 확인</span>
+                </div>
+                <ul>
+                    <li><b>문제</b> — 정지 상태에서도 연속회전 서보가 미세하게 회전(중립값 오차).</li>
+                    <li><b>조치</b> — 중립 듀티를 <code>5000 → 4900</code>으로 조정해 좌·우 바퀴 정지 확인.</li>
+                    <li><b>향후 조치</b> — 4900을 기본 중립으로 사용하되, <b>서보 개체차</b>로 중립값이 다른 경우를 대비해 <b>서보별 미세조정 파라미터</b>를 추가한다.</li>
+                </ul>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/7일차_개발현장1.jpg" alt="컴퓨터실 개발 현장 — 팀 병행 작업"></div>
+                    <figcaption><b>개발 현장</b> — 컴퓨터실에서 펌웨어·웹·시뮬레이터 트랙을 팀원별로 병행 진행.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:901/1600; background:#242424;"><img src="img/7일차_개발현장2.jpg" alt="시뮬레이터 화면과 Pico 하드웨어"></div>
+                    <figcaption><b>시뮬레이터·하드웨어 점검</b> — 화면의 3D 시뮬레이터와 책상 위 Pico 보드·배선으로 동작을 대조 확인.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:901/1600; background:#242424;"><img src="img/7일차_개발현장3.jpg" alt="작업 체크리스트와 Pico 배선"></div>
+                    <figcaption><b>작업 점검</b> — 진행 항목 체크리스트와 Pico 배선을 함께 두고 서보 동작을 점검.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 웹 인터페이스 — 모바일 테마 통일 &amp; <code>ui.js</code> 충돌 해결</h3>
+                <p class="lead">서비스 화면을 <b>모바일 환경 테마로 통일</b>하는 과정에서 여러 브랜치가 같은 <code>ui.js</code>를 수정해 <b>충돌</b>이 발생했다. <b>통합된 main 브랜치의 동작을 먼저 확인</b>한 뒤, 이를 <b>각 작업 브랜치가 다시 pull하여 갱신</b>하는 절차로 정리해 충돌을 해소하고 기준선을 맞췄다. 그 결과로 <b>강원교육튼튼</b> 폰트 적용, 관제실 <b>차시 버튼화·미션 리스트</b>, 개요 <b>모바일 아코디언 노출</b>, 코딩 환경 <b>블록 카테고리 색상 체계</b>를 반영했다.</p>
+                <div class="chips">
+                    <span class="chip t">모바일 테마 통일</span>
+                    <span class="chip">ui.js 충돌 해결(재-pull 갱신)</span>
+                    <span class="chip">강원교육튼튼 폰트</span>
+                    <span class="chip">차시 버튼·미션 리스트</span>
+                    <span class="chip">블록 카테고리 색상</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:767/900; background:#fff;"><img src="img/7일차_폰트적용_관제실.png" alt="관제실 화면 — 강원교육튼튼 폰트 적용"></div>
+                    <figcaption><b>① 폰트 적용(관제실)</b> — 학습 관제실 개요 화면에 <b>강원교육튼튼</b> 서체 적용. 상단 기능 버튼·차시 카드·하단 5탭 내비까지 두툼하고 큰 글자로 통일.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:763/896; background:#fff;"><img src="img/7일차_차시_미션리스트.png" alt="차시 버튼화와 미션 리스트"></div>
+                    <figcaption><b>② 차시 버튼·미션 리스트</b> — 차시를 카드/아코디언으로 버튼화하고 차시별 미션(0/4 진행)을 리스트로 펼쳐 보이도록 구성.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:811/796; background:#fff;"><img src="img/7일차_개요_모바일노출.png" alt="개요 모바일 아코디언 노출 디자인"></div>
+                    <figcaption><b>③ 개요 모바일 노출</b> — 12차시를 아코디언으로 접고 펴는 모바일 개요 화면. 하단 <b>신호연결</b> 플로팅 버튼 + 4탭(미션·코딩·시뮬레이션·AI도움).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:337/541; background:#fff;"><img src="img/7일차_코딩_블록카테고리.png" alt="코딩 환경 블록 카테고리 색상"></div>
+                    <figcaption><b>④ 코딩 환경 기본 디자인</b> — 블록 팔레트와 <b>카테고리 색상 체계</b>(동작·출력·발사·감지·제어·계산·묶음)를 정의한 코딩 화면 기본 디자인.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎮 시뮬레이터 — 기즈모 동작 확인 &amp; 컴포넌트 기반 확장 계획</h3>
+                <p class="lead">통합된 관제실 환경에서 <b>기즈모(이동·회전·크기)</b>가 정상 동작함을 확인했다. 다음 단계로, 명령에 반응하는 <b>컴포넌트 기반 객체 동작</b>을 시뮬레이션에 삽입할 계획이다.</p>
+                <div class="chips">
+                    <span class="chip t">기즈모 통합 동작 확인</span>
+                    <span class="chip">컴포넌트 기반 객체 동작(계획)</span>
+                </div>
+                <ul>
+                    <li><b>기즈모 동작 확인</b> — 관제실에 통합된 3D 시뮬레이터에서 알비(로버)에 바운딩 박스와 <b>이동·회전·크기</b> 기즈모가 표시·조작됨을 확인.</li>
+                    <li><b>향후 조치 계획 — 컴포넌트 기반 객체 동작 삽입</b> — 객체가 명령에 따라 반응하도록 동작을 컴포넌트로 구성: <b>LED</b>(0·1·2·3·4·5) + <b>모터</b>(축·이동) + <b>발사</b>(이동·폭발·화염).</li>
+                </ul>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:770/839; background:#1a1030;"><img src="img/7일차_시뮬_기즈모통합.png" alt="관제실 통합 시뮬레이터 — 기즈모 동작"></div>
+                    <figcaption><b>기즈모 환경 통합 결과</b> — 관제실 화면 안 3D 시뮬레이터에서 알비에 바운딩 박스와 <b>Move·Rotate·Scale</b> 기즈모가 표시된 통합 결과. 좌측 LED 0~2 패널·하단 시뮬레이션 실행/로그와 함께 동작.</figcaption>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 54매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 62매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->
