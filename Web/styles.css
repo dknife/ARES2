@@ -271,7 +271,7 @@ button:focus-visible {
     right: 0;
     bottom: 0;
     z-index: 9999;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
     height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
     padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
@@ -923,7 +923,6 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 }
 
 .inline-mission-list {
-    border-left: 4px solid #ff6740;
     background: #fff;
 }
 
@@ -1018,6 +1017,98 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     color: #13945a;
     font-size: 1.3em;
     text-align: right;
+    transition: transform .18s ease;
+}
+
+/* ── 개요 인라인 아코디언: 차시 패널 / 미션 상세 / 차시 정보 ── */
+.lesson-panel {
+    border-left: 4px solid #ff6740;
+    background: #fff;
+}
+
+.inline-mission-item {
+    border-bottom: 1px solid rgba(18, 183, 106, .14);
+}
+.inline-mission-item:last-child {
+    border-bottom: 0;
+}
+
+/* 미션 버튼이 아코디언 토글로 동작: 펼침 시 강조 + 화살표 회전 */
+.inline-mission-btn { cursor: pointer; }
+.inline-mission-btn[aria-expanded="true"] {
+    background: #fff3ee;
+}
+.inline-mission-btn[aria-expanded="true"] .inline-mission-arrow {
+    transform: rotate(90deg);
+}
+
+/* 미션 선택 시 아래로 열리는 상세 정보 */
+.inline-mission-detail {
+    padding: 2px 16px 16px 18px;
+    background: #fffdfb;
+    border-top: 1px dashed #f2d8ca;
+}
+.inline-mission-detail .mission-section h4 { margin-top: 6px; }
+.inline-goal-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: .85em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.inline-goal-list li { margin-bottom: 4px; }
+
+.mission-code-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent-color);
+    color: #fff;
+    font-family: inherit;
+    font-size: .9em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .18s ease, transform .1s ease;
+}
+.mission-code-btn:hover { background: #d8431b; }
+.mission-code-btn:active { transform: translateY(1px); }
+
+/* 미션 리스트 아래에 담기는 차시 정보 */
+.inline-lesson-info {
+    padding: 14px 18px 18px;
+    background: #fff8f3;
+    border-top: 1px solid #f0d4c5;
+}
+.inline-lesson-info-title {
+    margin: 0 0 8px;
+    font-size: .92em;
+    font-weight: 700;
+    color: #a93812;
+}
+.inline-lesson-info-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.inline-lesson-meta {
+    font-size: .8em;
+    color: var(--text-secondary);
+}
+.inline-lesson-intro {
+    margin: 0;
+    font-size: .86em;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+.inline-lesson-info .summary-box {
+    margin-top: 12px;
+    padding-left: 12px;
 }
 
 @media (max-width: 520px) {
