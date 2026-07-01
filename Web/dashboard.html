@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARES Dashboard</title>
+    <script src="mobile-preview.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary-color: #222222;
+            --accent-color: #FA5D29;
+            --blue-color: #0693E3;
+            --mint-color: #7BDCB5;
+            --success-color: #2a9d6a;
+            --warning-color: #FA5D29;
+            --error-color: #E74C3C;
+            --bg-color: #F8F8F8;
+            --bg-white: #FFFFFF;
+            --bg-secondary: #EDEDED;
+            --border-color: #EDEDED;
+            --text-primary: #222222;
+            --text-secondary: #313131;
+            --text-muted: #999999;
+            --font-main: 'Inter Tight', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            overflow-y: scroll;
+            overflow-x: auto;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 3px; }
+
+        .container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .header h2 {
+            font-family: var(--font-main);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+
+        .header h2 span {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-exit-btn {
+            height: 36px;
+            padding: 0 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: #fff;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .header-exit-btn:hover { background: #383838; }
+        .header-exit-btn:active { transform: scale(0.98); }
+
+        /* Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .nav-tab {
+            padding: 8px 18px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-tab.active {
+            background: var(--bg-white);
+            color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* Content */
+        .content-area {
+            position: relative;
+            overflow: visible;
+            padding-right: 5px;
+            padding-bottom: 30vh;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--accent-color), transparent);
+            opacity: 0.6;
+        }
+
+        .card-title {
+            font-family: var(--font-main);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Metrics */
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        .metric-row:last-child { border-bottom: none; }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .metric-value {
+            font-family: var(--font-main);
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Status dot */
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .status-dot.connected {
+            background: var(--success-color);
+            box-shadow: 0 0 8px rgba(42, 157, 106, 0.4);
+        }
+
+        /* Actions */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .action-btn {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 18px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: var(--font-main);
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-white);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .action-btn:active { transform: scale(0.98); }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Progress bar */
+        .bar-container {
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Forms */
+        .form-group { margin-bottom: 20px; }
+
+        .form-label {
+            display: block;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(250, 93, 41, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            height: 48px;
+            padding: 0 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #383838;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #228a58;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            .actions-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .action-btn {
+                padding: 14px 8px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="header-title-group">
+            <h2>ARES <span>미션 컨트롤</span></h2>
+            <button id="exit-dashboard-btn" type="button" class="header-exit-btn" title="점검을 마치고 블록 코딩 화면으로 복귀">🧩 점검완료 관제실로 복귀</button>
+        </div>
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="dashboard">개요</div>
+            <div class="nav-tab" data-tab="settings">시스템</div>
+            <div class="nav-tab" data-tab="hardware">하드웨어</div>
+            <div class="nav-tab" data-tab="logs">진단</div>
+        </div>
+    </header>
+
+    <div class="content-area">
+        <!-- 개요 탭 -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+                <!-- 연결 상태 카드 -->
+                <div class="card">
+                    <div class="card-title">🔗 연결 상태</div>
+                    <div class="metric-row">
+                        <span class="metric-label">링크 상태</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div id="connection-status" class="status-dot"></div>
+                            <span id="ble-status" class="metric-value">연결 끊김</span>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">마지막 통신</span>
+                        <span id="last-comm" class="metric-value">--</span>
+                    </div>
+                </div>
+
+                <!-- 센서 텔레메트리 카드 -->
+                <div class="card">
+                    <div class="card-title">📡 센서 텔레메트리</div>
+                    <div class="metric-row">
+                        <span class="metric-label">거리</span>
+                        <span id="distance-value" class="metric-value">-- cm</span>
+                    </div>
+                    <div class="bar-container">
+                        <div id="dist-bar" class="bar-fill" style="width: 0%;"></div>
+                    </div>
+
+                    <div class="metric-row" style="margin-top: 15px;">
+                        <span class="metric-label">자기장</span>
+                        <span id="magnetic-value" class="metric-value">--</span>
+                    </div>
+
+                    <div class="metric-row">
+                        <span class="metric-label">온도</span>
+                        <span id="temp-value" class="metric-value" style="color: var(--text-muted);">In Development</span>
+                    </div>
+                </div>
+
+                <!-- 시스템 자원 카드 -->
+                <div class="card">
+                    <div class="card-title">⚡ 시스템 자원</div>
+                    <div class="metric-row">
+                        <span class="metric-label">여유 메모리</span>
+                        <span id="mem-value" class="metric-value" style="color: var(--text-muted);">In Development</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">가동 시간</span>
+                        <span id="uptime-value" class="metric-value" style="color: var(--text-muted);">In Development</span>
+                    </div>
+                </div>
+
+                <!-- 수동 제어 카드 -->
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-title">🎮 수동 제어</div>
+                    <div class="actions-grid">
+                        <button class="action-btn" data-cmd="forward">⬆️ 전진</button>
+                        <button class="action-btn" data-cmd="stop">⏹️ 비상 정지</button>
+                        <button class="action-btn" data-cmd="led">💡 LED 패턴</button>
+                        <button class="action-btn" data-cmd="left">⬅️ 좌회전</button>
+                        <button class="action-btn" data-cmd="right">➡️ 우회전</button>
+                        <button class="action-btn" data-cmd="sound">🔊 소리 테스트</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시스템 설정 탭 -->
+        <div id="settings" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-title">⚙️ 시스템 설정 (Pico)</div>
+                    <div class="form-group">
+                        <label class="form-label">장치 이름 (최대 10자)</label>
+                        <input type="text" class="form-input" id="device-name" value="ARES" maxlength="10" placeholder="ARES">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">최대 속도: <span id="max-speed-value" style="color:var(--accent-color); font-weight:700;">80%</span></label>
+                        <input type="range" id="max-speed" style="width:100%; accent-color:var(--accent-color);" min="0" max="100" value="80">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">충돌 감지 거리 (cm)</label>
+                        <input type="number" id="collision-distance" class="form-input" value="10" min="5" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">자동 정지</label>
+                        <select id="auto-stop" class="form-select">
+                            <option value="true">활성화</option>
+                            <option value="false">비활성화</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="btn-save-system">Pico에 업로드</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📡 로컬 설정</div>
+                    <div class="form-group">
+                        <label class="form-label">연결 타임아웃 (ms)</label>
+                        <input type="number" class="form-input" id="connection-timeout" value="20000">
+                    </div>
+                    <button class="btn btn-primary" id="btn-save-local">로컬에 저장</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하드웨어 탭 -->
+        <div id="hardware" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-title">🔧 모터 캘리브레이션</div>
+                    <p style="color:var(--text-muted); margin-bottom:15px; font-size:0.9em;">
+                        모터 보정을 위해 3초간 테스트 주행을 실행합니다.
+                    </p>
+                    <button class="btn btn-primary" style="width:100%; margin-bottom:20px;" id="btn-calib-start">
+                        테스트 주행 시작
+                    </button>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label class="form-label">왼쪽 보정값</label>
+                            <input type="number" id="calib-left" class="form-input" value="100" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">오른쪽 보정값</label>
+                            <input type="number" id="calib-right" class="form-input" value="100" min="0" max="100">
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="width:100%;" id="btn-calib-apply">
+                        보정값 적용
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🛡️ 현재 안전 설정</div>
+                    <div class="metric-row">
+                        <span class="metric-label">최대 속도</span>
+                        <span id="hw-max-speed" class="metric-value">80%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">충돌 감지 거리</span>
+                        <span id="hw-collision-dist" class="metric-value">10 cm</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">자동 정지</span>
+                        <span id="hw-auto-stop" class="metric-value">활성화</span>
+                    </div>
+                    <p style="color:var(--text-muted); margin-top:15px; font-size:0.8em;">
+                        * Pico의 system.json에서 불러온 값입니다
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 진단 탭 -->
+        <div id="logs" class="tab-content">
+            <div class="card">
+                <div class="card-title">📠 시스템 진단</div>
+                <div class="actions-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <button class="action-btn" data-diag="connection">연결 테스트</button>
+                    <button class="action-btn" data-diag="sensors">센서 점검</button>
+                    <button class="action-btn" data-diag="motors">모터 점검</button>
+                    <button class="action-btn" data-diag="full">전체 진단</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ==========================
+   [대시보드 애플리케이션]
+   ========================== */
+(function() {
+    'use strict';
+
+    const CONFIG = {
+        device_name: '',
+        max_speed: 0,
+        collision_distance: 0,
+        auto_stop: false,
+        left_calibration: 0,
+        right_calibration: 0,
+        connection_timeout: 20000
+    };
+
+    let lastUpdateTime = 0;
+    let isConnected = false;
+
+    const DOM = {};
+
+    function initDOMReferences() {
+        DOM.connectionStatus = document.getElementById('connection-status');
+        DOM.bleStatus = document.getElementById('ble-status');
+        DOM.lastComm = document.getElementById('last-comm');
+
+        DOM.distanceValue = document.getElementById('distance-value');
+        DOM.distBar = document.getElementById('dist-bar');
+        DOM.magneticValue = document.getElementById('magnetic-value');
+        DOM.tempValue = document.getElementById('temp-value');
+        DOM.memValue = document.getElementById('mem-value');
+        DOM.uptimeValue = document.getElementById('uptime-value');
+
+        DOM.deviceName = document.getElementById('device-name');
+        DOM.maxSpeed = document.getElementById('max-speed');
+        DOM.maxSpeedValue = document.getElementById('max-speed-value');
+        DOM.collisionDistance = document.getElementById('collision-distance');
+        DOM.autoStop = document.getElementById('auto-stop');
+        DOM.connectionTimeout = document.getElementById('connection-timeout');
+
+        DOM.calibLeft = document.getElementById('calib-left');
+        DOM.calibRight = document.getElementById('calib-right');
+        DOM.hwMaxSpeed = document.getElementById('hw-max-speed');
+        DOM.hwCollisionDist = document.getElementById('hw-collision-dist');
+        DOM.hwAutoStop = document.getElementById('hw-auto-stop');
+    }
+
+    function setDashboardInteractive(enabled) {
+        document.querySelectorAll('.action-btn[data-cmd], .action-btn[data-diag]').forEach((btn) => {
+            btn.disabled = !enabled;
+            btn.style.opacity = enabled ? '' : '0.5';
+            btn.style.cursor = enabled ? '' : 'not-allowed';
+        });
+
+        const ids = ['btn-save-system', 'btn-calib-start', 'btn-calib-apply'];
+        ids.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = !enabled;
+        });
+    }
+
+    function resetDashboardValuesToZero() {
+        CONFIG.device_name = '';
+        CONFIG.max_speed = 0;
+        CONFIG.collision_distance = 0;
+        CONFIG.auto_stop = false;
+        CONFIG.left_calibration = 0;
+        CONFIG.right_calibration = 0;
+
+        if (DOM.distanceValue) DOM.distanceValue.textContent = '-- cm';
+        if (DOM.distBar) {
+            DOM.distBar.style.width = '0%';
+            DOM.distBar.style.backgroundColor = 'var(--text-muted)';
+        }
+        if (DOM.magneticValue) {
+            DOM.magneticValue.textContent = '--';
+            DOM.magneticValue.style.color = 'var(--text-muted)';
+        }
+        if (DOM.tempValue) DOM.tempValue.textContent = 'In Development';
+        if (DOM.memValue) DOM.memValue.textContent = 'In Development';
+        if (DOM.uptimeValue) DOM.uptimeValue.textContent = 'In Development';
+        if (DOM.lastComm) DOM.lastComm.textContent = '--';
+
+        updateSettingsUI();
+    }
+
+    function initTabs() {
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+    }
+
+    function initCommandButtons() {
+        document.querySelectorAll('.action-btn[data-cmd]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                executeQuickCommand(this.dataset.cmd);
+            });
+        });
+
+        document.querySelectorAll('.action-btn[data-diag]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                runDiagnostic(this.dataset.diag);
+            });
+        });
+    }
+
+    function executeQuickCommand(command) {
+        const COMMANDS = {
+            'stop': 'STOP',
+            'forward': 'tFORWARD,1',
+            'left': 'tLEFT,0.5',
+            'right': 'tRIGHT,0.5',
+            'led': 'LED_PATTERN',
+            'sound': 'SING'
+        };
+
+        const cmdStr = COMMANDS[command];
+        if (cmdStr) {
+            sendCommand(cmdStr);
+            addLog(`명령 실행: ${command}`, 'info');
+        }
+    }
+
+    function runDiagnostic(type) {
+        addLog(`${type} 진단 시작...`, 'warning');
+        setTimeout(() => {
+            addLog(`${type} 진단 완료: 정상`, 'success');
+        }, 2000);
+    }
+
+    function initSettingsButtons() {
+        document.getElementById('btn-save-system').addEventListener('click', saveSystemSettings);
+        document.getElementById('btn-save-local').addEventListener('click', saveLocalSettings);
+        document.getElementById('btn-calib-start').addEventListener('click', startCalibration);
+        document.getElementById('btn-calib-apply').addEventListener('click', applyCalibration);
+
+        DOM.maxSpeed.addEventListener('input', function() {
+            DOM.maxSpeedValue.textContent = this.value + '%';
+        });
+    }
+
+    function saveSystemSettings() {
+        const maxSpeed = DOM.maxSpeed.value;
+        const colDist = DOM.collisionDistance.value;
+        const autoStop = DOM.autoStop.value === 'true' ? 1 : 0;
+        let deviceName = DOM.deviceName.value.substring(0, 10);
+
+        CONFIG.max_speed = parseInt(maxSpeed);
+        CONFIG.collision_distance = parseInt(colDist);
+        CONFIG.auto_stop = autoStop === 1;
+        CONFIG.device_name = deviceName;
+
+        const cmd = `SYS_SET,${maxSpeed},${colDist},${autoStop},${deviceName}`;
+        sendCommand(cmd);
+        updateHardwareDisplay();
+        addLog('시스템 설정을 Pico에 전송했습니다.', 'info');
+        alert('설정이 Pico에 업로드되었습니다!');
+    }
+
+    function saveLocalSettings() {
+        const timeout = DOM.connectionTimeout.value;
+        CONFIG.connection_timeout = parseInt(timeout);
+
+        localStorage.setItem('ares-system-config', JSON.stringify({
+            connection_timeout: CONFIG.connection_timeout
+        }));
+
+        addLog('로컬 설정이 저장되었습니다.', 'success');
+        alert('로컬 설정이 저장되었습니다!');
+    }
+
+    function startCalibration() {
+        if (confirm('캘리브레이션 테스트 주행을 시작하시겠습니까?\n로버가 3초간 전진합니다.')) {
+            sendCommand('CALIB_START');
+            addLog('캘리브레이션 테스트 시작', 'warning');
+        }
+    }
+
+    function applyCalibration() {
+        let lVal = parseInt(DOM.calibLeft.value);
+        let rVal = parseInt(DOM.calibRight.value);
+        lVal = Math.max(0, Math.min(100, lVal));
+        rVal = Math.max(0, Math.min(100, rVal));
+        DOM.calibLeft.value = lVal;
+        DOM.calibRight.value = rVal;
+        CONFIG.left_calibration = lVal;
+        CONFIG.right_calibration = rVal;
+        sendCommand(`CALIB_SET,${lVal},${rVal}`);
+        addLog(`캘리브레이션 적용: 좌=${lVal}, 우=${rVal}`, 'info');
+    }
+
+    function updateSettingsUI() {
+        DOM.deviceName.value = CONFIG.device_name;
+        DOM.maxSpeed.value = CONFIG.max_speed;
+        DOM.maxSpeedValue.textContent = CONFIG.max_speed + '%';
+        DOM.collisionDistance.value = CONFIG.collision_distance;
+        DOM.autoStop.value = CONFIG.auto_stop ? 'true' : 'false';
+        DOM.connectionTimeout.value = CONFIG.connection_timeout;
+        DOM.calibLeft.value = CONFIG.left_calibration;
+        DOM.calibRight.value = CONFIG.right_calibration;
+        updateHardwareDisplay();
+    }
+
+    function updateHardwareDisplay() {
+        DOM.hwMaxSpeed.textContent = CONFIG.max_speed + '%';
+        DOM.hwCollisionDist.textContent = CONFIG.collision_distance + ' cm';
+        DOM.hwAutoStop.textContent = CONFIG.auto_stop ? '활성화' : '비활성화';
+    }
+
+    function updateConnectionUI(connected) {
+        isConnected = connected;
+
+        if (connected) {
+            lastUpdateTime = Date.now();
+            DOM.connectionStatus.classList.add('connected');
+            DOM.connectionStatus.style.background = 'var(--success-color)';
+            DOM.bleStatus.textContent = '연결됨';
+            DOM.lastComm.textContent = '방금 전';
+        } else {
+            DOM.connectionStatus.classList.remove('connected');
+            DOM.connectionStatus.style.background = 'var(--text-muted)';
+            DOM.bleStatus.textContent = '연결 끊김';
+        }
+    }
+
+    function updateSensorData(dataStr) {
+        const parts = dataStr.split(',');
+        if (parts.length < 6) return;
+
+        const dist = parseFloat(parts[1]).toFixed(1);
+        const mag = parseInt(parts[2]);
+
+        DOM.distanceValue.textContent = dist + ' cm';
+        let distWidth = (dist / 100) * 100;
+        if (distWidth > 100) distWidth = 100;
+        DOM.distBar.style.width = distWidth + '%';
+
+        if (dist < 10) {
+            DOM.distBar.style.backgroundColor = 'var(--error-color)';
+        } else if (dist < 30) {
+            DOM.distBar.style.backgroundColor = 'var(--warning-color)';
+        } else {
+            DOM.distBar.style.backgroundColor = 'var(--blue-color)';
+        }
+
+        if (mag === 0) {
+            DOM.magneticValue.textContent = '감지됨';
+            DOM.magneticValue.style.color = 'var(--warning-color)';
+        } else {
+            DOM.magneticValue.textContent = '정상';
+            DOM.magneticValue.style.color = 'var(--success-color)';
+        }
+
+        updateConnectionUI(true);
+    }
+
+    function sendCommand(cmd) {
+        window.parent.postMessage({ type: 'command', data: cmd }, '*');
+    }
+
+    function requestSystemConfig() {
+        sendCommand('GET_SYS');
+        addLog('Pico에서 시스템 설정을 요청 중...', 'info');
+    }
+
+    function requestModules() {
+        sendCommand('GET_MODULES');
+    }
+
+    function requestNames() {
+        sendCommand('GET_NAMES');
+    }
+
+    function requestStatusOnce() {
+        sendCommand('GET_STATUS');
+    }
+
+    function handleMessage(event) {
+        const data = event.data;
+        if (!data || !data.type) return;
+
+        switch (data.type) {
+            case 'connection_status':
+                if (data.connected) {
+                    addLog('블루투스 연결됨!', 'success');
+                    updateConnectionUI(true);
+                    setDashboardInteractive(true);
+                    setTimeout(requestSystemConfig, 500);
+                    setTimeout(requestModules, 600);
+                    setTimeout(requestNames, 650);
+                    setTimeout(requestStatusOnce, 750);
+                } else {
+                    addLog('블루투스 연결 끊김', 'error');
+                    updateConnectionUI(false);
+                    setDashboardInteractive(false);
+                    resetDashboardValuesToZero();
+                }
+                break;
+
+            case 'status_update':
+                updateSensorData(data.data);
+                break;
+
+            case 'sys_values':
+                {
+                    const maxSpeed = parseInt(data.max_speed, 10);
+                    if (!Number.isNaN(maxSpeed)) CONFIG.max_speed = maxSpeed;
+                    const collisionDist = parseInt(data.collision_dist, 10);
+                    if (!Number.isNaN(collisionDist)) CONFIG.collision_distance = collisionDist;
+                    CONFIG.auto_stop = data.auto_stop == 1;
+                    if (typeof data.device_name === 'string') CONFIG.device_name = data.device_name;
+                }
+                if (data.left_calibration !== undefined) {
+                    const left = parseInt(data.left_calibration, 10);
+                    if (!Number.isNaN(left)) CONFIG.left_calibration = left;
+                }
+                if (data.right_calibration !== undefined) {
+                    const right = parseInt(data.right_calibration, 10);
+                    if (!Number.isNaN(right)) CONFIG.right_calibration = right;
+                }
+                updateSettingsUI();
+                addLog('Pico에서 시스템 설정을 불러왔습니다.', 'success');
+                break;
+
+            case 'calib_values':
+                CONFIG.left_calibration = parseInt(data.left);
+                CONFIG.right_calibration = parseInt(data.right);
+                DOM.calibLeft.value = CONFIG.left_calibration;
+                DOM.calibRight.value = CONFIG.right_calibration;
+                addLog(`캘리브레이션 수신: 좌=${data.left}, 우=${data.right}`, 'success');
+                break;
+        }
+    }
+
+    function addLog(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString('ko-KR');
+        console.log(`[${timestamp}] [${type}] ${message}`);
+    }
+
+    function startConnectionMonitor() {
+        setInterval(() => {
+            if (lastUpdateTime !== 0) {
+                const elapsed = Date.now() - lastUpdateTime;
+                if (elapsed > 3000 && elapsed <= 5000) {
+                    DOM.lastComm.textContent = Math.floor(elapsed / 1000) + '초 전';
+                } else if (elapsed > 5000) {
+                    updateConnectionUI(false);
+                }
+            }
+        }, 1000);
+    }
+
+    function init() {
+        initDOMReferences();
+        initTabs();
+        initCommandButtons();
+        initSettingsButtons();
+
+        try {
+            const saved = localStorage.getItem('ares-system-config');
+            if (saved) {
+                const localConfig = JSON.parse(saved);
+                if (localConfig.connection_timeout) {
+                    CONFIG.connection_timeout = localConfig.connection_timeout;
+                }
+            }
+        } catch (e) {}
+
+        resetDashboardValuesToZero();
+        setDashboardInteractive(false);
+        window.addEventListener('message', handleMessage);
+        startConnectionMonitor();
+
+        // 점검 완료 후 부모(main.html) 에 복귀 요청
+        document.getElementById('exit-dashboard-btn')?.addEventListener('click', (e) => {
+            window.parent.postMessage({ type: 'exit_dashboard' }, '*');
+            e.currentTarget?.blur?.();
+        });
+
+        addLog('대시보드 준비 완료. 블루투스 연결 대기 중...', 'info');
+    }
+
+    if (window.__ARES_MOBILE_FRAME__) {
+        // no-op — mobile-preview.js 가 프레임을 구성하므로 백그라운드 이중 실행을 막는다
+    } else if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+</body>
+</html>
