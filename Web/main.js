@@ -856,13 +856,13 @@ async function enterOverview() {
            const willOpen = panel.hasAttribute('hidden');
            flowContainer.querySelectorAll('.lesson-panel:not([hidden])').forEach(openPanel => {
              if (openPanel !== panel) {
-               openPanel.setAttribute('hidden', '');
+               closeAccordion(openPanel);
                openPanel.previousElementSibling?.setAttribute('aria-expanded', 'false');
              }
            });
 
            if (!willOpen) {
-             panel.setAttribute('hidden', '');
+             closeAccordion(panel);
              lessonButton.setAttribute('aria-expanded', 'false');
              return;
            }
@@ -876,7 +876,7 @@ async function enterOverview() {
              </div>
              ${renderInlineLessonInfo(data)}
            `;
-           panel.removeAttribute('hidden');
+           openAccordion(panel);
            lessonButton.setAttribute('aria-expanded', 'true');
            item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
          });
@@ -950,6 +950,50 @@ function renderInlineLessonInfo(data) {
     </div>`;
 }
 
+// 아코디언 여닫이 애니메이션 (열림 2초 / 닫힘 1초). CSS 클래스로 제어하고,
+// 실제 콘텐츠 높이를 --acc-h 로 넘겨 높이 변화가 자연스럽게 보이도록 한다.
+const ACCORDION_OPEN_MS = 2000;
+const ACCORDION_CLOSE_MS = 1000;
+
+function openAccordion(el) {
+  if (!el) return;
+  if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  el.classList.remove('accordion-closing', 'accordion-opening');
+  el.removeAttribute('hidden');
+  el.style.setProperty('--acc-h', el.scrollHeight + 'px'); // 표시 후 전체 높이 측정
+  void el.offsetWidth;                                     // 리플로우 → 애니메이션 재시작 보장
+  el.classList.add('accordion-opening');
+  const done = (e) => {
+    if (e && e.target !== el) return;
+    el.classList.remove('accordion-opening');
+    el.style.removeProperty('--acc-h');
+    el.removeEventListener('animationend', done);
+    if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  };
+  el.addEventListener('animationend', done);
+  el._accTimer = setTimeout(done, ACCORDION_OPEN_MS + 120);
+}
+
+function closeAccordion(el) {
+  if (!el || el.hasAttribute('hidden')) return;
+  if (el.classList.contains('accordion-closing')) return; // 이미 닫히는 중이면 무시
+  if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  el.classList.remove('accordion-opening');
+  el.style.setProperty('--acc-h', el.scrollHeight + 'px');
+  void el.offsetWidth;
+  el.classList.add('accordion-closing');
+  const done = (e) => {
+    if (e && e.target !== el) return;
+    el.classList.remove('accordion-closing');
+    el.style.removeProperty('--acc-h');
+    el.setAttribute('hidden', '');               // 애니메이션이 끝난 뒤에야 숨김
+    el.removeEventListener('animationend', done);
+    if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  };
+  el.addEventListener('animationend', done);
+  el._accTimer = setTimeout(done, ACCORDION_CLOSE_MS + 120);
+}
+
 // 미션 버튼 클릭 → 그 미션 상세를 아래로 펼치고, 같은 차시의 다른 미션 상세는 접는다
 function toggleInlineMissionDetail(btn) {
   const item = btn.closest('.inline-mission-item');
@@ -959,16 +1003,16 @@ function toggleInlineMissionDetail(btn) {
   const willOpen = detail.hasAttribute('hidden');
   list?.querySelectorAll('.inline-mission-detail:not([hidden])').forEach(d => {
     if (d !== detail) {
-      d.setAttribute('hidden', '');
+      closeAccordion(d);
       d.previousElementSibling?.setAttribute('aria-expanded', 'false');
     }
   });
   if (willOpen) {
-    detail.removeAttribute('hidden');
+    openAccordion(detail);
     btn.setAttribute('aria-expanded', 'true');
     item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   } else {
-    detail.setAttribute('hidden', '');
+    closeAccordion(detail);
     btn.setAttribute('aria-expanded', 'false');
   }
 }
