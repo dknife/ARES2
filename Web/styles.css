@@ -1,17 +1,17 @@
 :root {
-    --primary-color: #222222;
-    --accent-color: #FA5D29;
-    --secondary-color: #313131;
+    --primary-color: #0D1117;
+    --accent-color: #FF6A00;
+    --secondary-color: #4A515C;
     --background-main: #F8F8F8;
     --background-white: #FFFFFF;
-    --background-secondary: #EDEDED;
-    --text-primary: #222222;
-    --text-secondary: #313131;
-    --text-muted: #999999;
+    --background-secondary: #D9DDE2;
+    --text-primary: #0D1117;
+    --text-secondary: #4A515C;
+    --text-muted: #8A929E;
     --success-color: #7BDCB5;
     --error-color: #E74C3C;
-    --info-color: #FA5D29;
-    --border-color: #EDEDED;
+    --info-color: #FF6A00;
+    --border-color: #D9DDE2;
     --log-background: #FFFFFF;
     --mobile-bottom-nav-height: 72px;
 }
@@ -88,7 +88,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 
 /* 버튼 색상 정의 */
 #connectButton {
-    background: #222;
+    background: #0D1117;
 }
 
 #connectButton:hover {
@@ -110,7 +110,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 #runButton {
-    background: #FA5D29;
+    background: #FF6A00;
 }
 
 #runButton:hover {
@@ -126,7 +126,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 #saveButton, #loadButton {
-    background: #0693E3;
+    background: #1F6FAE;
 }
 
 #saveButton:hover, #loadButton:hover {
@@ -134,7 +134,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 #blockCodingButton {
-    background: #0693E3;
+    background: #1F6FAE;
 }
 
 #blockCodingButton:hover {
@@ -259,7 +259,7 @@ button:focus {
 }
 
 button:focus-visible {
-    outline: 2px solid rgba(250, 93, 41, 0.55);
+    outline: 2px solid rgba(255, 106, 0, 0.55);
     outline-offset: 2px;
 }
 
@@ -329,13 +329,13 @@ button:focus-visible {
     .mobile-bottom-nav .mobile-nav-btn:hover {
         transform: none;
         box-shadow: none;
-        background: rgba(250, 93, 41, 0.06);
+        background: rgba(255, 106, 0, 0.06);
     }
 }
 
 .mobile-bottom-nav .mobile-nav-btn.active {
     color: var(--accent-color);
-    background: rgba(250, 93, 41, 0.1);
+    background: rgba(255, 106, 0, 0.1);
 }
 
 .mobile-bottom-nav .mobile-nav-icon {
@@ -463,7 +463,7 @@ body.log-hidden .main-content {
 }
 
 .log-entry { margin-bottom: 4px; }
-.log-send { color: #0693E3; }
+.log-send { color: #1F6FAE; }
 .log-receive { color: #2a9d6a; }
 .log-error { color: var(--error-color); }
 .log-info { color: var(--info-color); }
@@ -1192,7 +1192,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .mission-list-item a:hover {
     border-color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(250, 93, 41, 0.12);
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.12);
 }
 
 .mission-id {
@@ -1239,7 +1239,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     color: var(--text-secondary);
 }
 
-.summary-keypoint { border-left-color: #FA5D29; }
+.summary-keypoint { border-left-color: #FF6A00; }
 .summary-summary  { border-left-color: #5C81A6; }
 .summary-notebox  { border-left-color: #7BDCB5; }
 .summary-caution  { border-left-color: #E74C3C; background:#FFF3F1; }
@@ -1523,7 +1523,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     margin-right: 4px;
 }
 
-.story-albi .story-name { color: #0693E3; }
+.story-albi .story-name { color: #1F6FAE; }
 
 .story-text {
     color: var(--text-secondary);

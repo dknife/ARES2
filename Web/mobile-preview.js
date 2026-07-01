@@ -124,10 +124,10 @@
       'align-items:center;justify-content:center;gap:14px;overflow:auto;',
       'background:#e9ebef;font-family:"GangwonEduTeun","Inter Tight",system-ui,sans-serif;padding:20px;box-sizing:border-box;}',
       '.ares-mp-bar{display:flex;align-items:center;gap:14px;font-size:14px;color:#444;flex-wrap:wrap;justify-content:center;}',
-      '.ares-mp-bar strong{color:#222;font-weight:700;letter-spacing:.5px;}',
-      '.ares-mp-bar .dot{color:#FA5D29;}',
+      '.ares-mp-bar strong{color:#0D1117;font-weight:700;letter-spacing:.5px;}',
+      '.ares-mp-bar .dot{color:#FF6A00;}',
       '.ares-mp-bar select{font:inherit;padding:6px 10px;border:1px solid #ccd;border-radius:8px;background:#fff;color:#333;cursor:pointer;}',
-      '.ares-mp-bar a{color:#FA5D29;text-decoration:none;font-weight:600;}',
+      '.ares-mp-bar a{color:#FF6A00;text-decoration:none;font-weight:600;}',
       '.ares-mp-bar a:hover{text-decoration:underline;}',
       // 베젤(폰 프레임) 없이 화면만 — 회색 배경과는 그림자로만 구분한다.
       '.ares-mp-screen{background:#fff;border-radius:12px;overflow:hidden;flex:0 0 auto;',
