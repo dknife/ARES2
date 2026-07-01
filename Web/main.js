@@ -27,6 +27,28 @@ const LESSON_CATALOG = [
 ];
 
 const MISSION_PROGRESS_KEY = 'ares_completed_missions_v1';
+const LAST_CODING_KEY = 'ares_last_coding_mission_v1';
+
+// 마지막으로 블록코딩에 들어간 미션 { lesson, mission } — 하단 "코딩" 탭이 참조
+let lastCodingMission = null;
+
+function rememberCodingMission(lesson, mission) {
+  if (!Number.isFinite(lesson) || !Number.isFinite(mission)) return;
+  lastCodingMission = { lesson, mission };
+  try { localStorage.setItem(LAST_CODING_KEY, JSON.stringify(lastCodingMission)); } catch {}
+}
+
+function getLastCodingMission() {
+  if (lastCodingMission) return lastCodingMission;
+  try {
+    const o = JSON.parse(localStorage.getItem(LAST_CODING_KEY) || 'null');
+    if (Number.isFinite(o?.lesson) && Number.isFinite(o?.mission)) {
+      lastCodingMission = o;
+      return o;
+    }
+  } catch {}
+  return null;
+}
 
 function getCompletedMissions() {
   try {
@@ -581,7 +603,8 @@ function getMobileActiveAction() {
   if (isAiPanelOpen()) return 'ai';
   if (isLogExpanded()) return 'log';
   if (isDashboardVisible()) return 'dashboard';
-  // 개요·차시·미션(코딩)을 하나의 "미션" 탭으로 통합
+  // 미션(코딩 영역) 뷰 → "코딩" 탭, 개요·차시 메뉴 → "미션" 탭
+  if (currentView === 'mission') return 'coding';
   return 'mission';
 }
 
@@ -643,6 +666,9 @@ function bindMobileBottomNav() {
         mobileDashboardReturnHash = null;
         mobileAiReturnHash = null;
         navigate({});
+      } else if (action === 'coding' && currentView === 'mission') {
+        // 이미 코딩 영역이면 설명 모드였을 때 블록코딩 모드로 전환
+        if (setContentMode) setContentMode('coding');
       }
       updateMobileBottomNav();
       btn.blur?.();
@@ -656,6 +682,16 @@ function bindMobileBottomNav() {
         mobileAiReturnHash = null;
         navigate({});
         break;
+      case 'coding': {
+        // "코딩" 탭 → 마지막으로 선택한(기록된) 미션의 블록코딩 화면으로 진입
+        const target = getLastCodingMission();
+        const codingLesson = target?.lesson ?? lesson;
+        const codingMission = target?.mission ?? mission;
+        mobileDashboardReturnHash = null;
+        mobileAiReturnHash = null;
+        openMissionCoding(codingLesson, codingMission);
+        break;
+      }
       case 'dashboard':
         if (currentView !== 'mission') {
           mobileDashboardReturnHash = window.location.hash || '';
@@ -666,8 +702,13 @@ function bindMobileBottomNav() {
         break;
       case 'ai':
         if (currentView !== 'mission') {
+          // 개요/차시 화면에서 AI를 열 때도 1차시 1미션으로 리셋하지 말고
+          // 마지막으로 선택(기록)한 미션을 유지한다
+          const aiTarget = getLastCodingMission();
+          const aiLesson = aiTarget?.lesson ?? lesson;
+          const aiMission = aiTarget?.mission ?? mission;
           mobileAiReturnHash = window.location.hash || '';
-          navigate({ lesson, mission });
+          navigate({ lesson: aiLesson, mission: aiMission });
           pendingDashboardOpen = false;
           setTimeout(() => document.getElementById('aiHelpButton')?.click(), 450);
         } else {
@@ -869,12 +910,12 @@ async function enterOverview() {
 
            const data = await loadLesson(lessonNum);
            if (!data?.missions) return;
-           // 미션 리스트 + (그 아래) 차시 정보
+           // (위) 차시 정보 + (그 아래) 미션 리스트
            panel.innerHTML = `
+             ${renderInlineLessonInfo(data)}
              <div class="inline-mission-list">
                ${data.missions.map(m => renderInlineMissionItem(lessonNum, m)).join('')}
              </div>
-             ${renderInlineLessonInfo(data)}
            `;
            openAccordion(panel);
            lessonButton.setAttribute('aria-expanded', 'true');
@@ -1092,6 +1133,7 @@ async function enterMission(n, m) {
   showView('mission');
   currentLesson = n;
   currentMission = m;
+  rememberCodingMission(n, m);   // 하단 "코딩" 탭이 돌아올 미션으로 기록
   document.getElementById('lessonSelect').value = String(n);
   populateMissionSelect(n, data);
   document.getElementById('missionSelect').value = String(m);
