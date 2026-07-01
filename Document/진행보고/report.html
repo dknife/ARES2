@@ -171,6 +171,24 @@
             header.report-head { padding: 56px 0 44px; }
             .gallery { grid-template-columns: 1fr; }
         }
+
+        /* 코드 발췌 블록 (codechanges.html 과 동일 스타일) */
+        figure.code { margin: 4px 0 18px; }
+        figure.code figcaption {
+            font-size: 0.8em; color: #666; margin-bottom: 6px;
+            border-left: 3px solid #FA5D29; padding-left: 10px;
+        }
+        figure.code figcaption b { color: #d8431b; }
+        pre.code {
+            background: #1d1f27; color: #e6e6e6; border-radius: 10px;
+            padding: 16px 18px; overflow-x: auto; font-size: 0.82em; line-height: 1.55;
+        }
+        pre.code code {
+            background: none; color: inherit; padding: 0; border-radius: 0;
+            font-size: inherit; white-space: pre;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        @media (max-width: 600px) { pre.code { font-size: 0.76em; } }
     </style>
 </head>
 <body>
@@ -945,10 +963,10 @@
         <section class="day">
             <div class="day-head">
                 <span class="day-badge">DAY 6</span>
-                <h2>코리아사이언스 디자인 멘토링 · 디자인 고도화 운영계획 · 개발 산출물(시뮬레이터·발사대)</h2>
+                <h2>코리아사이언스 디자인 멘토링 · 디자인 고도화 운영계획 · 개발 산출물(시뮬레이터·발사대·웹 앱 셸)</h2>
                 <span class="day-date">2026.06.30 (화) · 원격 개발 KST</span>
             </div>
-            <p class="day-summary">교구 제작 협력 업체 <b>코리아사이언스의 디자인 담당자</b>가 진행한 <b>멘토링 수업</b>으로 UI/UX 개발 가이드와 <b>디자인 개선 방향</b>을 함께 검토했다. 이어 <b>온라인 서비스(웹)와 실물 교구</b>를 하나의 화성 탐사 수업 경험으로 잇는 <b>디자인 고도화 운영계획</b>을 팀이 함께 논의·정리했다(코리아사이언스 × 동명대 게임공학·게임그래픽학과). 아울러 이날의 개발 산출물로 <b>시뮬레이터 개발자 도구·커스터마이징 기능</b>과 <b>발사대 3D 프린팅 디자인</b> 결과를 정리했다. 그동안의 디자인 활동(요구사항 분석 → 개선계획 → 구체화·스티커 → 통합 사용성 테스트)을 되짚고, <b>디자인 콘셉트·5일 운영 흐름·온라인 UX/UI 개선안·실물 교구 제품화·컬러 시스템·산출물 패키지</b>로 개발 계획을 구체화했다.</p>
+            <p class="day-summary">교구 제작 협력 업체 <b>코리아사이언스의 디자인 담당자</b>가 진행한 <b>멘토링 수업</b>으로 UI/UX 개발 가이드와 <b>디자인 개선 방향</b>을 함께 검토했다. 이어 <b>온라인 서비스(웹)와 실물 교구</b>를 하나의 화성 탐사 수업 경험으로 잇는 <b>디자인 고도화 운영계획</b>을 팀이 함께 논의·정리했다(코리아사이언스 × 동명대 게임공학·게임그래픽학과). 아울러 이날의 개발 산출물로 <b>시뮬레이터 개발자 도구·커스터마이징 기능</b>, <b>발사대 3D 프린팅 디자인</b>, <b>웹 인터페이스의 모바일 전용 앱 셸(768px 프레임)</b> 결과를 정리했다. 그동안의 디자인 활동(요구사항 분석 → 개선계획 → 구체화·스티커 → 통합 사용성 테스트)을 되짚고, <b>디자인 콘셉트·5일 운영 흐름·온라인 UX/UI 개선안·실물 교구 제품화·컬러 시스템·산출물 패키지</b>로 개발 계획을 구체화했다.</p>
 
             <div class="tasks">
                 <h3>🎨 주요 업무 — 코리아사이언스 디자인 멘토링 &amp; 서비스 디자인 논의</h3>
@@ -1111,6 +1129,57 @@
                     <div class="imgbox" style="aspect-ratio:9/16; background:#242424;"><img src="img/6일차_발사대_출력디자인.png" alt="발사대 3D 프린팅 출력 디자인"></div>
                     <figcaption><b>발사대 출력 디자인</b> — 3D 프린팅을 전제로 재설계한 화성발사대. 슬림 박스형 베이스와 유지보수 패널, 상단의 로켓 가이드 갠트리 타워·로켓·레이더 디시로 구성된다. 다크 네이비·차콜 슬림 외장 방향을 반영한 형상 모델이다.</figcaption>
                 </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 개발 산출물 — 웹 인터페이스 모바일 전용 앱 셸(768px 프레임)</h3>
+                <p class="lead">UI/UX 개발 가이드가 정의한 <b>모바일(세로) 화면</b> 기준에 맞춰, 이 프로젝트의 <b>기본 인터페이스를 태블릿(768px) 모바일 모드로 고정</b>했다. 데스크톱 넓은 창으로 접근해도 실제 모바일/태블릿 화면을 그대로 보이도록, 페이지를 <b>768px 폭 iframe(중앙 컬럼)</b> 안에 렌더링하는 <b>반응형 앱 셸</b>(<code>Web/mobile-preview.js</code>)을 구현했다. CSS 미디어쿼리는 컨테이너가 아니라 <b>뷰포트 폭</b> 기준이므로, 폭을 실제로 768로 만들려면 프레임(iframe)이 필요하다 — 이렇게 하면 페이지의 <code>@media(max-width:768px)</code>와 <code>matchMedia</code>가 자연스럽게 발동한다. 실제 좁은 화면(≤768)은 이미 모바일 레이아웃이라 프레임 없이 직접 렌더링하고, <code>?mobile=true</code>로는 기기 크기(360·390·430·768) 미리보기를 제공한다. 각 페이지(<code>index·main·dashboard</code>)는 <code>&lt;head&gt;</code> 선두에서 이 셸을 로드하고, <code>window.__ARES_MOBILE_FRAME__</code> 플래그로 프레임 뒤 <b>중복 부트스트랩</b>(three.js·dashboard init 등)을 막는다.</p>
+                <div class="chips">
+                    <span class="chip t">모바일 전용 앱 셸</span>
+                    <span class="chip">768px iframe 프레임</span>
+                    <span class="chip">뷰포트 기준 @media 발동</span>
+                    <span class="chip">중복 부트스트랩 차단</span>
+                    <span class="chip">기기 크기 미리보기</span>
+                </div>
+
+                <figure class="code">
+                    <figcaption><b>Web/mobile-preview.js</b> — 진입 라우팅: 좁은 화면은 통과, 넓은 데스크톱만 프레임으로 감싼다</figcaption>
+                    <pre class="code"><code>var FRAMED         = params.get('framed') === '1';
+var DEVICE_PREVIEW = params.get('mobile') === 'true';   // 개발용 기기 크기 미리보기
+
+// 실제 좁은 화면(태블릿·폰 ≤768)은 이미 모바일 레이아웃 → 프레임 불필요
+var isNarrow = window.matchMedia('(max-width: 768px)').matches;
+if (!DEVICE_PREVIEW &amp;&amp; isNarrow) return;
+
+// 넓은 데스크톱만 768px 프레임으로 감싼다
+window.__ARES_MOBILE_FRAME__ = true;   // 페이지 자체 부트스트랩 중복 실행 차단
+boot(DEVICE_PREVIEW ? buildDevicePreview : buildTabletColumn);</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/mobile-preview.js</b> — 기본 768px 중앙 컬럼: 뷰포트 폭을 실제 768로 만드는 iframe</figcaption>
+                    <pre class="code"><code>// 미디어쿼리는 뷰포트 폭 기준 → 폭을 실제 768로 만들려면 iframe 이 필요하다
+function buildTabletColumn() {
+  // body: flex 중앙 정렬·회색 배경 / iframe: width:768px·height:100vh
+  document.body.className = 'ares-mp';
+  document.body.innerHTML =
+    '&lt;iframe src="' + innerSrc() + '"&gt;&lt;/iframe&gt;';   // 내부 = ?mobile=true&amp;framed=1
+}</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/dashboard.html</b> — 호스트 페이지: 프레임 뒤에서 자체 <code>init()</code>이 중복 실행되지 않도록 가드</figcaption>
+                    <pre class="code"><code>if (window.__ARES_MOBILE_FRAME__) {
+  // no-op — mobile-preview.js 가 프레임을 구성하므로 백그라운드 이중 실행을 막는다
+} else if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}</code></pre>
+                </figure>
+
+                <a class="doclink" href="../../Web/mobile-preview.js" target="_blank">mobile-preview.js 전체 소스 ↗</a>
+                <a class="doclink alt" href="../../Web/index.html?mobile=true" target="_blank">모바일 미리보기로 열기 ↗</a>
             </div>
         </section>
     </div>
