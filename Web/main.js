@@ -89,59 +89,40 @@ let _preSimMode = 'description';
 let setContentMode = null;     // setupContentToggle() 에서 등록
 
 // ============================================================
-// 동적 툴박스 필터링 및 이름 변경
+// 동적 툴박스 필터링
 // ============================================================
 function updateDynamicToolbox() {
   if (!workspace) return;
   const originalToolbox = document.getElementById('toolbox');
   if (!originalToolbox) return;
 
-  // Clone original toolbox XML
   const clonedToolbox = originalToolbox.cloneNode(true);
-  const names = state.tabNames;
 
-  // 1) Overwrite category names dynamically with correct emojis and names from pins.py / state.tabNames
-  const categoryConfig = {
-    wheel: { id: '#category_wheel', emoji: '🚗' },
-    dcmotor: { id: '#category_dcmotor', emoji: '⚡' },
-    leds: { id: '#category_leds', emoji: '💡' },
-    oled: { id: '#category_oled', emoji: '🖥️' },
-    buzzer: { id: '#category_buzzer', emoji: '🔊' },
-    gun: { id: '#category_gun', emoji: (state.activeModel === 'launchpad' ? '🚀' : '🔫') },
-    sensors: { id: '#category_sensors', emoji: '📡' }
-  };
-
-  for (const [key, cfg] of Object.entries(categoryConfig)) {
-    const cat = clonedToolbox.querySelector(cfg.id);
-    if (cat) {
-      const baseName = names[key] || (key === 'sensors' ? '센서' : key);
-      cat.setAttribute('name', `${cfg.emoji} ${baseName}`);
-    }
-  }
-
-  // 2) Hide/Filter modules
   if (state.enabledModules) {
     const modules = state.enabledModules;
-    const categoryMapping = {
-      wheel: '#category_wheel',
-      dcmotor: '#category_dcmotor',
-      leds: '#category_leds',
-      oled: '#category_oled',
-      buzzer: '#category_buzzer',
-      gun: '#category_gun'
+    const moduleBlockTypes = {
+      wheel: [
+        'timed_forward', 'timed_backward', 'timed_left', 'timed_right',
+        'move_forward', 'move_backward', 'turn_left', 'turn_right', 'stop_moving'
+      ],
+      dcmotor: [
+        'main_motor_forward_timed', 'main_motor_backward_timed',
+        'main_motor_forward', 'main_motor_backward', 'main_motor_stop'
+      ],
+      leds: ['led_on', 'led_off', 'led_off_all', 'set_lamp'],
+      oled: ['send_message', 'send_message_xy', 'display_icon', 'clear_display', 'clear_rect'],
+      buzzer: ['buzzer_on', 'buzzer_note'],
+      gun: ['gun_fire']
     };
 
-    // Remove disabled categories
-    for (const [moduleName, selector] of Object.entries(categoryMapping)) {
+    for (const [moduleName, blockTypes] of Object.entries(moduleBlockTypes)) {
       if (modules[moduleName] === false) {
-        const cat = clonedToolbox.querySelector(selector);
-        if (cat) {
-          cat.parentNode.removeChild(cat);
-        }
+        blockTypes.forEach((type) => {
+          clonedToolbox.querySelectorAll(`block[type="${type}"]`).forEach((block) => block.remove());
+        });
       }
     }
 
-    // Filter blocks inside categories
     if (modules.distance === false) {
       const block = clonedToolbox.querySelector('block[type="check_distance"]');
       if (block) {
@@ -205,7 +186,7 @@ function initializeBlockly() {
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
     updateDynamicToolbox();
-    updateWorkspaceBlocks(workspace, state.activeModel);
+    updateWorkspaceBlocks(workspace, state);
   };
 
   // Apply initial dynamic toolbox / names
