@@ -96,8 +96,18 @@
 \lstdefinestyle{js}{language=JS}
 \lstdefinestyle{json}{language={}}
 
-%% 짧은 인라인 명령/식별자
-\newcommand{\code}[1]{{\ttfamily\small #1}}
+%% 짧은 인라인 명령/식별자 — 긴 토큰(dknife/ARES2, evaluateValueBlock 등)이
+%% 넘칠 때만 문자 사이에서 줄바꿈되도록 seqsplit 으로 감싼다(overfull 방지).
+%% 제목→목차(.toc)·PDF 북마크 같은 이동 인자에서도 안전하도록 robust 로 선언한다.
+\usepackage{seqsplit}
+\DeclareRobustCommand{\code}[1]{{\ttfamily\small\seqsplit{#1}}}
+
+%% 이미지 테두리 박스 — \fbox 여백(\fboxsep·\fboxrule)만큼 이미지 폭을 줄여
+%% \linewidth 초과(overfull \hbox 6.8pt)를 방지한다.
+\newcommand{\figbox}[1]{\fbox{\includegraphics[width=\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax]{#1}}}
+
+%% 마지막 수단으로 약간의 여유 늘림을 허용해 잔여 overfull \hbox 를 줄인다.
+\setlength{\emergencystretch}{3em}
 
 %% ----- 제목 스타일 -----
 \usepackage{titlesec}
@@ -228,6 +238,8 @@
   urlcolor=aresorange,
   citecolor=aresorange,
 }
+%% PDF 북마크(hyperref)에서는 \code/\seqsplit 서식을 제거하고 원문만 사용한다.
+\pdfstringdefDisableCommands{\def\code#1{#1}\def\seqsplit#1{#1}}
 \usepackage{caption}
 \captionsetup{font=small, labelfont={bf,sf}, labelsep=period}
 \captionsetup[sub]{font=footnotesize}
