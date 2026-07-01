@@ -1,0 +1,73 @@
+%% ============================================================
+%% ProgressReport.tex — ARES 현장 진행 보고 (1~6일차) · 메인
+%% 대상: https://github.com/dknife/ARES2
+%% XeLaTeX:  xelatex ProgressReport → biber ProgressReport → xelatex ×2
+%% ============================================================
+\documentclass[11pt, oneside]{article}
+
+\input{preamble}
+
+\title{%
+  {\sffamily\bfseries\fontsize{24}{28}\selectfont\color{inkdark}ARES 현장 진행 보고}\\[6pt]
+  {\sffamily\large\color{aresorange}1\,$\sim$\,6일차 — 블록 코딩 화성 탐사 로버 개발 현장 기록}%
+}
+\author{\sffamily (주)코리아사이언스\quad/\quad 동명대학교 게임공학과}
+\date{2026년 6월 23일\,--\,30일 (KST)}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{plain}
+
+\begin{abstract}
+\noindent
+본 문서는 ARES(Autonomous Rover Exploration System) 교육용 로봇 플랫폼의
+제품개발학기 현장 진행을 1$\sim$6일차에 걸쳐 기록한 보고서이다. ARES는
+초등학생을 대상으로 한 블록 코딩 교육 플랫폼으로~\cite{papert1980, maloney2010scratch}, Google Blockly 기반 웹
+애플리케이션~\cite{blockly}, 라즈베리파이 피코 MicroPython 펌웨어~\cite{micropython,rp2040},
+그리고 보조 AI 모듈~\cite{exaone35}의 세 런타임 도메인으로 구성된다. 보고 기간 동안
+컴퓨터실 개발 착수, 교구 제작 협력 업체(코리아사이언스) 방문과 웹 서비스 시연, 디자인 프로토타입
+제작, 1차시 운영 점검 및 인터페이스 개선, 그리고 \textbf{팀원별 작업 브랜치의
+\code{main} 통합 머지와 통합 후 전 계층 서비스 점검$\cdot$트랙별(웹$\cdot$피코$\cdot$시뮬레이션)
+개선}을 수행하였다. 주요 산출물(코드 분석 종합 보고서, 1$\cdot$2차 Refactoring 계획)은
+본문 「산출물」에 요약하고, \textbf{전문은 참고문헌 뒤 부록 A$\sim$C에 수록}한다.
+끝으로 \textbf{부록 D}에 \emph{통합 머지로 반영된 주요 코드 변경}을 부록 A 기준선과
+대조한 중간 점검으로 정리한다.
+\end{abstract}
+
+\vspace{0.5em}
+{\color{rulegray}\hrule height 0.6pt}
+\vspace{1.0em}
+
+\tableofcontents
+\newpage
+
+\input{body.tex}
+
+%% ============ 배포 웹 서비스 주요 기능 (라이브 캡처) ============
+\input{webservice.tex}
+
+%% ============ 산출물 (본문) ============
+\input{deliverables.tex}
+
+%% ============ 참고 문헌 ============
+\newpage
+\printbibliography[heading=bibliography, title={참고 문헌}]
+
+%% ============ 부록 (참고문헌 뒤, 전문) ============
+\newpage
+\appendix
+\renewcommand{\thesection}{부록 \Alph{section}}
+\renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\Alph{section}.\arabic{subsection}.\arabic{subsubsection}}
+%% 부록 표제: 본문보다 넓은 라벨 폭(목차 겹침 방지는 tocloft 로 처리)
+\titleformat{\section}
+  {\sffamily\Large\bfseries\color{deepblue}}
+  {\thesection}{0.8em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+\input{appendix_code.tex}
+\input{appendix_refactor1.tex}
+\input{appendix_refactor2.tex}
+\input{appendix_mergechanges.tex}
+
+\end{document}

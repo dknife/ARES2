@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARES 진행 보고 — 1~6일차</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: #F8F8F8; color: #222;
+            font-family: 'Inter Tight', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header.report-head {
+            background: #222; color: #fff;
+            padding: 72px 0 60px;
+        }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+        .eyebrow {
+            font-size: 0.85em; font-weight: 600; letter-spacing: 3px;
+            text-transform: uppercase; color: #FA5D29; margin-bottom: 18px;
+        }
+        header.report-head h1 {
+            font-size: clamp(30px, 5vw, 52px); font-weight: 800;
+            letter-spacing: -1px; line-height: 1.1; margin-bottom: 18px;
+        }
+        header.report-head h1 .accent { color: #FA5D29; }
+        header.report-head p.sub { color: rgba(255,255,255,0.72); font-size: 1.05em; max-width: 640px; }
+
+        .stat-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+        .stat {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px; padding: 14px 22px;
+        }
+        .stat b { display: block; font-size: 1.5em; font-weight: 800; color: #fff; }
+        .stat span { font-size: 0.8em; color: rgba(255,255,255,0.6); letter-spacing: 1px; }
+
+        /* Day section */
+        section.day { padding: 56px 0 8px; }
+        .day-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+        .day-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #FA5D29; color: #fff; font-weight: 800;
+            border-radius: 10px; padding: 6px 16px; font-size: 0.95em; letter-spacing: 1px;
+        }
+        .day-head h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 700; }
+        .day-date { color: #999; font-weight: 500; font-size: 0.9em; }
+        .day-summary {
+            color: #444; font-size: 1.02em; margin: 4px 0 22px;
+            border-left: 3px solid #FA5D29; padding-left: 16px;
+        }
+
+        /* 주요 업무 (문서 산출물) */
+        .tasks {
+            background: #fff; border-radius: 14px; padding: 24px 26px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-top: 3px solid #FA5D29; margin-bottom: 28px;
+        }
+        .tasks h3 {
+            font-size: 1.05em; font-weight: 700; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tasks .lead { color: #444; font-size: 0.95em; margin-bottom: 14px; }
+        .tasks .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .tasks .chip { background: #F2F2F2; border-radius: 100px; padding: 5px 13px; font-size: 0.78em; color: #444; }
+        .tasks .chip.t { background: rgba(250,93,41,0.1); color: #d8431b; font-weight: 600; }
+        .tasks ul { margin: 0 0 16px 18px; }
+        .tasks li { font-size: 0.9em; color: #313131; margin-bottom: 6px; }
+        .tasks li b { color: #222; }
+        .tasks .doclink {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #222; color: #fff; text-decoration: none;
+            padding: 10px 18px; border-radius: 100px; font-size: 0.85em; font-weight: 600;
+            transition: background 0.25s ease; margin-right: 8px;
+        }
+        .tasks .doclink:hover { background: #FA5D29; }
+        .tasks .doclink.alt { background: transparent; color: #222; border: 1.5px solid #222; }
+        .tasks .doclink.alt:hover { background: #222; color: #fff; }
+
+        /* Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        figure {
+            background: #fff; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        figure:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
+        figure .imgbox { position: relative; aspect-ratio: 4 / 3; background: #EDEDED; cursor: zoom-in; }
+        figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        figure .time {
+            position: absolute; bottom: 8px; right: 8px;
+            background: rgba(0,0,0,0.6); color: #fff; font-size: 0.72em; font-weight: 600;
+            padding: 3px 9px; border-radius: 100px; letter-spacing: 0.5px;
+        }
+        figcaption { padding: 14px 16px 16px; font-size: 0.9em; color: #313131; }
+
+        /* 스크린샷(웹 서비스 캡처) — 잘림 없이 전체 표시 */
+        figure.shot .imgbox { aspect-ratio: 16 / 10; background: #F4F4F4; }
+        figure.shot img { object-fit: contain; }
+        .live-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #FA5D29; color: #fff; font-weight: 800;
+            border-radius: 10px; padding: 6px 14px; font-size: 0.95em; letter-spacing: 1px;
+        }
+        .live-link {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            color: #FA5D29; text-decoration: none; font-weight: 600;
+        }
+        .live-link:hover { text-decoration: underline; }
+
+        /* Lightbox */
+        .lightbox {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.92); display: none;
+            align-items: center; justify-content: center; padding: 24px;
+            cursor: zoom-out;
+        }
+        .lightbox.open { display: flex; }
+        .lightbox img { max-width: 100%; max-height: 86vh; border-radius: 8px; }
+        .lightbox .lb-cap {
+            position: absolute; bottom: 20px; left: 0; right: 0; text-align: center;
+            color: rgba(255,255,255,0.85); font-size: 0.9em; padding: 0 24px;
+        }
+        .lightbox .lb-close {
+            position: absolute; top: 18px; right: 24px; color: #fff;
+            font-size: 2em; font-weight: 300; cursor: pointer; line-height: 1;
+        }
+
+        /* Team & Roles */
+        section.team { padding: 48px 0 8px; }
+        .team .group-label {
+            font-size: 0.8em; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+            color: #FA5D29; margin: 24px 0 14px;
+        }
+        .role-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
+        }
+        .role-card {
+            background: #fff; border-radius: 14px; padding: 20px 22px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            border-left: 4px solid #FA5D29;
+            display: flex; align-items: flex-start; gap: 14px;
+        }
+        .role-card .avatar {
+            flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%;
+            background: #222; color: #fff; font-weight: 800; font-size: 1em;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .role-card.prof .avatar { background: #FA5D29; }
+        .role-card .who { display: flex; flex-direction: column; }
+        .role-card .name { font-size: 1.02em; font-weight: 700; color: #222; }
+        .role-card .name .tag { font-size: 0.72em; font-weight: 600; color: #999; margin-left: 6px; }
+        .role-card .role { font-size: 0.9em; color: #444; margin-top: 3px; line-height: 1.5; }
+
+        footer {
+            text-align: center; padding: 48px 32px 60px; margin-top: 40px;
+            color: #999; font-size: 0.85em; border-top: 1px solid #EDEDED;
+        }
+        footer a { color: #FA5D29; text-decoration: none; }
+
+        @media (max-width: 600px) {
+            .wrap { padding: 0 20px; }
+            header.report-head { padding: 56px 0 44px; }
+            .gallery { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="report-head">
+        <div class="wrap">
+            <div class="eyebrow">ARES Project · Progress Report</div>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 6일차</span></h1>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검.</p>
+            <div class="stat-row">
+                <div class="stat"><b>5</b><span>DAYS</span></div>
+                <div class="stat"><b>32</b><span>PHOTOS</span></div>
+                <div class="stat"><b>11</b><span>LIVE SCREENS</span></div>
+                <div class="stat"><b>06.23~29</b><span>2026 · KST</span></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="wrap">
+        <!-- ============ 팀 구성 및 주요 업무 ============ -->
+        <section class="team">
+            <div class="day-head">
+                <span class="day-badge">TEAM</span>
+                <h2>팀 구성 및 주요 업무</h2>
+            </div>
+            <p class="day-summary">교수진과 제품개발학기 참여 학생의 역할 분담 — 서비스 애플리케이션·시뮬레이션·펌웨어·UI/UX·실물 교구 디자인을 나누어 진행한다.</p>
+
+            <div class="group-label">교수진</div>
+            <div class="role-grid">
+                <div class="role-card prof">
+                    <div class="avatar">강</div>
+                    <div class="who">
+                        <span class="name">강영민<span class="tag">교수</span></span>
+                        <span class="role">서비스 애플리케이션 개발</span>
+                    </div>
+                </div>
+                <div class="role-card prof">
+                    <div class="avatar">서</div>
+                    <div class="who">
+                        <span class="name">서미라<span class="tag">교수</span></span>
+                        <span class="role">제품 디자인 지도 (실물 교구 및 온라인 서비스)</span>
+                    </div>
+                </div>
+                <div class="role-card prof">
+                    <div class="avatar">신</div>
+                    <div class="who">
+                        <span class="name">신원<span class="tag">교수</span></span>
+                        <span class="role">제품개발학기 총괄 진행 및 제품 수준의 서비스 관리</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group-label">학생</div>
+            <div class="role-grid">
+                <div class="role-card">
+                    <div class="avatar">김</div>
+                    <div class="who">
+                        <span class="name">김지훈<span class="tag">학생</span></span>
+                        <span class="role">시뮬레이션 모듈 고도화 및 디지털 트윈 시스템 구현</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이민혁<span class="tag">학생</span></span>
+                        <span class="role">시뮬레이션 모듈 고도화 및 디지털 트윈 시스템 구현</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이주현<span class="tag">학생</span></span>
+                        <span class="role">펌웨어 개발 및 블록코딩 서비스 연계</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이성빈<span class="tag">학생</span></span>
+                        <span class="role">제품 서비스 UI/UX 고도화</span>
+                    </div>
+                </div>
+                <div class="role-card">
+                    <div class="avatar">이</div>
+                    <div class="who">
+                        <span class="name">이재훈<span class="tag">학생</span></span>
+                        <span class="role">실물 교구 디자인 기획 및 시작품 제작</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ 배포된 웹 서비스 주요 기능 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="live-badge">● LIVE</span>
+                <h2>배포된 웹 서비스 주요 기능</h2>
+                <span class="day-date"><a class="live-link" href="https://dknife.github.io/ARES2" target="_blank">dknife.github.io/ARES2</a></span>
+            </div>
+            <p class="day-summary">GitHub Pages로 배포된 ARES 웹 서비스를 직접 구동하며 주요 기능을 점검했다. 설치 없이 브라우저만으로 <b>학습 콘텐츠 열람 · 블록 코딩 · 3D 시뮬레이션 · AI 도움 · 기기 모니터링</b>이 가능하다. 블록 1개가 명령 문자열로 변환돼 BLE로 로버에 전달되는 전체 경로를, 실물 기기 없이도 시뮬레이션으로 체험할 수 있다.</p>
+
+            <div class="tasks">
+                <h3>🚀 주요 기능 — 학습 관제실부터 3D 시뮬레이션까지</h3>
+                <p class="lead">랜딩 페이지에서 ‘서비스 시작’으로 학습 관제실에 진입하면 <b>12차시 × 4미션 = 48개 미션</b>의 커리큘럼(‘화성 탐사선 코딩 여정’)이 차시 카드와 표로 안내된다. 미션을 고르면 Google Blockly 기반 블록 코딩 화면이 열리고, ‘시뮬레이션’으로 탐사로봇 ‘알비’가 3D로 등장해 작성한 블록의 동작을 미리 보여 준다.</p>
+                <div class="chips">
+                    <span class="chip">랜딩 · 학습 관제실</span>
+                    <span class="chip">블록 코딩(Blockly)</span>
+                    <span class="chip">WebGL 3D 시뮬레이션</span>
+                    <span class="chip t">시뮬 모델 4종</span>
+                    <span class="chip">AI 도움</span>
+                    <span class="chip">점검 대시보드</span>
+                </div>
+                <a class="doclink" href="https://dknife.github.io/ARES2" target="_blank">웹 서비스 열기 ↗</a>
+                <a class="doclink alt" href="../../Web/main.html" target="_blank">학습 관제실(로컬) ↗</a>
+                <p style="margin-top:14px; font-size:0.85em; color:#777;">아래 화면은 <code>dknife.github.io/ARES2</code>를 데스크톱 브라우저로 구동해 캡처했다. 블루투스(BLE)는 사용자 제스처·실기기가 필요해 연결 상태는 ‘연결 끊김’으로 표시되며, 블록 코딩·3D 시뮬레이션·학습 콘텐츠는 기기 없이도 동작한다.</p>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_landing.jpg" alt="랜딩 페이지"></div>
+                    <figcaption><b>랜딩 페이지</b> — “블록 코딩으로 화성을 탐사하다”. 제품 정체성을 제시하고 ‘서비스 시작’으로 학습 관제실에 진입한다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_overview.jpg" alt="학습 관제실"></div>
+                    <figcaption><b>학습 관제실</b> — 12차시 커리큘럼(‘화성 탐사선 코딩 여정’)을 차시 카드와 ‘차시 한눈에 보기’ 표로 안내. 차시·미션을 골라 시작한다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_blockcoding.jpg" alt="블록 코딩 워크스페이스"></div>
+                    <figcaption><b>블록 코딩</b> — 좌측 툴박스(서보·DC·LED·디스플레이·소리·발사·센서·시간·제어·변수·수학·함수). ‘장애물 피하기’ 예제를 불러와 센서 분기·주행·LED·부저 블록이 조합된 모습.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_simulation.jpg" alt="3D 시뮬레이션"></div>
+                    <figcaption><b>3D 시뮬레이션</b> — 탐사로봇 ‘알비’가 3D로 등장해, 작성한 블록이 기기 없이 어떻게 동작하는지 보여 준다(WebGL).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_ai.jpg" alt="AI 도움 패널"></div>
+                    <figcaption><b>AI 도움</b> — 하고 싶은 일을 자연어로 적으면 블록 구성을 제안하는 보조 패널.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/web_dashboard.jpg" alt="점검 대시보드"></div>
+                    <figcaption><b>점검 대시보드</b>(ARES 미션 컨트롤) — BLE 연결 상태, 센서 텔레메트리(거리·자기장·온도), 시스템 자원, 수동 제어(전진·정지·LED·회전·소리)를 한눈에.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks" style="margin-top:24px;">
+                <h3>🎮 시뮬레이션 모델 4종 — 드롭다운 전환</h3>
+                <p class="lead">시뮬레이션 화면 좌측 상단의 <b>모델 선택 드롭다운</b>으로 4종의 모델을 전환할 수 있다. 같은 블록 코드라도 선택한 모델에 따라 서로 다른 3D 장면·동작이 연출되어, 미션 맥락(로봇·신호등·발사·주행)에 맞는 학습이 가능하다. 네 모델을 차례로 선택해 각각 다른 시뮬레이션이 이뤄짐을 확인했다.</p>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_albi.jpg" alt="시뮬레이션 — 알비와 함께"></div>
+                    <figcaption><b>① 알비와 함께</b> — 탐사로봇 ‘알비’와 LED(눈·가슴) 제어 중심의 입문 장면.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_traffic.jpg" alt="시뮬레이션 — 우주 신호등"></div>
+                    <figcaption><b>② 우주 신호등</b> — 신호등 슬롯·램프와 가위바위보 손동작(랜덤 함수 학습).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_launchpad.jpg" alt="시뮬레이션 — 발사대"></div>
+                    <figcaption><b>③ 발사대</b> — 로켓 발사 시퀀스(레이더·로켓·LED), 점화·발사 연출.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/sim_rover.jpg" alt="시뮬레이션 — 로버"></div>
+                    <figcaption><b>④ 로버</b> — DC 모터 주행과 거리 센서·장애물 회피(격자 바닥의 장애물 박스).</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 1 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 1</span>
+                <h2>컴퓨터실 개발 착수</h2>
+                <span class="day-date">2026.06.23 (월) · 10:00–17:00 KST</span>
+            </div>
+            <p class="day-summary">컴퓨터실에서 개발에 착수했다. 로버 하드웨어(섀시·모터 컨트롤러 보드)를 조립하고, 발사대·로켓·LED 모형을 제작했으며, 블록 코딩과 펌웨어 작업을 병행했다.</p>
+
+            <div class="tasks">
+                <h3>📄 주요 업무 — 코드 분석 종합 보고서 작성</h3>
+                <p class="lead">ARES 저장소(<code>github.com/dknife/ARES2</code>) 전체를 코드 수준에서 분석한 <b>「ARES 프로젝트 코드 분석 종합 보고서」(전 14장)</b>를 작성했다. 웹·펌웨어·AI 세 런타임 도메인이 <em>개행 구분 텍스트 명령</em>이라는 단일 계약으로 느슨하게 결합되는 구조를 중심으로, 하드웨어부터 향후 연구 방향까지 망라했다.</p>
+                <div class="chips">
+                    <span class="chip">개요·구성요소</span>
+                    <span class="chip">하드웨어·핀 배치</span>
+                    <span class="chip">피코 펌웨어(CommandProcessor)</span>
+                    <span class="chip">웹 서비스 계층</span>
+                    <span class="chip">Web Bluetooth</span>
+                    <span class="chip">블록 코딩 구현</span>
+                    <span class="chip">WebGL 3D 시뮬레이션</span>
+                    <span class="chip">코드 연계 구조</span>
+                    <span class="chip">네이티브 앱 패키징</span>
+                    <span class="chip">개선 계획·연구 주제</span>
+                </div>
+                <ul>
+                    <li><b>대상 시스템</b> — 초등학생용 블록 코딩 화성 탐사 로버 ‘알비’: Blockly 웹앱 + 라즈베리파이 피코(MicroPython) 펌웨어 + AI 보조 모듈.</li>
+                    <li><b>핵심 발견</b> — 웹과 펌웨어는 코드를 공유하지 않고 <em>텍스트 명령 프로토콜</em>만으로 통신해 독립 개발·교체가 쉬운 반면, 프로토콜 변경 시 양측 동시 반영 의존이 생긴다.</li>
+                    <li><b>범위</b> — 블록 1개가 ‘블록 → 명령 문자열 → BLE → 펌웨어 핸들러 → 하드웨어’로 도달하는 전 경로를 코드로 추적, 오프라인 <code>file://</code> 단독 실행 구조까지 분석.</li>
+                </ul>
+                <a class="doclink" href="../SourceAnalysis/CodeReport.pdf" target="_blank">코드 분석 보고서 (PDF) ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/main/Document/SourceAnalysis" target="_blank">LaTeX 원본 ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2948.jpg" alt="컴퓨터실 개발 작업">
+                        <span class="time">10:32</span></div>
+                    <figcaption>팀원들이 각자 워크스테이션에서 로버 제어 개발에 집중하고 있다. 책상 위에 부품 키트(BINDER 박스)가 놓여 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2949.jpg" alt="로버 섀시와 컨트롤러 보드">
+                        <span class="time">11:09</span></div>
+                    <figcaption>조립 중인 4륜 로버 섀시와 모터 컨트롤러 보드(VCC·GND·SIG 단자). 서보·배선 연결 작업 중이다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2951.jpg" alt="페어 작업">
+                        <span class="time">13:30</span></div>
+                    <figcaption>모니터 앞에서 팀원이 다른 팀원의 작업을 도우며 페어 작업을 진행하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2952.jpg" alt="컴퓨터실 전경">
+                        <span class="time">13:58</span></div>
+                    <figcaption>컴퓨터실 전경 — 팀원들이 나란히 앉아 블록 코딩·펌웨어 작업에 몰두하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/1일차_IMG_2955.jpg" alt="발사대 모형">
+                        <span class="time">15:40</span></div>
+                    <figcaption>레이저 커팅 목재로 만든 발사대(launchpad) 모형 — 3D 프린팅 로켓·LED 링·컨트롤러 보드가 연결된 하드웨어 프로토타입.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 2 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 2</span>
+                <h2>교구 제작 협력 업체(코리아사이언스) 방문 &amp; 웹 서비스 시연</h2>
+                <span class="day-date">2026.06.24 (화) · 10:00–17:00 KST</span>
+            </div>
+            <p class="day-summary">교구 제작 협력 업체인 코리아사이언스의 생산 공장을 방문해 키트 부품 생산 공정을 견학했다. 이어 회의실에서 ARES 웹 서비스를 시연하고 부품·앱을 함께 검토했다.</p>
+
+            <div class="tasks">
+                <h3>🏭 주요 업무 — 교구 제작 협력 업체(코리아사이언스) 방문 &amp; 웹 서비스 시연</h3>
+                <p class="lead">키트 양산을 담당하는 <b>교구 제작 협력 업체 코리아사이언스</b>의 생산 공장을 방문해 부품 생산 공정을 현장에서 점검하고, 완성된 <b>ARES 블록 코딩 웹 서비스</b>를 관계자에게 시연·리뷰했다.</p>
+                <div class="chips">
+                    <span class="chip">레이저 커팅 부품</span>
+                    <span class="chip">생산 공정 점검</span>
+                    <span class="chip">품질·물류 협의</span>
+                    <span class="chip">웹 서비스 시연</span>
+                    <span class="chip">앱·부품 통합 검토</span>
+                </div>
+                <ul>
+                    <li><b>생산 공정 견학</b> — GPL.TECH 레이저 커팅기로 가공되는 목재 키트 부품의 절단·정밀도·후처리 공정을 확인.</li>
+                    <li><b>부품·재고 점검</b> — 창고의 키트 부품 재고·포장 상태를 보고 양산·물류 일정을 협의.</li>
+                    <li><b>웹 서비스 시연</b> — 협력업체 관계자에게 ARES 웹 서비스(“블록 코딩으로 화성을 탐사하다”)를 시연하고 피드백을 수렴.</li>
+                    <li><b>통합 검토</b> — 레이저 커팅 부품과 태블릿의 블록 코딩 앱을 함께 놓고 실제 사용 흐름을 점검.</li>
+                </ul>
+                <a class="doclink" href="../../Web/index.html" target="_blank">ARES 웹 서비스 (시연 대상) ↗</a>
+                <a class="doclink alt" href="../../index.html" target="_blank">프로젝트 홈 ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2961.jpg" alt="협력업체 부품 설명">
+                        <span class="time">10:44</span></div>
+                    <figcaption>교구 제작 협력 업체 코리아사이언스 생산 공장 방문 — 담당자가 가공된 부품을 설명하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2962.jpg" alt="레이저 커팅기 견학">
+                        <span class="time">10:44</span></div>
+                    <figcaption>GPL.TECH 레이저 커팅기 앞에서 키트 부품 생산 공정을 견학하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2963.jpg" alt="커팅 부품 확인">
+                        <span class="time">10:44</span></div>
+                    <figcaption>레이저로 커팅된 목재 시트(키트 부품)를 확인하는 모습.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2964.jpg" alt="커팅기 작동 참관">
+                        <span class="time">10:44</span></div>
+                    <figcaption>레이저 커팅기 작동 과정을 참관하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2965.jpg" alt="부품 창고 논의">
+                        <span class="time">10:47</span></div>
+                    <figcaption>부품 재고·포장이 보관된 창고에서 생산·물류 과정을 논의하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2966.jpg" alt="ARES 웹 서비스 시연">
+                        <span class="time">11:10</span></div>
+                    <figcaption>회의실 모니터에 ARES 웹 서비스("블록 코딩으로 화성을 탐사하다") 랜딩 페이지를 띄우고 시연·리뷰하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2967.jpg" alt="웹 서비스 발표">
+                        <span class="time">11:10</span></div>
+                    <figcaption>협력업체 관계자들에게 ARES 블록 코딩 웹 서비스를 시연하는 모습.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/2일차_IMG_2968.jpg" alt="부품과 앱 검토">
+                        <span class="time">11:20</span></div>
+                    <figcaption>레이저 커팅 부품과 태블릿의 블록 코딩 앱을 함께 검토하고 있다.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 3 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 3</span>
+                <h2>개발 지속 · 디자인 프로토타입 제작</h2>
+                <span class="day-date">2026.06.25 (수) · 10:00–17:00 KST</span>
+            </div>
+            <p class="day-summary">컴퓨터실로 복귀해 개발을 이어갔다. 통합·검증 작업과 함께 1차 리팩토링 계획을 수립하고, 자체 설계 디자인을 3D 프린터로 출력해 프로토타입을 점검하며 추가 디자인 계획을 세웠다.</p>
+
+            <div class="tasks">
+                <h3>🧩 주요 업무 — 1차 Refactoring 계획 수립</h3>
+                <p class="lead">지나치게 큰 함수·파일로 분석이 어려운 소스를 기능 단위로 분할하기 위한 <b>「1차 Refactoring 계획」</b>을 수립했다. <em>동작 보존(behavior-preserving)</em>을 원칙으로, 비대 지점을 네 가지 문제 유형으로 분류하고 6단계 로드맵을 도출했다.</p>
+                <div class="chips">
+                    <span class="chip t">A · 거대 클로저</span>
+                    <span class="chip t">B · 거대 디스패처</span>
+                    <span class="chip t">C · 데이터 덩어리</span>
+                    <span class="chip t">D · 인라인 자산</span>
+                </div>
+                <ul>
+                    <li><b>유형 A</b> — 거대 클로저(<code>simulation.js</code> 2333줄)를 공유 컨텍스트(ctx) + 서브시스템 14개로 분할.</li>
+                    <li><b>유형 B</b> — 거대 디스패처(<code>process_data.py</code> 170줄 if/elif)를 도메인 핸들러 + dict 디스패치로 전환.</li>
+                    <li><b>유형 C</b> — 한 배열·만능 함수(<code>blocklyconfig.js</code>)를 카테고리별 파일로 분리.</li>
+                    <li><b>유형 D</b> — 인라인 자산(<code>dashboard.html</code> 828줄)의 CSS·JS를 외부 파일로 추출.</li>
+                    <li><b>로드맵</b> — 위험 낮은 D·C부터 시작해 가장 어려운 A(simulation.js)를 마지막에 두는 6단계 점진 분할.</li>
+                </ul>
+                <a class="doclink" href="../../dev.html" target="_blank">1차 Refactoring 계획 (개발 페이지) ↗</a>
+                <a class="doclink alt" href="../REFACTORING_PLAN.md" target="_blank">계획 원문 (Markdown) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🛠️ 주요 업무 — 디자인 프로토타입 출력 &amp; 추가 디자인 계획</h3>
+                <p class="lead">자체 설계한 디자인을 <b>3D 프린터로 출력</b>해 실물 프로토타입의 형상·조립성을 검증하고, <b>Autodesk 3ds Max로 후속 디자인을 모델링</b>하며 추가 디자인 계획을 수립했다.</p>
+                <div class="chips">
+                    <span class="chip">3D 프린팅 출력</span>
+                    <span class="chip">프로토타입 조립 점검</span>
+                    <span class="chip">3ds Max 모델링</span>
+                    <span class="chip">추가 디자인 계획</span>
+                </div>
+                <ul>
+                    <li><b>프로토타입 출력</b> — 부저 스피커 베이스(‘코리아사이언스’ 각인)·로켓 노즈콘·LED 마운트 등 자체 제작 부품을 3D 프린팅하고, 컨트롤러·모터와 함께 배치해 조립성을 점검.</li>
+                    <li><b>추가 디자인 모델링</b> — Autodesk 3ds Max로 로버·발사대 구조의 후속 디자인을 3D 모델링.</li>
+                    <li><b>디자인 계획 수립</b> — 출력물·스케치·3D 모델을 대조하며 다음 단계 디자인 방향과 보완 사항을 정리.</li>
+                </ul>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/3일차_IMG_2998.jpg" alt="컴퓨터실 개발 지속">
+                        <span class="time">11:19</span></div>
+                    <figcaption>컴퓨터실로 복귀해 개발을 이어가는 팀 — 책상마다 부품 키트(투명 박스)가 놓여 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/3일차_IMG_2999.jpg" alt="3D 프린팅 프로토타입 출력물">
+                        <span class="time">15:23</span></div>
+                    <figcaption>자체 제작한 3D 프린팅 디자인 프로토타입 — 부저 스피커 베이스(‘코리아사이언스’ 각인), 로켓 노즈콘, LED 마운트, DC 기어모터와 컨트롤러를 배치해 조립성을 점검하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/3일차_IMG_3001.jpg" alt="3ds Max 추가 디자인 모델링">
+                        <span class="time">15:23</span></div>
+                    <figcaption>Autodesk 3ds Max로 로버·발사대 구조의 후속 디자인을 3D 모델링하고 있는 화면.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/3일차_IMG_3002.jpg" alt="디자인 모델링과 출력물 대조">
+                        <span class="time">15:24</span></div>
+                    <figcaption>3D 모델링 화면과 3D 프린팅 출력물·디자인 스케치를 나란히 놓고 추가 디자인 계획을 검토하고 있다.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 4 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 4</span>
+                <h2>1차시 운영 점검 · 2차 Refactoring 계획</h2>
+                <span class="day-date">2026.06.26 (목) · 10:00–17:00 KST</span>
+            </div>
+            <p class="day-summary">수업 적용을 앞두고 1차시 운영을 점검했다. 조립된 로버·컨트롤러의 제품 동작과 교구 학습 진도를 확인하고, 팀이 함께 웹 인터페이스와 WebGL 3D 시뮬레이션을 점검해 「2차 Refactoring 계획」을 수립했다. 또한 최종 제품의 배선·외형 조립이 용이하도록 모듈형 패널로 분해·결합되는 <b>조립형 모델 시작품</b>을 제작해 조립성을 검증했다.</p>
+
+            <div class="tasks">
+                <h3>✅ 주요 업무 — 1차시 운영 점검 (제품 동작 · 교구 학습)</h3>
+                <p class="lead">ARES 키트의 실제 수업 적용을 앞두고 <b>1차시 운영</b>을 점검했다. 조립된 로버와 컨트롤러의 동작을 실물로 확인하고, 화면의 학습 콘텐츠로 차시별 교구 학습 진도를 점검했다.</p>
+                <div class="chips">
+                    <span class="chip">제품 동작 확인</span>
+                    <span class="chip">컨트롤러 배선</span>
+                    <span class="chip">방향 표시 교구</span>
+                    <span class="chip">교구 학습 진도</span>
+                    <span class="chip">1차시 운영</span>
+                </div>
+                <ul>
+                    <li><b>제품 동작 확인</b> — 4륜 로버와 3D 프린팅 컨트롤러 케이스(입출력 핀이 라벨링된 보드·전원 LED)를 연결하고, 방향 표시 디스크 교구와 함께 실제 동작을 점검.</li>
+                    <li><b>교구 학습 진도 점검</b> — 모니터에 ARES 학습 콘텐츠(‘화성 탐사선 코딩 여정’)를 띄워 차시별 학습 진도를 점검하고, 발사대 모형과 함께 수업 흐름을 확인.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🧭 주요 업무 — 웹 인터페이스·3D 시뮬레이션 점검 &amp; 2차 Refactoring 계획 수립</h3>
+                <p class="lead">ARES 웹 서비스의 <b>인터페이스</b>와 <b>WebGL 3D 시뮬레이션</b>을 팀이 함께 점검하고, 그 결과를 바탕으로 시뮬레이터·피코+블록코딩·웹 인터페이스 세 트랙의 <b>「2차 Refactoring 계획」</b>을 수립했다.</p>
+                <div class="chips">
+                    <span class="chip">웹 인터페이스 점검</span>
+                    <span class="chip">WebGL 3D 시뮬레이션</span>
+                    <span class="chip">사용성 리뷰</span>
+                    <span class="chip t">2차 Refactoring 계획</span>
+                    <span class="chip t">조립 가능한 시작품 제작 완료</span>
+                </div>
+                <ul>
+                    <li><b>웹 인터페이스 점검</b> — 컴퓨터실에서 팀원들이 함께 ARES 웹 페이지를 띄워 화면 구성과 동작을 점검.</li>
+                    <li><b>3D 시뮬레이션 점검</b> — 홈 화면의 WebGL 3D 연출(탐사로봇 ‘알비’의 우주 유영, 제트팩 우주인)을 확인.</li>
+                    <li><b>2차 Refactoring 계획 수립</b> — 점검 결과를 바탕으로 <b>시뮬레이터·피코+블록코딩·웹 인터페이스</b> 세 트랙의 「2차 Refactoring 계획」을 수립. (1차 동작 보존 분할의 연장선)</li>
+                    <li><b>조립 가능한 시작품 제작 완료</b> — Bambu Lab 3D 프린터로 디자인 부품을 출력해, 분해·결합이 되는 <b>조립 가능한 시작품 제작을 완료</b>.</li>
+                </ul>
+                <a class="doclink" href="../REFACTORING_PLAN_2.html" target="_blank">2차 Refactoring 계획 ↗</a>
+                <a class="doclink alt" href="../REFACTORING_PLAN_2.md" target="_blank">계획 원문 (Markdown) ↗</a>
+                <a class="doclink alt" href="../../Web/index.html" target="_blank">ARES 웹 서비스 ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🧱 주요 업무 — 조립형 모델 시작품 제작</h3>
+                <p class="lead">최종 제품의 <b>배선 조립</b>과 <b>외형 조립</b>이 쉬워지도록, 본체·외형 패널·상단 발사대 모듈로 분해·결합되는 <b>조립형 모델 시작품</b>을 3D 프린팅으로 제작했다. 내부 구동부와 배선을 먼저 배치한 뒤 측면 외형 패널과 상단 모듈을 끼워 맞추는 <em>모듈형 결합 구조</em>로, 양산 시 조립·점검·유지보수가 용이한지를 실물로 검증했다.</p>
+                <div class="chips">
+                    <span class="chip">조립형 모델</span>
+                    <span class="chip">모듈형 패널 결합</span>
+                    <span class="chip">내부 배선 배치</span>
+                    <span class="chip">외형 조립</span>
+                    <span class="chip">조립성 검증</span>
+                </div>
+                <ul>
+                    <li><b>내부 배선·구동부 배치</b> — 발사대 하우징 내부에 DC 기어모터·구동축과 배선을 먼저 배치하고, 배선 경로가 외부로 드러나지 않도록 내부 공간을 설계.</li>
+                    <li><b>모듈형 외형 결합</b> — 측면 외형 패널(도어)과 상단 발사대 모듈을 분리형으로 만들어, 배선 후 외형을 끼워 맞추는 조립·점검이 쉬운 구조로 검증.</li>
+                    <li><b>조립성 검증</b> — 분해→배선→외형 결합→완성의 전 과정을 실물 시작품으로 재현해 양산 조립 흐름을 점검.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🧩 주요 업무 — 시뮬레이션 모듈 분할 리팩터링 (유형 A 실행)</h3>
+                <p class="lead">「2차 Refactoring 계획」의 첫 실행으로, 가장 비대했던 <code>simulation.js</code>(2,407줄)의 <b>거대 클로저 <code>buildSim()</code></b>를 <em>동작 보존</em> 원칙 아래 <b>공유 컨텍스트(ctx) + 서브시스템 모듈</b> 구조로 분해했다. 그 결과 <code>simulation.js</code>는 <b>372줄의 얇은 오케스트레이터</b>로 줄고, 기능은 <code>Web/Sim_Parts/</code> 13개 모듈로 분리됐다.</p>
+                <div class="chips">
+                    <span class="chip t">유형 A · 거대 클로저</span>
+                    <span class="chip">공유 컨텍스트(ctx)</span>
+                    <span class="chip">Sim_Parts 13개 모듈</span>
+                    <span class="chip">2,407 → 372줄</span>
+                    <span class="chip">동작 보존</span>
+                </div>
+                <ul>
+                    <li><b>거대 클로저 분해</b> — <code>buildSim()</code>에 묶여 있던 ~50개 상태와 서브시스템을 <code>Sim_Parts/context.js</code>(씬·카메라·렌더러·ctx) 중심으로 끌어올리고, 각 기능을 모듈로 분리: <code>assets·leds·movement·gun·rocket·traffic·waves·oled·render·audio·dispatch·topics</code>.</li>
+                    <li><b>얇은 오케스트레이터화</b> — <code>simulation.js</code>는 <code>setupSimulation()</code>으로 ctx를 만들어 각 모듈에 넘기는 조립 역할만 남김(2,407→372줄). 외부 인터페이스는 그대로라 <code>main.js</code>는 주석 1줄 외 변경 없음.</li>
+                    <li><b>동작 수정 병행</b> — 음파 생성(<code>SpawnSoundWave</code>) 보정과 중복 코드 정리 등 소규모 버그 수정 2건 포함.</li>
+                </ul>
+                <a class="doclink" href="../../dev.html" target="_blank">리팩터링 계획 — 유형 A 상세 ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/Simulation_Minhyuck/Web/Sim_Parts" target="_blank">Sim_Parts 모듈 (브랜치) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🤖 주요 업무 — 피코 펌웨어 설정 개편 &amp; 속도 기능</h3>
+                <p class="lead">펌웨어의 설정 체계를 <b>교사·어린이가 메모장으로 직접 고치는 텍스트 설정</b>으로 바꾸고, 이동 블록에 <b>속도 조절</b>을 추가했다. 기존 <code>system.json</code>(JSON)을 주석·섹션이 달린 <code>ModelFactorySetting.txt</code>로 대체해, 코드를 몰라도 속도·핀·모듈·탭 이름을 직접 설정할 수 있게 했다.</p>
+                <div class="chips">
+                    <span class="chip t">JSON → 텍스트 설정</span>
+                    <span class="chip">ModelFactorySetting.txt</span>
+                    <span class="chip">속도 기능</span>
+                    <span class="chip">탭 한글 이름</span>
+                    <span class="chip">테마 모델(rover/launchpad)</span>
+                    <span class="chip">주석 보존 저장</span>
+                </div>
+                <ul>
+                    <li><b>설정 파일 텍스트화</b> — <code>system_config.py</code>에 텍스트 파서를 추가해 <code>키=값</code>(또는 <code>키:값</code>) 형식을 읽고, 첫 부팅 시 설명이 담긴 기본 템플릿을 자동 생성. 저장 시 <em>기존 주석·가이드라인을 그대로 보존</em>하고 값만 갱신.</li>
+                    <li><b>속도 기능</b> — 서보·DC 모터 이동 명령이 속도 인자를 받도록 형식을 확장(<code>SERVO_방향,속도</code>·<code>DC_t방향,초,속도</code> 등). <code>max_speed</code> 기준으로 스케일링하고 0~100%로 제한.</li>
+                    <li><b>커스터마이징 확장</b> — 블록코딩 카테고리 <b>탭 한글 이름</b>(<code>GET_NAMES</code>), <b>테마 모델</b>(로버/발사대), 모듈 활성화 토글, GP 핀 번호, 서보 좌우 보정치를 모두 설정 파일에서 제어.</li>
+                    <li><b>웹 연동</b> — 변경된 명령 프로토콜에 맞춰 <code>blocklyconfig.js</code>·<code>bluetooth.js</code>·<code>commandexecutor.js</code> 등 웹 측도 함께 갱신(펌웨어·웹 짝 반영 필요).</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/Piiiiiiiico/Pico" target="_blank">피코 펌웨어 (브랜치) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 주요 업무 — 웹 인터페이스 개선 (모바일 하단 내비 &amp; 버튼 동선)</h3>
+                <p class="lead">태블릿·휴대폰으로 수업하는 환경에 맞춰 <b>화면 하단 고정 내비게이션 바</b>를 새로 만들고, 상단 버튼(개요·블록코딩·점검)의 <b>이동 동선 버그</b>를 바로잡았다. 또한 UI 보조 로직을 <code>ui.js</code>로 분리해 <code>main.js</code>를 정리했다.</p>
+                <div class="chips">
+                    <span class="chip">모바일 하단 내비 바</span>
+                    <span class="chip">개요·차시·미션·AI·로그</span>
+                    <span class="chip">홈·점검 버튼 수정</span>
+                    <span class="chip">safe-area 대응</span>
+                    <span class="chip t">ui.js 분리</span>
+                </div>
+                <ul>
+                    <li><b>모바일 하단 내비게이션</b> — <code>개요·차시·미션·AI·로그</code> 5개 버튼의 하단 고정 바(<code>#mobileBottomNav</code>)를 추가. 노치/홈바를 피하는 <code>safe-area-inset</code> 대응과 반응형 처리로 태블릿에서 한 손 조작이 쉬워짐.</li>
+                    <li><b>상단 버튼 동선 정리</b> — 🏠 개요·🧩 블록코딩·🔍 점검 버튼을 재배치하고, <em>어디서든 점검(대시보드)·블록코딩·개요로 정확히 이동</em>하도록 보강(미션 화면이 아닐 때도 대시보드를 여는 일회성 리스너+타임아웃 등).</li>
+                    <li><b>UI 로직 분리</b> — <code>updateBlockCodingButtonUI·setupLogToggle·setupContentToggle</code>를 <code>ui.js</code>로 추출해 <code>main.js</code>의 책임을 줄임(웹 인터페이스 리팩터링의 일부).</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/LEE_SEONGBEEN/Web" target="_blank">웹 인터페이스 (브랜치) ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_1차시_제품동작확인.jpg" alt="1차시 제품 동작 확인">
+                        <span class="time">11:33</span></div>
+                    <figcaption>조립된 4륜 로버와 3D 프린팅 컨트롤러 케이스(전원 LED 점등)를 연결하고, 방향 표시 디스크 교구와 함께 제품 동작을 확인하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_교구학습진도.jpg" alt="교구 학습 진도 점검">
+                        <span class="time">11:42</span></div>
+                    <figcaption>모니터에 ARES 학습 콘텐츠(‘화성 탐사선 코딩 여정’)를 띄워 교구 학습 진도를 점검하고 있다. 책상에는 발사대 모형이 함께 놓여 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_웹인터페이스점검.jpg" alt="웹 인터페이스 점검">
+                        <span class="time">11:42</span></div>
+                    <figcaption>컴퓨터실에서 팀원들이 함께 ARES 웹 페이지를 띄워 인터페이스 구성·동작을 점검하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_인터페이스개선계획수립.jpg" alt="인터페이스 개선 계획 수립">
+                        <span class="time">13:35</span></div>
+                    <figcaption>점검 결과를 화면에 정리하며 인터페이스 개선 방향(2차 Refactoring 계획)을 수립하고 있다. 책상에는 발사대 모형이 함께 놓여 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_시뮬레이션점검.jpg" alt="WebGL 3D 시뮬레이션 점검">
+                        <span class="time">13:38</span></div>
+                    <figcaption>홈 화면의 WebGL 3D 시뮬레이션 — 탐사로봇 ‘알비’가 별이 빛나는 우주에서 제트팩 우주인과 함께 유영하는 연출(‘ARES · 화성 탐사선 제어’)을 점검하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_시제품제작.jpg" alt="3D 프린터 시제품 제작"></div>
+                    <figcaption>Bambu Lab 3D 프린터로 디자인 부품을 출력해 조립 가능한 시작품 제작을 완료했다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_조립형모델_내부배선.jpg" alt="조립형 모델 내부 배선·구동부 배치">
+                        <span class="time">19:00</span></div>
+                    <figcaption><b>조립형 모델 시작품 ①</b> — 발사대 하우징의 측면 패널을 연 상태. 내부에 DC 기어모터·구동축과 배선이 배치돼 있으며, 최종 제품의 배선 조립이 쉽도록 내부 공간과 배선 경로를 설계했다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_조립형모델_외형패널.jpg" alt="조립형 모델 외형 패널 결합">
+                        <span class="time">19:00</span></div>
+                    <figcaption><b>조립형 모델 시작품 ②</b> — 내부 배선·구동부 위로 측면 외형 패널(도어)을 끼워 닫는 과정. 분리형 패널이라 조립·점검·유지보수가 용이하다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_조립형모델_상단모듈.jpg" alt="조립형 모델 상단 발사대 모듈 결합">
+                        <span class="time">19:00</span></div>
+                    <figcaption><b>조립형 모델 시작품 ③</b> — 발사대 상단 모듈(로켓 가이드 타워)을 본체에 안착·고정하는 과정. 외형을 모듈 단위로 끼워 맞춰 조립한다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/4일차_조립형모델_완성.jpg" alt="완성된 조립형 모델 시작품">
+                        <span class="time">19:00</span></div>
+                    <figcaption><b>조립형 모델 시작품 ④</b> — 조립이 끝난 모습. 배선이 외부로 드러나지 않고 모듈형 패널로 마감돼, 최종 제품의 배선·외형 조립성을 실물로 검증했다.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 5 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 5</span>
+                <h2>작업 브랜치 통합 머지 · 서비스 점검 · 인터페이스·펌웨어·시뮬레이션 개선</h2>
+                <span class="day-date">2026.06.29 (월) · 원격 개발 KST</span>
+            </div>
+            <p class="day-summary">팀원별로 나뉘어 진행되던 여러 작업 브랜치를 <b>main 한 곳으로 통합</b>했다. 통합 직전 상태를 백업 브랜치로 보존한 뒤 순차 병합했고, 통합 후 “학습 관제실(개요 화면)이 안 뜬다”는 신고를 받아 <b>전 계층 검증</b>으로 원인을 규명했다(머지된 코드의 개요는 정상 동작 — 원인을 런타임 환경 요인으로 규명). 또한 트랙별 개선을 정리했다 — <b>웹 인터페이스</b>(목차 간략화·미션 설명 토글화·중복 메뉴 제거), <b>피코(Pico) 펌웨어</b>(모터 속도 제한 코드 추가, 미션 맥락 블록 제한 방향), <b>3D 시뮬레이션</b>(객체 배치 완료, property 기반 명령 연동 방향). 이어 팀 토론으로 트랙별 <b>다음 개선 방향</b>(웹 사이드 인터페이스·피코 블록 직관성·시뮬 메시 hierarchy)을 구체화했다. 하드웨어로는 측면 패널을 밀어 끼우는 <b>슬라이드형 조립 시작품 제작을 완성</b>했다.</p>
+
+            <div class="tasks">
+                <h3>🔀 주요 업무 — 작업 브랜치 통합 머지 (Git 통합)</h3>
+                <p class="lead">분산 개발되던 브랜치(시뮬레이션·펌웨어·UI/UX)를 <code>main</code>으로 모으는 통합 머지를 수행했다. 되돌릴 수 있는 <b>안전장치(백업 브랜치)</b>를 먼저 마련하고, 브랜치별 선후 관계를 확인한 뒤 충돌 없이 순차 병합했다.</p>
+                <div class="chips">
+                    <span class="chip">원격 브랜치 6개 점검</span>
+                    <span class="chip t">main_20260629 백업</span>
+                    <span class="chip">Jihun 머지</span>
+                    <span class="chip">test/merge-검증 머지</span>
+                    <span class="chip">충돌 0건</span>
+                </div>
+                <ul>
+                    <li><b>브랜치 현황 점검</b> — 원격(<code>dknife/ARES2</code>)의 6개 브랜치(<code>main·Jihun·LEE_SEONGBEEN·Piiiiiiiico·Simulation_Minhyuck·test/merge-검증</code>)의 최신 커밋과 <code>main</code> 대비 선행/후행 커밋 수를 확인하고, 로컬 <code>main</code>을 원격과 동기화.</li>
+                    <li><b>백업 브랜치 생성</b> — 통합 직전의 <code>main</code>을 그대로 보존하는 <code>main_20260629</code> 백업 브랜치를 만들어 원격에 push(문제 발생 시 즉시 되돌릴 안전장치).</li>
+                    <li><b>Jihun 브랜치 머지</b> — <b>3D 오브젝트 조작</b>과 시뮬레이션 모듈 분리(<code>Web/Sim_Parts/·Web/Simulation/</code>) 작업을 <code>main</code>에 병합(충돌 없음).</li>
+                    <li><b>누락 발견·보완</b> — Jihun이 <em>force-push</em>로 재정리되며 통합 브랜치 <code>test/merge-검증</code>(이성빈·피코·민혁 작업의 통합본)이 빠진 것을 확인하고, <code>test/merge-검증</code>을 다시 <code>main</code>에 병합해 <code>ui.js</code>·펌웨어(<code>process_data·system_config</code>)·블록코딩 등 누락분을 복구(충돌 없음).</li>
+                </ul>
+                <a class="doclink" href="https://github.com/dknife/ARES2/tree/main" target="_blank">통합된 main 브랜치 ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/branches" target="_blank">브랜치 목록 ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_머지후_테스트.jpg" alt="머지 작업 이후 통합 빌드 테스트 장면"></div>
+                    <figcaption><b>머지 직후 통합 테스트</b> — 학생들이 통합한 빌드를 함께 점검·테스트하는 모습. 스크린에는 이번 5일차 작업 보고(통합 머지·서비스 점검·트랙별 개선)가 투영돼 있다.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>📝 주요 업무 — 주요 코드 변경 요약 (부록 D)</h3>
+                <p class="lead">통합 머지로 <b>main</b>에 반영된 주요 코드 변경을, 1일차 코드 분석 보고서(부록 A)가 기록한 머지 전 상태와 대조해 정리했다. 코드 도메인에서 <b>35개 파일 · +5,152/−2,563 라인</b>이 바뀌었고, 1·2차 Refactoring 계획이 실제 코드로 실행됐다. 트랙별 변경과 <b>실제 코드 발췌 전체</b>는 별도 문서(부록 D)에 담았다.</p>
+                <div class="chips">
+                    <span class="chip t">시뮬: simulation.js 2,300→383줄 + 모듈 19개</span>
+                    <span class="chip t">피코: system.json→ModelFactorySetting.txt</span>
+                    <span class="chip">모터 속도 0~100% 제한</span>
+                    <span class="chip t">웹: ui.js 분리·모바일 내비</span>
+                    <span class="chip">glb 7.21→0.58MB</span>
+                </div>
+                <ul>
+                    <li><b>시뮬레이터</b> — 거대 클로저 <code>simulation.js</code>를 공유 컨텍스트 + <code>Sim_Parts</code> 14모듈·<code>Simulation</code> 5래퍼로 분해(383줄 오케스트레이터, 공개 API 유지).</li>
+                    <li><b>피코 펌웨어</b> — JSON 설정을 텍스트 <code>ModelFactorySetting.txt</code>로 대체(주석 보존 저장), 서보·DC 속도 인자와 모터 속도 0~100% 제한, <code>GET_NAMES</code> 추가.</li>
+                    <li><b>웹 인터페이스</b> — <code>ui.js</code> 분리·모바일 하단 내비, 바뀐 명령 프로토콜에 맞춘 <code>blocklyconfig·bluetooth·commandexecutor</code> 동시 갱신.</li>
+                    <li><b>진입점·자산</b> — 랜딩/개발/메인 앱 페이지 확장, <code>ares_robot.glb</code> 7.21→0.58MB 경량화.</li>
+                </ul>
+                <a class="doclink" href="codechanges.html" target="_blank">변경 코드 상세 — 부록 D 전체 ↗</a>
+                <a class="doclink alt" href="../SourceAnalysis/CodeReport.pdf" target="_blank">기준선 — 코드 분석 보고서(부록 A) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🩺 주요 업무 — 개요 로딩 이상 진단 (검증·디버깅)</h3>
+                <p class="lead">머지 직후 <b>“서비스 시작 → 학습 관제실 진입 시 개요가 안 뜬다”</b>는 보고를 받아, 머지가 코드를 깨뜨렸는지 전 계층에서 검증했다. 커밋·배포된 코드의 개요는 정상 동작함을 확인하고, 원인을 코드 결함이 아닌 <b>런타임 환경 요인</b>으로 규명했다.</p>
+                <div class="chips">
+                    <span class="chip">정적 점검(문법·중복·충돌마커)</span>
+                    <span class="chip">헤드리스 렌더링 검증</span>
+                    <span class="chip">배포본 대조</span>
+                    <span class="chip t"><code>file://</code> · 브라우저 캐시</span>
+                    <span class="chip">캐시버스팅 제안</span>
+                </div>
+                <ul>
+                    <li><b>코드 정적 점검</b> — 머지 결과물의 문법 검사(<code>node --check</code>), 중복 선언·머지 충돌 마커, 중복 <code>id</code>를 점검 → 이상 없음.</li>
+                    <li><b>실제 렌더링 검증</b> — 로컬 서버 + 헤드리스 브라우저로 <code>main.html</code>을 렌더해 개요(히어로·‘차시 한눈에 보기’ 12행 표)가 정상 표시됨을 <b>스크린샷으로 확인</b>. 문서 표준 셋업(<code>cd Web; http.server</code>)과 직전 머지 상태에서도 동일하게 정상.</li>
+                    <li><b>배포본 대조</b> — 배포된 GitHub Pages의 <code>main.js</code>·<code>overview.html</code>이 최신 머지본이며 정상 응답(HTTP 200)임을 확인.</li>
+                    <li><b>원인 규명</b> — 코드 결함이 아니라 <em>(1) <code>file://</code> 직접 실행 시 ES module·<code>fetch()</code> 차단, (2) 캐시버스팅 없는 <code>main.js</code>의 브라우저 캐시</em> 가능성으로 좁힘. 재발 방지로 모듈 로드에 버전 쿼리(<code>main.js?v=…</code>) 적용을 제안.</li>
+                </ul>
+                <a class="doclink" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 열기(검증 대상) ↗</a>
+                <a class="doclink alt" href="../../Web/main.html" target="_blank">학습 관제실(로컬) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 주요 업무 — 웹 인터페이스 개선계획 수립 (목차·미션 설명·메뉴 정리)</h3>
+                <p class="lead">학습 관제실(개요)부터 미션 화면까지의 화면 동선을 점검해, 어린이가 더 단순하고 직관적으로 쓸 수 있도록 <b>인터페이스 개선계획</b>을 수립했다. 핵심은 세 가지 — <b>목차 간략화</b>, <b>미션 설명의 제목 노출 + 상세 토글화</b>, <b>중복 메뉴 제거</b>로, 화면을 덜 복잡하게 하고 코딩 영역을 더 넓게 확보하는 방향이다.</p>
+                <div class="chips">
+                    <span class="chip t">목차 간략화</span>
+                    <span class="chip">미션 제목 상시 노출</span>
+                    <span class="chip">상세 설명 토글(펼침/접힘)</span>
+                    <span class="chip">중복 메뉴 삭제</span>
+                    <span class="chip">화면 동선 단순화</span>
+                </div>
+                <ul>
+                    <li><b>목차 간략화</b> — 개요(학습 관제실)의 ‘차시 한눈에 보기’ 표·차시 안내를 핵심 정보 위주로 압축해, 한눈에 들어오고 차시 선택까지의 동선이 짧아지도록 정리.</li>
+                    <li><b>미션 설명 개선</b> — 미션 화면에서 <em>미션 제목은 항상 노출</em>하고, 상세 설명(스토리·학습 목표)은 <em>펼침/접힘 토글</em>로 나타났다 사라지게 한다. 처음엔 제목만 보여 화면을 단순하게, 필요할 때만 상세를 펼쳐 코딩 영역을 넓게 쓴다.</li>
+                    <li><b>중복 메뉴 삭제</b> — 같은 기능을 가리키는 중복 버튼(예: 상단바 ‘🧩 블록코딩’과 네비게이터 ‘블록 코딩’ 전환 버튼)을 하나로 정리해 메뉴 혼선을 없앤다.</li>
+                </ul>
+                <a class="doclink" href="../../Web/main.html" target="_blank">개선 대상 — 학습 관제실 ↗</a>
+                <a class="doclink alt" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🤖 주요 업무 — 피코(Pico) 펌웨어 개선 (모터 속도 제한 · 미션 맥락 블록 제한)</h3>
+                <p class="lead">펌웨어(라즈베리파이 피코) 측 개선으로, 안전하고 다루기 쉬운 주행을 위해 <b>모터 속도 제한 코드를 추가</b>했다(개선 결과). 나아가 어린이가 미션에 집중하도록 <b>미션 맥락에 따라 노출 블록을 제한</b>하는 개념을 실현하는 것을 다음 개선 방향으로 설정했다.</p>
+                <div class="chips">
+                    <span class="chip t">모터 속도 제한 (완료)</span>
+                    <span class="chip">max_speed 스케일·0~100% 제한</span>
+                    <span class="chip t">미션별 블록 제한 (방향)</span>
+                    <span class="chip">학습 스캐폴딩</span>
+                    <span class="chip">펌웨어·웹 툴박스 연계</span>
+                </div>
+                <ul>
+                    <li><b>[개선 결과] 모터 속도 제한 코드 추가</b> — DC·서보 모터 이동 명령이 받는 속도를 <code>max_speed</code> 기준으로 스케일링하고 <b>0~100% 범위로 제한</b>해, 과속으로 인한 이탈·안전 문제를 막고 어린이가 다루기 쉬운 일정한 주행을 보장.</li>
+                    <li><b>[개선 방향] 미션 맥락에 따른 노출 블록 제한</b> — 각 차시·미션의 학습 목표에 필요한 블록만 블록코딩 툴박스에 노출하고 나머지는 숨기는 개념을 실현. 어린이가 해당 미션에 집중하도록 돕는 <em>학습 스캐폴딩</em>으로, 펌웨어의 미션/모델 설정과 웹 툴박스를 연계해 단계적으로 적용할 계획.</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/Piiiiiiiico/Pico" target="_blank">피코 펌웨어 (브랜치) ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🎮 주요 업무 — 시뮬레이션 개선 (객체 배치 완료 · property 기반 명령 연동)</h3>
+                <p class="lead">3D 시뮬레이션에서 장면에 <b>객체(로봇·장치·소품 등)를 배치하는 작업을 완성</b>했다(개선 결과). 다음 단계로, 각 객체에 <b>property로 ‘연동 명령’을 지정</b>해 두고 <b>해당 명령이 들어오면 그 명령에 맞는 동작을 수행</b>하도록 하는 데이터 주도 방식을 개선 방향으로 잡았다.</p>
+                <div class="chips">
+                    <span class="chip t">객체 배치 완료</span>
+                    <span class="chip t">property 기반 명령 연동 (방향)</span>
+                    <span class="chip">명령 → 동작 매핑</span>
+                    <span class="chip">선언적·데이터 주도 구성</span>
+                    <span class="chip">블록 명령 ↔ 시뮬 동작 일치</span>
+                </div>
+                <ul>
+                    <li><b>[개선 결과] 시뮬레이션 객체 배치 완성</b> — 시뮬레이션 장면에 필요한 객체(탐사로봇·장치·소품 등)를 원하는 위치에 배치하는 작업을 완료.</li>
+                    <li><b>[개선 방향] property 기반 명령 연동</b> — 각 객체에 <em>property로 연동 명령을 지정</em>할 수 있게 하여, 그 명령이 수신되면 객체가 그에 맞는 동작(점등·회전·이동·발사 등)을 수행하도록 한다. 객체마다 코드를 따로 짜지 않고 <b>property 설정만으로 ‘명령 → 동작’을 매핑</b>하는 선언적 구조라, 새 객체·미션을 추가하기 쉽고 블록 명령과 시뮬레이션 동작의 일관성도 높아진다.</li>
+                </ul>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/main/Web/Sim_Parts" target="_blank">시뮬레이션 모듈 (Sim_Parts) ↗</a>
+                <a class="doclink alt" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_시뮬_객체배치.png" alt="모바일 시뮬레이션 — 객체 배치(Move/Rotate/Scale)"></div>
+                    <figcaption><b>시뮬레이션 객체 배치 — 모바일 화면</b> — 배포 서비스(<code>dknife.github.io/ARES2</code>)를 모바일(갤럭시 A51/71) 화면으로 구동한 모습. 탐사로봇 ‘알비’가 바운딩 박스(기즈모)와 함께 배치되고, 하단의 <b>Move·Rotate·Scale</b>로 객체를 이동·회전·크기 조절할 수 있다(객체 배치 작업 완료 결과).</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🗣️ 주요 업무 — 개선계획 토론 결과 (트랙별 다음 개선 방향)</h3>
+                <p class="lead">팀 토론을 통해 세 트랙(<b>웹 · 피코 · 시뮬레이션</b>)의 다음 개선 방향을 구체화했다. 어린이가 더 빠르게 블록코딩에 몰입하고, 블록이 직관적이며, 시뮬레이션 객체를 효율적으로 다루도록 하는 데 초점을 맞췄다.</p>
+                <div class="chips">
+                    <span class="chip t">웹 · 사이드 인터페이스</span>
+                    <span class="chip">블록코딩으로 빠른 유도</span>
+                    <span class="chip t">피코 · 블록 직관성(수학·논리)</span>
+                    <span class="chip">제어 블록 개선</span>
+                    <span class="chip t">시뮬 · 메시 hierarchy</span>
+                </div>
+                <ul>
+                    <li><b>[웹] 사이드 인터페이스 구현</b> — 차시(목차)를 길게 노출하기보다, <b>사이드 형태의 인터페이스</b>로 <b>블록코딩 화면에 빠르게 유도·집중</b>시키는 인터페이스 개발이 필요. (앞선 ‘목차 간략화·중복 메뉴 제거’의 연장선)</li>
+                    <li><b>[피코] 펌웨어 거의 완성 — 블록코딩 보완 필요</b> — 피코 펌웨어는 거의 완성 단계. 다만 블록코딩에서 <b>수학/논리 탭의 블록들이 직관적이지 않아</b> 개선이 필요하고, <b>제어 관련 블록들</b>도 더 다듬어야 한다.</li>
+                    <li><b>[시뮬레이션] 메시 배치 기능 개선</b> — 시뮬레이션 <b>메시 배치 기능</b>을 개선하되, <b>메시 hierarchy(계층 구조)를 도입</b>해 객체를 효율적으로 모델링할 수 있는 도구를 완성. (객체별 ‘property 기반 명령 연동’ 방향과 함께 추진)</li>
+                </ul>
+                <a class="doclink" href="https://dknife.github.io/ARES2" target="_blank">배포 서비스 ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/branches" target="_blank">작업 브랜치 ↗</a>
+            </div>
+
+            <div class="tasks">
+                <h3>🧱 주요 업무 — 슬라이드형 조립 시작품 제작 완성</h3>
+                <p class="lead">Day 4의 모듈형 조립 시작품을 발전시켜, 측면 외형 패널을 <b>슬라이드 방식으로 밀어 끼웠다 빼는</b> 조립 구조의 시작품을 완성했다. 내부 구동부·배선을 배치한 뒤 슬라이드 패널을 밀어 마감하는 방식으로, <b>나사 없이</b> 분해·재조립이 되어 양산 시 조립·점검·유지보수가 한층 쉬워진다. (아래는 제작 영상에서 캡처한 주요 장면)</p>
+                <div class="chips">
+                    <span class="chip t">슬라이드형 외형 패널</span>
+                    <span class="chip">내부 구동부·배선 배치</span>
+                    <span class="chip">밀어 끼우는 조립(나사 없음)</span>
+                    <span class="chip">점검·유지보수 용이</span>
+                    <span class="chip t">제작 완성</span>
+                </div>
+                <ul>
+                    <li><b>측면 개방·내부 배치</b> — 발사대 하우징의 측면을 열어 DC 기어모터·구동축·배선을 내부에 배치.</li>
+                    <li><b>슬라이드 패널 결합</b> — 측면 외형 패널(도어)을 레일을 따라 <b>슬라이드로 끼워</b> 내부를 마감. 나사 없이 밀어 끼우는 구조라 분해·재조립이 쉽다.</li>
+                    <li><b>조립 완성</b> — 본체·슬라이드 패널·상단 발사대 타워까지 결합한 완성 형태를 실물로 확인.</li>
+                </ul>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_내부노출.jpg" alt="측면 개방 — 내부 구동부·배선 노출"></div>
+                    <figcaption><b>① 측면 개방</b> — 발사대 하우징의 측면을 연 상태. 내부에 DC 기어모터·구동축과 배선이 배치돼 있다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_슬라이드결합.jpg" alt="슬라이드형 측면 패널 결합"></div>
+                    <figcaption><b>② 슬라이드 패널 결합</b> — 측면 외형 패널(도어)을 레일을 따라 슬라이드로 끼워 내부를 마감하는 모습.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_패널닫음.jpg" alt="슬라이드 패널을 밀어 끼워 마감"></div>
+                    <figcaption><b>③ 밀어 끼워 마감</b> — 슬라이드 패널을 손으로 밀어 끼워 닫는 과정. 나사 없이 조립된다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:10/16; background:#11132a;"><img src="img/5일차_조립_완성.jpg" alt="조립 완성 — 발사대 타워까지 결합한 전체 모습"></div>
+                    <figcaption><b>④ 조립 완성</b> — 본체·슬라이드 패널·상단 발사대 타워까지 결합한 완성 형태.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>📊 주요 업무 — 개발 활동·협업 현황 점검 (GitHub Insights)</h3>
+                <p class="lead">통합 작업 전후의 저장소 활동을 GitHub Insights로 점검했다. 최근 1주(<b>6/21~6/28</b>) 동안 머지를 제외하고 <b>6명</b>이 <code>main</code>에 <b>30커밋</b>(전 브랜치 31커밋)을 푸시했고, <code>main</code> 기준 <b>128개 파일</b>에서 <b>+14,363 / −2,564</b> 라인이 변동됐다. 연간 커밋·코드 변동 그래프에서 <b>4~6월 집중 개발</b>이 뚜렷하며, 네트워크 그래프에는 이번에 통합한 작업 브랜치들과 백업 브랜치(<code>main_20260629</code>)가 <code>main</code>으로 모이는 흐름이 그대로 나타난다.</p>
+                <div class="chips">
+                    <span class="chip t">6 authors</span>
+                    <span class="chip">main 30 commits</span>
+                    <span class="chip">+14,363 additions</span>
+                    <span class="chip">−2,564 deletions</span>
+                    <span class="chip">128 files</span>
+                    <span class="chip t">브랜치 통합 흐름</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_pulse.png" alt="GitHub Insights — Pulse(주간 요약)"></div>
+                    <figcaption><b>주간 활동 요약(Pulse)</b> — 6/21~6/28 동안 6명이 <code>main</code>에 30커밋(전 브랜치 31커밋)을 푸시, 128파일에서 +14,363/−2,564 변동. 우측은 Top committers.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_commits.png" alt="GitHub Insights — 최근 1년 주간 커밋"></div>
+                    <figcaption><b>최근 1년 주간 커밋</b> — 제품개발학기가 시작된 <b>4~6월에 개발이 집중</b>됐음을 보여 준다(주당 최대 35커밋).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_codefreq.png" alt="GitHub Insights — Code frequency(주간 가감산)"></div>
+                    <figcaption><b>코드 변동(Code frequency)</b> — 주간 추가/삭제 라인. 5~6월의 대규모 추가와, 리팩터링·통합 과정의 삭제가 함께 나타난다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/5일차_github_network.png" alt="GitHub Insights — 브랜치 네트워크 그래프"></div>
+                    <figcaption><b>브랜치 네트워크</b> — 작업 브랜치들(<code>Jihun·test/merge-검증·Simulation_Minhyuck·Piiiiiiiico·LEE_SEONGBEEN</code>)과 백업 브랜치(<code>main_20260629</code>)가 <code>main</code>으로 통합되는 이번 작업의 흐름이 보인다.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ Day 6 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 6</span>
+                <h2>코리아사이언스 디자인 멘토링 · 디자인 고도화 운영계획 · 개발 산출물(시뮬레이터·발사대)</h2>
+                <span class="day-date">2026.06.30 (화) · 원격 개발 KST</span>
+            </div>
+            <p class="day-summary">교구 제작 협력 업체 <b>코리아사이언스의 디자인 담당자</b>가 진행한 <b>멘토링 수업</b>으로 UI/UX 개발 가이드와 <b>디자인 개선 방향</b>을 함께 검토했다. 이어 <b>온라인 서비스(웹)와 실물 교구</b>를 하나의 화성 탐사 수업 경험으로 잇는 <b>디자인 고도화 운영계획</b>을 팀이 함께 논의·정리했다(코리아사이언스 × 동명대 게임공학·게임그래픽학과). 아울러 이날의 개발 산출물로 <b>시뮬레이터 개발자 도구·커스터마이징 기능</b>과 <b>발사대 3D 프린팅 디자인</b> 결과를 정리했다. 그동안의 디자인 활동(요구사항 분석 → 개선계획 → 구체화·스티커 → 통합 사용성 테스트)을 되짚고, <b>디자인 콘셉트·5일 운영 흐름·온라인 UX/UI 개선안·실물 교구 제품화·컬러 시스템·산출물 패키지</b>로 개발 계획을 구체화했다.</p>
+
+            <div class="tasks">
+                <h3>🎨 주요 업무 — 코리아사이언스 디자인 멘토링 &amp; 서비스 디자인 논의</h3>
+                <p class="lead"><b>코리아사이언스 디자인 담당자</b>의 멘토링 수업으로 UI/UX 개발 가이드와 디자인 개선 방향을 함께 짚은 뒤, 개발 트랙과 별개로 진행된 <b>디자인 트랙</b>의 운영계획을 팀이 함께 검토·논의했다. 온라인 서비스와 실물 교구가 하나의 화성 탐사 수업 경험으로 이어지도록, <b>디자인 콘셉트·컬러 시스템·온라인 UX/UI·실물 교구 제품화·산출물 패키지</b>로 디자인 개발 계획을 정리했다.</p>
+                <div class="chips">
+                    <span class="chip t">조립형 코딩 어드벤처</span>
+                    <span class="chip">온라인 ↔ 실물 경험 연결</span>
+                    <span class="chip t">5일 디자인 운영 흐름</span>
+                    <span class="chip">UX/UI 개선안</span>
+                    <span class="chip">교구 제품화·스티커</span>
+                    <span class="chip">제작 가이드·운영 매뉴얼</span>
+                </div>
+                <ul>
+                    <li><b>디자인 콘셉트</b> — “화성 탐사 미션을 따라가며 <em>온라인 서비스와 실물 교구를 함께 완성하는 조립형 코딩 어드벤처</em>”. 다섯 축으로 정리 — <b>화성 탐사</b>(주황 화성 톤·로켓/로버/발사대), <b>관제실 경험</b>(차시·미션·시뮬·점검 화면 연결), <b>조립형 제품</b>(3D 프린팅·교체형 부품·스티커), <b>학생 친화성</b>(단순·명확한 버튼·아이콘·모듈명), <b>수업 운영성</b>(교사 설명→학생 수행 오류 최소화). 설계 우선 기준은 <em>“수업에서 바로 이해·조립·작동 확인이 되는가”</em>.</li>
+                    <li><b>5일 디자인 운영 흐름</b> — <b>Day 1</b> 코리아사이언스 특강·요구사항 분석·디자인 방향 설정(온라인=‘화성 미션 관제실’, 실물=‘직접 조립하는 화성 탐사 장비’) → <b>Day 2</b> 5개 화면 UX/UI 개선계획 + 4개 모듈 조립 점검(현황 점수화로 수정 우선순위 도출) → <b>Day 3</b> 화면 Before/After 구체화·기능적 스티커 방향·3D 프린팅 검토 → <b>Day 4</b> 수업 상황 기반 통합 사용성 테스트(화면→조립→코드→실물 반응 연결성 점검) → <b>Day 5</b> 최종 보완·제작 가이드·운영 매뉴얼·사진 기록 정리.</li>
+                    <li><b>온라인 서비스 UX/UI 개선안 (게임공학)</b> — <b>랜딩</b>: 기능 나열 → “블록 코딩으로 화성을 탐사하다” 스토리 Hero + 탐사 시작 CTA. <b>학습 관제실</b>: 12차시 일괄 나열의 압도감을 줄여 ‘오늘의 미션 카드’ 최상단 고정 + 분기 진행 바 + 전체 차시 접기. <b>모바일</b>: 하단 4탭 고정·safe-area 대응·터치 타겟 44pt 확보. <b>블록 코딩 진입</b>: 아이콘+텍스트 레이블·온보딩 투어로 1클릭 진입. <b>AI 도움(알비)</b>: 코딩 화면 상시 노출 플로팅 버튼.</li>
+                    <li><b>실물 교구 제품화 방향 (게임그래픽)</b> — 4개 모듈별 디자인 — <b>룰렛</b>(원형·주황 포인터 유지, 의미는 교체형 스티커로 전달, 중심축 나사 고정), <b>알비 &amp; 알비카트</b>(조형 유지 + <em>Silk Metallic Blue PLA</em> 소재감·블랙/차콜 카트·배선 정리), <b>화성신호등·RPS</b>(공용 베이스 + 아크릴 슬롯 교체로 신호등↔가위바위보 모드 전환, 전구 색상 대신 아이콘 실루엣+라벨), <b>화성발사대</b>(둔탁한 박스형 → 다크 네이비·차콜 슬림 박스형 재설계 + 유지보수 패널). <b>스티커는 장식이 아닌 기능적 그래픽</b>(모듈명·조작 방향·경고·미션 의미)으로 통일하고, 학생 커스터마이징(이름·감정 아이콘) 영역을 둔다.</li>
+                    <li><b>컬러 시스템</b> — 실물 교구와 웹을 통합하는 스티커·스타일 가이드. <b>화성 주황 #FF6A00</b>(강조·발사대 포인트·경고), 다크 네이비 <b>#0D1117</b>·차콜 <b>#4A515C</b>(본체·패널), 화이트 <b>#FFFFFF</b>·라이트 그레이 <b>#D9DDE2</b>(텍스트·정보 구조), 알비 <b>메탈릭 블루 #1F6FAE</b>(기술·신뢰).</li>
+                    <li><b>산출물 패키지</b> — 별도 발표 없이 <em>제작·운영 기준 자료</em>로 정리해 ProgressReport에 활용 — ① UX/UI 개선안(랜딩·관제실·모바일·AI 버튼), ② 3D 프린팅 제작 가이드(출력 파트·권장 재질·결합 구조·스티커 위치), ③ 운영 매뉴얼(학생 조립 체크리스트·교사 점검·오류 대응·재조립), ④ 사진 기록(전·후 비교).</li>
+                </ul>
+                <a class="doclink" href="6일차/ARES_design_plan_0630.pdf" target="_blank">디자인 고도화 운영계획 (PDF) ↗</a>
+                <a class="doclink alt" href="6일차/ARES_design_plan_0630.pptx" target="_blank">발표 자료 (PPTX) ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/6일차_멘토링_코리아사이언스.jpg" alt="코리아사이언스 디자인 담당자 멘토링 수업"></div>
+                    <figcaption><b>코리아사이언스 디자인 멘토링</b> — 교구 제작 협력 업체 코리아사이언스의 디자인 담당자가 진행한 멘토링 수업. 스크린에 UI/UX 개발 가이드(모바일·Blockly 기반·분기별 미션 수행·AI 알비)를 띄우고 화면 설계 기준과 개선 방향을 설명하고 있다.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/6일차_디자인개선논의.jpg" alt="디자인 개선 방향 논의 — 컴퓨터실"></div>
+                    <figcaption><b>디자인 개선 방향 논의</b> — 컴퓨터실에서 디자인 담당자와 참여 학생들이 온라인 서비스·실물 교구의 디자인 개선 방향을 함께 논의하는 모습.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/6일차_디자인논의.jpg" alt="서비스 디자인 논의 장면 — 컴퓨터실"></div>
+                    <figcaption><b>서비스 디자인 논의</b> — 학생·지도진이 컴퓨터실에 모여 온라인 서비스와 실물 교구를 아우르는 디자인 고도화 운영계획을 함께 검토·논의하는 모습. 스크린에 띄운 자료를 보며 화면 개선안·교구 제품화·스티커·컬러 방향을 정리했다.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🖼️ 진행 논의 — 발표자료 발췌 (디자인 고도화 운영계획)</h3>
+                <p class="lead">논의에 사용한 <b>발표자료(<code>ARES_design_plan_0630</code>)</b>에서 핵심 장표를 발췌했다. <b>표지·팀 구성 → 디자인 콘셉트 → 컬러 시스템 → 알비 소재감 → 모듈별 제품 디자인</b> 순으로, 온라인 서비스와 실물 교구를 하나로 잇는 디자인 개발 계획의 골격을 보여 준다. (전체 21장은 아래 PDF/PPTX 원본 참고)</p>
+                <a class="doclink" href="6일차/ARES_design_plan_0630.pdf" target="_blank">발표자료 전체 (PDF) ↗</a>
+                <a class="doclink alt" href="6일차/ARES_design_plan_0630.pptx" target="_blank">발표자료 전체 (PPTX) ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_발표_표지.jpg" alt="발표자료 표지 — 디자인 고도화 운영계획"></div>
+                    <figcaption><b>① 표지 — 디자인 고도화 운영계획</b> — “교육용 로봇 플랫폼 ARES, UX/UI 개선 및 조립형 교구 제품화 디자인 방향”. 코리아사이언스 × 동명대 게임공학·게임그래픽학과. 5일 운영 + 디자인 콘셉트·컬러 시스템·모듈 디자인으로 구성.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_발표_팀구성.jpg" alt="발표자료 — 팀 구성 및 주요 업무"></div>
+                    <figcaption><b>② 팀 구성·역할 분담</b> — <b>게임공학</b>(온라인 서비스 UX/UI 개선: 랜딩·관제실·모바일·블록코딩 진입), <b>게임그래픽</b>(조립형 교구 제품 디자인: 출력 구조·외형 슬림화·스티커·컬러), <b>공통 협업</b>(수업 적용·세계관 일관성·공동 검토).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_발표_콘셉트.jpg" alt="발표자료 — 디자인 콘셉트"></div>
+                    <figcaption><b>③ 디자인 콘셉트</b> — “화성 탐사 미션을 따라가며 온라인 서비스와 실물 교구를 함께 완성하는 <b>조립형 코딩 어드벤처</b>”. 다섯 축(화성 탐사·관제실 경험·조립형 제품·학생 친화성·수업 운영성)과 설계 우선 기준(바로 이해·조립·작동 확인).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_발표_컬러시스템.jpg" alt="발표자료 — 컬러 시스템"></div>
+                    <figcaption><b>④ 컬러 시스템</b> — 실물 교구와 웹을 통합하는 스티커·스타일 가이드. 화성 주황 <code>#FF6A00</code>(강조·경고), 다크 네이비 <code>#0D1117</code>·차콜 <code>#4A515C</code>(본체·패널), 화이트·라이트 그레이(정보), 알비 메탈릭 블루 <code>#1F6FAE</code>(기술·신뢰).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_발표_알비소재.jpg" alt="발표자료 — 알비 소재감(Silk Metallic Blue PLA)"></div>
+                    <figcaption><b>⑤ 알비 소재감</b> — 캐릭터 조형은 유지하고 <b>Silk Metallic Blue PLA</b>로 별도 도색 없이 금속감을 표현. 알비카트는 블랙/차콜로 기계적 이미지를 유지하고, 학생 커스터마이징 스티커(이름·감정 아이콘) 영역을 둔다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_발표_모듈디자인.jpg" alt="발표자료 — 모듈별 제품 디자인 방향"></div>
+                    <figcaption><b>⑥ 모듈별 제품 디자인</b> — 4개 모듈(룰렛 · 알비&amp;알비카트 · 화성신호등·RPS · 화성발사대)의 제품화 방향. 조형·구조는 유지하고 교체형 스티커·아크릴 슬롯·슬림 외장 재설계로 학습 의미와 제품성을 함께 확보.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🧭 진행 논의 — UI/UX 개발 가이드 발췌 (모바일 화면 설계)</h3>
+                <p class="lead">온라인 서비스의 <b>모바일 화면 흐름</b>을 정의한 <b>UI/UX 개발 가이드(<code>화성탐사블록코딩_UIUX개발가이드</code>)</b>에서 핵심 장표를 발췌했다. ‘<b>아레스와 알비의 화성탐사 코딩여행</b>’ 콘셉트 아래 <b>표지·개요·대상/환경/컨셉</b>과, 하단 5개 메뉴로 묶이는 <b>메인 메뉴 → 홈 → 미션 → 코딩 → 미리보기 → AI 알비</b> 화면 설계를 화면 단위로 정리해 개발 기준으로 삼았다.</p>
+                <a class="doclink" href="6일차/화성탐사블록코딩_UIUX개발가이드11.pdf" target="_blank">UI/UX 개발 가이드 전체 (PDF) ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_표지.jpg" alt="UI/UX 개발 가이드 표지"></div>
+                    <figcaption><b>① 표지 — 화성탐사 블록코딩 UI/UX 개발 가이드</b> — 온라인 블록코딩 서비스의 화면 설계 기준 문서.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_개요.jpg" alt="가이드 — 개요"></div>
+                    <figcaption><b>② 개요</b> — 네 가지 축: <b>모바일(세로 화면)·Blockly 기반·분기별 미션 수행·AI 알비</b>. “초등학생이 모바일 화면에서 미션을 읽고, 블록을 조립하고, 시뮬레이션을 보고, AI 알비에게 힌트를 받는 구조”.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_대상환경컨셉.jpg" alt="가이드 — 대상·환경·컨셉·색상"></div>
+                    <figcaption><b>③ 대상·환경·컨셉·색상</b> — 대상: 코딩에 관심있는 초등학생 / 환경: 스마트폰·태블릿 PC / 컨셉: 아레스와 알비의 화성탐사 코딩여행 / 색상: 4색 팔레트.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_메인메뉴.jpg" alt="가이드 — 메인 메뉴"></div>
+                    <figcaption><b>④ 메인 메뉴</b> — <b>미션</b>(1–12차시 메뉴)·<b>코딩</b>(블록코딩 작업 공간)·<b>홈</b>(첫화면/진도 현황/블루투스 연결 등 제어)·<b>미리보기</b>(코딩 결과 미리보기)·<b>AI 알비</b>(미션 도우미). ※화면 하단에 5개 아이콘 고정 배치.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_홈화면.jpg" alt="가이드 — 홈 화면"></div>
+                    <figcaption><b>⑤ 홈 화면</b> — 상단 표시(차시 구분)·미션 현황(진도 파악)·블루투스 연결·탐사선 찾기·저장/불러오기·코딩 연습모드·화면 전환(일반/다크모드). ※첫 화면이자 제어 화면으로 직관적이고 밝은 UI 필요.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_미션화면.jpg" alt="가이드 — 미션 화면"></div>
+                    <figcaption><b>⑥ 미션 화면</b> — 아코디언 메뉴 구성, 차시별 미션완료 메뉴 구분, 실물과 연동되는 미션은 미리보기 추가. ※분기별 메인 색상으로 메뉴를 구분.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_코딩화면.jpg" alt="가이드 — 코딩 화면"></div>
+                    <figcaption><b>⑦ 코딩 화면</b> — 상단 영역(미션 안내/미리보기/스토리)·왼쪽 영역(블록코딩 메뉴)·코딩 영역(화면 확대·축소/쓰레기통)·그 외(되돌리기/초기화/실행). ※<b>코딩 영역은 최대한 넓게</b>.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_미리보기.jpg" alt="가이드 — 미리보기 화면"></div>
+                    <figcaption><b>⑧ 미리보기 화면</b> — 작성한 코드로 미션 수행 결과를 3D로 미리 확인. 바라보기·미리보기로 결과를 검증한다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/6일차_가이드_AI알비.jpg" alt="가이드 — AI 알비 화면"></div>
+                    <figcaption><b>⑨ AI 알비 화면</b> — 미션 수행 중 필요한 내용을 보조하는 도우미 AI. 코딩 보조·질문 입력 기능을 제공한다.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🛠️ 개발 산출물 — 시뮬레이터 개발자 도구·커스터마이징 기능</h3>
+                <p class="lead">3D 시뮬레이터에 장면의 객체(탐사로봇 ‘알비’ 등)를 직접 조작·커스터마이징할 수 있는 <b>개발자 도구</b>를 추가했다(5일차 ‘객체 배치’ 작업의 연장). 객체를 선택하면 <b>바운딩 박스(기즈모)</b>가 표시되고, <b>이동(Move)·회전(Rotate)·크기(Scale)</b> 세 가지 변환 기즈모로 위치·방향·크기를 자유롭게 조절해 원하는 장면을 구성할 수 있다.</p>
+                <div class="chips">
+                    <span class="chip t">개발자 도구</span>
+                    <span class="chip">바운딩 박스 기즈모</span>
+                    <span class="chip">이동·회전·크기 변환</span>
+                    <span class="chip">객체 커스터마이징</span>
+                </div>
+                <a class="doclink" href="../../Web/index.html" target="_blank">ARES 웹 서비스 (시뮬레이터) ↗</a>
+                <a class="doclink alt" href="https://github.com/dknife/ARES2/tree/main/Web/Sim_Parts" target="_blank">시뮬레이션 모듈 (Sim_Parts) ↗</a>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="background:#2a2450;"><img src="img/6일차_시뮬레이터_커스터마이징1.jpg" alt="시뮬레이터 — 회전(Rotate) 기즈모"></div>
+                    <figcaption><b>① 회전(Rotate) 기즈모</b> — 선택한 객체에 바운딩 박스와 함께 X·Y·Z 회전 링이 표시된다. 링을 드래그해 알비의 방향(자세)을 조절한다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="background:#2a2450;"><img src="img/6일차_시뮬레이터_커스터마이징2.jpg" alt="시뮬레이터 — 이동(Move) 기즈모"></div>
+                    <figcaption><b>② 이동(Move) 기즈모</b> — X·Y·Z 축 화살표를 드래그해 객체를 원하는 위치로 이동한다. 바운딩 박스로 객체 범위를 함께 확인한다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="background:#2a2450;"><img src="img/6일차_시뮬레이터_커스터마이징3.jpg" alt="시뮬레이터 — 크기(Scale) 기즈모"></div>
+                    <figcaption><b>③ 크기(Scale) 기즈모</b> — 축 끝의 핸들을 드래그해 객체 크기를 조절한다. 이동·회전·크기 세 도구로 장면 객체를 자유롭게 커스터마이징한다.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🚀 개발 산출물 — 발사대 3D 프린팅 디자인</h3>
+                <p class="lead">디자인 고도화 방향(‘화성발사대 → 다크 네이비·차콜 <b>슬림 박스형</b> 재설계 + 유지보수 패널’)을 반영한 <b>발사대(launchpad) 3D 프린팅 디자인</b> 결과다. 슬림한 박스형 베이스에 <b>유지보수 패널(도어)</b>을 두고, 상단에 <b>로켓 가이드 갠트리 타워·로켓·레이더 디시</b>를 배치해 실물 출력·조립을 전제로 모델링했다.</p>
+                <div class="chips">
+                    <span class="chip t">화성발사대</span>
+                    <span class="chip">슬림 박스형 외장</span>
+                    <span class="chip">유지보수 패널</span>
+                    <span class="chip">3D 프린팅 출력용</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox" style="aspect-ratio:9/16; background:#242424;"><img src="img/6일차_발사대_출력디자인.png" alt="발사대 3D 프린팅 출력 디자인"></div>
+                    <figcaption><b>발사대 출력 디자인</b> — 3D 프린팅을 전제로 재설계한 화성발사대. 슬림 박스형 베이스와 유지보수 패널, 상단의 로켓 가이드 갠트리 타워·로켓·레이더 디시로 구성된다. 다크 네이비·차콜 슬림 외장 방향을 반영한 형상 모델이다.</figcaption>
+                </figure>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
+        <p style="margin-top:6px;">사진 54매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+    </footer>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <span class="lb-close" id="lbClose">&times;</span>
+        <img id="lbImg" src="" alt="">
+        <div class="lb-cap" id="lbCap"></div>
+    </div>
+
+    <script>
+    (function () {
+        const lb = document.getElementById('lightbox');
+        const lbImg = document.getElementById('lbImg');
+        const lbCap = document.getElementById('lbCap');
+        document.querySelectorAll('figure').forEach(fig => {
+            const box = fig.querySelector('.imgbox');
+            const img = fig.querySelector('img');
+            const cap = fig.querySelector('figcaption');
+            box.addEventListener('click', () => {
+                lbImg.src = img.src;
+                lbImg.alt = img.alt;
+                lbCap.textContent = cap ? cap.textContent : '';
+                lb.classList.add('open');
+            });
+        });
+        function close() { lb.classList.remove('open'); lbImg.src = ''; }
+        lb.addEventListener('click', close);
+        document.getElementById('lbClose').addEventListener('click', close);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    })();
+    </script>
+</body>
+</html>
