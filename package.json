@@ -1,0 +1,10 @@
+{
+	"private": true,
+	"scripts": {
+		"build:three": "esbuild Web/vendor/three-bundle-entry.js --bundle --format=iife --target=es2018 --minify --outfile=Web/vendor/three-bundle.min.js"
+	},
+	"devDependencies": {
+		"three": "0.160.0",
+		"esbuild": "^0.28.1"
+	}
+}
