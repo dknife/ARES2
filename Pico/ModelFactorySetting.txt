@@ -57,7 +57,7 @@ right_calibration=100
 # [6. 서보 모터 바퀴 중립/최소 구동 보정]
 # neutral_duty: 정지 상태에서도 바퀴가 돌 때 조정합니다. (오른쪽, 왼쪽 각각)
 # min_drive: 낮은 속도에서 한쪽 바퀴가 안 돌 때만 0~100 사이로 올립니다.
-left_neutral_duty=5000
-right_neutral_duty=5000
+left_neutral_duty=4900
+right_neutral_duty=4900
 left_min_drive=0
 right_min_drive=0
