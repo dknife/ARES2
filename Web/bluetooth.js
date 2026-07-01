@@ -13,6 +13,7 @@ export const BluetoothManager = {
     // (매번 .bind(this)로 등록하면 remove가 실패해 재연결마다 리스너가 누적된다.)
     _boundHandleRxData: null,
     _boundOnDeviceDisconnected: null,
+    _sendQueue: Promise.resolve(),
 
     // 연결
     async connect() {
@@ -52,6 +53,7 @@ export const BluetoothManager = {
             );
 
             state.bluetoothServer = await state.bluetoothDevice.gatt.connect();
+            Logger.add('[BLE] GATT 연결됨', 'info');
             await this.delay(2000);
 
             state.uartService = await state.bluetoothServer.getPrimaryService(
@@ -62,6 +64,7 @@ export const BluetoothManager = {
             state.characteristic = await state.uartService.getCharacteristic(
                 BLUETOOTH_CONFIG.UART_CHARACTERISTIC_UUID
             );
+            Logger.add('[BLE] UART 특성 연결됨', 'info');
 
             try {
                 await state.characteristic.startNotifications();
@@ -75,7 +78,7 @@ export const BluetoothManager = {
                 state.notificationsEnabled = true;
                 Logger.add('[BLE] 알림 모드 활성화', 'info');
             } catch (error) {
-                Logger.add(`[BLE] 폴링 모드로 전환`, 'info');
+                Logger.add(`[BLE] 알림 실패, 폴링 모드로 전환: ${error.message}`, 'warning');
                 this.startPeriodicReads();
             }
 
@@ -158,10 +161,13 @@ export const BluetoothManager = {
         }
         if (state.pendingReject) {
             const reject = state.pendingReject;
+            const command = state.pendingCommand;
+            state.pendingCommand = null;
             state.pendingResolve = null;
             state.pendingReject = null;
-            reject(new Error('연결이 끊어져 응답 대기를 취소했습니다.'));
+            reject(new Error(`연결이 끊어져 응답 대기를 취소했습니다: ${command || 'unknown'}`));
         }
+        state.pendingCommand = null;
         state.pendingResolve = null;
     },
 
@@ -257,9 +263,15 @@ export const BluetoothManager = {
 
         let left_calib = undefined;
         let right_calib = undefined;
+        let active_model = undefined;
         let device_name = '';
 
-        if (parts.length >= 7) {
+        if (parts.length >= 8) {
+            left_calib = parts[parts.length - 3];
+            right_calib = parts[parts.length - 2];
+            active_model = parts[parts.length - 1];
+            device_name = parts.slice(4, parts.length - 3).join(',');
+        } else if (parts.length >= 7) {
             left_calib = parts[parts.length - 2];
             right_calib = parts[parts.length - 1];
             device_name = parts.slice(4, parts.length - 2).join(',');
@@ -276,15 +288,16 @@ export const BluetoothManager = {
                 device_name: device_name,
                 left_calibration: left_calib,
                 right_calibration: right_calib,
+                active_model: active_model,
                 connection_timeout: BLUETOOTH_CONFIG.RESPONSE_TIMEOUT
             }, '*');
         }
 
-        // 연결된 장치 이름에 따라 활성 모델 동적 설정
-        if (device_name.toLowerCase().includes('launchpad') || device_name.includes('발사대')) {
+        // Pico 설정의 model 값을 우선하고, 예전 펌웨어만 장치명으로 보정한다.
+        if (active_model) {
+            state.activeModel = active_model.toLowerCase();
+        } else if (device_name.toLowerCase().includes('launchpad') || device_name.includes('발사대')) {
             state.activeModel = 'launchpad';
-        } else {
-            state.activeModel = 'gun';
         }
         if (window.updateToolboxForActiveState) {
             window.updateToolboxForActiveState();
@@ -371,10 +384,13 @@ export const BluetoothManager = {
         if (state.pendingResolve) {
             if (state.pendingTimeout) clearTimeout(state.pendingTimeout);
             const resolve = state.pendingResolve;
+            state.pendingCommand = null;
             state.pendingResolve = null;
             state.pendingReject = null;
             state.pendingTimeout = null;
             resolve(data);
+        } else if (DEBUG) {
+            Logger.add(`[BLE] 대기 중인 명령 없이 수신됨: ${data}`, 'warning');
         }
     },
 
@@ -476,6 +492,13 @@ export const BluetoothManager = {
 
     // 데이터 전송
     async sendData(data, waitForResponse = false) {
+        const sendTask = () => this._sendDataNow(data, waitForResponse);
+        const queuedSend = this._sendQueue.then(sendTask, sendTask);
+        this._sendQueue = queuedSend.catch(() => {});
+        return queuedSend;
+    },
+
+    async _sendDataNow(data, waitForResponse = false) {
         if (!state.characteristic) {
             throw new Error('BLE 장치에 연결되어 있지 않습니다.');
         }
@@ -496,13 +519,16 @@ export const BluetoothManager = {
         let responsePromise = null;
         if (waitForResponse) {
             responsePromise = new Promise((resolve, reject) => {
+                state.pendingCommand = data;
                 state.pendingResolve = resolve;
                 state.pendingReject = reject;
                 state.pendingTimeout = setTimeout(() => {
+                    const command = state.pendingCommand;
+                    state.pendingCommand = null;
                     state.pendingResolve = null;
                     state.pendingReject = null;
                     state.pendingTimeout = null;
-                    reject(new Error('응답 시간 초과'));
+                    reject(new Error(`응답 시간 초과: ${command || data}`));
                 }, BLUETOOTH_CONFIG.RESPONSE_TIMEOUT);
             });
         }
@@ -535,7 +561,13 @@ export const BluetoothManager = {
             }
             if (DEBUG) Logger.add(`전송 완료: ${data}`, 'info');
         } catch (error) {
-            if (DEBUG) Logger.add(`전송 오류 무시됨: ${error.message}`, 'warning');
+            if (state.pendingTimeout) clearTimeout(state.pendingTimeout);
+            state.pendingCommand = null;
+            state.pendingResolve = null;
+            state.pendingReject = null;
+            state.pendingTimeout = null;
+            Logger.add(`[오류] 전송 실패: ${data} - ${error.message}`, 'error');
+            throw error;
         }
 
         if (!waitForResponse) {

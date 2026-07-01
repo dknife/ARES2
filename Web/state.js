@@ -43,6 +43,7 @@ export const state = {
     variables: {},
 
     // Promise 상태
+    pendingCommand: null,
     pendingResolve: null,
     pendingReject: null,
     pendingTimeout: null
