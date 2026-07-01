@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARES Dashboard</title>
+    <script src="mobile-preview.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
 
@@ -943,7 +944,9 @@
         addLog('대시보드 준비 완료. 블루투스 연결 대기 중...', 'info');
     }
 
-    if (document.readyState === 'loading') {
+    if (window.__ARES_MOBILE_FRAME__) {
+        // no-op — mobile-preview.js 가 프레임을 구성하므로 백그라운드 이중 실행을 막는다
+    } else if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();

@@ -1,14 +1,18 @@
-/* ARES 모바일 미리보기
+/* ARES 반응형 앱 셸 (모바일/태블릿 프레임)
  * ------------------------------------------------------------------
- * 데스크톱 브라우저에서 ?mobile=true 로 접근하면 휴대폰 크기 프레임(iframe)
- * 안에 실제 페이지를 띄워, 기존 반응형(@media) 디자인을 그대로 "모바일 모습"
- * 으로 확인할 수 있게 한다. 프레임 폭이 좁으므로 페이지의
- * @media(max-width:…) 규칙과 matchMedia 가 자연스럽게 발동된다.
+ * 이 프로젝트의 데스크톱 기본 인터페이스는 "태블릿(768px) 모바일 모드"이다.
+ * 데스크톱(넓은 창)에서 접근하면 실제 페이지를 768px 폭(태블릿 기준) iframe
+ * 안에 깨끗한 중앙 컬럼으로 렌더링해, 모바일/태블릿 인터페이스를 그대로
+ * 보여준다. iframe 내부 뷰포트가 768px 이므로 페이지의
+ * @media(max-width:768px) 규칙과 matchMedia 가 자연스럽게 발동한다.
+ * (미디어쿼리는 컨테이너가 아니라 뷰포트 폭 기준이므로, 폭을 실제로 768로
+ *  만들려면 iframe 프레임이 필요하다.)
  *
- *   index.html?mobile=true            → 휴대폰 프레임을 만들고 그 안에
- *                                       같은 페이지(framed=1)를 로드
- *   index.html?mobile=true&framed=1   → 프레임 내부의 "진짜" 페이지.
- *                                       정상 동작 + 내부 링크에 파라미터 전파
+ *   (기본) 데스크톱             → 깨끗한 768 중앙 컬럼 프레임
+ *   실제 모바일/태블릿(≤768)    → 프레임 없이 직접 렌더링
+ *   ?mobile=true               → 기기 크기 선택 미리보기(개발용, 기본 태블릿 768)
+ *   ?mobile=true&framed=1      → (미리보기)프레임 내부의 "진짜" 페이지
+ *   ?framed=1                  → (기본)프레임 내부의 "진짜" 페이지
  *
  * (각 HTML 의 <head> 맨 앞에 이 스크립트를 넣어야, 페이지 자신의 부트스트랩
  *  보다 먼저 실행되어 백그라운드 이중 실행을 막을 수 있다.)
@@ -17,13 +21,12 @@
   'use strict';
 
   var params = new URLSearchParams(location.search);
-  if (params.get('mobile') !== 'true') return;   // 일반 데스크톱: 아무 동작 안 함
-
   var FRAMED = params.get('framed') === '1';
+  var DEVICE_PREVIEW = params.get('mobile') === 'true';   // 개발용 기기 크기 미리보기
 
   // ── 프레임 내부(진짜 페이지) ────────────────────────────────────
-  // 내부 링크(예: index → main)가 같은 프레임 안에서 계속 모바일로 열리도록
-  // mobile/framed 파라미터를 유지한다. 외부 링크·앵커·상위경로는 그대로 둔다.
+  // 내부 링크(예: index → main)가 같은 프레임 안에서 계속 열리도록
+  // 파라미터를 유지한다. 외부 링크·앵커·상위경로는 그대로 둔다.
   if (FRAMED) {
     var propagate = function () {
       var anchors = document.querySelectorAll('a[href]');
@@ -34,7 +37,7 @@
         try {
           var u = new URL(href, location.href);
           if (u.origin !== location.origin) continue;
-          u.searchParams.set('mobile', 'true');
+          if (DEVICE_PREVIEW) u.searchParams.set('mobile', 'true');
           u.searchParams.set('framed', '1');
           a.setAttribute('href', u.pathname + u.search + u.hash);
         } catch (e) { /* 무시 */ }
@@ -48,36 +51,73 @@
     return;
   }
 
-  // ── 최상위 페이지: 휴대폰 프레임을 만든다 ──────────────────────────
-  // 이 페이지 자신의 부트스트랩(index 의 three.js, main.js 등)이 프레임 뒤에서
-  // 중복 실행되지 않도록 표시한다. (각 페이지가 이 플래그를 보고 init 을 건너뜀)
-  window.__ARES_MOBILE_FRAME__ = true;
+  // ── 최상위 페이지 ────────────────────────────────────────────────
+  // 실제 좁은 화면(태블릿/폰, ≤768)은 이미 모바일 레이아웃이므로 프레임 불필요.
+  // 넓은 데스크톱 화면만 768 프레임으로 감싼다.
+  var isNarrow = window.matchMedia('(max-width: 768px)').matches;
+  if (!DEVICE_PREVIEW && isNarrow) return;
 
-  // 프리셋 디바이스(논리 폭/높이, CSS px)
-  var DEVICES = [
-    { label: '📱 갤럭시 · 360', w: 360, h: 780 },
-    { label: '📱 아이폰 · 390', w: 390, h: 844 },
-    { label: '📱 큰폰 · 430',   w: 430, h: 932 },
-    { label: '💻 태블릿 · 768', w: 768, h: 1024 },
-  ];
-  var DEFAULT_IDX = 1;
+  // 이 페이지 자신의 부트스트랩(three.js, main.js, dashboard init 등)이 프레임
+  // 뒤에서 중복 실행되지 않도록 표시한다. (각 페이지가 이 플래그를 보고 init 건너뜀)
+  window.__ARES_MOBILE_FRAME__ = true;
 
   function innerSrc() {
     var u = new URL(location.href);
-    u.searchParams.set('mobile', 'true');
+    u.searchParams.set('mobile', 'true');   // 프레임 내부는 항상 모바일 모드
     u.searchParams.set('framed', '1');
     return u.pathname + u.search + u.hash;
   }
 
-  function desktopHref() {
-    var u = new URL(location.href);
-    u.searchParams.delete('mobile');
-    u.searchParams.delete('framed');
-    var q = u.searchParams.toString();
-    return u.pathname + (q ? '?' + q : '') + u.hash;
+  function boot(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
   }
 
-  function build() {
+  if (DEVICE_PREVIEW) {
+    boot(buildDevicePreview);
+  } else {
+    boot(buildTabletColumn);
+  }
+
+  // ── 기본: 깨끗한 768 중앙 컬럼 ──────────────────────────────────
+  function buildTabletColumn() {
+    var style = document.createElement('style');
+    style.textContent = [
+      'html,body.ares-mp{margin:0;height:100%;}',
+      'body.ares-mp{background:#e9ebef;display:flex;justify-content:center;',
+      'align-items:stretch;overflow:hidden;}',
+      'body.ares-mp>iframe{display:block;border:0;width:768px;max-width:100%;',
+      'height:100vh;background:#fff;box-shadow:0 0 60px rgba(0,0,0,.18);}',
+    ].join('');
+    document.head.appendChild(style);
+
+    document.body.className = 'ares-mp';
+    document.body.innerHTML =
+      '<iframe id="ares-mp-frame" title="ARES" src="' + innerSrc() + '"></iframe>';
+  }
+
+  // ── 개발용: 기기 크기 미리보기(?mobile=true) ───────────────────
+  function buildDevicePreview() {
+    // 프리셋 디바이스(논리 폭/높이, CSS px)
+    var DEVICES = [
+      { label: '📱 갤럭시 · 360', w: 360, h: 780 },
+      { label: '📱 아이폰 · 390', w: 390, h: 844 },
+      { label: '📱 큰폰 · 430',   w: 430, h: 932 },
+      { label: '💻 태블릿 · 768', w: 768, h: 1024 },
+    ];
+    var DEFAULT_IDX = 3;   // 기본 태블릿 768(데스크톱 기준 해상도)
+
+    function desktopHref() {
+      var u = new URL(location.href);
+      u.searchParams.delete('mobile');
+      u.searchParams.delete('framed');
+      var q = u.searchParams.toString();
+      return u.pathname + (q ? '?' + q : '') + u.hash;
+    }
+
     var style = document.createElement('style');
     style.textContent = [
       'body.ares-mp{margin:0;min-height:100vh;display:flex;flex-direction:column;',
@@ -132,11 +172,5 @@
     applySize();
 
     document.getElementById('ares-mp-desktop').setAttribute('href', desktopHref());
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', build);
-  } else {
-    build();
   }
 })();
