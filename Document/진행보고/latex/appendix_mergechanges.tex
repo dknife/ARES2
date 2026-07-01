@@ -1,0 +1,290 @@
+%% ============================================================
+%% appendix_mergechanges.tex — 부록 D: 중간 점검 머지 — 주요 코드 변경
+%% 부록 A(1일차 코드 분석, app:code)가 기록한 머지 전 코드 상태와,
+%% 4~5일차 브랜치 통합 머지로 반영된 현재 main 을 대조 정리한다.
+%% 근거: git diff 6f49e27(통합 전 main) .. 통합 후 main
+%% ============================================================
+\section{중간 점검 머지 --- 주요 코드 변경 (부록 A 대비)}
+\label{app:merge}
+
+본 부록은 \textbf{5일차 작업 브랜치 통합 머지}(2장 5일차 참조)로 \code{main}에 반영된
+주요 코드 변경을, \textbf{부록~\ref{app:code}(1일차 코드 분석 종합 보고서)가 기록한 머지 전
+코드 상태}와 대조해 정리한 \emph{중간 점검}이다. 부록 A가 \emph{통합 전} 코드를 기술한
+기준선이라면, 본 부록은 그 위에 1$\cdot$2차 Refactoring 계획(부록~\ref{app:refactor1}$\cdot$%
+\ref{app:refactor2})이 \emph{실제로 실행}되어 달라진 점을 요약한다. 근거는 통합 전
+\code{main}과 통합 후 \code{main}의 형상 비교(\code{git diff})이다.
+
+\subsection{변경 규모 요약}
+통합 머지로 코드 도메인(\code{Web/}$\cdot$\code{Pico/}$\cdot$\code{AI/})에서 35개 파일이
+바뀌었다(\textbf{+5,152 / $-$2,563} 라인, 메시 자산$\cdot$\code{simulation\_backup.js} 제외).
+핵심 파일의 전후 비교는 다음과 같다.
+
+\begin{table}[H]\centering\small
+\caption{핵심 파일 전후 비교 --- 부록~\ref{app:code} 기준선 대비 통합 후 \code{main}}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l c c L{0.40\linewidth}@{}}
+\toprule
+\sffamily 파일 & \sffamily 전 & \sffamily 후 & \sffamily 변화 \\
+\midrule
+Web/simulation.js   & $\sim$2,300 & 383   & 거대 클로저 → 얇은 오케스트레이터 \\
+Web/Sim\_Parts/ (신규) & ---     & 14모듈 & 기능별 서브시스템 분리 \\
+Web/Simulation/ (신규) & ---     & 5모듈  & 토픽별 래퍼$\cdot$오케스트레이터 \\
+Web/main.js         & 1,051   & 1,473 & 모바일 내비$\cdot$버튼 동선 보강 \\
+Web/ui.js (신규)     & ---     & 97    & \code{main.js}에서 UI 보조 분리 \\
+Web/blocklyconfig.js & ---    & {\footnotesize $\pm$135} & 속도 인자$\cdot$탭 이름 블록 \\
+Web/bluetooth.js    & ---     & {\footnotesize $\pm$118} & \code{GET\_NAMES} 등 프로토콜 \\
+Web/commandexecutor.js & ---  & {\footnotesize $\pm$56}  & 명령에 속도 인자 반영 \\
+Web/styles.css      & ---     & {\footnotesize $+$455}   & 모바일 하단 내비$\cdot$반응형 \\
+Pico/system.json    & 존재    & 삭제  & JSON 설정 폐지 \\
+Pico/ModelFactorySetting.txt (신규) & --- & 55 & 텍스트(키=값) 설정으로 대체 \\
+Pico/system\_config.py & ---  & {\footnotesize $\pm$305} & 텍스트 파서$\cdot$주석 보존 저장 \\
+Pico/process\_data.py & 653   & 713   & 속도 기능$\cdot$모터 속도 제한 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent 이하 D.2$\sim$D.5는 부록 A의 해당 장을 기준으로 \emph{무엇이 어떻게 달라졌는지}를
+트랙별로 정리한다.
+
+\subsection{시뮬레이터 --- 모놀리스 \code{simulation.js}의 모듈화 (유형 A 실행)}
+\textbf{[부록 A 기준]} 부록 A(\S A.2 \code{simulation.js}, 8장 미션 시뮬레이터)는
+\code{simulation.js}를 three.js 기반 3D 시뮬레이션의 \emph{초기화$\cdot$관리} 단일
+파일로 기술한다. 공개 API는 \code{setupSimulation(\{workspace, onOpen, onClose\})}
+하나뿐이고, \code{OLED\_ICONS}$\cdot$\code{TOPICS}$\cdot$\code{buildSim}$\cdot$%
+\code{recolorLaunchpadAntenna} 등은 \emph{거대 클로저 \code{buildSim()} 내부의 비공개
+헬퍼}였다(1차 진단의 ``유형 A --- 거대 클로저'').
+
+\smallskip
+\noindent\textbf{[통합 후]} 「2차 Refactoring 계획」의 유형 A 실행으로,
+\code{buildSim()}에 묶여 있던 약 50개 상태와 서브시스템을 끌어올려 \emph{공유
+컨텍스트(ctx) + 기능별 모듈} 구조로 분해했다. \code{simulation.js}는 \textbf{383줄의 얇은
+오케스트레이터}로 줄고, 기능은 \code{Web/Sim\_Parts/} 14개 모듈과 \code{Web/Simulation/}
+5개 래퍼로 분리됐다(\code{setupSimulation()} 외부 인터페이스는 그대로라 \code{main.js}는
+변경 거의 없음).
+
+\begin{table}[H]\centering\small
+\caption{거대 클로저 \code{buildSim()} → 모듈 분해 (유형 A)}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}l L{0.62\linewidth}@{}}
+\toprule
+\sffamily 모듈(\code{Web/Sim\_Parts/}) & \sffamily 책임 \\
+\midrule
+context.js  & 공유 상태(\code{SimContext}) + 씬$\cdot$카메라$\cdot$렌더러 구성, 서브시스템 조립 \\
+render.js / assets.js & 렌더 루프 / GLTF 로딩 \\
+movement.js / leds.js / gun.js / oled.js & 주행$\cdot$LED$\cdot$발사$\cdot$디스플레이 동작 \\
+rocket.js / traffic.js / waves.js & 로켓 발사$\cdot$신호등$\cdot$음파 연출 \\
+audio.js / dispatch.js / topics.js / editor\_controls.js & 음향$\cdot$명령 디스패치$\cdot$토픽 정의$\cdot$객체 배치 편집 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent \code{Web/Simulation/}(\code{Simulation\_Main$\cdot$Launcher$\cdot$Rover$\cdot$%
+Traffic$\cdot$AresRobot})은 위 라이브러리를 토픽별로 감싸 \code{buildSim}을 재노출하는
+얇은 래퍼다. 머지에는 음파 생성(\code{SpawnSoundWave}) 보정 등 소규모 버그 수정과,
+모바일 객체 배치(Move$\cdot$Rotate$\cdot$Scale)를 위한 \code{editor\_controls.js}가 포함된다.
+구 모놀리스 전문은 \code{Web/simulation\_backup.js}로 보존된다.
+
+\begin{lstlisting}[style=js, caption={실제 코드 --- \code{Sim\_Parts/context.js}: \code{SimContext}가 공유 ctx(=this)로 서브시스템을 조립}]
+// Shared subsystem refs (OOP Class instances)
+this.leds         = new LedSubsystem(this);
+this.movement     = new MovementSubsystem(this);
+this.gun          = new GunSubsystem(this);
+this.rocket       = new RocketSubsystem(this);
+this.traffic      = new TrafficSubsystem(this);
+this.waves        = new WavesSubsystem(this);
+this.oled         = new OledSubsystem(this);
+this.audio        = new AudioSynthesizer(this);
+this.assets       = new AssetLoader(this);
+this.renderEngine = new RenderEngine(this);
+this.dispatcher   = new CommandDispatcher(this);
+this.editor       = new EditorControls(this);
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={실제 코드 --- \code{simulation.js}: 거대 클로저 대신 \code{buildSim} 모듈을 조립만 하는 얇은 오케스트레이터(공개 API \code{setupSimulation} 유지)}]
+import { buildSim } from './Sim_Parts/context.js';
+import { TOPICS, TOPIC_ORDER, DEFAULT_TOPIC,
+         defaultTopicForMission } from './Sim_Parts/topics.js';
+
+// 외부 인터페이스는 그대로 — main.js 는 거의 변경 없음
+export function setupSimulation({ workspace, onOpen, onClose }) {
+  // ... 필수 DOM 확보 후 buildSim(THREE, A, stage, loadingEl, cfg, ...)
+  //     을 호출하고 컨트롤러 { close } 를 반환한다.
+}
+\end{lstlisting}
+
+\subsection{피코 펌웨어 --- 설정 체계와 명령 프로토콜 변경}
+\textbf{[부록 A 기준]} 부록 A(2장 구성요소, 4장 설정 로딩, \S A.1 \code{system\_config.py})는
+설정 \emph{정본}을 \code{system.json}(JSON)으로 기술한다 --- \code{CONFIG\_FILE='system.json'},
+모듈 활성 플래그$\cdot$핀 할당$\cdot$보정값을 저장하고, \code{SystemConfig}가 입출력을
+담당하며, 구형 \code{calibration.json}을 병합한다. 또한 9장은 설정이 펌웨어
+\code{system.json}과 웹 \code{localStorage}에 \emph{이중으로} 존재함을 지적했다.
+
+\smallskip
+\noindent\textbf{[통합 후]} JSON 설정을 폐지하고, 교사$\cdot$어린이가 메모장으로 직접 고치는
+\textbf{텍스트 설정 \code{ModelFactorySetting.txt}}로 대체했다.
+\begin{itemize}
+  \item \textbf{설정 파일 텍스트화} --- \code{system\_config.py}에 \code{키=값}(또는
+  \code{키:값}) 파서를 추가, 첫 부팅 시 설명이 담긴 기본 템플릿을 자동 생성하고,
+  저장 시 \emph{기존 주석$\cdot$가이드라인을 보존}하고 값만 갱신. \code{system.json}은 삭제.
+  \item \textbf{속도 기능 + 모터 속도 제한} --- 서보$\cdot$DC 이동 명령이 속도 인자를 받도록
+  형식을 확장하고(아래 표), \code{max\_speed} 기준으로 스케일링해 \textbf{0\,--\,100\%로
+  제한}(5일차 모터 속도 제한 코드). \code{process\_data.py}는 653$\to$713줄.
+  \item \textbf{커스터마이징 확장} --- 블록코딩 탭 한글 이름(\code{GET\_NAMES}), 테마 모델
+  (로버/발사대), 모듈 토글, GP 핀 번호, 서보 좌우 보정치를 모두 설정 파일에서 제어.
+\end{itemize}
+
+\begin{lstlisting}[style=json, caption={실제 파일 --- \code{Pico/ModelFactorySetting.txt}(발췌): JSON 대신 주석 달린 텍스트 설정}]
+# 아레스 탐사선 모델 팩토리 설정 파일 (ModelFactorySetting.txt)
+# '#'으로 시작하는 줄은 설명글이므로 무시됩니다.
+# '=' 이나 ':' 문자를 사용해 '키=값' 형태로 작성해 주세요.
+
+# [1. 기본 설정 및 테마]
+device_name=rover
+max_speed=40            # 0 ~ 100 %
+collision_dist=10       # 장애물 정지 거리(cm)
+model=rover             # rover / launchpad
+
+# [2. 블럭 코딩 카테고리 탭 한글 이름 커스텀]
+wheel=바퀴
+dcmotor=안테나
+leds=LED
+# [3. 모듈 활성화 (1=사용, 0=숨김)] ... [4. GP 핀] ... [5. 서보 보정치] (이하 생략)
+\end{lstlisting}
+
+\begin{lstlisting}[style=py, caption={실제 코드 --- \code{system\_config.py}: 텍스트(키=값/키:값) 파서. 파일이 없으면 설명 템플릿을 자동 생성}]
+if "ModelFactorySetting.txt" not in os.listdir():        # 첫 부팅
+    with open("ModelFactorySetting.txt", "w") as f:
+        f.write(DEFAULT_FACTORY_TEXT)                     # 설명 포함 기본 템플릿
+
+with open("ModelFactorySetting.txt", "r") as f:
+    content = f.read().replace('﻿', '')  # BOM 제거
+    for line in content.split('\n'):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue                                     # 빈 줄·주석 무시
+        if   "=" in line: parts = line.split("=", 1)
+        elif ":" in line: parts = line.split(":", 1)
+        else:             parts = []
+        if len(parts) == 2:
+            key, val = parts[0].strip().lower(), parts[1].strip()
+            if val.isdigit() or (val.startswith('-') and val[1:].isdigit()):
+                self.config[key] = int(val)              # 숫자 자동 정수화
+            else:
+                self.config[key] = val
+\end{lstlisting}
+
+\begin{lstlisting}[style=py, caption={실제 코드 --- \code{system\_config.py}: 저장 시 기존 주석$\cdot$가이드라인을 보존하고 값만 교체}]
+for i, line in enumerate(lines):
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        continue                                         # 주석·빈 줄은 그대로
+    ...
+    if len(parts) == 2:
+        current_key = parts[0].strip().lower()
+        for k, v in kv_dict.items():
+            if current_key == k.strip().lower():
+                lines[i] = f"{parts[0].strip()}{delimiter}{v}"   # 값만 갱신
+\end{lstlisting}
+
+\begin{table}[H]\centering\small
+\caption{명령 프로토콜 변경 --- 부록~\ref{app:code} 명령 목록 대비 신규$\cdot$확장}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l L{0.54\linewidth}@{}}
+\toprule
+\sffamily 명령 형식 & \sffamily 의미(신규/확장) \\
+\midrule
+SERVO\_방향,속도          & 서보 휠 연속 이동 + 속도(0--100\%) \\
+SERVO\_t방향,초,속도       & 시간 제한 서보 이동 + 속도 \\
+DC\_방향,속도 / DC\_t방향,초,속도 & DC 모터 연속/시간 제한 + 속도 \\
+GET\_NAMES                & 블록코딩 탭 한글 이름 조회(신규) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{lstlisting}[style=py, caption={실제 코드 --- \code{process\_data.py}: 속도 인자를 0--100\%(서보는 0.0--1.0)로 클램프 (5일차 모터 속도 제한)}]
+# SERVO_t방향,초,속도  — 속도 미지정 시 설정의 max_speed 사용
+spd = float(argv[2]) / 100.0 if len(argv) >= 3 \
+      else sys_config.get('max_speed') / 100.0
+spd = max(0.0, min(1.0, spd))            # 과속 방지 클램프
+robot.wheel.forward(speed=spd)           # 방향별 호출
+
+# DC_방향,속도  — 0~100% 로 제한 후 PWM 변환
+speed   = int(float(parts[2]))
+speed   = max(0, min(100, speed))
+pwm_val = int(speed * PWM_MAX / 100)
+\end{lstlisting}
+
+\begin{notebox}[주의 --- 계약 문서 갱신 필요]
+명령 프로토콜이 바뀌었으므로(예: \code{SERVO\_방향,속도}, \code{GET\_NAMES}) 부록 A가
+사실상의 계약 문서로 지목한 \code{API\_DOCUMENTATION.md}와 펌웨어$\cdot$웹 양측을
+\textbf{짝으로} 갱신해야 한다. 기존 기기의 \code{system.json} 값은 새
+\code{ModelFactorySetting.txt}로 자동 이전되지 않는다(기본 템플릿 초기화).
+\end{notebox}
+
+\subsection{웹 인터페이스 --- 라우팅 정리와 블록코딩$\cdot$BLE 연동}
+\textbf{[부록 A 기준]} 부록 A(\S A.2 \code{main.js})는 \code{main.js}를 라우팅$\cdot$뷰
+전환$\cdot$Blockly 초기화$\cdot$이벤트$\cdot$버튼 콜백을 \emph{대부분 내부 함수로} 담당하는
+진입점으로 기술한다(1차 진단에서 ``한 함수가 미션/저장/예제/AI/대시보드를 전부 처리''로
+지목). 7장은 새 블록 추가 시 \code{blocklyconfig.js}$\cdot$툴박스$\cdot$\code{commandexecutor.js}
+세 곳을 함께 고쳐야 함을 강조했다.
+
+\smallskip
+\noindent\textbf{[통합 후]}
+\begin{itemize}
+  \item \textbf{UI 보조 분리} --- \code{updateBlockCodingButtonUI}$\cdot$\code{setupLogToggle}$\cdot$%
+  \code{setupContentToggle}를 \textbf{\code{ui.js}(신규 97줄)}로 추출(\code{main.js}는
+  1,051$\to$1,473줄로, 모바일 동선 로직 추가분 포함).
+  \item \textbf{모바일 하단 내비 + 버튼 동선} --- \emph{개요$\cdot$차시$\cdot$미션$\cdot$AI$\cdot$로그}
+  하단 고정 바(\code{safe-area-inset} 대응)와 상단 버튼(개요$\cdot$블록코딩$\cdot$점검) 이동
+  버그 수정. \code{styles.css}는 모바일$\cdot$반응형으로 $+$455줄.
+  \item \textbf{명령 프로토콜 연동} --- 속도 기능$\cdot$\code{GET\_NAMES}에 맞춰
+  \code{blocklyconfig.js}$\cdot$\code{bluetooth.js}$\cdot$\code{commandexecutor.js}를 함께 갱신
+  (부록 A가 지적한 ``세 곳 동시 수정'' 지점이 그대로 반영됨).
+\end{itemize}
+
+\begin{lstlisting}[style=js, caption={실제 코드 --- \code{ui.js}: \code{main.js}에서 분리한 UI 보조 함수(상태별 버튼 라벨)}]
+// ui.js — UI 전용 보조 함수들
+export function updateBlockCodingButtonUI(
+  btn = document.getElementById('blockCodingButton'), helpers = {}) {
+  if (!btn) return;
+  const isDashboardVisible   = helpers.isDashboardVisible   || (() => false);
+  const isInBlockCodingStage = helpers.isInBlockCodingStage || (() => false);
+  if (isDashboardVisible())        { btn.textContent = '🧩 코딩';    }
+  else if (isInBlockCodingStage()) { btn.textContent = '🏠 메인';    }
+  else                             { btn.textContent = '🧩 블록코딩'; }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={실제 코드 --- \code{commandexecutor.js}: 블록 → 명령 문자열에 속도 인자 추가}]
+// 서보 모터 (시간 제한) - SERVO_t방향,초,속도
+case 'timed_forward': {
+  const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+  const speed   = this.evaluateValueBlock(block.getInputTargetBlock('SPEED'))   || '100';
+  return `SERVO_tFORWARD,${seconds},${speed}`;
+}
+// 서보 모터 (연속) - SERVO_방향,속도
+case 'move_forward': {
+  const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+  return `SERVO_FORWARD,${speed}`;
+}
+\end{lstlisting}
+
+\subsection{진입점$\cdot$자산 --- 페이지 구성과 3D 모델 경량화}
+\textbf{[부록 A 기준]} 부록 A는 진입점으로 \code{main.html}(블록 편집기)$\cdot$%
+\code{dashboard.html}(점검)을, 모바일 미리보기로 \code{mobile-preview.js}를 기술한다.
+
+\smallskip
+\noindent\textbf{[통합 후]} 공개 랜딩(루트 \code{index.html})$\cdot$개발 랜딩(\code{dev.html})과
+메인 앱(\code{Web/index.html})으로 페이지 구성이 확장됐고(\code{main.html}/\code{styles.css}에
+모바일 내비$\cdot$3D 히어로 추가), 3D 모델 \code{ares\_robot.glb}는 \textbf{7.21\,MB $\to$ 0.58\,MB}로
+경량화(약 92\% 감소), 우주인 모델 \code{Astronaut.glb}가 추가됐다. 이 코드 변경은
+본문(CLAUDE.md ``Web UI Module Structure'')에도 반영했다.
+
+\begin{infobox}[title=중간 점검 결론]
+\small
+1$\cdot$2차 Refactoring 계획(부록~\ref{app:refactor1}$\cdot$\ref{app:refactor2})의 핵심
+항목 --- \emph{유형 A 거대 클로저 분할}(시뮬레이터)과 \emph{피코 설정$\cdot$명령 체계
+정비} --- 이 통합 머지로 실제 코드에 반영됐다. 남은 과제는 부록 A가 짚은 \emph{설정
+이중화}(\code{system.json}$\leftrightarrow$\code{localStorage})의 단일화 마무리와,
+바뀐 명령 프로토콜에 맞춘 \code{API\_DOCUMENTATION.md} 갱신이다.
+\end{infobox}
