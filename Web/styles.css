@@ -271,7 +271,7 @@ button:focus-visible {
     right: 0;
     bottom: 0;
     z-index: 9999;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0;
     height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
     padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
@@ -788,6 +788,40 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     display: none !important;
 }
 
+/* ----- 화면 전환 애니메이션 -----
+   개요·차시·미션 뷰가 바뀔 때는 새 화면이 옆에서 밀려 들어오듯,
+   미션 뷰 내부(설명↔블록코딩↔시뮬)가 바뀔 때는 서서히 나타나듯 전환한다.
+   showView()/setContentMode() 가 hidden·data-mode 를 바꾸면 자동 재생된다. */
+@keyframes viewSlideIn {
+    from { opacity: 0; transform: translateX(28px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes viewFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.content-view:not([hidden]) {
+    animation: viewSlideIn 1s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 미션 뷰 내부 모드 전환(설명·블록코딩·시뮬)은 위치가 겹쳐 있으므로 페이드만 */
+#missionView[data-mode="description"] > .mission-panel,
+#missionView[data-mode="coding"]      > .mission-workspace,
+#missionView[data-mode="simulation"]  > .sim-card {
+    animation: viewFadeIn 1s ease;
+}
+
+/* 모션 최소화 설정 사용자는 즉시 전환 */
+@media (prefers-reduced-motion: reduce) {
+    .content-view:not([hidden]),
+    #missionView[data-mode] > .mission-panel,
+    #missionView[data-mode] > .mission-workspace,
+    #missionView[data-mode] > .sim-card {
+        animation: none;
+    }
+}
+
 /* ----- 태그 배지 ----- */
 .lesson-tag {
     display: inline-block;
@@ -1077,17 +1111,18 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .mission-code-btn:hover { background: #d8431b; }
 .mission-code-btn:active { transform: translateY(1px); }
 
-/* 미션 리스트 아래에 담기는 차시 정보 */
+/* 미션 리스트 위에 담기는 차시 정보 — 푸른색 팔레트로 차별화 */
 .inline-lesson-info {
-    padding: 14px 18px 18px;
-    background: #fff8f3;
-    border-top: 1px solid #f0d4c5;
+    padding: 14px 18px 16px;
+    background: #eef5fc;
+    border-left: 3px solid #2f7fc4;
+    border-bottom: 1px solid #cfe1f2;
 }
 .inline-lesson-info-title {
     margin: 0 0 8px;
     font-size: .92em;
     font-weight: 700;
-    color: #a93812;
+    color: #1763a6;
 }
 .inline-lesson-info-head {
     display: flex;
@@ -1098,18 +1133,21 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 }
 .inline-lesson-meta {
     font-size: .8em;
-    color: var(--text-secondary);
+    color: #3f5a72;
 }
 .inline-lesson-intro {
     margin: 0;
     font-size: .86em;
     line-height: 1.6;
-    color: var(--text-secondary);
+    color: #3f5a72;
 }
 .inline-lesson-info .summary-box {
     margin-top: 12px;
     padding-left: 12px;
+    border-left-color: #2f7fc4;
 }
+.inline-lesson-info .summary-box h4 { color: #1763a6; }
+.inline-lesson-info .summary-box p { color: #3f5a72; }
 
 /* 아코디언 여닫이 애니메이션 — 실제 콘텐츠 높이(--acc-h)까지 부드럽게 펼치고 접음.
    열림/닫힘은 main.js 의 openAccordion()/closeAccordion() 이 클래스로 제어한다. */
