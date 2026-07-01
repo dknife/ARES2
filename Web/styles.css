@@ -823,7 +823,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 
 .overview-flow {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 28px;
 }
@@ -837,10 +837,205 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     border-radius: 10px;
 }
 
+.lesson-accordion-item {
+    overflow: hidden;
+    border: 1px solid #f0d4c5;
+    border-radius: 10px;
+    background: #fffaf6;
+}
+
+.flow-step-btn {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto 18px;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 72px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 0;
+    background: #fffaf6;
+    color: var(--text-primary);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transform: none;
+}
+
+.flow-step-btn:hover,
+.flow-step-btn:active {
+    background: #fff1e7;
+    box-shadow: none;
+    transform: none;
+}
+
+.flow-step-btn[aria-expanded="true"] {
+    background: #fff0df;
+    border-bottom: 1px solid #f0d4c5;
+}
+
+.flow-main {
+    min-width: 0;
+}
+
+.flow-step-btn strong {
+    display: block;
+    margin: 0 0 4px;
+    overflow: hidden;
+    color: #a93812;
+    font-size: .96em;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow-step-btn small {
+    display: block;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: .8em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow-count {
+    color: #6878a0;
+    font-size: .76em;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.flow-arrow {
+    color: #c94a1a;
+    font-size: .78em;
+    transition: transform .18s ease;
+}
+
+.flow-step-btn[aria-expanded="true"] .flow-arrow {
+    transform: rotate(90deg);
+}
+
+.inline-mission-list {
+    border-left: 4px solid #ff6740;
+    background: #fff;
+}
+
+.inline-mission-btn {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 8px 14px 8px 18px;
+    border: 0;
+    border-bottom: 1px solid rgba(18, 183, 106, .14);
+    border-radius: 0;
+    background: #fff;
+    color: #3f4542;
+    text-align: left;
+    box-shadow: none;
+    transform: none;
+}
+
+.inline-mission-btn:last-child {
+    border-bottom: 0;
+}
+
+.inline-mission-btn:hover,
+.inline-mission-btn:active {
+    background: #fff3ee;
+    box-shadow: none;
+    transform: none;
+}
+
+.inline-mission-btn.completed {
+    background: linear-gradient(90deg, #e2f8ed 0%, #f1fbf6 100%);
+    color: #214d38;
+}
+
+.inline-mission-btn.completed:hover,
+.inline-mission-btn.completed:active {
+    background: #d9f4e7;
+}
+
+.inline-mission-num {
+    display: grid;
+    place-items: center;
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    background: #ff623a;
+    color: #fff;
+    font-size: .75em;
+    font-weight: 800;
+}
+
+.inline-mission-main {
+    min-width: 0;
+}
+
+.inline-mission-main strong,
+.inline-mission-main small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inline-mission-main strong {
+    margin-bottom: 2px;
+    font-size: .88em;
+}
+
+.inline-mission-main small {
+    color: #707975;
+    font-size: .74em;
+}
+
+.inline-mission-btn.completed .inline-mission-num {
+    background: #12b76a;
+}
+
+.inline-mission-btn.completed .inline-mission-main small {
+    color: #4f7562;
+}
+
+.inline-mission-check {
+    color: #12a866;
+    font-weight: 900;
+}
+
+.inline-mission-arrow {
+    color: #13945a;
+    font-size: 1.3em;
+    text-align: right;
+}
+
+@media (max-width: 520px) {
+    .flow-step-btn {
+        grid-template-columns: 36px minmax(0, 1fr) 14px;
+        gap: 9px;
+        min-height: 60px;
+        padding: 9px 10px;
+    }
+    .flow-num {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+        font-size: .9em;
+    }
+    .flow-count { display: none; }
+    .flow-step-btn strong { font-size: .88em; }
+    .inline-mission-btn { padding-left: 12px; }
+}
 .flow-num {
-    flex: 0 0 32px;
-    width: 32px;
-    height: 32px;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: var(--accent-color);
     color: #fff;
@@ -848,7 +1043,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9em;
+    font-size: 1.1em;
 }
 
 .flow-step strong {

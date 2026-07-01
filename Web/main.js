@@ -26,6 +26,52 @@ const LESSON_CATALOG = [
   { n: 12, title: "화성 로켓 최종 발사!",           tag: "LAUNCH",   hardware: "LED 5개 + 부저 + DC모터", concept: "통합 시나리오, 자유 창작 발표" },
 ];
 
+const MISSION_PROGRESS_KEY = 'ares_completed_missions_v1';
+
+function getCompletedMissions() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MISSION_PROGRESS_KEY) || '[]');
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function missionProgressId(lesson, mission) {
+  return `${lesson}-${mission}`;
+}
+
+function isMissionCompleted(lesson, mission) {
+  return getCompletedMissions().has(missionProgressId(lesson, mission));
+}
+
+function completedMissionCount(lesson) {
+  const completed = getCompletedMissions();
+  let count = 0;
+  for (let mission = 1; mission <= 4; mission += 1) {
+    if (completed.has(missionProgressId(lesson, mission))) count += 1;
+  }
+  return count;
+}
+
+function markMissionCompleted(lesson, mission) {
+  if (!lesson || !mission) return;
+  const completed = getCompletedMissions();
+  const id = missionProgressId(lesson, mission);
+  if (completed.has(id)) return;
+  completed.add(id);
+  try { localStorage.setItem(MISSION_PROGRESS_KEY, JSON.stringify([...completed])); } catch {}
+
+  const lessonItem = document.querySelector(`[data-lesson-item="${lesson}"]`);
+  const count = lessonItem?.querySelector('.flow-count');
+  if (count) count.textContent = `${completedMissionCount(lesson)}/4`;
+  const missionButton = lessonItem?.querySelector(`[data-inline-mission="${mission}"]`);
+  if (missionButton) {
+    missionButton.classList.add('completed');
+    missionButton.querySelector('.inline-mission-check')?.removeAttribute('hidden');
+  }
+}
+
 const lessonCache = new Map(); // n -> lesson.json 객체
 let workspace = null;          // Blockly 워크스페이스 (한 번만 inject)
 let currentView = 'overview';
@@ -118,8 +164,8 @@ function updateDynamicToolbox() {
 // ============================================================
 function initializeBlockly() {
   if (!navigator.bluetooth) {
-    alert('이 브라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
-    Logger.add('[오류] 브라우저가 Web Bluetooth API를 지원하지 않습니다', 'error');
+    alert('이 블라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
+    Logger.add('[오류] 블라우저가 Web Bluetooth API를 지원하지 않습니다', 'error');
   }
 
   Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
@@ -161,7 +207,7 @@ function initializeBlockly() {
     updateDynamicToolbox();
     updateWorkspaceBlocks(workspace, state.activeModel);
   };
-  
+
   // Apply initial dynamic toolbox / names
   window.updateToolboxForActiveState();
 
@@ -738,7 +784,7 @@ function showView(view) {
   const contentBtn = document.getElementById('contentToggleBtn');
   if (contentBtn) contentBtn.hidden = !inMission;
 
-  // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
+  // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠날 때 카드 닫기
   const simToggle = document.getElementById('simToggle');
   if (simToggle) simToggle.hidden = !inMission;
   if (!inMission) {
@@ -792,9 +838,78 @@ async function enterOverview() {
             <td>${escapeHtml(l.concept)}</td>
             <td><span class="tag tag-${l.tag}">${escapeHtml(l.tag)}</span></td>
           </tr>
-        `).join('');
-      }
-    } catch (e) {
+         `).join('');
+       }
+
+       // 12개 차시를 아코디언형 버튼 목록으로 생성
+       const flowContainer = document.getElementById('lessonFlowContainer');
+       if (flowContainer) {
+         flowContainer.innerHTML = LESSON_CATALOG.map(lesson => `
+           <section class="lesson-accordion-item" data-lesson-item="${lesson.n}">
+             <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
+               <span class="flow-num">${lesson.n}</span>
+               <span class="flow-main">
+                 <strong>${lesson.n}차시 — ${escapeHtml(lesson.title)}</strong>
+                 <small>${escapeHtml(lesson.hardware)}</small>
+               </span>
+               <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
+               <span class="flow-arrow" aria-hidden="true">▶</span>
+             </button>
+             <div id="inlineMissions${lesson.n}" class="inline-mission-list" hidden></div>
+           </section>
+         `).join('');
+
+         flowContainer.addEventListener('click', async (event) => {
+           const missionButton = event.target.closest('[data-inline-mission]');
+           if (missionButton) {
+             navigate({
+               lesson: Number(missionButton.dataset.lesson),
+               mission: Number(missionButton.dataset.inlineMission),
+             });
+             return;
+           }
+
+           const lessonButton = event.target.closest('.flow-step-btn');
+           if (!lessonButton) return;
+           const lessonNum = Number(lessonButton.dataset.lesson);
+           const item = lessonButton.closest('.lesson-accordion-item');
+           const missionList = item?.querySelector('.inline-mission-list');
+           if (!missionList) return;
+
+           const willOpen = missionList.hasAttribute('hidden');
+           flowContainer.querySelectorAll('.inline-mission-list:not([hidden])').forEach(openList => {
+             if (openList !== missionList) {
+               openList.setAttribute('hidden', '');
+               openList.previousElementSibling?.setAttribute('aria-expanded', 'false');
+             }
+           });
+
+           if (!willOpen) {
+             missionList.setAttribute('hidden', '');
+             lessonButton.setAttribute('aria-expanded', 'false');
+             return;
+           }
+
+           const data = await loadLesson(lessonNum);
+           if (!data?.missions) return;
+           missionList.innerHTML = data.missions.map(mission => {
+             const completed = isMissionCompleted(lessonNum, mission.id);
+             return `
+               <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}" data-lesson="${lessonNum}" data-inline-mission="${mission.id}">
+                 <span class="inline-mission-num">${mission.id}</span>
+                 <span class="inline-mission-main">
+                   <strong>${escapeHtml(mission.title)} <span class="inline-mission-check" ${completed ? '' : 'hidden'}>✓</span></strong>
+                   <small>${escapeHtml(mission.hardware || '')}</small>
+                 </span>
+                 <span class="inline-mission-arrow" aria-hidden="true">›</span>
+               </button>`;
+           }).join('');
+           missionList.removeAttribute('hidden');
+           lessonButton.setAttribute('aria-expanded', 'true');
+           item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+         });
+       }
+     } catch (e) {
       container.innerHTML = '<p style="color:#E74C3C">개요를 불러오지 못했습니다.</p>';
       Logger.add(`[오류] overview.html 로드 실패: ${e.message}`, 'error');
     }
@@ -1140,7 +1255,11 @@ function initializeMissionListeners(ws) {
     }
     if (!validateConnection()) return;
     try {
-      await CommandExecutor.executeWorkspace(ws);
+      const completed = await CommandExecutor.executeWorkspace(ws);
+      if (completed && currentLesson && currentMission) {
+        markMissionCompleted(currentLesson, currentMission);
+        Logger.add(`[미션] ${currentLesson}차시 ${currentMission}번 완료 기록`, 'info');
+      }
     } catch (error) {
       console.error('명령 실행 오류:', error);
       alert('명령 실행 중 오류가 발생했습니다: ' + error.message);
