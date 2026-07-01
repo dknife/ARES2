@@ -171,6 +171,23 @@
             header.report-head { padding: 56px 0 44px; }
             .gallery { grid-template-columns: 1fr; }
         }
+
+        /* 코드 발췌 블록 */
+        figure.code { margin: 6px 0 18px; }
+        figure.code figcaption {
+            font-size: 0.82em; color: #666; margin-bottom: 6px;
+            border-left: 3px solid #FA5D29; padding-left: 10px;
+        }
+        figure.code figcaption b { color: #d8431b; }
+        pre.code {
+            background: #1d1f27; color: #e6e6e6; border-radius: 10px;
+            padding: 15px 18px; overflow-x: auto; font-size: 0.82em; line-height: 1.55;
+        }
+        pre.code code {
+            background: none; color: inherit; padding: 0; white-space: pre;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        @media (max-width: 600px) { pre.code { font-size: 0.74em; } }
     </style>
 </head>
 <body>
@@ -1201,6 +1218,60 @@
                 <figure>
                     <div class="imgbox" style="aspect-ratio:770/839; background:#1a1030;"><img src="img/7일차_시뮬_기즈모통합.png" alt="관제실 통합 시뮬레이터 — 기즈모 동작"></div>
                     <figcaption><b>기즈모 환경 통합 결과</b> — 관제실 화면 안 3D 시뮬레이터에서 알비에 바운딩 박스와 <b>Move·Rotate·Scale</b> 기즈모가 표시된 통합 결과. 좌측 LED 0~2 패널·하단 시뮬레이션 실행/로그와 함께 동작.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🧾 주요 코드 변경 요약 (오늘 커밋 기준)</h3>
+                <p class="lead">오늘(2026.07.01) 팀원별 작업 브랜치를 <code>main</code>으로 통합한 결과, 문서를 제외한 코드 변화는 <b>32개 파일에서 +2,333 / −942 라인</b>(<code>git</code> 기준)이다. 다섯 트랙으로 요약한다.</p>
+                <ul>
+                    <li>🔧 <b>펌웨어 — 서보 정지 튜닝</b> (<code>wheel.py</code>·<code>system_config.py</code>·<code>ModelFactorySetting.txt</code>) — 정지 기준인 <b>중립 듀티</b>를 좌·우 개별 설정값(<code>left/right_neutral_duty</code>)으로 분리해 설정 파일에서 로드하고, <code>reload_config()</code>로 리부트 없이 재적용. 안전 듀티 범위(2500~7500)·정지각(90) 도입, 실측 튜닝값 <b>4900</b> 적용.</li>
+                    <li>🎮 <b>시뮬레이터 기즈모</b> (<code>Sim_Parts/editor_controls.js</code> 191줄 개편·<code>vendor/three-bundle*</code>·<code>package.json</code>) — three.js <b>TransformControls</b> 기반 이동·회전·크기 기즈모(번들 미포함 시 자동 비활성화).</li>
+                    <li>🧩 <b>블록코딩 — 새 블록 호환</b> (<code>blocklyconfig.js</code> +201·<code>bluetooth.js</code>·<code>examples/*.xml</code>) — 서보·DC 모터 등 블록 라벨·동적 이름과 예제 XML을 새 블록코딩 규격에 맞춤.</li>
+                    <li>📋 <b>차시·미션 리스트</b> (<code>main.js</code> +192·<code>commandexecutor.js</code>·<code>overview.html</code>) — <code>localStorage</code> 기반 차시별 미션(1~4) 완료 추적·리스트 렌더.</li>
+                    <li>🎨 <b>서비스 서체·모바일 셸</b> (<code>fonts/fonts.css</code>·<code>styles.css</code>·<code>mobile-preview.js</code> 등) — 강원교육튼튼 자체 호스팅 woff2, 768px 모바일 프레임 셸.</li>
+                </ul>
+
+                <figure class="code">
+                    <figcaption><b>Pico/wheel.py · ModelFactorySetting.txt</b> — 서보 중립 듀티를 좌·우 설정값으로 분리하고 4900으로 튜닝</figcaption>
+                    <pre class="code"><code>MIN_DUTY, MAX_DUTY, STOP_ANGLE = 2500, 7500, 90
+
+# 정지 기준(중립)을 좌·우 개별 설정값으로 분리 → 설정 파일에서 로드
+self.neutral_duties = [
+    self._get_int_config('right_neutral_duty', 5000),
+    self._get_int_config('left_neutral_duty', 5000),
+]
+
+def reload_config(self):        # 리부트 없이 중립값 재적용
+    self.neutral_duties = [ ... ]
+
+# ModelFactorySetting.txt: left/right_neutral_duty = 4900  (정지 미세 회전 제거)</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/Sim_Parts/editor_controls.js</b> — three.js TransformControls 기반 이동·회전·크기 기즈모</figcaption>
+                    <pre class="code"><code>// three.js TransformControls로 이동/회전/스케일 기즈모 제공
+this.TransformControls = this.A?.TransformControls;
+this.enabled = !!this.TransformControls;   // 번들에 없으면 조용히 비활성화
+
+this.transform = new this.TransformControls(this.camera, this.dom);
+this.transform.setMode(this.mode);         // 'translate' | 'rotate' | 'scale'
+this.transform.setSpace('world');
+this.transform.setSize(0.85);</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/main.js</b> — localStorage 기반 차시별 미션(1~4) 완료 추적</figcaption>
+                    <pre class="code"><code>const MISSION_PROGRESS_KEY = 'ares_completed_missions_v1';
+const missionProgressId = (lesson, mission) =&gt; `${lesson}-${mission}`;
+
+function completedMissionCount(lesson) {     // 차시별 0~4 완료 집계
+  const done = getCompletedMissions();
+  let n = 0;
+  for (let m = 1; m &lt;= 4; m += 1)
+    if (done.has(missionProgressId(lesson, m))) n += 1;
+  return n;
+}</code></pre>
                 </figure>
             </div>
         </section>
