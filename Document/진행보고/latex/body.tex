@@ -1143,6 +1143,8 @@ function closeAccordion(el) {
 문제 20여 건을 발견했다. HIGH 4건 --- \textbf{① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅
 불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연} --- 은 당일 \textbf{수정 계획 수립
 $\to$ 코드 수정 $\to$ 자동화 검증(펌웨어 8$\cdot$웹 17 시나리오 전체 통과)}까지 완료했다.
+이어 \textbf{중간(MEDIUM) 등급 5건} --- 한글 명령 유실$\cdot$블록 인터프리터 누락$\cdot$UI
+배선$\cdot$대시보드 연결 표시$\cdot$프레임레이트 종속 애니메이션 --- 도 같은 날 수정$\cdot$검증했다.
 \end{summarybox}
 
 \subsection{문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)}
@@ -1256,4 +1258,49 @@ _resolvePromise(data) {
 [PASS] BATCH: 중단 후 나머지 하위 명령 건너뜀
 [timed] 9999.0s 요청 -> 60s로 제한
 실패: 없음 — 펌웨어 8·웹 17 시나리오 전체 통과
+\end{lstlisting}
+
+\subsection{후속 수정 — 중간(MEDIUM) 결함 5건 (당일 처리)}
+점검에서 발견한 중간 등급 문제 가운데 5건을 이어서 수정했다(\textbf{6개 파일 +178 / $-$37}).
+나머지 2건은 보류했다 --- \code{Web/Simulation/} 죽은 코드는 \textbf{팀원 브랜치}
+(\code{Simulation\_LeeMinhyuck})가 해당 폴더의 재배선을 진행 중이어서 main에서 손대면 충돌만
+만들고(머지 리뷰 때 확인), \code{SET\_PIN} 미적용은 후속 작업으로 넘겼다.
+
+\smallskip
+\noindent{\raggedright\chip{한글 명령 유실 해결} \chip{else-if$\cdot$함수 본문 실행} %
+\chip{버튼 라벨$\cdot$코딩 탭 배선} \chip{대시보드 상태 폴링} \chip{dt 기반 애니메이션}\par}
+
+\begin{itemize}
+  \item \textbf{한글 명령 유실}(\code{Pico/main.py}) — 수신 버퍼를 str에서 \textbf{bytes}로
+  전환하고 완성된 라인만 디코드. 한글 장치명 등 멀티바이트 문자가 20바이트 BLE 청크 경계에서
+  잘려도 다음 청크와 합쳐 복원되며(MicroPython rp2는 \code{decode}의 errors 인자를 무시하고
+  예외를 던져 명령이 유실됐다), 깨진 라인은 폐기하고 다음 명령을 정상 처리한다.
+  \item \textbf{블록 인터프리터 2건}(\code{commandexecutor.js}) — \code{controls\_if}가
+  IF0..IF$n$을 순회해 ``아니면 만약''(else-if) 절을 실행. 반환값 함수는 \textbf{비동기 사전
+  해석} 방식 도입 --- 값 평가 전에 트리 안의 함수 호출을 찾아 본문(STACK)을 실행하고 반환값을
+  캐시하며, while 조건은 매 반복 재해석, 재귀는 16단계로 제한.
+  \item \textbf{UI 배선 2건}(\code{main.js}) — 툴바 버튼이 화면 상태에 따라
+  ``블록코딩$\cdot$메인$\cdot$코딩''으로 정상 전환되도록 상태 헬퍼를 전달하는 래퍼로 호출부 4곳
+  통일. 하단바 ``코딩'' 탭이 열려 있는 점검(대시보드) 화면을 닫고 진입하도록 수정(화면 갇힘 해소).
+  \item \textbf{대시보드 연결 표시}(\code{dashboard.html}) — \code{GET\_STATUS}를 \textbf{3초
+  주기}로 폴링(iframe이 숨겨진 동안은 건너뜀)하고 끊김 판정 임계를 7.5초로 조정. 정상 연결이
+  5초 뒤 항상 ``연결 끊김''으로 표시되던 문제 해소.
+  \item \textbf{프레임레이트 종속 애니메이션}(\code{Sim\_Parts/render.js}$\cdot$\code{rocket.js}) —
+  레이더 회전$\cdot$로켓 상승을 프레임당 고정 증분에서 \textbf{초당 속도 $\times$ dt}로 환산
+  (\code{RADAR\_SPIN}=9 rad/s, \code{ROCKET\_SPEED}=0.16/s). 60Hz 체감은 동일, 120Hz+에서
+  2배 빨라지던 문제 해소.
+  \item \textbf{검증} — 펌웨어 하니스에 한글 청크 분할 복원$\cdot$깨진 라인 폐기 시나리오를
+  추가해 \textbf{11개} 통과, 블록 인터프리터는 목업 워크스페이스로 else-if 분기$\cdot$함수
+  본문 실행(본문이 설정한 변수 42 반환)$\cdot$무한재귀 방어까지 \textbf{6개} 통과.
+\end{itemize}
+
+\begin{lstlisting}[style=js, caption={\code{Web/commandexecutor.js} --- 반환값 함수의 비동기 사전 해석: 본문 실행 후 반환값을 캐시}]
+// evaluateValueBlock은 동기 함수라 명령 전송이 필요한 함수 본문을 직접 실행할
+// 수 없다. 값 평가 전에 트리 안의 함수 호출을 실행해 반환값을 캐시해 둔다.
+async _executeFunctionCall(callBlock) {
+  await this._setupProcedureArgs(callBlock, defBlock);
+  await this.processBlock(defBlock.getInputTargetBlock('STACK'));  // 본문 실행
+  const value = this.evaluateValueBlock(returnBlock);              // 반환값 평가
+  this._funcResults.set(callBlock.id, value);                     // 캐시 -> 동기 평가가 사용
+}
 \end{lstlisting}
