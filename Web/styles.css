@@ -38,11 +38,16 @@ body {
     display: block;
     background: var(--background-main);
     color: var(--text-primary);
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 17px;      /* 강원교육튼튼 기준 — 초등 대상에 맞춰 적당히 크게 */
+    font-weight: 700;     /* 대체로 굵게 */
     overflow: hidden;
     overflow-x: hidden !important;
     max-width: 100%;
 }
+
+/* 제목·헤딩은 강원교육튼튼 (본문은 강원교육모두) */
+h1, h2, h3, h4, h5, h6 { font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif; }
 
 /* ===== Blockly Drilldown (카테고리 숨김 + 블록 목록을 그 자리로) ===== */
 body.ares-toolbox-drilldown .blocklyToolboxDiv {
@@ -61,7 +66,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
     left: 10px;
     z-index: 65;
 
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 13px;
     font-weight: 600;
     line-height: 1;
@@ -179,7 +184,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 .header-main h1 {
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif;
     font-size: 0.95em;
     font-weight: 700;
     margin: 0;
@@ -223,7 +228,7 @@ body.ares-toolbox-drilldown .blocklyFlyout {
 }
 
 button {
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 0.9em;
     height: 40px;
     padding: 0 16px;
@@ -382,7 +387,7 @@ body.log-hidden .main-content {
 .blocklyToolboxDiv {
     background-color: var(--background-main);
     color: var(--text-primary);
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
 }
 
 .blocklyTreeLabel {
@@ -426,7 +431,7 @@ body.log-hidden .main-content {
 #logHeader {
     padding: 8px 12px;
     background: var(--background-main);
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-weight: 600;
     font-size: 0.85em;
     display: flex;
@@ -700,7 +705,7 @@ iframe, #dashboardFrame {
 }
 
 #missionNav select {
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 0.88em;
     height: 36px;
     padding: 0 10px;
@@ -1263,7 +1268,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .sim-drag { display: none; }
 .sim-topic {
     flex: 0 0 auto; width: 100%; min-width: 0; max-width: none;
-    font-family: 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
     color: var(--text-primary); background: var(--background-white);
     border: 1px solid var(--border-color); border-radius: 8px;
     padding: 6px 8px; cursor: pointer; touch-action: auto;
@@ -1272,7 +1277,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 /* 오버레이 안에서는 각 버튼이 위→아래로 차례로 쌓이도록 세로 배치 */
 .sim-led-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-led-btn {
-    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
     border: 1px solid var(--border-color); border-radius: 8px;
     padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
@@ -1289,7 +1294,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 /* 우주 신호등 액션 버튼 — LED 버튼과 동일한 룩, 활성 색만 주황(신호등 느낌) */
 .sim-traffic-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-traffic-btn {
-    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
     border: 1px solid var(--border-color); border-radius: 8px;
     padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
@@ -1307,7 +1312,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 /* 탐사선 발사대 액션 버튼(레이더) — 신호등 버튼과 동일한 룩, 활성 색만 청록(레이더 느낌) */
 .sim-launch-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-launch-btn {
-    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
     border: 1px solid var(--border-color); border-radius: 8px;
     padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
@@ -1326,7 +1331,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .sim-launch-led-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-rover-buttons { display: flex; flex-direction: column; gap: 6px; }
 .sim-launch-led-btn {
-    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     color: var(--text-primary); background: var(--background-secondary);
     border: 1px solid var(--border-color); border-radius: 8px;
     padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
@@ -1383,7 +1388,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .sim-editor-toolbar button {
     flex: 0 0 auto;
     min-width: 54px;
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 0.74em;
     font-weight: 700;
     color: #eef3fb;
@@ -1440,7 +1445,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     display: flex; gap: 8px; padding: 0;
 }
 .sim-runbar button {
-    font-family: 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
     border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; cursor: pointer;
 }
 /* 눈에 잘 띄는 노란색 — 어두운 텍스트로 대비, 은은한 발광 그림자 */
@@ -1933,7 +1938,7 @@ details.mission-section summary {
     padding: 0 12px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 0.9em;
 }
 .ai-form input:focus { outline: none; border-color: var(--accent-color); }

@@ -122,16 +122,16 @@
     style.textContent = [
       'body.ares-mp{margin:0;min-height:100vh;display:flex;flex-direction:column;',
       'align-items:center;justify-content:center;gap:14px;overflow:auto;',
-      'background:#e9ebef;font-family:"Inter Tight",system-ui,sans-serif;padding:20px;box-sizing:border-box;}',
+      'background:#e9ebef;font-family:"GangwonEduTeun","Inter Tight",system-ui,sans-serif;padding:20px;box-sizing:border-box;}',
       '.ares-mp-bar{display:flex;align-items:center;gap:14px;font-size:14px;color:#444;flex-wrap:wrap;justify-content:center;}',
       '.ares-mp-bar strong{color:#222;font-weight:700;letter-spacing:.5px;}',
       '.ares-mp-bar .dot{color:#FA5D29;}',
       '.ares-mp-bar select{font:inherit;padding:6px 10px;border:1px solid #ccd;border-radius:8px;background:#fff;color:#333;cursor:pointer;}',
       '.ares-mp-bar a{color:#FA5D29;text-decoration:none;font-weight:600;}',
       '.ares-mp-bar a:hover{text-decoration:underline;}',
-      '.ares-mp-device{background:#111;border-radius:38px;padding:12px;',
-      'box-shadow:0 24px 70px rgba(0,0,0,.28);flex:0 0 auto;}',
-      '.ares-mp-screen{background:#fff;border-radius:26px;overflow:hidden;}',
+      // 베젤(폰 프레임) 없이 화면만 — 회색 배경과는 그림자로만 구분한다.
+      '.ares-mp-screen{background:#fff;border-radius:12px;overflow:hidden;flex:0 0 auto;',
+      'box-shadow:0 18px 60px rgba(0,0,0,.22);}',
       '.ares-mp-screen iframe{display:block;border:0;width:100%;height:100%;background:#fff;}',
     ].join('');
     document.head.appendChild(style);
@@ -143,9 +143,9 @@
         '<label>기기 <select id="ares-mp-device"></select></label>' +
         '<a id="ares-mp-desktop" href="#">🖥️ 데스크톱으로</a>' +
       '</div>' +
-      '<div class="ares-mp-device"><div class="ares-mp-screen">' +
+      '<div class="ares-mp-screen">' +
         '<iframe id="ares-mp-frame" title="모바일 미리보기"></iframe>' +
-      '</div></div>';
+      '</div>';
 
     var sel = document.getElementById('ares-mp-device');
     DEVICES.forEach(function (d, i) {

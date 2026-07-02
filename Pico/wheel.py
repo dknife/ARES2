@@ -2,10 +2,13 @@
 # [모듈 가져오기]
 # ==========================
 from machine import Pin, PWM
-from time import sleep
-from utime import sleep_ms
 from system_config import sys_config
 from pins import SERVO_RIGHT_PIN, SERVO_LEFT_PIN
+
+# 연속회전 서보/전원 안정성을 위해 극단 펄스폭을 피한다.
+MIN_DUTY = 2500
+MAX_DUTY = 7500
+STOP_ANGLE = 90
 
 # ==========================
 # [클래스 정의]
@@ -17,8 +20,15 @@ class KSWheel:
     def __init__(self):
         # pins.py에서 서보 핀 설정 가져오기 (오른쪽, 왼쪽)
         self.servo_pins = [SERVO_RIGHT_PIN, SERVO_LEFT_PIN]
-        # 서보의 중립 듀티 사이클 (약 1.5ms)
-        self.neutral_duties = [5000, 5000] 
+        # [오른쪽, 왼쪽] 순서. 중립값은 기체마다 달라 설정 파일에서 조정한다.
+        self.neutral_duties = [
+            self._get_int_config('right_neutral_duty', 5000),
+            self._get_int_config('left_neutral_duty', 5000)
+        ]
+        self.min_drive_speeds = [
+            self._get_percent_config('right_min_drive', 0),
+            self._get_percent_config('left_min_drive', 0)
+        ]
         # PWM 객체 저장용 리스트
         self.servos = []
         # 설정에서 캘리브레이션 팩터 로드
@@ -31,6 +41,20 @@ class KSWheel:
             pwm.freq(50)  # 서보용 50 Hz
             self.servos.append(pwm)
             self.set_angle(i, 90)  # 정지 상태로 설정 (90도)
+
+    def _get_int_config(self, key, default):
+        value = sys_config.get(key)
+        if value is None:
+            return default
+        try:
+            return int(value)
+        except Exception:
+            return default
+
+    def _get_percent_config(self, key, default):
+        value = self._get_int_config(key, default)
+        value = max(0, min(100, value))
+        return value / 100.0
     
     # ==========================
     # [설정]
@@ -43,30 +67,45 @@ class KSWheel:
         if self.left_factor > 100: self.left_factor = 100
         if self.right_factor > 100: self.right_factor = 100
 
+    def reload_config(self):
+        """설정 파일에서 바퀴 보정값을 다시 읽는다."""
+        self.left_factor = self._get_int_config('left_calibration', 100)
+        self.right_factor = self._get_int_config('right_calibration', 100)
+        self.neutral_duties = [
+            self._get_int_config('right_neutral_duty', 5000),
+            self._get_int_config('left_neutral_duty', 5000)
+        ]
+        self.min_drive_speeds = [
+            self._get_percent_config('right_min_drive', 0),
+            self._get_percent_config('left_min_drive', 0)
+        ]
+
     # ==========================
     # [저수준 제어]
     # ==========================
     def set_angle(self, wheel_idx, angle, speed=1.0):
         # 서보 각도(0-180)를 속도 스케일링 적용한 PWM 듀티로 매핑
-        min_duty = 1000  # ~0.5 ms (최대 전진)
-        max_duty = 9000  # ~2.5 ms (최대 후진)
+        angle = max(0, min(180, angle))
+        speed = max(0.0, min(1.0, speed))
         neutral_duty = self.neutral_duties[wheel_idx]
         
-        if angle == 90:
+        if angle == STOP_ANGLE or speed <= 0:
             duty = neutral_duty
         else:
             # 속도에 캘리브레이션 팩터 적용
             actual_speed = speed
             if speed > 0:  # 움직일 때만 적용
-                 if wheel_idx == 0:  # 오른쪽
+                if wheel_idx == 0:  # 오른쪽
                     actual_speed = speed * (self.right_factor / 100.0)
-                 elif wheel_idx == 1:  # 왼쪽
+                elif wheel_idx == 1:  # 왼쪽
                     actual_speed = speed * (self.left_factor / 100.0)
+                actual_speed = max(actual_speed, self.min_drive_speeds[wheel_idx])
+                actual_speed = max(0.0, min(1.0, actual_speed))
 
             # 속도 기반 각도 스케일링
-            scaled_angle = 90 + (angle - 90) * actual_speed
+            scaled_angle = STOP_ANGLE + (angle - STOP_ANGLE) * actual_speed
             # 각도를 듀티 사이클로 매핑
-            duty = int(min_duty + (max_duty - min_duty) * scaled_angle / 180)
+            duty = int(MIN_DUTY + (MAX_DUTY - MIN_DUTY) * scaled_angle / 180)
             
         # 듀티 사이클 적용
         self.servos[wheel_idx].duty_u16(duty)
