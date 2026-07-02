@@ -13,6 +13,7 @@ import { GunSubsystem } from './gun.js';
 import { AudioSynthesizer } from './audio.js';
 import { CommandDispatcher } from './dispatch.js';
 import { EditorControls } from './editor_controls.js';
+import { SimulationObjectRegistry } from './sim_object.js';
 
 export class SimContext {
   constructor(THREE, A, stage, loadingEl, cfg, options = {}) {
@@ -92,6 +93,7 @@ export class SimContext {
     this.assets = new AssetLoader(this);
     this.renderEngine = new RenderEngine(this);
     this.dispatcher = new CommandDispatcher(this);
+    this.objects = new SimulationObjectRegistry(this);
     this.editor = new EditorControls(this);
   }
 
@@ -124,6 +126,7 @@ export class SimContext {
   dispose() {
     this.disposed = true;
     try { this.controls.dispose(); } catch {}
+    this.objects?.dispose?.();
     
     this.scene.traverse((o) => {
       if (o.isMesh || o.isSprite) {
