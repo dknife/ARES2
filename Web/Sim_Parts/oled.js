@@ -9,12 +9,54 @@ const OLED_SCALE = 4;
 const OLED_CHAR_W = 8;
 const OLED_CHAR_H = 8;
 
-export class OledSubsystem {
+export class Oled {
   constructor(ctx) {
     this.ctx = ctx;
     this.oledCanvas = null;
     this.oledCtx = null;
     this.oledTex = null;
+  }
+
+  // Build the OLED Canvas, texture, and screen mesh from the loaded gltf node
+  setupOled(roverGroup, root, editor) {
+    const THREE = this.ctx.THREE;
+    root.position.set(0, 0.1, 0.5);
+    root.rotation.x = -Math.PI / 6;
+
+    const probe = root.clone(true);
+    probe.position.set(0, 0, 0); probe.rotation.set(0, 0, 0); probe.scale.set(1, 1, 1);
+    const pbox = new THREE.Box3().setFromObject(probe);
+    const psize = pbox.getSize(new THREE.Vector3());
+    const pcenter = pbox.getCenter(new THREE.Vector3());
+
+    this.oledCanvas = document.createElement('canvas');
+    this.oledCanvas.width = 128 * OLED_SCALE;
+    this.oledCanvas.height = 64 * OLED_SCALE;
+    this.oledCtx = this.oledCanvas.getContext('2d');
+    
+    this.clear();
+    this.text(0, 0, 'ARES READY');
+
+    this.oledTex = new THREE.CanvasTexture(this.oledCanvas);
+    this.oledTex.colorSpace = THREE.SRGBColorSpace;
+    this.oledTex.magFilter = THREE.NearestFilter;
+    this.oledTex.minFilter = THREE.NearestFilter;
+    
+    const w = psize.x * 0.85 * 0.95 * 0.95 * 0.9;
+    const h = w * (this.oledCanvas.height / this.oledCanvas.width);
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ map: this.oledTex, side: THREE.DoubleSide })
+    );
+    const pivot = new THREE.Group();
+    pivot.position.set(pcenter.x, pcenter.y - h / 2, pbox.max.z + 0.001);
+    pivot.rotation.x = -Math.PI / 12;
+    screen.position.set(0, h / 2, 0);
+    pivot.add(screen);
+    root.add(pivot);
+
+    roverGroup.add(root);
+    editor?.register(root, 'Rover OLED');
   }
 
   clear() {

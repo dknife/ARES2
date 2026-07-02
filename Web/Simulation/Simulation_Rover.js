@@ -1,228 +1,77 @@
 // Simulation_Rover.js
 // Subsystem wrapper for the Rover (rover) topic, reusing modular subsystems.
 
-import { LedSubsystem } from '../Sim_Parts/leds.js';
-import { MovementSubsystem } from '../Sim_Parts/movement.js';
-import { OledSubsystem } from '../Sim_Parts/oled.js';
-import { GunSubsystem } from '../Sim_Parts/gun.js';
-import { WavesSubsystem } from '../Sim_Parts/waves.js';
-import { playGunFire as basePlayGunFire } from '../Sim_Parts/audio.js';
+import { Simulation_Base } from './Simulation_Base.js';
 
-export function playGunFire(audioCtx) {
-  basePlayGunFire(audioCtx);
-}
-
-export class RoverSubsystem {
-  constructor(ctx, makeGLTFLoader, OLED_ICONS) {
-    this.ctx = ctx;
-    this.makeGLTFLoader = makeGLTFLoader;
-    this.OLED_ICONS = OLED_ICONS;
-
-    this.leds = new LedSubsystem(ctx);
-    this.movement = new MovementSubsystem(ctx);
-    this.oled = new OledSubsystem(ctx);
-    this.gun = new GunSubsystem(ctx);
-    this.waves = new WavesSubsystem(ctx);
+export class Simulation_Rover extends Simulation_Base {
+  constructor(ctx) {
+    super(ctx);
+    this.leds = ctx.leds;
+    this.movement = ctx.movement;
+    this.oled = ctx.oled;
+    this.gun = ctx.gun;
+    this.waves = ctx.waves;
 
     const THREE = ctx.THREE;
     const scene = ctx.scene;
     const cfg = ctx.cfg;
 
+    // Create the main rover group node
     this.roverGroup = new THREE.Group();
     this.roverGroup.position.y = 0.4;
     scene.add(this.roverGroup);
+    ctx.roverGroup = this.roverGroup;
 
+    // Initialize LEDs configurations
     this.leds.init(cfg.eyes, cfg.chest, cfg.launch);
 
-    // Helper setup (Grid floor, boxes, etc.)
+    // Delegate World Helpers & Obstacles setup to Movement Subsystem
     if (cfg.helpers) {
-      const FLOOR_SIZE = 100;
-      const floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE),
-        new THREE.MeshStandardMaterial({
-          color: 0x3a3a3a, roughness: 0.95, metalness: 0.0,
-          polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
-        }),
-      );
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.y = -0.001;
-      floor.receiveShadow = true;
-      floor.renderOrder = -1;
-
-      const grid = new THREE.GridHelper(FLOOR_SIZE, FLOOR_SIZE, 0x444444, 0x666666);
-      grid.position.y = 0.002;
-
-      this.worldGroup = new THREE.Group();
-      this.worldGroup.add(floor, grid);
-      ctx.worldGroup = this.worldGroup;
-
-      // Random boxes
-      const BOX_SPAWN_RANGE = 50;
-      const BOX_CLEAR_R = 5;
-      const BOX_COUNT = 150;
-      const boxGeom = new THREE.BoxGeometry(1, 2, 1);
-      for (let i = 0; i < BOX_COUNT; i++) {
-        let x = 0, z = 0;
-        do {
-          x = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
-          z = (Math.random() * 2 - 1) * BOX_SPAWN_RANGE;
-        } while (Math.hypot(x, z) < BOX_CLEAR_R);
-        const box = new THREE.Mesh(
-          boxGeom,
-          new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(Math.random(), 0.55, 0.5), roughness: 0.8, metalness: 0.0 }),
-        );
-        box.position.set(x, 1, z);
-        box.castShadow = true;
-        box.receiveShadow = true;
-        this.worldGroup.add(box);
-        this.boxes.push(box);
-      }
-      scene.add(this.worldGroup);
-
-      const axes = new THREE.AxesHelper(1);
-      axes.position.y = 0.003;
-      scene.add(axes);
+      this.movement.setupWorld(scene, ctx.editor);
     }
 
-    // Setup sensor balls
-    {
-      const LED_COUNT = 6, LED_X0 = -0.4, LED_X1 = 0.4, LED_Y = 0.4, LED_Z = 0.25, LED_R = 0.05;
-      const step = (LED_X1 - LED_X0) / (LED_COUNT - 1);
-      const ledGeom = new THREE.SphereGeometry(LED_R, 16, 12);
-      for (let i = 0; i < LED_COUNT; i++) {
-        const ball = new THREE.Mesh(
-          ledGeom,
-          new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
-        );
-        ball.position.set(LED_X0 + step * i, LED_Y, LED_Z);
-        this.roverGroup.add(ball);
-        this.roverLeds.push(ball);
-      }
+    // Delegate Sensor Balls and indicator setups to Leds and Movement Subsystems
+    this.leds.setupRoverLeds(this.roverGroup);
+    this.movement.setupSensorIndicators(this.roverGroup);
 
-      this.magSensorBall = new THREE.Mesh(
-        ledGeom,
-        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
-      );
-      this.magSensorBall.position.set(0, -0.3, 0.9);
-      this.roverGroup.add(this.magSensorBall);
-
-      [-0.22, 0.22].forEach((x) => {
-        const ball = new THREE.Mesh(
-          ledGeom,
-          new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 }),
-        );
-        ball.position.set(x, 0.58, 0.1);
-        this.roverGroup.add(ball);
-        this.irSensorBalls.push(ball);
-      });
-    }
-
-    // Load GLTF Parts
-    const loader = makeGLTFLoader();
-    let remaining = cfg.parts.length;
-    cfg.parts.forEach((url) => {
-      loader.load(url, (gltf) => {
-        if (ctx.disposed) {
-          gltf.scene.traverse((o) => {
-            if (o.isMesh || o.isSprite) {
-              o.geometry?.dispose?.();
-              const m = o.material;
-              (Array.isArray(m) ? m : [m]).forEach((mm) => { mm?.map?.dispose?.(); mm?.dispose?.(); });
-            }
-          });
-          return;
-        }
-        const root = gltf.scene;
-        if (!/RoverBody\.glb$/.test(url)) root.scale.setScalar(0.5);
-        root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
-
+    // Delegate Multi-part GLTF loading and positioning to individual Subsystems
+    ctx.assets.loadModels(
+      cfg.parts,
+      (url, root) => {
         if (/RoverWheel\.glb$/.test(url)) {
-          root.scale.multiplyScalar(0.8);
-          this.wheelR = root;
-          this.wheelL = root.clone();
-          this.wheelR.rotation.y = Math.PI / 2;
-          this.wheelL.rotation.y = Math.PI / 2;
-          this.wheelR.position.set( 0.7, 0, -0.3);
-          this.wheelL.position.set(-0.7, 0, -0.3);
-          this.roverGroup.add(this.wheelR, this.wheelL);
+          this.movement.setupWheels(this.roverGroup, root, ctx.editor);
         } else if (/RoverRadar\.glb$/.test(url)) {
-          root.scale.multiplyScalar(0.5);
-          root.scale.multiplyScalar(0.8);
-          root.position.set(0, 0.5, -0.9);
-          this.antennaPivot = root;
-          this.roverGroup.add(root);
+          this.movement.setupRadar(this.roverGroup, root, ctx.editor);
         } else if (/RoverLED\.glb$/.test(url)) {
-          root.position.set(0, 0.35, 0.2);
-          root.rotation.x = Math.PI / 4;
-          this.roverGroup.add(root);
+          this.leds.setupLedMesh(this.roverGroup, root, ctx.editor);
         } else if (/RoverHead\.glb$/.test(url)) {
-          root.position.set(0, 0.6, -0.3);
-          root.rotation.y = Math.PI;
-          this.roverGroup.add(root);
+          this.movement.setupHead(this.roverGroup, root, ctx.editor);
         } else if (/RoverGun\.glb$/.test(url)) {
-          root.position.set(0.55, 0.5, -0.5);
-          root.rotation.y = Math.PI / 2;
-          this.roverGroup.add(root);
-          this.gunMesh = root;
-          {
-            const bbox = new THREE.Box3().setFromObject(root);
-            const size = bbox.getSize(new THREE.Vector3());
-            const center = bbox.getCenter(new THREE.Vector3());
-            let ax = 0;
-            if (size.y > size.x && size.y > size.z) ax = 1;
-            else if (size.z > size.x) ax = 2;
-            const minV = bbox.min.getComponent(ax);
-            const maxV = bbox.max.getComponent(ax);
-            const muzzleEnd = Math.abs(maxV) > Math.abs(minV) ? minV : maxV;
-            this.muzzleWorldPos.copy(center);
-            this.muzzleWorldPos.setComponent(ax, muzzleEnd);
-            this.muzzleForward.set(0, 0, 0);
-            this.muzzleForward.setComponent(ax, Math.sign(muzzleEnd - center.getComponent(ax)) || -1);
-          }
+          this.gun.setupGun(this.roverGroup, root, ctx.editor);
         } else if (/RoverOLED\.glb$/.test(url)) {
-          root.position.set(0, 0.1, 0.5);
-          root.rotation.x = -Math.PI / 6;
-          {
-            const probe = root.clone(true);
-            probe.position.set(0, 0, 0); probe.rotation.set(0, 0, 0); probe.scale.set(1, 1, 1);
-            const box = new THREE.Box3().setFromObject(probe);
-            const size = box.getSize(new THREE.Vector3());
-            const center = box.getCenter(new THREE.Vector3());
-
-            this.oledCanvas = document.createElement('canvas');
-            this.oledCanvas.width = 128 * 4;
-            this.oledCanvas.height = 64 * 4;
-            this.oledCtx = this.oledCanvas.getContext('2d');
-            this.oledClear();
-            this.oledText(0, 0, 'ARES READY');
-            this.oledTex = new THREE.CanvasTexture(this.oledCanvas);
-            this.oledTex.colorSpace = THREE.SRGBColorSpace;
-            this.oledTex.magFilter = THREE.NearestFilter;
-            this.oledTex.minFilter = THREE.NearestFilter;
-            const w = size.x * 0.85 * 0.95 * 0.95 * 0.9;
-            const h = w * (this.oledCanvas.height / this.oledCanvas.width);
-            const screen = new THREE.Mesh(
-              new THREE.PlaneGeometry(w, h),
-              new THREE.MeshBasicMaterial({ map: this.oledTex, side: THREE.DoubleSide })
-            );
-            const pivot = new THREE.Group();
-            pivot.position.set(center.x, center.y - h / 2, box.max.z + 0.001);
-            pivot.rotation.x = -Math.PI / 12;
-            screen.position.set(0, h / 2, 0);
-            pivot.add(screen);
-            root.add(pivot);
-            root.userData.oledScreen = screen;
-          }
-          this.roverGroup.add(root);
+          this.oled.setupOled(this.roverGroup, root, ctx.editor);
         } else {
+          // Fallback placement for generic parts
           this.roverGroup.add(root);
+          ctx.editor?.register(root, 'Rover Component');
         }
-        if (--remaining === 0 && ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
-      }, undefined, (err) => {
-        console.error('부속 로드 실패:', url, err);
-        if (--remaining === 0 && ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
-      });
-    });
+      },
+      () => {
+        if (ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
+        this.ctx.frame(0.6, 2.8);
+      }
+    );
+  }
+
+  // Base Controller interface overrides
+  dispose() {
+    super.dispose();
+    if (this.roverGroup && this.roverGroup.parent) {
+      this.roverGroup.parent.remove(this.roverGroup);
+    }
+    if (this.worldGroup && this.worldGroup.parent) {
+      this.worldGroup.parent.remove(this.worldGroup);
+    }
   }
 
   // Getters/setters delegating properties to respective subsystems
@@ -330,59 +179,14 @@ export class RoverSubsystem {
     this.gun.setGunFire();
   }
 
-  update(dt) {
-    // 1) Radar rotation
-    if (this.movement.radarOn && this.movement.antennaPivot) {
-      this.movement.antennaPivot.rotation.y += 0.15 * this.movement.radarDir;
-    }
-    
-    // 2) Wheel spin animation during movement
-    if (this.movement.servoOn && this.movement.wheelR && this.movement.wheelL) {
-      const amt = 4.0 * dt * this.movement.servoDir;
-      this.movement.wheelR.rotation.x += amt;
-      this.movement.wheelL.rotation.x += amt;
-    }
-
-    // 3) Servo turn translation/rotation
-    if (this.movement.servoOn || this.movement.servoTurnOn) {
-      const THREE = this.ctx.THREE;
-      if (this.movement.servoOn) {
-        const dirVec = new THREE.Vector3(0, 0, 1).applyQuaternion(this.roverGroup.quaternion);
-        this.roverGroup.position.addScaledVector(dirVec, 1.2 * dt * this.movement.servoDir);
-      }
-      if (this.movement.servoTurnOn) {
-        this.roverGroup.rotateY(0.9 * dt * this.movement.servoTurnDir);
-      }
-    }
-
-    // 4) Gun animations
-    this.gun.updateMuzzleFlash(dt);
-    this.gun.updateGunSmoke(dt);
-
-    // 5) Waves update
-    this.waves.updateWaves(dt);
-  }
-
-  dispose() {
-    this.leds.dispose();
-    this.movement.dispose();
-    this.oled.dispose();
-    this.gun.dispose();
-    this.waves.dispose();
-    if (this.roverGroup && this.roverGroup.parent) {
-      this.roverGroup.parent.remove(this.roverGroup);
-    }
-    if (this.worldGroup && this.worldGroup.parent) {
-      this.worldGroup.parent.remove(this.worldGroup);
-    }
-  }
-
+  // Properties checked by outside simulation.js wrapper
   get hasRoverLeds() { return this.leds.roverLeds.length > 0; }
   get hasDistanceSensor() { return this.movement.irSensorBalls.length > 0; }
-  get hasServo() { return !!this.ctx.worldGroup; }
+  get hasServo() { return !!this.worldGroup; }
   get hasRadar() { return !!this.movement.antennaPivot; }
   get hasGun() { return !!this.gun.gunMesh; }
   get hasOled() { return !!this.oled.oledCanvas; }
-  get hasRoverWave() { return !!this.ctx.worldGroup; }
+  get hasRoverWave() { return !!this.worldGroup; }
   get servoActive() { return this.movement.servoOn || this.movement.servoTurnOn; }
+  get hasBoxes() { return this.movement.boxes.length > 0; }
 }

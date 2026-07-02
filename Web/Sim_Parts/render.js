@@ -6,7 +6,7 @@ const SERVO_WORLD_SPEED = 1.2;
 const SERVO_TURN_SPEED = 0.9;
 const BOX_COLLIDE_R = 1.5;
 
-export class RenderEngine {
+export class Render {
   constructor(ctx) {
     this.ctx = ctx;
   }
