@@ -1402,6 +1402,9 @@ function initializeMissionListeners(ws) {
       updateRunButtonUI();
       if (isBleConnected()) {
         try {
+          // 진행 중 명령의 응답 대기를 끊어 전송 큐를 즉시 비운다.
+          // (안 끊으면 STOP_ALL이 앞 명령의 응답/타임아웃까지 큐에 갇힌다)
+          BluetoothManager.cancelPendingResponse('비상정지');
           await BluetoothManager.sendData('STOP_ALL', false);
           Logger.add('[비상정지] 모든 하드웨어 정지 완료', 'info');
         } catch (error) {

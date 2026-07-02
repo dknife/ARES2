@@ -7,13 +7,54 @@ from system_config import sys_config
 
 PWM_MAX = 65535
 
+# 시간지정 이동/대기 상한(초). Web/commandexecutor.js의 MAX_TIMED_SEC와 동기화.
+# blocking 처리 중에는 다른 명령을 못 받으므로 과도한 값을 강제로 자른다.
+MAX_TIMED_SEC = 60
+
 
 class CommandProcessor:
     """UART 명령 파싱 및 실행 클래스"""
-    
-    def __init__(self):
-        pass
-    
+
+    def __init__(self, abort_check=None):
+        # abort_check: 시간지정 동작 중 주기적으로 호출되는 콜백.
+        # True를 반환하면 비상정지 명령이 도착한 것 — 즉시 동작을 중단한다.
+        # (main.py의 AresRover._poll_abort가 주입된다)
+        self.abort_check = abort_check
+        # 직전 동작이 비상정지로 중단됐는지 표시 — BATCH가 남은 하위 명령
+        # 실행을 건너뛰는 데 사용한다. _handle_batch 진입 시 리셋.
+        self.aborted = False
+
+    def _abort_requested(self):
+        """abort_check를 안전하게 호출. 콜백 오류가 모터를 켠 채로
+        핸들러의 except로 새어 나가지 않도록 여기서 흡수한다."""
+        if not self.abort_check:
+            return False
+        try:
+            if self.abort_check():
+                self.aborted = True
+                return True
+            return False
+        except Exception as e:
+            print(f"[abort] 확인 오류: {e}")
+            return False
+
+    def _interruptible_sleep(self, sec):
+        """50ms 슬라이스로 대기하며 매 슬라이스 비상정지 도착을 확인한다.
+        정상 완료 시 True, 비상정지로 중단되면 False를 반환한다."""
+        try:
+            sec = float(sec)
+        except (ValueError, TypeError):
+            sec = 0
+        if sec > MAX_TIMED_SEC:
+            print(f"[timed] {sec}s 요청 → {MAX_TIMED_SEC}s로 제한")
+            sec = MAX_TIMED_SEC
+        end = utime.ticks_add(utime.ticks_ms(), int(sec * 1000))
+        while utime.ticks_diff(end, utime.ticks_ms()) > 0:
+            if self._abort_requested():
+                return False
+            utime.sleep_ms(50)
+        return True
+
     def _get_speed_pwm(self):
         """설정된 max_speed에서 PWM 값 계산"""
         spd = sys_config.get('max_speed') / 100.0
@@ -299,16 +340,26 @@ class CommandProcessor:
         파이프로 구분된 각 명령을 기존 디스패처로 차례 실행하고, 마지막에 한 번의 응답을 보낸다.
         값 반환 명령(DISTANCE/MAGNET/PING)과 제어 흐름은 Web 측에서 미리 차단한다."""
         try:
+            self.aborted = False
             body = data[len("BATCH;"):]
             for cmd in body.split('|'):
                 cmd = cmd.strip()
                 if not cmd:
                     continue
                 self.process(cmd)
+                # 하위 명령(시간지정 이동 등)이 비상정지로 중단됐으면
+                # 남은 하위 명령을 실행하지 않는다.
+                if self.aborted:
+                    return 1
                 # 논블로킹 부저가 BATCH 안에서 시작됐다면, 다음 음이 덮어쓰지
                 # 않도록 끝날 때까지 대기한다(BATCH는 펌웨어가 순차 타이밍을 보장).
+                # 대기 중에도 비상정지가 도착하면 즉시 배치를 중단한다.
                 if robot.buzzer and robot.buzzer.is_playing:
                     while robot.buzzer.is_playing:
+                        if self._abort_requested():
+                            robot.buzzer.stop()
+                            self._handle_stop_all()
+                            return 1
                         robot.buzzer.update()
                         utime.sleep_ms(10)
             return 1
@@ -382,12 +433,15 @@ class CommandProcessor:
                 robot.wheel.turn_right(speed=spd)
             elif direction == "left":
                 robot.wheel.turn_left(speed=spd)
-            
-            time.sleep(sec)
+
+            if not self._interruptible_sleep(sec):
+                self._handle_stop_all()
+                return 1
             robot.wheel.stop()
             return 1
         except Exception as e:
             print(f"t{direction.upper()} 오류: {e}")
+            robot.wheel.stop()
             return 0
     
     def _handle_continuous_wheel(self, data, direction):
@@ -449,12 +503,15 @@ class CommandProcessor:
                 robot.dcmotor.dc_forward(pwm_val)
             elif direction == "BACKWARD":
                 robot.dcmotor.dc_backward(pwm_val)
-            
-            time.sleep(sec)
+
+            if not self._interruptible_sleep(sec):
+                self._handle_stop_all()
+                return 1
             robot.dcmotor.dc_stop()
             return 1
         except Exception as e:
             print(f"tDCMOTOR 오류: {e}")
+            robot.dcmotor.dc_stop()
             return 0
     
     def _handle_timed_dcmotor_new(self, data, direction):
@@ -475,12 +532,15 @@ class CommandProcessor:
                 robot.dcmotor.dc_forward(pwm_val)
             elif direction == "backward":
                 robot.dcmotor.dc_backward(pwm_val)
-            
-            time.sleep(sec)
+
+            if not self._interruptible_sleep(sec):
+                self._handle_stop_all()
+                return 1
             robot.dcmotor.dc_stop()
             return 1
         except Exception as e:
             print(f"DC_t{direction.upper()} 오류: {e}")
+            robot.dcmotor.dc_stop()
             return 0
     
     def _handle_main_motor(self, data, direction):
@@ -705,11 +765,12 @@ class CommandProcessor:
 
     # 유틸리티 핸들러
     def _handle_sleep(self, data):
-        """대기"""
+        """대기 (비상정지 도착 시 즉시 중단)"""
         try:
             argv = data.split(',')
             sec = float(argv[1])
-            time.sleep(sec)
+            if not self._interruptible_sleep(sec):
+                self._handle_stop_all()
             return 1
         except Exception as e:
             print(f"SLEEP 오류: {e}")
