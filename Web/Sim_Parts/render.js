@@ -84,6 +84,9 @@ export class RenderEngine {
     if (ctx.gun && ctx.gun.gunMesh && typeof ctx.gun.updateGunSmoke === 'function') {
       ctx.gun.updateGunSmoke(dt);
     }
+    if (ctx.objects && typeof ctx.objects.update === 'function') {
+      ctx.objects.update(dt);
+    }
     if (ctx.editor && typeof ctx.editor.update === 'function') {
       ctx.editor.update();
     }

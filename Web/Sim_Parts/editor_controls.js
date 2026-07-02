@@ -1,13 +1,17 @@
 // ARES Simulation Editor Controls
-// Signature: Codex assisted implementation for mouse-based 3D object editing.
-// three.js TransformControls를 사용해 Unity와 비슷한 이동/회전/스케일 기즈모를 제공합니다.
+// Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
+
+import { createPrimitiveObject } from './object_factory.js';
 
 const MODES = ['translate', 'rotate', 'scale'];
+const SPAWN_MENU = [
+  { type: 'box', label: 'Box' },
+  { type: 'sphere', label: 'Sphere' },
+  { type: 'marker', label: 'Marker' },
+];
 
 export class EditorControls {
   constructor(ctx) {
-    // SimContext에서 생성한 three.js 객체를 공유합니다.
-    // 별도 렌더러를 만들지 않고 현재 시뮬레이션 캔버스 위에 에디터 기능만 얹습니다.
     this.ctx = ctx;
     this.THREE = ctx.THREE;
     this.A = ctx.A;
@@ -15,39 +19,35 @@ export class EditorControls {
     this.dom = ctx.renderer.domElement;
     this.orbit = ctx.controls;
 
-    // TransformControls가 번들에 없으면 에디터 기능만 조용히 비활성화합니다.
-    // 이 경우 기존 시뮬레이션 렌더링과 OrbitControls는 그대로 동작합니다.
     this.TransformControls = this.A?.TransformControls;
     this.enabled = !!this.TransformControls;
 
-    // assets.js가 등록해 주는 선택 가능한 오브젝트 목록입니다.
-    // 실제 Raycaster hit는 자식 Mesh에 걸릴 수 있으므로 부모를 거슬러 등록 오브젝트를 찾습니다.
     this.selectables = [];
     this.selected = null;
     this.mode = 'translate';
+    this.lastSpawnPoint = new this.THREE.Vector3();
 
-    // 선택 판정에 쓰는 Raycaster와 NDC 포인터 좌표입니다.
     this.raycaster = new this.THREE.Raycaster();
     this.pointer = new this.THREE.Vector2();
+    this.groundPlane = new this.THREE.Plane(new this.THREE.Vector3(0, 1, 0), 0);
 
-    // 선택된 오브젝트 외곽을 보여 주는 보조 박스입니다.
-    // TransformControls 기즈모와 함께 표시되면 선택 상태가 더 명확합니다.
     this.boxHelper = new this.THREE.BoxHelper(new this.THREE.Object3D(), 0xffd24a);
     this.boxHelper.visible = false;
     this.boxHelper.renderOrder = 999;
     this.ctx.scene.add(this.boxHelper);
 
-    // Move / Rotate / Scale 전환 UI를 시뮬레이션 stage 위에 올립니다.
     this.toolbar = this.createToolbar();
     this.ctx.stage.appendChild(this.toolbar);
+    this.menu = this.createContextMenu();
+    this.ctx.stage.appendChild(this.menu);
 
     this.onPointerDown = this.onPointerDown.bind(this);
+    this.onContextMenu = this.onContextMenu.bind(this);
+    this.onDocumentPointerDown = this.onDocumentPointerDown.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onDraggingChanged = this.onDraggingChanged.bind(this);
 
     if (this.enabled) {
-      // three.js 공식 TransformControls입니다.
-      // scene에 추가한 뒤 선택 오브젝트를 attach()하면 축 기즈모가 자동으로 나타납니다.
       this.transform = new this.TransformControls(this.camera, this.dom);
       this.transform.setMode(this.mode);
       this.transform.setSpace('world');
@@ -59,15 +59,13 @@ export class EditorControls {
       console.warn('ARES editor controls disabled: TransformControls is not available in window.ARES3.');
     }
 
-    // pointerdown은 오브젝트 선택용입니다.
-    // 실제 변환 드래그는 TransformControls 내부 이벤트가 처리합니다.
     this.dom.addEventListener('pointerdown', this.onPointerDown);
+    this.dom.addEventListener('contextmenu', this.onContextMenu);
+    document.addEventListener('pointerdown', this.onDocumentPointerDown);
     window.addEventListener('keydown', this.onKeyDown);
   }
 
   createToolbar() {
-    // 에디터 모드 전환용 툴바입니다.
-    // aria-pressed는 현재 활성 모드를 CSS와 접근성 상태에 동시에 반영합니다.
     const toolbar = document.createElement('div');
     toolbar.className = 'sim-editor-toolbar';
     toolbar.innerHTML = `
@@ -84,9 +82,36 @@ export class EditorControls {
     return toolbar;
   }
 
+  createContextMenu() {
+    const menu = document.createElement('div');
+    menu.className = 'sim-editor-context-menu';
+    menu.hidden = true;
+
+    const title = document.createElement('div');
+    title.className = 'sim-editor-context-title';
+    title.textContent = 'Create object';
+    menu.appendChild(title);
+
+    SPAWN_MENU.forEach((item) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.spawn = item.type;
+      btn.textContent = item.label;
+      btn.addEventListener('click', () => this.spawn(item.type));
+      menu.appendChild(btn);
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.dataset.action = 'delete-selected';
+    deleteBtn.textContent = 'Delete spawned';
+    deleteBtn.addEventListener('click', () => this.deleteSelected());
+    menu.appendChild(deleteBtn);
+
+    return menu;
+  }
+
   register(object, label = 'Object') {
-    // 외부 로더가 선택 가능한 조작 단위를 등록합니다.
-    // GLB의 모든 Mesh를 따로 등록하지 않고 루트 Group을 등록하면 기즈모가 전체 부품을 움직입니다.
     if (!object || this.selectables.some((entry) => entry.object === object)) return object;
 
     object.userData.simEditorLabel = label;
@@ -95,14 +120,11 @@ export class EditorControls {
   }
 
   unregister(object) {
-    // 오브젝트 제거 시 Raycaster 후보에서도 제거합니다.
-    // 현재 선택 중인 대상이라면 TransformControls도 같이 detach합니다.
     this.selectables = this.selectables.filter((entry) => entry.object !== object);
     if (this.selected === object) this.select(null);
   }
 
   setMode(mode) {
-    // TransformControls가 지원하는 세 가지 기본 모드만 허용합니다.
     if (!MODES.includes(mode)) return;
 
     this.mode = mode;
@@ -114,11 +136,9 @@ export class EditorControls {
   }
 
   select(object) {
-    // null 선택은 선택 해제입니다.
     this.selected = object || null;
 
     if (this.selected && this.transform) {
-      // attach()가 Unity식 기즈모를 선택 오브젝트에 붙이는 핵심 호출입니다.
       this.transform.attach(this.selected);
       this.transform.visible = true;
     } else if (this.transform) {
@@ -134,27 +154,66 @@ export class EditorControls {
     if (text) text.textContent = label;
   }
 
+  getSpawnParent() {
+    return this.ctx.worldGroup || this.ctx.scene;
+  }
+
+  spawn(type) {
+    const simObject = createPrimitiveObject(this.ctx, type);
+    const parent = this.getSpawnParent();
+    const worldPoint = this.lastSpawnPoint.clone();
+
+    this.ctx.objects.add(simObject, parent);
+    simObject.setWorldPosition(worldPoint, parent);
+
+    this.select(simObject.root);
+    this.hideContextMenu();
+    return simObject.root;
+  }
+
+  deleteSelected() {
+    const object = this.selected;
+    const simObject = object ? this.ctx.objects?.getByRoot(object) : null;
+    if (!simObject?.spawned) {
+      this.hideContextMenu();
+      return;
+    }
+
+    this.ctx.objects.remove(simObject);
+    this.hideContextMenu();
+  }
+
   onKeyDown(event) {
-    // 입력 UI를 조작하는 중에는 단축키가 텍스트 입력을 방해하지 않게 합니다.
     if (event.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/i.test(event.target.tagName)) return;
 
-    // Unity/Unreal 계열에서 익숙한 W/E/R 배치를 따릅니다.
     const key = event.key.toLowerCase();
     if (key === 'w') this.setMode('translate');
     else if (key === 'e') this.setMode('rotate');
     else if (key === 'r') this.setMode('scale');
-    else if (key === 'escape') this.select(null);
+    else if (key === 'escape') {
+      this.select(null);
+      this.hideContextMenu();
+    } else if ((key === 'delete' || key === 'backspace') && this.selected?.userData?.simEditorSpawned) {
+      this.deleteSelected();
+    }
   }
 
   setPointer(event) {
-    // 브라우저 좌표를 Raycaster가 쓰는 NDC 좌표(-1~1)로 변환합니다.
     const rect = this.dom.getBoundingClientRect();
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   }
 
+  getGroundPoint(event) {
+    this.setPointer(event);
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+
+    const point = new this.THREE.Vector3();
+    if (this.raycaster.ray.intersectPlane(this.groundPlane, point)) return point;
+    return this.raycaster.ray.at(4, point);
+  }
+
   pick(event) {
-    // 캔버스 클릭 위치에서 선택 후보 오브젝트를 찾습니다.
     this.setPointer(event);
     this.raycaster.setFromCamera(this.pointer, this.camera);
 
@@ -163,8 +222,6 @@ export class EditorControls {
 
     for (const hit of hits) {
       let node = hit.object;
-
-      // hit.object는 GLB 내부 Mesh일 수 있으므로 등록된 부모 Group까지 거슬러 올라갑니다.
       while (node) {
         const entry = this.selectables.find((item) => item.object === node);
         if (entry) return entry.object;
@@ -175,11 +232,29 @@ export class EditorControls {
     return null;
   }
 
+  showContextMenu(event) {
+    const rect = this.ctx.stage.getBoundingClientRect();
+    const menuW = 172;
+    const menuH = 178;
+    const x = Math.min(Math.max(8, event.clientX - rect.left), Math.max(8, rect.width - menuW - 8));
+    const y = Math.min(Math.max(8, event.clientY - rect.top), Math.max(8, rect.height - menuH - 8));
+
+    this.menu.style.left = `${x}px`;
+    this.menu.style.top = `${y}px`;
+    this.menu.hidden = false;
+
+    const deleteBtn = this.menu.querySelector('[data-action="delete-selected"]');
+    if (deleteBtn) deleteBtn.disabled = !this.selected?.userData?.simEditorSpawned;
+  }
+
+  hideContextMenu() {
+    this.menu.hidden = true;
+  }
+
   onPointerDown(event) {
     if (event.button !== 0) return;
+    this.hideContextMenu();
 
-    // 기즈모 축 위에서 누른 경우에는 TransformControls가 변환을 처리해야 하므로
-    // 여기서는 선택 변경을 하지 않습니다.
     if (this.transform?.axis) return;
 
     const picked = this.pick(event);
@@ -191,23 +266,36 @@ export class EditorControls {
     }
   }
 
+  onContextMenu(event) {
+    event.preventDefault();
+    this.lastSpawnPoint.copy(this.getGroundPoint(event));
+
+    const picked = this.pick(event);
+    if (picked) this.select(picked);
+
+    this.showContextMenu(event);
+  }
+
+  onDocumentPointerDown(event) {
+    if (this.menu.hidden || this.menu.contains(event.target) || event.target === this.dom) return;
+    this.hideContextMenu();
+  }
+
   onDraggingChanged(event) {
-    // 기즈모를 드래그하는 동안 OrbitControls를 끕니다.
-    // 그렇지 않으면 오브젝트 변환과 카메라 회전이 동시에 발생합니다.
     this.orbit.enabled = !event.value;
   }
 
   update() {
-    // 외부 애니메이션이나 시뮬레이션 명령으로 선택 오브젝트가 움직일 수 있으므로
-    // 렌더 루프에서 선택 박스를 계속 현재 bbox에 맞춥니다.
     if (this.selected) this.boxHelper.setFromObject(this.selected);
   }
 
   dispose() {
-    // 토픽 전환/시뮬레이션 종료 시 DOM 이벤트와 three.js 리소스를 정리합니다.
     this.dom.removeEventListener('pointerdown', this.onPointerDown);
+    this.dom.removeEventListener('contextmenu', this.onContextMenu);
+    document.removeEventListener('pointerdown', this.onDocumentPointerDown);
     window.removeEventListener('keydown', this.onKeyDown);
     this.toolbar?.remove();
+    this.menu?.remove();
 
     if (this.transform) {
       this.transform.removeEventListener('dragging-changed', this.onDraggingChanged);
