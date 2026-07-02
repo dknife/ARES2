@@ -59,8 +59,12 @@ class AresRover:
             tx=Pin(UART_TX_PIN),
             rx=Pin(UART_RX_PIN)
         )
-        # 수신 버퍼 (_poll_abort가 참조하므로 processor보다 먼저 초기화)
-        self.rx_buffer = ""
+        # 수신 버퍼 (_poll_abort가 참조하므로 processor보다 먼저 초기화).
+        # bytes로 유지한다 — 멀티바이트 문자(한글 장치명 등)가 20바이트 BLE
+        # 청크 경계에서 잘려도 다음 청크와 합쳐 복원되도록, decode는 완성된
+        # 라인 단위로만 수행한다. (MicroPython rp2는 decode의 errors 인자를
+        # 지원하지 않아 str 누적 방식은 UnicodeError로 명령이 유실됐다)
+        self.rx_buffer = b""
         # 명령 프로세서 초기화 — 시간지정 동작(SERVO_t*/DC_t*/SLEEP/BATCH) 중
         # 비상정지를 감지할 수 있도록 폴링 콜백을 주입한다.
         self.processor = CommandProcessor(abort_check=self._poll_abort)
@@ -78,25 +82,34 @@ class AresRover:
         if self.uart.any():
             chunk = self.uart.read()
             if chunk:
-                try:
-                    self.rx_buffer += chunk.decode('utf-8', 'ignore')
-                except Exception:
-                    pass  # 잘린 멀티바이트 등 디코드 실패 — 정지 감지에는 영향 없음
+                self.rx_buffer += chunk
                 if len(self.rx_buffer) > MAX_BUFFER_SIZE:
                     print("[UART] 버퍼 오버플로우, 초기화")
-                    self.rx_buffer = ""
+                    self.rx_buffer = b""
                     return False
-        if '\n' not in self.rx_buffer:
+        if b'\n' not in self.rx_buffer:
             return False
-        lines = self.rx_buffer.split('\n')
+        lines = self.rx_buffer.split(b'\n')
         tail = lines.pop()  # 마지막 조각(미완성 라인)은 보존
         for i, line in enumerate(lines):
-            head = line.strip().split(',', 1)[0]
+            head = self._decode_line(line)
+            if head is None:
+                continue
+            head = head.split(',', 1)[0]
             if head in self.ABORT_CMDS:
-                self.rx_buffer = '\n'.join(lines[i + 1:] + [tail])
+                self.rx_buffer = b'\n'.join(lines[i + 1:] + [tail])
                 print(f"[비상정지] 동작 중 {head} 수신 → 즉시 중단")
                 return True
         return False
+
+    @staticmethod
+    def _decode_line(raw):
+        """완성된 라인 bytes를 str로 디코드. 실패 시 None(해당 라인 폐기)."""
+        try:
+            return raw.decode('utf-8').strip()
+        except UnicodeError:
+            print("[UART] 디코드 실패, 라인 폐기")
+            return None
 
     def boot(self):
         """부팅 시퀀스 실행"""
@@ -105,7 +118,7 @@ class AresRover:
             print("Cleaning UART buffer...")
             while self.uart.any():
                 self.uart.read()
-        self.rx_buffer = ""
+        self.rx_buffer = b""
         
         # 모든 하드웨어 안전 정지
         self._safe_stop_all_motors()
@@ -128,13 +141,16 @@ class AresRover:
         self.robot.stop_all()
 
     def _pop_line(self):
-        """rx_buffer에 완전한 라인이 있으면 떼어내 반환, 없으면 None."""
-        if '\n' not in self.rx_buffer:
-            return None
-        newline_idx = self.rx_buffer.index('\n')
-        complete_line = self.rx_buffer[:newline_idx].strip()
-        self.rx_buffer = self.rx_buffer[newline_idx + 1:]
-        return complete_line
+        """rx_buffer에 완전한 라인이 있으면 떼어내 str로 반환, 없으면 None.
+        디코드 불가 라인(전송 오류 등)은 폐기하고 다음 라인을 시도한다."""
+        while b'\n' in self.rx_buffer:
+            newline_idx = self.rx_buffer.index(b'\n')
+            raw = self.rx_buffer[:newline_idx]
+            self.rx_buffer = self.rx_buffer[newline_idx + 1:]
+            line = self._decode_line(raw)
+            if line is not None:
+                return line
+        return None
 
     def _read_uart_line(self):
         """UART에서 완전한 라인 읽기.
@@ -156,12 +172,12 @@ class AresRover:
             if self.uart.any():
                 chunk = self.uart.read()
                 if chunk:
-                    self.rx_buffer += chunk.decode('utf-8', 'ignore')
+                    self.rx_buffer += chunk
 
                 # 버퍼 오버플로우 방지
                 if len(self.rx_buffer) > MAX_BUFFER_SIZE:
                     print("[UART] 버퍼 오버플로우, 초기화")
-                    self.rx_buffer = ""
+                    self.rx_buffer = b""
                     return None
 
                 # newline 즉시 종료
