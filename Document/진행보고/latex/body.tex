@@ -1132,3 +1132,128 @@ function closeAccordion(el) {
   \end{subfigure}
   \caption{8일차 — 오늘(2026.07.02) 커밋 히스토리}
 \end{figure}
+
+\section{9일차 — 전체 코드 점검 · 치명 결함 4건 수정(비상정지 즉시화·BLE 응답 동기화·설정 안전화)}
+\textit{2026.07.03 (금) · 개발 KST}
+
+\begin{summarybox}
+서비스 전체 코드를 대상으로 \textbf{정밀 점검(코드 리뷰)}을 수행했다. \textbf{웹 코어}(블록코딩
+실행기$\cdot$BLE 통신), \textbf{3D 시뮬레이터}, \textbf{Pico 펌웨어}, 그리고 \textbf{웹$\leftrightarrow$펌웨어$\leftrightarrow$시뮬레이터
+명령 프로토콜 정합성}의 네 영역으로 나눠 검토해 \textbf{치명(HIGH) 결함 4건}과 중간$\cdot$경미
+문제 20여 건을 발견했다. HIGH 4건 --- \textbf{① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅
+불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연} --- 은 당일 \textbf{수정 계획 수립
+$\to$ 코드 수정 $\to$ 자동화 검증(펌웨어 8$\cdot$웹 17 시나리오 전체 통과)}까지 완료했다.
+\end{summarybox}
+
+\subsection{문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)}
+네 영역을 병렬로 정밀 점검했다: ① 웹 코어(블록 정의$\leftrightarrow$툴박스$\leftrightarrow$실행기 연결$\cdot$BLE 송수신),
+② 3D 시뮬레이터(모듈 import/export$\cdot$에셋 경로$\cdot$디스패치), ③ Pico 펌웨어(명령 디스패치$\cdot$모듈
+가드$\cdot$MicroPython 제약), ④ 세 계층이 주고받는 \textbf{명령 문자열 프로토콜의 상호 정합성}.
+블록$\leftrightarrow$툴박스 매핑, 파일명 대소문자, GLTF 경로, BLE 20바이트 청킹, fire-and-forget 명령 목록의
+웹$\leftrightarrow$펌웨어 동기화 등은 \textbf{이상 없음}을 확인했고, 아래 4건을 \textbf{치명(HIGH)}으로 분류했다.
+
+\smallskip
+\noindent{\raggedright\chip{4개 영역 병렬 점검} \chip{HIGH 4건} \chip{MEDIUM$\cdot$LOW 20여 건} %
+\chip{연결$\cdot$정합성 다수 확인}\par}
+
+\begin{itemize}
+  \item \textbf{① 자석 센서 표시 반전}(\code{dashboard.html}) — 펌웨어(\code{magsensor.py})는
+  \textbf{1=감지}로 보내는데 대시보드는 \code{mag===0}일 때 ``감지됨''을 표시. 자석이 없으면
+  ``감지됨'', 있으면 ``정상''으로 나오는 \textbf{완전 반전} 버그.
+  \item \textbf{② 설정 파일 오타 한 줄로 로버 부팅 불가}(\code{system\_config.py}) —
+  \code{is\_module\_enabled()}가 \code{int()}를 보호 없이 호출. 사용자가 설정 파일에
+  \code{enable\_wheel=yes}처럼 쓰면 \textbf{import 시점}(\code{hardware.py}가 호출)에 예외가 발생해
+  \code{main.py}가 아예 시작하지 못함.
+  \item \textbf{③ 5초 초과 명령의 BLE 응답 어긋남}(\code{bluetooth.js}) — 시간지정 이동(예:
+  10초 전진)은 펌웨어가 동작 완료 후에야 ack를 보내는데 웹 타임아웃은 고정 5초. 타임아웃 뒤
+  도착한 \textbf{늦은 ack가 다음 명령의 응답 슬롯을 오염}시켜, 이후 ``거리 측정'' 값이 어긋나는 등
+  응답 스트림이 한 칸씩 밀림.
+  \item \textbf{④ 비상정지 지연} — 이중 차단: 웹은 STOP\_ALL이 \textbf{전송 큐에 갇혀} 앞 명령의
+  응답/타임아웃까지 대기하고, 펌웨어는 시간지정 이동을 \textbf{상한 없는 blocking sleep}으로 처리해
+  그동안 어떤 명령도 못 받음(\code{tFORWARD,9999}면 수 시간). 어린이용 로봇에서 실질적 안전 결함.
+  \item \textbf{MEDIUM$\cdot$LOW(후속 수정 예정)} — \code{Web/Simulation/} 폴더가 실제로는 어디서도
+  import되지 않는 죽은 코드(문서와 불일치), \code{SET\_PIN}이 저장만 되고 미적용, 블록 실행기의
+  else-if$\cdot$반환값 함수 본문 누락, 대시보드 연결 상태 5초 후 오표시, 프레임레이트 종속
+  애니메이션 등.
+\end{itemize}
+
+\subsection{수정 계획 — 치명(HIGH) 4건}
+발견 당일 4건의 수정 계획을 수립했다. 원칙은 \textbf{(a) 근본 원인 제거, (b) 웹$\cdot$펌웨어 양쪽
+방어, (c) 자동화 검증 동반}이다.
+
+\begin{itemize}
+  \item \textbf{① 자석 반전} — 대시보드 판정 조건을 펌웨어 규약(1=감지)에 맞게 뒤집는다(한 줄).
+  \item \textbf{② 부팅 안전화} — \code{is\_module\_enabled()}를 try/except로 감싸 잘못된 값이면
+  \textbf{크래시 대신 해당 모듈만 비활성}으로 강등하고 시리얼 로그로 원인을 알린다.
+  \item \textbf{③ 응답 동기화(2단 방어)} — (a) 명령 문자열에서 예상 소요시간을 계산해 \textbf{타임아웃을
+  동적으로 연장}(SERVO\_t*/DC\_t*/SLEEP은 초 인자, BATCH는 하위 명령 합산), (b) 값 반환 명령
+  (DISTANCE$\to$\code{DIST:} 등)은 \textbf{기대 응답 접두어를 검증}해 무관한 늦은 ack를 버리고 계속
+  대기. 부수로 대시보드 저장 타임아웃 기본값(20000ms)을 5000ms로 일치.
+  \item \textbf{④ 비상정지 즉시화} — 웹: 비상정지 시 \textbf{대기 중 응답 promise를 즉시 취소}해
+  전송 큐를 비우고 STOP\_ALL을 바로 내보냄. 펌웨어: blocking sleep을 \textbf{50ms 슬라이스}로
+  바꾸고 매 슬라이스 UART를 폴링해 STOP\_ALL 도착 시 즉시 정지. \textbf{시간 상한 60초}를
+  웹$\cdot$펌웨어 양쪽에 동기 적용.
+\end{itemize}
+
+\subsection{수정 내용 — 적용 결과 및 자동화 검증}
+계획대로 \textbf{8개 파일에서 +224 / $-$34 라인}을 수정했다(웹 5$\cdot$펌웨어 3). 핵심 구현은
+펌웨어의 \textbf{중단 가능 sleep}과 웹의 \textbf{동적 타임아웃$\cdot$응답 짝 검증}이다.
+
+\smallskip
+\noindent{\raggedright\chip{비상정지 $\sim$0.1s 반응} \chip{시간 상한 60s(웹$\cdot$펌웨어 동기)} %
+\chip{동적 타임아웃} \chip{응답 접두어 검증} \chip{부팅 크래시 방지} \chip{자석 표시 정상화}\par}
+
+\begin{itemize}
+  \item \textbf{펌웨어}(\code{process\_data.py}$\cdot$\code{main.py}$\cdot$\code{system\_config.py}) —
+  \code{\_interruptible\_sleep()} 도입(시간지정 휠$\cdot$DC$\cdot$SLEEP$\cdot$BATCH 부저 대기 5곳 교체),
+  \code{main.py}의 \code{\_poll\_abort()}가 동작 중 UART를 폴링해 STOP\_ALL만 선별 소비,
+  BATCH는 중단 시 남은 하위 명령을 건너뜀. \code{MAX\_TIMED\_SEC=60} 클램프.
+  \item \textbf{웹}(\code{bluetooth.js}$\cdot$\code{commandexecutor.js}$\cdot$\code{main.js}$\cdot$%
+  \code{constants.js}$\cdot$\code{dashboard.html}) — \code{\_estimateBlockingMs()} 동적 타임아웃,
+  \code{\_expectedResponsePrefix()} 응답 짝 검증, \code{cancelPendingResponse()} 비상정지 경로,
+  블록 초 입력 클램프(\code{\_clampSeconds}), 자석 판정 반전 수정, 타임아웃 기본값 일치.
+  \item \textbf{자동화 검증} — MicroPython 모듈(machine$\cdot$utime$\cdot$hardware)을 스텁으로 대체한
+  CPython 하니스로 펌웨어 \textbf{8개 시나리오}(``10초 전진'' 중 STOP\_ALL 주입 $\to$
+  \textbf{0.36초 내 정지}, 9999초 요청 $\to$ 60초 클램프, BATCH 중단 전파, 콜백 예외 안전성 등)와
+  node로 실제 웹 모듈을 import한 \textbf{17개 케이스}(타임아웃 추정 8$\cdot$응답 짝 검증 6$\cdot$취소
+  경로 3)를 실행해 \textbf{전체 통과}를 확인했다.
+\end{itemize}
+
+\begin{lstlisting}[style=py, caption={\code{Pico/process\_data.py} --- 중단 가능 sleep: 50ms 슬라이스마다 비상정지 폴링 + 60초 상한}]
+MAX_TIMED_SEC = 60   # 시간지정 이동/대기 상한 (웹 _clampSeconds와 동기)
+
+def _interruptible_sleep(self, sec):
+    """50ms 슬라이스로 대기하며 매 슬라이스 비상정지 도착을 확인한다."""
+    if sec > MAX_TIMED_SEC:
+        sec = MAX_TIMED_SEC
+    end = utime.ticks_add(utime.ticks_ms(), int(sec * 1000))
+    while utime.ticks_diff(end, utime.ticks_ms()) > 0:
+        if self._abort_requested():   # main.py의 _poll_abort가 STOP_ALL 감지
+            return False              # -> 핸들러가 즉시 stop_all()
+        utime.sleep_ms(50)
+    return True
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={\code{Web/bluetooth.js} --- 동적 타임아웃(예상 소요시간 합산)과 기대 응답 접두어 검증}]
+// 시간지정 명령은 예상 소요시간만큼 타임아웃을 연장 (BATCH는 하위 명령 합산)
+_estimateTimeoutMs(command) {
+    return BLUETOOTH_CONFIG.RESPONSE_TIMEOUT + this._estimateBlockingMs(command);
+}
+
+// 값 반환 명령 대기 중 도착한 무관 데이터(직전 blocking 명령의 늦은 ack "1")를
+// 버리고 진짜 응답(DIST:/SYS_VALUES/...)을 계속 기다린다 -> 응답 밀림 차단
+_resolvePromise(data) {
+    const expected = this._expectedResponsePrefix(state.pendingCommand);
+    if (expected && !String(data).toUpperCase().startsWith(expected)) return;
+    /* ... resolve ... */
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=py, caption={검증 하니스 실행 결과 발췌 --- 10초 이동이 비상정지로 0.36초 만에 중단}]
+[PASS] STOP_ALL 감지·앞 명령 폐기·꼬리 보존 (buffer='DIST')
+[PASS] 10초 이동이 ~0.3초에 중단 (elapsed=0.36s)
+[PASS] SLEEP,10 이 ~0.3초에 중단 + stop_all (elapsed=0.35s)
+[PASS] BATCH: 중단 후 나머지 하위 명령 건너뜀
+[timed] 9999.0s 요청 -> 60s로 제한
+실패: 없음 — 펌웨어 8·웹 17 시나리오 전체 통과
+\end{lstlisting}
