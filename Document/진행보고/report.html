@@ -1425,7 +1425,7 @@ function closeAccordion(el) {
                 <h2>전체 코드 점검 · 치명 결함 4건 수정 — 비상정지 즉시화·BLE 응답 동기화·설정 안전화</h2>
                 <span class="day-date">2026.07.03 (금) · 개발 KST</span>
             </div>
-            <p class="day-summary">서비스 전체 코드를 대상으로 <b>정밀 점검(코드 리뷰)</b>을 수행했다. <b>웹 코어</b>(블록코딩 실행기·BLE 통신), <b>3D 시뮬레이터</b>, <b>Pico 펌웨어</b>, 그리고 <b>웹↔펌웨어↔시뮬레이터 명령 프로토콜 정합성</b>의 네 영역으로 나눠 검토해 <b>치명(HIGH) 결함 4건</b>과 중간·경미 문제 20여 건을 발견했다. HIGH 4건 — <b>① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅 불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연</b> — 은 당일 <b>수정 계획 수립 → 코드 수정 → 자동화 검증(펌웨어 8·웹 17 시나리오 전체 통과)</b>까지 완료했다.</p>
+            <p class="day-summary">서비스 전체 코드를 대상으로 <b>정밀 점검(코드 리뷰)</b>을 수행했다. <b>웹 코어</b>(블록코딩 실행기·BLE 통신), <b>3D 시뮬레이터</b>, <b>Pico 펌웨어</b>, 그리고 <b>웹↔펌웨어↔시뮬레이터 명령 프로토콜 정합성</b>의 네 영역으로 나눠 검토해 <b>치명(HIGH) 결함 4건</b>과 중간·경미 문제 20여 건을 발견했다. HIGH 4건 — <b>① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅 불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연</b> — 은 당일 <b>수정 계획 수립 → 코드 수정 → 자동화 검증(펌웨어 8·웹 17 시나리오 전체 통과)</b>까지 완료했다. 이어 <b>중간(MEDIUM) 등급 5건</b> — 한글 명령 유실·블록 인터프리터 누락·UI 배선·대시보드 연결 표시·프레임레이트 종속 애니메이션 — 도 같은 날 수정·검증했다.</p>
 
             <div class="tasks">
                 <h3>🔍 문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)</h3>
@@ -1513,6 +1513,38 @@ _resolvePromise(data) {
 [PASS] BATCH: 중단 후 나머지 하위 명령 건너뜀
 [timed] 9999.0s 요청 -&gt; 60s로 제한
 실패: 없음 — 펌웨어 8·웹 17 시나리오 전체 통과</code></pre>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🔧 후속 수정 — 중간(MEDIUM) 결함 5건 (당일 처리)</h3>
+                <p class="lead">점검에서 발견한 중간 등급 문제 가운데 5건을 이어서 수정했다(<b>6개 파일 +178 / −37</b>). 나머지 2건은 보류했다 — <code>Web/Simulation/</code> 죽은 코드는 <b>팀원 브랜치</b>(<code>Simulation_LeeMinhyuck</code>)가 해당 폴더의 재배선을 진행 중이어서 main에서 손대면 충돌만 만들고(머지 리뷰 때 확인), <code>SET_PIN</code> 미적용은 후속 작업으로 넘겼다.</p>
+                <div class="chips">
+                    <span class="chip t">한글 명령 유실 해결</span>
+                    <span class="chip">else-if·함수 본문 실행</span>
+                    <span class="chip">버튼 라벨·코딩 탭 배선</span>
+                    <span class="chip">대시보드 상태 폴링</span>
+                    <span class="chip">dt 기반 애니메이션</span>
+                </div>
+                <ul>
+                    <li>🔩 <b>한글 명령 유실</b> (<code>Pico/main.py</code>) — 수신 버퍼를 str에서 <b>bytes</b>로 전환하고 완성된 라인만 디코드. 한글 장치명 등 멀티바이트 문자가 20바이트 BLE 청크 경계에서 잘려도 다음 청크와 합쳐 복원되며(MicroPython rp2는 <code>decode</code>의 errors 인자를 무시하고 예외를 던져 명령이 유실됐다), 깨진 라인은 폐기하고 다음 명령을 정상 처리한다.</li>
+                    <li>🧩 <b>블록 인터프리터 2건</b> (<code>commandexecutor.js</code>) — <code>controls_if</code>가 IF0..IFn을 순회해 "아니면 만약"(else-if) 절을 실행. 반환값 함수는 <b>비동기 사전 해석</b> 방식 도입 — 값 평가 전에 트리 안의 함수 호출을 찾아 본문(STACK)을 실행하고 반환값을 캐시하며, while 조건은 매 반복 재해석, 재귀는 16단계로 제한.</li>
+                    <li>🎨 <b>UI 배선 2건</b> (<code>main.js</code>) — 툴바 버튼이 화면 상태에 따라 "블록코딩·메인·코딩"으로 정상 전환되도록 상태 헬퍼를 전달하는 래퍼로 호출부 4곳 통일. 하단바 "코딩" 탭이 열려 있는 점검(대시보드) 화면을 닫고 진입하도록 수정(화면 갇힘 해소).</li>
+                    <li>📡 <b>대시보드 연결 표시</b> (<code>dashboard.html</code>) — <code>GET_STATUS</code>를 <b>3초 주기</b>로 폴링(iframe이 숨겨진 동안은 건너뜀)하고 끊김 판정 임계를 7.5초로 조정. 정상 연결이 5초 뒤 항상 "연결 끊김"으로 표시되던 문제 해소.</li>
+                    <li>🎮 <b>프레임레이트 종속 애니메이션</b> (<code>Sim_Parts/render.js</code>·<code>rocket.js</code>) — 레이더 회전·로켓 상승을 프레임당 고정 증분에서 <b>초당 속도 × dt</b>로 환산(<code>RADAR_SPIN</code>=9 rad/s, <code>ROCKET_SPEED</code>=0.16/s). 60Hz 체감은 동일, 120Hz+에서 2배 빨라지던 문제 해소.</li>
+                    <li>✅ <b>검증</b> — 펌웨어 하니스에 한글 청크 분할 복원·깨진 라인 폐기 시나리오를 추가해 <b>11개</b> 통과, 블록 인터프리터는 목업 워크스페이스로 else-if 분기·함수 본문 실행(본문이 설정한 변수 42 반환)·무한재귀 방어까지 <b>6개</b> 통과.</li>
+                </ul>
+
+                <figure class="code">
+                    <figcaption><b>Web/commandexecutor.js</b> — 반환값 함수의 비동기 사전 해석: 본문 실행 후 반환값을 캐시</figcaption>
+                    <pre class="code"><code>// evaluateValueBlock은 동기 함수라 명령 전송이 필요한 함수 본문을 직접 실행할
+// 수 없다. 값 평가 전에 트리 안의 함수 호출을 실행해 반환값을 캐시해 둔다.
+async _executeFunctionCall(callBlock) {
+  await this._setupProcedureArgs(callBlock, defBlock);
+  await this.processBlock(defBlock.getInputTargetBlock('STACK'));  // 본문 실행
+  const value = this.evaluateValueBlock(returnBlock);              // 반환값 평가
+  this._funcResults.set(callBlock.id, value);                     // 캐시 -&gt; 동기 평가가 사용
+}</code></pre>
                 </figure>
             </div>
         </section>
