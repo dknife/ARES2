@@ -18,6 +18,19 @@ class CommandProcessor:
         """설정된 max_speed에서 PWM 값 계산"""
         spd = sys_config.get('max_speed') / 100.0
         return int(spd * PWM_MAX)
+
+    def _clamp_percent_speed(self, value):
+        """0~100 입력값을 0.0~1.0 속도로 변환"""
+        return max(0.0, min(1.0, float(value) / 100.0))
+
+    def _get_wheel_speed(self, argv, index):
+        """명령 인자 속도를 읽되 시스템 max_speed를 상한으로 적용"""
+        max_speed = self._clamp_percent_speed(sys_config.get('max_speed'))
+        if len(argv) > index and argv[index] != "":
+            requested_speed = self._clamp_percent_speed(argv[index])
+        else:
+            requested_speed = max_speed
+        return min(requested_speed, max_speed)
     
     def process(self, data):
         """명령 처리 및 결과 반환"""
@@ -359,12 +372,7 @@ class CommandProcessor:
         try:
             argv = data.split(',')
             sec = float(argv[1])
-            if len(argv) >= 3:
-                spd = float(argv[2]) / 100.0
-            else:
-                spd = sys_config.get('max_speed') / 100.0
-            
-            spd = max(0.0, min(1.0, spd))
+            spd = self._get_wheel_speed(argv, 2)
             
             if direction == "forward":
                 robot.wheel.forward(speed=spd)
@@ -388,12 +396,7 @@ class CommandProcessor:
             return 0
         try:
             argv = data.split(',')
-            if len(argv) >= 2:
-                spd = float(argv[1]) / 100.0
-            else:
-                spd = sys_config.get('max_speed') / 100.0
-            
-            spd = max(0.0, min(1.0, spd))
+            spd = self._get_wheel_speed(argv, 1)
             
             if direction == "forward":
                 robot.wheel.forward(speed=spd)
@@ -526,7 +529,7 @@ class CommandProcessor:
             left_val = int(parts[1])
             right_val = int(parts[2])
             sys_config.save_calibration(left_val, right_val)
-            robot.wheel.update_factors(left_val, right_val)
+            robot.wheel.reload_config()
             if robot.oled:
                 robot.oled.fill(0)
                 robot.oled.text(f"L:{left_val} R:{right_val}", 0, 0)

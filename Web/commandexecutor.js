@@ -258,7 +258,7 @@ export const CommandExecutor = {
         return `BUZZER_ON,${freq},${duration}`;
       }
       case 'gun_fire': return 'GUN_FIRE';
-      
+
       // 서보 모터 (시간 제한) - SERVO_t방향,초,속도
       case 'timed_forward': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
@@ -280,7 +280,7 @@ export const CommandExecutor = {
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tLEFT,${seconds},${speed}`;
       }
-      
+
       // 서보 모터 (연속) - SERVO_방향,속도
       case 'move_forward': {
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
@@ -299,7 +299,7 @@ export const CommandExecutor = {
         return `SERVO_RIGHT,${speed}`;
       }
       case 'stop_moving': return 'SERVO_STOP';
-      
+
       // DC 모터 (시간 제한) - DC_t방향,초,속도
       case 'main_motor_forward_timed': {
         const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
@@ -311,7 +311,7 @@ export const CommandExecutor = {
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `DC_tBACKWARD,${seconds},${speed}`;
       }
-      
+
       // DC 모터 (연속) - DC_방향,속도
       case 'main_motor_forward': {
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
@@ -442,10 +442,10 @@ export const CommandExecutor = {
       for (let i = 0; i < loopTimes && state.isExecuting; i++) {
         await this.processBlock(block.getInputTargetBlock('DO'));
       }
-    
+
     } else if (block.type === 'procedures_defnoreturn' || block.type === 'procedures_defreturn') {
       // 함수 정의 - 실행하지 않음
-      
+
     } else if (block.type === 'procedures_callnoreturn') {
       const funcName = block.getFieldValue('NAME');
       const defBlock = this._findProcedureDefinition(block.workspace, funcName, false);
@@ -456,7 +456,7 @@ export const CommandExecutor = {
       } else {
         Logger.add(`[오류] 함수 찾을 수 없음: ${funcName}`, 'error');
       }
-      
+
     } else if (block.type === 'procedures_callreturn') {
       const funcName = block.getFieldValue('NAME');
       const defBlock = this._findProcedureDefinition(block.workspace, funcName, true);
@@ -467,34 +467,34 @@ export const CommandExecutor = {
       }
     }
   },
-  
+
   _findProcedureDefinition(workspace, name, hasReturn) {
     const defType = hasReturn ? 'procedures_defreturn' : 'procedures_defnoreturn';
     const allBlocks = workspace.getAllBlocks();
-    
+
     for (const block of allBlocks) {
       if (block.type === defType && block.getFieldValue('NAME') === name) {
         return block;
       }
     }
-    
+
     for (const block of allBlocks) {
-      if ((block.type === 'procedures_defreturn' || block.type === 'procedures_defnoreturn') 
+      if ((block.type === 'procedures_defreturn' || block.type === 'procedures_defnoreturn')
           && block.getFieldValue('NAME') === name) {
         return block;
       }
     }
-    
+
     return null;
   },
-  
+
   async _setupProcedureArgs(callBlock, defBlock) {
     const argNames = defBlock.arguments_ || [];
-    
+
     for (let i = 0; i < argNames.length; i++) {
       const argName = argNames[i];
       const argBlock = callBlock.getInputTargetBlock('ARG' + i);
-      
+
       if (argBlock) {
         const value = this.evaluateValueBlock(argBlock);
         state.variables[argName] = value;
@@ -524,15 +524,19 @@ export const CommandExecutor = {
         await this.processBlock(block);
       }
 
-      if (state.isExecuting) {
+      const completed = state.isExecuting;
+      if (completed) {
         Logger.add('[실행] 완료', 'info');
       }
+      state.isExecuting = false;
+      window.dispatchEvent(new CustomEvent('ares:execution', { detail: { executing: false } }));
+      return completed;
     } catch (error) {
       Logger.add(`[오류] 프로그램 실행 실패: ${error.message}`, 'error');
+      state.isExecuting = false;
+      window.dispatchEvent(new CustomEvent('ares:execution', { detail: { executing: false } }));
+      return false;
     }
-
-    state.isExecuting = false;
-    window.dispatchEvent(new CustomEvent('ares:execution', { detail: { executing: false } }));
   },
 
   // 시뮬레이션 실행: 실제 BLE 없이 sink(로그)로 명령을 흘려보낸다.

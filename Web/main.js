@@ -26,6 +26,74 @@ const LESSON_CATALOG = [
   { n: 12, title: "화성 로켓 최종 발사!",           tag: "LAUNCH",   hardware: "LED 5개 + 부저 + DC모터", concept: "통합 시나리오, 자유 창작 발표" },
 ];
 
+const MISSION_PROGRESS_KEY = 'ares_completed_missions_v1';
+const LAST_CODING_KEY = 'ares_last_coding_mission_v1';
+
+// 마지막으로 블록코딩에 들어간 미션 { lesson, mission } — 하단 "코딩" 탭이 참조
+let lastCodingMission = null;
+
+function rememberCodingMission(lesson, mission) {
+  if (!Number.isFinite(lesson) || !Number.isFinite(mission)) return;
+  lastCodingMission = { lesson, mission };
+  try { localStorage.setItem(LAST_CODING_KEY, JSON.stringify(lastCodingMission)); } catch {}
+}
+
+function getLastCodingMission() {
+  if (lastCodingMission) return lastCodingMission;
+  try {
+    const o = JSON.parse(localStorage.getItem(LAST_CODING_KEY) || 'null');
+    if (Number.isFinite(o?.lesson) && Number.isFinite(o?.mission)) {
+      lastCodingMission = o;
+      return o;
+    }
+  } catch {}
+  return null;
+}
+
+function getCompletedMissions() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MISSION_PROGRESS_KEY) || '[]');
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function missionProgressId(lesson, mission) {
+  return `${lesson}-${mission}`;
+}
+
+function isMissionCompleted(lesson, mission) {
+  return getCompletedMissions().has(missionProgressId(lesson, mission));
+}
+
+function completedMissionCount(lesson) {
+  const completed = getCompletedMissions();
+  let count = 0;
+  for (let mission = 1; mission <= 4; mission += 1) {
+    if (completed.has(missionProgressId(lesson, mission))) count += 1;
+  }
+  return count;
+}
+
+function markMissionCompleted(lesson, mission) {
+  if (!lesson || !mission) return;
+  const completed = getCompletedMissions();
+  const id = missionProgressId(lesson, mission);
+  if (completed.has(id)) return;
+  completed.add(id);
+  try { localStorage.setItem(MISSION_PROGRESS_KEY, JSON.stringify([...completed])); } catch {}
+
+  const lessonItem = document.querySelector(`[data-lesson-item="${lesson}"]`);
+  const count = lessonItem?.querySelector('.flow-count');
+  if (count) count.textContent = `${completedMissionCount(lesson)}/4`;
+  const missionButton = lessonItem?.querySelector(`[data-inline-mission="${mission}"]`);
+  if (missionButton) {
+    missionButton.classList.add('completed');
+    missionButton.querySelector('.inline-mission-check')?.removeAttribute('hidden');
+  }
+}
+
 const lessonCache = new Map(); // n -> lesson.json 객체
 let workspace = null;          // Blockly 워크스페이스 (한 번만 inject)
 let currentView = 'overview';
@@ -43,59 +111,40 @@ let _preSimMode = 'description';
 let setContentMode = null;     // setupContentToggle() 에서 등록
 
 // ============================================================
-// 동적 툴박스 필터링 및 이름 변경
+// 동적 툴박스 필터링
 // ============================================================
 function updateDynamicToolbox() {
   if (!workspace) return;
   const originalToolbox = document.getElementById('toolbox');
   if (!originalToolbox) return;
 
-  // Clone original toolbox XML
   const clonedToolbox = originalToolbox.cloneNode(true);
-  const names = state.tabNames;
 
-  // 1) Overwrite category names dynamically with correct emojis and names from pins.py / state.tabNames
-  const categoryConfig = {
-    wheel: { id: '#category_wheel', emoji: '🚗' },
-    dcmotor: { id: '#category_dcmotor', emoji: '⚡' },
-    leds: { id: '#category_leds', emoji: '💡' },
-    oled: { id: '#category_oled', emoji: '🖥️' },
-    buzzer: { id: '#category_buzzer', emoji: '🔊' },
-    gun: { id: '#category_gun', emoji: (state.activeModel === 'launchpad' ? '🚀' : '🔫') },
-    sensors: { id: '#category_sensors', emoji: '📡' }
-  };
-
-  for (const [key, cfg] of Object.entries(categoryConfig)) {
-    const cat = clonedToolbox.querySelector(cfg.id);
-    if (cat) {
-      const baseName = names[key] || (key === 'sensors' ? '센서' : key);
-      cat.setAttribute('name', `${cfg.emoji} ${baseName}`);
-    }
-  }
-
-  // 2) Hide/Filter modules
   if (state.enabledModules) {
     const modules = state.enabledModules;
-    const categoryMapping = {
-      wheel: '#category_wheel',
-      dcmotor: '#category_dcmotor',
-      leds: '#category_leds',
-      oled: '#category_oled',
-      buzzer: '#category_buzzer',
-      gun: '#category_gun'
+    const moduleBlockTypes = {
+      wheel: [
+        'timed_forward', 'timed_backward', 'timed_left', 'timed_right',
+        'move_forward', 'move_backward', 'turn_left', 'turn_right', 'stop_moving'
+      ],
+      dcmotor: [
+        'main_motor_forward_timed', 'main_motor_backward_timed',
+        'main_motor_forward', 'main_motor_backward', 'main_motor_stop'
+      ],
+      leds: ['led_on', 'led_off', 'led_off_all', 'set_lamp'],
+      oled: ['send_message', 'send_message_xy', 'display_icon', 'clear_display', 'clear_rect'],
+      buzzer: ['buzzer_on', 'buzzer_note'],
+      gun: ['gun_fire']
     };
 
-    // Remove disabled categories
-    for (const [moduleName, selector] of Object.entries(categoryMapping)) {
+    for (const [moduleName, blockTypes] of Object.entries(moduleBlockTypes)) {
       if (modules[moduleName] === false) {
-        const cat = clonedToolbox.querySelector(selector);
-        if (cat) {
-          cat.parentNode.removeChild(cat);
-        }
+        blockTypes.forEach((type) => {
+          clonedToolbox.querySelectorAll(`block[type="${type}"]`).forEach((block) => block.remove());
+        });
       }
     }
 
-    // Filter blocks inside categories
     if (modules.distance === false) {
       const block = clonedToolbox.querySelector('block[type="check_distance"]');
       if (block) {
@@ -118,8 +167,8 @@ function updateDynamicToolbox() {
 // ============================================================
 function initializeBlockly() {
   if (!navigator.bluetooth) {
-    alert('이 브라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
-    Logger.add('[오류] 브라우저가 Web Bluetooth API를 지원하지 않습니다', 'error');
+    alert('이 블라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
+    Logger.add('[오류] 블라우저가 Web Bluetooth API를 지원하지 않습니다', 'error');
   }
 
   Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
@@ -159,9 +208,9 @@ function initializeBlockly() {
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
     updateDynamicToolbox();
-    updateWorkspaceBlocks(workspace, state.activeModel);
+    updateWorkspaceBlocks(workspace, state);
   };
-  
+
   // Apply initial dynamic toolbox / names
   window.updateToolboxForActiveState();
 
@@ -551,17 +600,12 @@ function isLogExpanded() {
 }
 
 function getMobileActiveAction() {
-  return isAiPanelOpen()
-    ? 'ai'
-    : isLogExpanded()
-      ? 'log'
-      : isDashboardVisible()
-        ? 'dashboard'
-        : currentView === 'mission'
-          ? 'mission'
-          : currentView === 'lesson'
-            ? 'lesson'
-            : 'overview';
+  if (isAiPanelOpen()) return 'ai';
+  if (isLogExpanded()) return 'log';
+  if (isDashboardVisible()) return 'dashboard';
+  // 미션(코딩 영역) 뷰 → "코딩" 탭, 개요·차시 메뉴 → "미션" 탭
+  if (currentView === 'mission') return 'coding';
+  return 'mission';
 }
 
 function restoreHash(hash) {
@@ -617,6 +661,14 @@ function bindMobileBottomNav() {
         }
       } else if (action === 'log' && isLogExpanded()) {
         document.getElementById('logHeader')?.click();
+      } else if (action === 'mission' && currentView !== 'overview') {
+        // 차시/미션 코딩 화면에서 "미션" 탭을 다시 누르면 메뉴(개요 아코디언)로 복귀
+        mobileDashboardReturnHash = null;
+        mobileAiReturnHash = null;
+        navigate({});
+      } else if (action === 'coding' && currentView === 'mission') {
+        // 이미 코딩 영역이면 설명 모드였을 때 블록코딩 모드로 전환
+        if (setContentMode) setContentMode('coding');
       }
       updateMobileBottomNav();
       btn.blur?.();
@@ -624,21 +676,22 @@ function bindMobileBottomNav() {
     }
 
     switch (action) {
-      case 'overview':
+      case 'mission':
+        // 통합된 "미션" 탭 → 개요 메뉴(차시·미션 아코디언) 화면을 표시
         mobileDashboardReturnHash = null;
         mobileAiReturnHash = null;
         navigate({});
         break;
-      case 'lesson':
+      case 'coding': {
+        // "코딩" 탭 → 마지막으로 선택한(기록된) 미션의 블록코딩 화면으로 진입
+        const target = getLastCodingMission();
+        const codingLesson = target?.lesson ?? lesson;
+        const codingMission = target?.mission ?? mission;
         mobileDashboardReturnHash = null;
         mobileAiReturnHash = null;
-        navigate({ lesson });
+        openMissionCoding(codingLesson, codingMission);
         break;
-      case 'mission':
-        mobileDashboardReturnHash = null;
-        mobileAiReturnHash = null;
-        navigate({ lesson, mission });
-        break;
+      }
       case 'dashboard':
         if (currentView !== 'mission') {
           mobileDashboardReturnHash = window.location.hash || '';
@@ -649,8 +702,13 @@ function bindMobileBottomNav() {
         break;
       case 'ai':
         if (currentView !== 'mission') {
+          // 개요/차시 화면에서 AI를 열 때도 1차시 1미션으로 리셋하지 말고
+          // 마지막으로 선택(기록)한 미션을 유지한다
+          const aiTarget = getLastCodingMission();
+          const aiLesson = aiTarget?.lesson ?? lesson;
+          const aiMission = aiTarget?.mission ?? mission;
           mobileAiReturnHash = window.location.hash || '';
-          navigate({ lesson, mission });
+          navigate({ lesson: aiLesson, mission: aiMission });
           pendingDashboardOpen = false;
           setTimeout(() => document.getElementById('aiHelpButton')?.click(), 450);
         } else {
@@ -738,7 +796,7 @@ function showView(view) {
   const contentBtn = document.getElementById('contentToggleBtn');
   if (contentBtn) contentBtn.hidden = !inMission;
 
-  // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠나면 카드 닫기
+  // 시뮬레이션 버튼은 미션 뷰에서만 노출, 뷰를 떠날 때 카드 닫기
   const simToggle = document.getElementById('simToggle');
   if (simToggle) simToggle.hidden = !inMission;
   if (!inMission) {
@@ -792,13 +850,228 @@ async function enterOverview() {
             <td>${escapeHtml(l.concept)}</td>
             <td><span class="tag tag-${l.tag}">${escapeHtml(l.tag)}</span></td>
           </tr>
-        `).join('');
-      }
-    } catch (e) {
+         `).join('');
+       }
+
+       // 12개 차시를 아코디언형 버튼 목록으로 생성
+       const flowContainer = document.getElementById('lessonFlowContainer');
+       if (flowContainer) {
+         flowContainer.innerHTML = LESSON_CATALOG.map(lesson => `
+           <section class="lesson-accordion-item" data-lesson-item="${lesson.n}">
+             <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
+               <span class="flow-num">${lesson.n}</span>
+               <span class="flow-main">
+                 <strong>${lesson.n}차시 — ${escapeHtml(lesson.title)}</strong>
+                 <small>${escapeHtml(lesson.hardware)}</small>
+               </span>
+               <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
+               <span class="flow-arrow" aria-hidden="true">▶</span>
+             </button>
+             <div id="inlineMissions${lesson.n}" class="lesson-panel" hidden></div>
+           </section>
+         `).join('');
+
+         flowContainer.addEventListener('click', async (event) => {
+           // (1) 미션 코딩 버튼 → 해당 미션 선택 + 블록코딩 모드로 전환
+           const codeBtn = event.target.closest('.mission-code-btn');
+           if (codeBtn) {
+             openMissionCoding(Number(codeBtn.dataset.lesson), Number(codeBtn.dataset.mission));
+             return;
+           }
+
+           // (2) 미션 버튼 → 미션 상세 정보를 아래로 펼침 (개요를 떠나지 않음)
+           const missionButton = event.target.closest('.inline-mission-btn');
+           if (missionButton) {
+             toggleInlineMissionDetail(missionButton);
+             return;
+           }
+
+           // (3) 차시 버튼 → 미션 리스트 + 차시 정보를 펼침
+           const lessonButton = event.target.closest('.flow-step-btn');
+           if (!lessonButton) return;
+           const lessonNum = Number(lessonButton.dataset.lesson);
+           const item = lessonButton.closest('.lesson-accordion-item');
+           const panel = item?.querySelector('.lesson-panel');
+           if (!panel) return;
+
+           const willOpen = panel.hasAttribute('hidden');
+           flowContainer.querySelectorAll('.lesson-panel:not([hidden])').forEach(openPanel => {
+             if (openPanel !== panel) {
+               closeAccordion(openPanel);
+               openPanel.previousElementSibling?.setAttribute('aria-expanded', 'false');
+             }
+           });
+
+           if (!willOpen) {
+             closeAccordion(panel);
+             lessonButton.setAttribute('aria-expanded', 'false');
+             return;
+           }
+
+           const data = await loadLesson(lessonNum);
+           if (!data?.missions) return;
+           // (위) 차시 정보 + (그 아래) 미션 리스트
+           panel.innerHTML = `
+             ${renderInlineLessonInfo(data)}
+             <div class="inline-mission-list">
+               ${data.missions.map(m => renderInlineMissionItem(lessonNum, m)).join('')}
+             </div>
+           `;
+           openAccordion(panel);
+           lessonButton.setAttribute('aria-expanded', 'true');
+           item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+         });
+       }
+     } catch (e) {
       container.innerHTML = '<p style="color:#E74C3C">개요를 불러오지 못했습니다.</p>';
       Logger.add(`[오류] overview.html 로드 실패: ${e.message}`, 'error');
     }
   }
+}
+
+// ============================================================
+// 개요 인라인 렌더 헬퍼 (차시 → 미션 → 미션 상세 아코디언)
+// ============================================================
+function renderInlineMissionDetail(n, mission) {
+  const story = (mission.story || []).map(line => `
+      <div class="story-line story-${line.speaker}">
+        <span class="story-avatar">${line.speaker === 'ares' ? '🧑‍🚀' : '🤖'}</span>
+        <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
+        <span class="story-text">${escapeHtml(line.text)}</span>
+      </div>`).join('');
+  const goals = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
+  return `
+    <div id="missionDetail${n}_${mission.id}" class="inline-mission-detail" hidden>
+      <div class="mission-story">${story}</div>
+      <div class="mission-section">
+        <h4>🎯 학습 목표</h4>
+        <ul class="inline-goal-list">${goals}</ul>
+      </div>
+      <details class="mission-section">
+        <summary>💡 샘플 코드 보기</summary>
+        <pre class="sample-code">${escapeHtml(mission.sampleCode || '')}</pre>
+      </details>
+      <button type="button" class="mission-code-btn" data-lesson="${n}" data-mission="${mission.id}">🧩 미션 코딩 시작 →</button>
+    </div>`;
+}
+
+function renderInlineMissionItem(n, mission) {
+  const completed = isMissionCompleted(n, mission.id);
+  return `
+    <div class="inline-mission-item" data-mission-item="${mission.id}">
+      <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}"
+              data-lesson="${n}" data-inline-mission="${mission.id}"
+              aria-expanded="false" aria-controls="missionDetail${n}_${mission.id}">
+        <span class="inline-mission-num">${mission.id}</span>
+        <span class="inline-mission-main">
+          <strong>${escapeHtml(mission.title)} <span class="inline-mission-check" ${completed ? '' : 'hidden'}>✓</span></strong>
+          <small>${escapeHtml(mission.hardware || '')}</small>
+        </span>
+        <span class="inline-mission-arrow" aria-hidden="true">›</span>
+      </button>
+      ${renderInlineMissionDetail(n, mission)}
+    </div>`;
+}
+
+function renderInlineLessonInfo(data) {
+  const summary = data.summary ? `
+      <div class="summary-box summary-${data.summary.type}">
+        <h4>${escapeHtml(data.summary.title)}</h4>
+        <p>${escapeHtml(data.summary.text)}</p>
+      </div>` : '';
+  return `
+    <div class="inline-lesson-info">
+      <h4 class="inline-lesson-info-title">📘 차시 정보</h4>
+      <div class="inline-lesson-info-head">
+        <span class="lesson-tag tag-${data.tag}">${escapeHtml(data.tag)}</span>
+        <span class="inline-lesson-meta">🔧 ${escapeHtml(data.hardware)} <span class="dot-sep">·</span> 💡 ${escapeHtml(data.concept)}</span>
+      </div>
+      <p class="inline-lesson-intro">${escapeHtml(data.intro)}</p>
+      ${summary}
+    </div>`;
+}
+
+// 아코디언 여닫이 애니메이션 (열림 2초 / 닫힘 1초). CSS 클래스로 제어하고,
+// 실제 콘텐츠 높이를 --acc-h 로 넘겨 높이 변화가 자연스럽게 보이도록 한다.
+const ACCORDION_OPEN_MS = 2000;
+const ACCORDION_CLOSE_MS = 1000;
+
+function openAccordion(el) {
+  if (!el) return;
+  if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  el.classList.remove('accordion-closing', 'accordion-opening');
+  el.removeAttribute('hidden');
+  el.style.setProperty('--acc-h', el.scrollHeight + 'px'); // 표시 후 전체 높이 측정
+  void el.offsetWidth;                                     // 리플로우 → 애니메이션 재시작 보장
+  el.classList.add('accordion-opening');
+  const done = (e) => {
+    if (e && e.target !== el) return;
+    el.classList.remove('accordion-opening');
+    el.style.removeProperty('--acc-h');
+    el.removeEventListener('animationend', done);
+    if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  };
+  el.addEventListener('animationend', done);
+  el._accTimer = setTimeout(done, ACCORDION_OPEN_MS + 120);
+}
+
+function closeAccordion(el) {
+  if (!el || el.hasAttribute('hidden')) return;
+  if (el.classList.contains('accordion-closing')) return; // 이미 닫히는 중이면 무시
+  if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  el.classList.remove('accordion-opening');
+  el.style.setProperty('--acc-h', el.scrollHeight + 'px');
+  void el.offsetWidth;
+  el.classList.add('accordion-closing');
+  const done = (e) => {
+    if (e && e.target !== el) return;
+    el.classList.remove('accordion-closing');
+    el.style.removeProperty('--acc-h');
+    el.setAttribute('hidden', '');               // 애니메이션이 끝난 뒤에야 숨김
+    el.removeEventListener('animationend', done);
+    if (el._accTimer) { clearTimeout(el._accTimer); el._accTimer = null; }
+  };
+  el.addEventListener('animationend', done);
+  el._accTimer = setTimeout(done, ACCORDION_CLOSE_MS + 120);
+}
+
+// 미션 버튼 클릭 → 그 미션 상세를 아래로 펼치고, 같은 차시의 다른 미션 상세는 접는다
+function toggleInlineMissionDetail(btn) {
+  const item = btn.closest('.inline-mission-item');
+  const detail = item?.querySelector('.inline-mission-detail');
+  if (!detail) return;
+  const list = item.closest('.inline-mission-list');
+  const willOpen = detail.hasAttribute('hidden');
+  list?.querySelectorAll('.inline-mission-detail:not([hidden])').forEach(d => {
+    if (d !== detail) {
+      closeAccordion(d);
+      d.previousElementSibling?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  if (willOpen) {
+    openAccordion(detail);
+    btn.setAttribute('aria-expanded', 'true');
+    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } else {
+    closeAccordion(detail);
+    btn.setAttribute('aria-expanded', 'false');
+  }
+}
+
+// 미션 코딩 시작 → 해당 미션으로 이동 후 블록코딩 모드로 전환
+function openMissionCoding(lesson, mission) {
+  if (!Number.isFinite(lesson) || !Number.isFinite(mission)) return;
+  navigate({ lesson, mission });
+  // 미션 뷰 진입은 해시 변경 후 비동기로 이뤄지므로, 진입을 확인한 뒤 코딩 모드로 전환
+  let attempts = 0;
+  const poll = () => {
+    if (currentView === 'mission') {
+      if (setContentMode) setContentMode('coding');
+      return;
+    }
+    if (attempts++ < 60) setTimeout(poll, 50);
+  };
+  setTimeout(poll, 50);
 }
 
 // ============================================================
@@ -860,6 +1133,7 @@ async function enterMission(n, m) {
   showView('mission');
   currentLesson = n;
   currentMission = m;
+  rememberCodingMission(n, m);   // 하단 "코딩" 탭이 돌아올 미션으로 기록
   document.getElementById('lessonSelect').value = String(n);
   populateMissionSelect(n, data);
   document.getElementById('missionSelect').value = String(m);
@@ -1140,7 +1414,11 @@ function initializeMissionListeners(ws) {
     }
     if (!validateConnection()) return;
     try {
-      await CommandExecutor.executeWorkspace(ws);
+      const completed = await CommandExecutor.executeWorkspace(ws);
+      if (completed && currentLesson && currentMission) {
+        markMissionCompleted(currentLesson, currentMission);
+        Logger.add(`[미션] ${currentLesson}차시 ${currentMission}번 완료 기록`, 'info');
+      }
     } catch (error) {
       console.error('명령 실행 오류:', error);
       alert('명령 실행 중 오류가 발생했습니다: ' + error.message);
