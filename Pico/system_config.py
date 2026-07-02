@@ -264,9 +264,16 @@ class SystemConfig:
             return False
 
     def is_module_enabled(self, module_name):
-        """모듈의 사용 여부 확인"""
+        """모듈의 사용 여부 확인.
+        사용자가 설정 파일에 잘못된 값(예: enable_wheel=yes)을 넣어도
+        부팅이 죽지 않도록 해당 모듈만 비활성 처리한다.
+        (hardware.py가 import 시점에 호출하므로 여기서 예외가 새면 로버 전체가 못 뜬다)"""
         config_key = f"enable_{module_name}"
-        return int(self.config.get(config_key, 0)) == 1
+        try:
+            return int(self.config.get(config_key, 0)) == 1
+        except (ValueError, TypeError):
+            print(f"[Config] {config_key} 값이 잘못됨 → 모듈 비활성 처리")
+            return False
 
     def get_module_info(self):
         """활성화된 모듈 정보 반환"""

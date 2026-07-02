@@ -48,6 +48,9 @@ class AresRover:
         "SYS_SET", "CALIB_START", "CALIB_SET",
     )
 
+    # 시간지정 동작을 즉시 중단시키는 명령 (비상정지 경로)
+    ABORT_CMDS = ("STOP_ALL", "STOP")
+
     def __init__(self):
         # UART 초기화 (블루투스 통신)
         self.uart = UART(
@@ -56,14 +59,44 @@ class AresRover:
             tx=Pin(UART_TX_PIN),
             rx=Pin(UART_RX_PIN)
         )
-        # 명령 프로세서 초기화
-        self.processor = CommandProcessor()
+        # 수신 버퍼 (_poll_abort가 참조하므로 processor보다 먼저 초기화)
+        self.rx_buffer = ""
+        # 명령 프로세서 초기화 — 시간지정 동작(SERVO_t*/DC_t*/SLEEP/BATCH) 중
+        # 비상정지를 감지할 수 있도록 폴링 콜백을 주입한다.
+        self.processor = CommandProcessor(abort_check=self._poll_abort)
         # 하드웨어 싱글톤 참조
         self.robot = robot
         # 실행 상태
         self.is_running = False
-        # 수신 버퍼
-        self.rx_buffer = ""
+
+    def _poll_abort(self):
+        """시간지정 이동/대기 중 CommandProcessor가 주기 호출하는 비상정지 폴링.
+        UART를 비차단으로 흡수한 뒤, 버퍼의 완성 라인 중 정지 명령이 있으면
+        그 라인까지 전부 소비하고 True를 반환한다(그 앞에 쌓인 명령은 비상정지
+        의미상 폐기). 정지 명령이 없으면 버퍼를 건드리지 않고 False —
+        일반 명령은 동작 종료 후 run() 루프가 평소처럼 처리한다."""
+        if self.uart.any():
+            chunk = self.uart.read()
+            if chunk:
+                try:
+                    self.rx_buffer += chunk.decode('utf-8', 'ignore')
+                except Exception:
+                    pass  # 잘린 멀티바이트 등 디코드 실패 — 정지 감지에는 영향 없음
+                if len(self.rx_buffer) > MAX_BUFFER_SIZE:
+                    print("[UART] 버퍼 오버플로우, 초기화")
+                    self.rx_buffer = ""
+                    return False
+        if '\n' not in self.rx_buffer:
+            return False
+        lines = self.rx_buffer.split('\n')
+        tail = lines.pop()  # 마지막 조각(미완성 라인)은 보존
+        for i, line in enumerate(lines):
+            head = line.strip().split(',', 1)[0]
+            if head in self.ABORT_CMDS:
+                self.rx_buffer = '\n'.join(lines[i + 1:] + [tail])
+                print(f"[비상정지] 동작 중 {head} 수신 → 즉시 중단")
+                return True
+        return False
 
     def boot(self):
         """부팅 시퀀스 실행"""

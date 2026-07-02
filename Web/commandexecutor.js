@@ -58,6 +58,16 @@ export const CommandExecutor = {
     if (magMatch) state.variables['_last_magnetic'] = magMatch[1];
   },
 
+  // 시간지정 이동/대기의 초 입력 상한 (펌웨어 MAX_TIMED_SEC와 동기화).
+  // 펌웨어가 blocking 처리하므로 과도한 값은 비상정지 지연·타임아웃을 유발한다.
+  MAX_TIMED_SEC: 60,
+
+  _clampSeconds(raw) {
+    const sec = parseFloat(raw);
+    if (!isFinite(sec) || sec < 0) return '0';
+    return String(Math.min(sec, this.MAX_TIMED_SEC));
+  },
+
   evaluateValueBlock(block) {
     if (!block) return '0';
     if (block.type === 'math_number') {
@@ -261,22 +271,22 @@ export const CommandExecutor = {
 
       // 서보 모터 (시간 제한) - SERVO_t방향,초,속도
       case 'timed_forward': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tFORWARD,${seconds},${speed}`;
       }
       case 'timed_backward': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tBACKWARD,${seconds},${speed}`;
       }
       case 'timed_right': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tRIGHT,${seconds},${speed}`;
       }
       case 'timed_left': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tLEFT,${seconds},${speed}`;
       }
@@ -302,12 +312,12 @@ export const CommandExecutor = {
 
       // DC 모터 (시간 제한) - DC_t방향,초,속도
       case 'main_motor_forward_timed': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `DC_tFORWARD,${seconds},${speed}`;
       }
       case 'main_motor_backward_timed': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `DC_tBACKWARD,${seconds},${speed}`;
       }
@@ -323,7 +333,7 @@ export const CommandExecutor = {
       }
       case 'main_motor_stop': return 'DC_STOP';
       case 'time_sleep': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         return `SLEEP,${seconds}`;
       }
       case 'pico_check_device': return 'PING';

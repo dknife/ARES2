@@ -30,8 +30,9 @@ export const DEFAULT_SYSTEM_CONFIG = {
     // 캘리브레이션 설정
     left_calibration: 100,
     right_calibration: 100,
-    // 블루투스 설정 (UI 전용)
-    connection_timeout: 20000,
+    // 블루투스 설정 (UI 전용) — BLUETOOTH_CONFIG.RESPONSE_TIMEOUT과 동일 기본값.
+    // (예전 기본 20000이 저장되면 모든 응답 대기가 4배로 늘어졌다)
+    connection_timeout: 5000,
     reconnect_attempts: 3,
     chunk_size: 20,
     command_delay: 100

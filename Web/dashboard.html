@@ -491,7 +491,7 @@
                     <div class="card-title">📡 로컬 설정</div>
                     <div class="form-group">
                         <label class="form-label">연결 타임아웃 (ms)</label>
-                        <input type="number" class="form-input" id="connection-timeout" value="20000">
+                        <input type="number" class="form-input" id="connection-timeout" value="5000">
                     </div>
                     <button class="btn btn-primary" id="btn-save-local">로컬에 저장</button>
                 </div>
@@ -575,7 +575,7 @@
         auto_stop: false,
         left_calibration: 0,
         right_calibration: 0,
-        connection_timeout: 20000
+        connection_timeout: 5000
     };
 
     let lastUpdateTime = 0;
@@ -813,7 +813,8 @@
             DOM.distBar.style.backgroundColor = 'var(--blue-color)';
         }
 
-        if (mag === 0) {
+        // 펌웨어(magsensor.py)는 1=자석 감지, 0=미감지로 보낸다.
+        if (mag === 1) {
             DOM.magneticValue.textContent = '감지됨';
             DOM.magneticValue.style.color = 'var(--warning-color)';
         } else {
