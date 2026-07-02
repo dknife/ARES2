@@ -12,7 +12,7 @@ import { Oled } from './oled.js';
 import { Gun } from './gun.js';
 import { Audio } from './audio.js';
 import { Dispatch } from './dispatch.js';
-import { Editor_Controls } from './editor_controls.js';
+import { EditorControls } from './editor_controls.js';
 
 export class Context {
   constructor(THREE, A, stage, loadingEl, cfg, options = {}) {
@@ -92,7 +92,7 @@ export class Context {
     this.assets = new Assets(this);
     this.renderEngine = new Render(this);
     this.dispatcher = new Dispatch(this);
-    this.editor = new Editor_Controls(this);
+    this.editor = new EditorControls(this);
   }
 
   getAudioCtx() {
