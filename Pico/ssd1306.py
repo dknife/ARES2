@@ -5,6 +5,7 @@
 from machine import UART, Pin, I2C, PWM
 from micropython import const
 import framebuf
+import utime
 from icon import *
 from pins import I2C_SDA_PIN, I2C_SCL_PIN
 
@@ -166,7 +167,7 @@ class SSD1306_SPI(SSD1306):
         self.cs.init(self.cs.OUT, value=1)
         self.dc.init(self.dc.OUT, value=0)
         self.res.init(self.res.OUT, value=0)
-        time.sleep_ms(1)
+        utime.sleep_ms(1)
         self.res(1)
         super().__init__(width, height, external_vcc)
 

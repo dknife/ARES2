@@ -1,6 +1,7 @@
 # ARES 로버 메인 애플리케이션
 
 from machine import UART, Pin
+import gc
 import utime
 from process_data import CommandProcessor
 from hardware import robot
@@ -12,6 +13,7 @@ UART_BAUDRATE = 9600
 
 # 루프 설정
 MAIN_LOOP_DELAY_MS = 10
+GC_COLLECT_INTERVAL_MS = 5000
 # CHUNK_DELAY(=100ms, Web 측 BLE 청크 간격)보다 충분히 크게 잡아 멀티 청크 명령
 # (BATCH, LED 패턴, SYS_SET 등)이 한 번의 _read_uart_line 호출 안에 newline까지
 # 도달할 확률을 높인다. 단일 청크 명령은 newline 발견 즉시 종료하므로 이 값과 무관.
@@ -175,7 +177,8 @@ class AresRover:
     def run(self):
         """메인 루프 실행"""
         self.boot()
-        
+        last_gc_ms = utime.ticks_ms()
+
         while self.is_running:
             try:
                 data = self._read_uart_line()
@@ -196,6 +199,11 @@ class AresRover:
             # 명령 수신 대기 중에도 매 루프 호출되어 마지막 음도 제때 꺼진다.
             if self.robot.buzzer:
                 self.robot.buzzer.update()
+
+            now = utime.ticks_ms()
+            if utime.ticks_diff(now, last_gc_ms) >= GC_COLLECT_INTERVAL_MS:
+                gc.collect()
+                last_gc_ms = now
 
             utime.sleep_ms(MAIN_LOOP_DELAY_MS)
 

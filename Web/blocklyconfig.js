@@ -16,13 +16,24 @@ export const BATCH_FORBIDDEN_TYPES = new Set([
   'batch_block',
 ]);
 
+const MODULE_LABEL_CONFIG = {
+  wheel: { field: 'WHEEL_LABEL', emoji: '🚗', defaultName: '서보 모터' },
+  dcmotor: { field: 'DCMOTOR_LABEL', emoji: '⚡', defaultName: 'DC 모터' },
+  leds: { field: 'LEDS_LABEL', emoji: '💡', defaultName: 'LED' },
+  oled: { field: 'OLED_LABEL', emoji: '🖥️', defaultName: '디스플레이' },
+  buzzer: { field: 'BUZZER_LABEL', emoji: '🔊', defaultName: '소리' },
+  sensors: { field: 'SENSORS_LABEL', emoji: '📡', defaultName: '센서' },
+  gun: { field: 'LABEL', emoji: '🔫', defaultName: '발사' }
+};
+
 export const BlocklyConfig = {
   blocks: [
     // 서보 모터 블록 (주황색 #FF8C00)
     {
       type: "timed_forward",
-      message0: "🚗 서보 전진 %1 초 (속도 %2 %%)",
+      message0: "%1 전진 %2 초 (속도 %3 %%)",
       args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
         { type: "input_value", name: "SECONDS", check: "Number" },
         { type: "input_value", name: "SPEED", check: "Number" }
       ],
@@ -33,8 +44,9 @@ export const BlocklyConfig = {
     },
     {
       type: "timed_backward",
-      message0: "🚗 서보 후진 %1 초 (속도 %2 %%)",
+      message0: "%1 후진 %2 초 (속도 %3 %%)",
       args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
         { type: "input_value", name: "SECONDS", check: "Number" },
         { type: "input_value", name: "SPEED", check: "Number" }
       ],
@@ -45,8 +57,9 @@ export const BlocklyConfig = {
     },
     {
       type: "timed_left",
-      message0: "🚗 서보 좌회전 %1 초 (속도 %2 %%)",
+      message0: "%1 좌회전 %2 초 (속도 %3 %%)",
       args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
         { type: "input_value", name: "SECONDS", check: "Number" },
         { type: "input_value", name: "SPEED", check: "Number" }
       ],
@@ -57,8 +70,9 @@ export const BlocklyConfig = {
     },
     {
       type: "timed_right",
-      message0: "🚗 서보 우회전 %1 초 (속도 %2 %%)",
+      message0: "%1 우회전 %2 초 (속도 %3 %%)",
       args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
         { type: "input_value", name: "SECONDS", check: "Number" },
         { type: "input_value", name: "SPEED", check: "Number" }
       ],
@@ -69,8 +83,11 @@ export const BlocklyConfig = {
     },
     {
       type: "move_forward",
-      message0: "🚗 서보 계속 전진 (속도 %1 %%)",
-      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
+      message0: "%1 계속 전진 (속도 %2 %%)",
+      args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
@@ -78,8 +95,11 @@ export const BlocklyConfig = {
     },
     {
       type: "move_backward",
-      message0: "🚗 서보 계속 후진 (속도 %1 %%)",
-      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
+      message0: "%1 계속 후진 (속도 %2 %%)",
+      args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
@@ -87,8 +107,11 @@ export const BlocklyConfig = {
     },
     {
       type: "turn_left",
-      message0: "🚗 서보 계속 좌회전 (속도 %1 %%)",
-      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
+      message0: "%1 계속 좌회전 (속도 %2 %%)",
+      args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
@@ -96,8 +119,11 @@ export const BlocklyConfig = {
     },
     {
       type: "turn_right",
-      message0: "🚗 서보 계속 우회전 (속도 %1 %%)",
-      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
+      message0: "%1 계속 우회전 (속도 %2 %%)",
+      args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
@@ -105,7 +131,10 @@ export const BlocklyConfig = {
     },
     {
       type: "stop_moving",
-      message0: "🚗 서보 정지",
+      message0: "%1 정지",
+      args0: [
+        { type: "field_label", name: "WHEEL_LABEL", text: "🚗 서보 모터" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF8C00",
@@ -115,8 +144,9 @@ export const BlocklyConfig = {
     // DC 모터 블록 (노랑색 #FFCC00)
     {
       type: "main_motor_forward_timed",
-      message0: "⚡ DC모터 전진 %1 초 (속도 %2 %%)",
+      message0: "%1 전진 %2 초 (속도 %3 %%)",
       args0: [
+        { type: "field_label", name: "DCMOTOR_LABEL", text: "⚡ DC 모터" },
         { type: "input_value", name: "SECONDS", check: "Number" },
         { type: "input_value", name: "SPEED", check: "Number" }
       ],
@@ -127,8 +157,9 @@ export const BlocklyConfig = {
     },
     {
       type: "main_motor_backward_timed",
-      message0: "⚡ DC모터 후진 %1 초 (속도 %2 %%)",
+      message0: "%1 후진 %2 초 (속도 %3 %%)",
       args0: [
+        { type: "field_label", name: "DCMOTOR_LABEL", text: "⚡ DC 모터" },
         { type: "input_value", name: "SECONDS", check: "Number" },
         { type: "input_value", name: "SPEED", check: "Number" }
       ],
@@ -139,8 +170,11 @@ export const BlocklyConfig = {
     },
     {
       type: "main_motor_forward",
-      message0: "⚡ DC모터 계속 전진 (속도 %1 %%)",
-      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
+      message0: "%1 계속 전진 (속도 %2 %%)",
+      args0: [
+        { type: "field_label", name: "DCMOTOR_LABEL", text: "⚡ DC 모터" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
@@ -148,8 +182,11 @@ export const BlocklyConfig = {
     },
     {
       type: "main_motor_backward",
-      message0: "⚡ DC모터 계속 후진 (속도 %1 %%)",
-      args0: [{ type: "input_value", name: "SPEED", check: "Number" }],
+      message0: "%1 계속 후진 (속도 %2 %%)",
+      args0: [
+        { type: "field_label", name: "DCMOTOR_LABEL", text: "⚡ DC 모터" },
+        { type: "input_value", name: "SPEED", check: "Number" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
@@ -157,7 +194,10 @@ export const BlocklyConfig = {
     },
     {
       type: "main_motor_stop",
-      message0: "⚡ DC모터 정지",
+      message0: "%1 정지",
+      args0: [
+        { type: "field_label", name: "DCMOTOR_LABEL", text: "⚡ DC 모터" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FFCC00",
@@ -167,8 +207,9 @@ export const BlocklyConfig = {
     // LED 블록 (빨강색 #FF5555)
     {
       type: "set_lamp",
-      message0: "💡 LED 전체 설정 [ %1 %2 %3 %4 %5 %6 ]",
+      message0: "%1 전체 설정 [ %2 %3 %4 %5 %6 %7 ]",
       args0: [
+        { type: "field_label", name: "LEDS_LABEL", text: "💡 LED" },
         { type: "input_value", name: "LAMP0", check: "Number" },
         { type: "input_value", name: "LAMP1", check: "Number" },
         { type: "input_value", name: "LAMP2", check: "Number" },
@@ -183,8 +224,9 @@ export const BlocklyConfig = {
     },
     {
       type: "led_on",
-      message0: "💡 LED %1 번 켜기 (밝기 %2 )",
+      message0: "%1 %2 번 켜기 (밝기 %3 )",
       args0: [
+        { type: "field_label", name: "LEDS_LABEL", text: "💡 LED" },
         { type: "input_value", name: "LED_NUM", check: "Number" },
         { type: "input_value", name: "BRIGHTNESS", check: "Number" }
       ],
@@ -195,8 +237,9 @@ export const BlocklyConfig = {
     },
     {
       type: "led_off",
-      message0: "💡 LED %1 번 끄기",
+      message0: "%1 %2 번 끄기",
       args0: [
+        { type: "field_label", name: "LEDS_LABEL", text: "💡 LED" },
         { type: "input_value", name: "LED_NUM", check: "Number" }
       ],
       previousStatement: null,
@@ -206,7 +249,10 @@ export const BlocklyConfig = {
     },
     {
       type: "led_off_all",
-      message0: "💡 LED 전체 끄기",
+      message0: "%1 전체 끄기",
+      args0: [
+        { type: "field_label", name: "LEDS_LABEL", text: "💡 LED" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#FF5555",
@@ -216,8 +262,11 @@ export const BlocklyConfig = {
     // 디스플레이 블록 (보라색 #9966FF)
     {
       type: "send_message",
-      message0: "🖥️ 화면에 표시: %1",
-      args0: [{ type: "input_value", name: "Msg", check: "String" }],
+      message0: "%1에 표시: %2",
+      args0: [
+        { type: "field_label", name: "OLED_LABEL", text: "🖥️ 디스플레이" },
+        { type: "input_value", name: "Msg", check: "String" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#9966FF",
@@ -225,7 +274,10 @@ export const BlocklyConfig = {
     },
     {
       type: "clear_display",
-      message0: "🖥️ 화면 지우기",
+      message0: "%1 지우기",
+      args0: [
+        { type: "field_label", name: "OLED_LABEL", text: "🖥️ 디스플레이" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#9966FF",
@@ -233,8 +285,9 @@ export const BlocklyConfig = {
     },
     {
       type: "clear_rect",
-      message0: "🖥️ 영역 지우기 (x: %1, y: %2, 폭: %3, 높이: %4)",
+      message0: "%1 영역 지우기 (x: %2, y: %3, 폭: %4, 높이: %5)",
       args0: [
+        { type: "field_label", name: "OLED_LABEL", text: "🖥️ 디스플레이" },
         { type: "input_value", name: "X", check: "Number" },
         { type: "input_value", name: "Y", check: "Number" },
         { type: "input_value", name: "W", check: "Number" },
@@ -247,8 +300,9 @@ export const BlocklyConfig = {
     },
     {
       type: "send_message_xy",
-      message0: "🖥️ 화면 (x: %1, y: %2) 에 표시: %3",
+      message0: "%1 (x: %2, y: %3) 에 표시: %4",
       args0: [
+        { type: "field_label", name: "OLED_LABEL", text: "🖥️ 디스플레이" },
         { type: "input_value", name: "X", check: "Number" },
         { type: "input_value", name: "Y", check: "Number" },
         { type: "input_value", name: "Msg", check: "String" }
@@ -260,8 +314,9 @@ export const BlocklyConfig = {
     },
     {
       type: "display_icon",
-      message0: "🖥️ 아이콘 %1 을(를) (x: %2, y: %3) 에 표시",
+      message0: "%1 아이콘 %2 을(를) (x: %3, y: %4) 에 표시",
       args0: [
+        { type: "field_label", name: "OLED_LABEL", text: "🖥️ 디스플레이" },
         {
           type: "field_dropdown",
           name: "ICON",
@@ -284,8 +339,9 @@ export const BlocklyConfig = {
     // 소리 블록 (하늘색 #00CCFF)
     {
       type: "buzzer_on",
-      message0: "🔊 부저 %1 Hz로 %2 초 울리기",
+      message0: "%1 %2 Hz로 %3 초 울리기",
       args0: [
+        { type: "field_label", name: "BUZZER_LABEL", text: "🔊 소리" },
         { type: "input_value", name: "FREQ", check: "Number" },
         { type: "input_value", name: "DURATION", check: "Number" }
       ],
@@ -296,8 +352,9 @@ export const BlocklyConfig = {
     },
     {
       type: "buzzer_note",
-      message0: "🔊 계명 %1 로 %2 초 울리기",
+      message0: "%1 계명 %2 로 %3 초 울리기",
       args0: [
+        { type: "field_label", name: "BUZZER_LABEL", text: "🔊 소리" },
         { type: "field_dropdown", name: "NOTE", options: [
           // 낮은 옥타브 (C3 ~ B3)
           ["도(↓)", "131"],
@@ -352,7 +409,10 @@ export const BlocklyConfig = {
     // 센서 블록 (회청색 #5C81A6)
     {
       type: "pico_check_device",
-      message0: "📡 연결 확인",
+      message0: "%1 연결 확인",
+      args0: [
+        { type: "field_label", name: "SENSORS_LABEL", text: "📡 센서" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#5C81A6",
@@ -360,8 +420,11 @@ export const BlocklyConfig = {
     },
     {
       type: "check_distance",
-      message0: "📡 거리 측정 → %1",
-      args0: [{ type: "field_variable", name: "VAR", variable: "거리값" }],
+      message0: "%1 거리 측정 → %2",
+      args0: [
+        { type: "field_label", name: "SENSORS_LABEL", text: "📡 센서" },
+        { type: "field_variable", name: "VAR", variable: "거리값" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#5C81A6",
@@ -369,8 +432,11 @@ export const BlocklyConfig = {
     },
     {
       type: "check_magnetic",
-      message0: "📡 자기장 감지 → %1",
-      args0: [{ type: "field_variable", name: "VAR", variable: "자기값" }],
+      message0: "%1 자기장 감지 → %2",
+      args0: [
+        { type: "field_label", name: "SENSORS_LABEL", text: "📡 센서" },
+        { type: "field_variable", name: "VAR", variable: "자기값" }
+      ],
       previousStatement: null,
       nextStatement: null,
       colour: "#5C81A6",
@@ -458,29 +524,49 @@ export function attachBatchBlockValidator(BlocklyLib) {
   };
 }
 
-// 모델별 동적 이름 변경 기능 부착
-export function attachDynamicNaming(BlocklyLib, state) {
-  const proto = BlocklyLib.Blocks['gun_fire'];
-  if (!proto) return;
-  const originalInit = proto.init;
-  proto.init = function() {
-    originalInit.call(this);
-    const labelField = this.getField('LABEL');
+function getModuleBlockLabel(blockNames, activeModel, moduleName) {
+  const cfg = MODULE_LABEL_CONFIG[moduleName];
+  if (!cfg) return '';
+  const emoji = moduleName === 'gun' && activeModel === 'launchpad' ? '🚀' : cfg.emoji;
+  const name = blockNames?.[moduleName] || cfg.defaultName;
+  return `${emoji} ${name}`;
+}
+
+function updateDynamicLabelFields(block, state) {
+  for (const [moduleName, cfg] of Object.entries(MODULE_LABEL_CONFIG)) {
+    const labelField = block.getField(cfg.field);
     if (labelField) {
-      labelField.setValue(getGunBlockLabel(state.tabNames, state.activeModel));
+      const label = moduleName === 'gun'
+        ? getGunBlockLabel(state?.blockNames, state?.activeModel)
+        : getModuleBlockLabel(state?.blockNames, state?.activeModel, moduleName);
+      labelField.setValue(label);
     }
-    this.setTooltip(() => getGunBlockTooltip(state.tabNames, state.activeModel));
-  };
+  }
 }
 
-export function getGunBlockLabel(tabNames, activeModel) {
-  const emoji = (activeModel === 'launchpad') ? '🚀' : '🔫';
-  const name = tabNames?.gun || '발사';
-  return `${emoji} ${name} 실행`;
+// 모델별 동적 블록 이름 변경 기능 부착
+export function attachDynamicNaming(BlocklyLib, state) {
+  BlocklyConfig.blocks.forEach((blockDef) => {
+    const proto = BlocklyLib.Blocks[blockDef.type];
+    if (!proto || proto.__aresDynamicNamingAttached) return;
+    const originalInit = proto.init;
+    proto.init = function() {
+      originalInit.call(this);
+      updateDynamicLabelFields(this, state);
+      if (this.type === 'gun_fire') {
+        this.setTooltip(() => getGunBlockTooltip(state.blockNames, state.activeModel));
+      }
+    };
+    proto.__aresDynamicNamingAttached = true;
+  });
 }
 
-export function getGunBlockTooltip(tabNames, activeModel) {
-  const name = tabNames?.gun || '발사';
+export function getGunBlockLabel(blockNames, activeModel) {
+  return `${getModuleBlockLabel(blockNames, activeModel, 'gun')} 실행`;
+}
+
+export function getGunBlockTooltip(blockNames, activeModel) {
+  const name = blockNames?.gun || '발사';
   if (activeModel === 'launchpad') {
     return `${name}를 실행합니다.`;
   }
@@ -491,11 +577,6 @@ export function updateWorkspaceBlocks(workspace, state) {
   if (!workspace) return;
   const blocks = workspace.getAllBlocks(false);
   blocks.forEach((block) => {
-    if (block.type === 'gun_fire') {
-      const labelField = block.getField('LABEL');
-      if (labelField) {
-        labelField.setValue(getGunBlockLabel(state.tabNames, state.activeModel));
-      }
-    }
+    updateDynamicLabelFields(block, state);
   });
 }
