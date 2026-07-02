@@ -842,8 +842,27 @@
         sendCommand('GET_NAMES');
     }
 
-    function requestStatusOnce() {
+    // 상태(STATUS)는 펌웨어가 요청 시에만 보내므로 주기적으로 요청해야
+    // 연결 감시가 동작한다. (1회만 요청하면 5초 뒤 항상 "연결 끊김"으로 표시됐다)
+    let statusPollTimer = null;
+    const STATUS_POLL_MS = 3000;
+
+    function startStatusPolling() {
+        stopStatusPolling();
         sendCommand('GET_STATUS');
+        statusPollTimer = setInterval(() => {
+            // 대시보드 iframe이 display:none으로 숨겨진 동안(코딩 화면 등)은
+            // 불필요한 BLE 트래픽을 만들지 않는다
+            if (document.body.clientWidth === 0) return;
+            sendCommand('GET_STATUS');
+        }, STATUS_POLL_MS);
+    }
+
+    function stopStatusPolling() {
+        if (statusPollTimer) {
+            clearInterval(statusPollTimer);
+            statusPollTimer = null;
+        }
     }
 
     function handleMessage(event) {
@@ -859,9 +878,10 @@
                     setTimeout(requestSystemConfig, 500);
                     setTimeout(requestModules, 600);
                     setTimeout(requestNames, 650);
-                    setTimeout(requestStatusOnce, 750);
+                    setTimeout(startStatusPolling, 750);
                 } else {
                     addLog('블루투스 연결 끊김', 'error');
+                    stopStatusPolling();
                     updateConnectionUI(false);
                     setDashboardInteractive(false);
                     resetDashboardValuesToZero();
@@ -912,9 +932,11 @@
         setInterval(() => {
             if (lastUpdateTime !== 0) {
                 const elapsed = Date.now() - lastUpdateTime;
-                if (elapsed > 3000 && elapsed <= 5000) {
+                // 끊김 판정 임계는 상태 폴링 주기(3s)의 2.5배 — 응답 한 번
+                // 놓친 정도로는 끊김으로 표시하지 않는다
+                if (elapsed > 3000 && elapsed <= STATUS_POLL_MS * 2.5) {
                     DOM.lastComm.textContent = Math.floor(elapsed / 1000) + '초 전';
-                } else if (elapsed > 5000) {
+                } else if (elapsed > STATUS_POLL_MS * 2.5) {
                     updateConnectionUI(false);
                 }
             }
