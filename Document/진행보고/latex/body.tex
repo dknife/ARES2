@@ -974,3 +974,161 @@ function completedMissionCount(lesson) {     // count 0..4 done per lesson
   return n;
 }
 \end{lstlisting}
+
+\section{8일차 — 시뮬레이터 객체 삽입 기능 구현 · 관제실·개요 UX 개편 · 블록코딩 페이지 디자인 개선}
+\textit{2026.07.02 (목) · 컴퓨터실 개발 KST}
+
+\begin{summarybox}
+컴퓨터실에서 개발을 이어갔다. \textbf{시뮬레이터}는 7일차에 계획한 \textbf{객체 삽입 기능}을
+실제로 구현해, 3D 장면에 \textbf{박스$\cdot$구$\cdot$마커}를 생성하고 \textbf{이동$\cdot$회전$\cdot$크기}
+기즈모로 배치$\cdot$변형할 수 있게 했다. \textbf{웹 인터페이스}는 관제실$\cdot$개요 화면을
+\textbf{차시$\cdot$미션 통합 아코디언}으로 재구성하고, 뷰 전환에 \textbf{슬라이드$\cdot$페이드
+애니메이션}과 \textbf{차시 정보 블루화}$\cdot$\textbf{하단바 코딩 탭}을 추가했으며,
+\textbf{하단 내비게이션을 데스크톱에서도 표시}하도록 반응형 정책을 바꿨다.
+\textbf{블록 카테고리 색상 팔레트}를 새로 정의하고, \textbf{블록코딩 페이지의 디자인 개선 계획}을
+시안으로 정리했다.
+\end{summarybox}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_개발현장1.jpg}
+    \caption{개발 현장 — 코딩$\cdot$실행 로그}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_개발현장2.jpg}
+    \caption{컴퓨터실 전경}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_개발현장3.jpg}
+    \caption{페어 개발$\cdot$논의}
+  \end{subfigure}
+  \caption{8일차 — 개발 현장: 서비스$\cdot$시뮬레이터$\cdot$펌웨어 트랙 병행}
+\end{figure}
+
+\subsection{시뮬레이터 — 객체 삽입 기능 구현 (7일차 계획 실현)}
+7일차에 세운 \textbf{컴포넌트 기반 객체 삽입 계획}을 실제 기능으로 구현했다. 시뮬레이터 화면의
+\textbf{CREATE OBJECT} 메뉴에서 \textbf{Box$\cdot$Sphere$\cdot$Marker}를 3D 장면에 생성하고,
+\textbf{Move$\cdot$Rotate$\cdot$Scale} 기즈모로 위치$\cdot$방향$\cdot$크기를 조정할 수 있다. 생성한
+객체는 \textbf{Delete spawned}로 일괄 제거한다. 아래 캡처는 기능 시연 \textbf{동영상에서 발췌}한
+삽입 흐름이다.
+
+\smallskip
+\noindent\chip{CREATE OBJECT (Box$\cdot$Sphere$\cdot$Marker)} \chip{Move$\cdot$Rotate$\cdot$Scale 기즈모} %
+\chip{다중 객체 배치$\cdot$선택} \chip{Delete spawned}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_시뮬_객체메뉴.jpg}
+    \caption{\textcircled{1} 객체 생성 메뉴(Box$\cdot$Sphere$\cdot$Marker)}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_시뮬_박스삽입.jpg}
+    \caption{\textcircled{2} 박스 삽입 + 이동 기즈모(RGB 축)}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_시뮬_객체배치.jpg}
+    \caption{\textcircled{3} 박스$\cdot$구$\cdot$마커 다중 배치}
+  \end{subfigure}
+  \caption{8일차 — 시뮬레이터 객체 삽입 기능(동영상 발췌): 메뉴 → 박스 생성 → 다중 객체 배치$\cdot$변형}
+\end{figure}
+
+\subsection{웹 인터페이스 — 관제실·개요 UX 개편 \& 하단 내비 데스크톱 표시}
+관제실$\cdot$개요 화면을 \textbf{차시$\cdot$미션 통합 아코디언}으로 재구성했다. 차시 정보를 미션 목록
+위로 올리고 \textbf{푸른색 팔레트}로 구분했으며, 개요/차시/미션 뷰 전환에 \textbf{슬라이드-인},
+미션 내부 모드 전환에 \textbf{페이드(1s)} 애니메이션을 넣었다. 아코디언 여닫이는
+\textbf{열림 2s$\cdot$닫힘 1s}로 조정했다. 하단바에 \textbf{코딩 탭}을 추가해 \code{localStorage}에
+기록된 미션의 블록코딩으로 바로 진입하도록 하고(3$\to$4탭), 기존에 모바일($\leq$768px)에서만
+보이던 \textbf{하단 내비게이션을 데스크톱에서도 표시}하도록 반응형 정책을 바꿨다. 서비스 첫 화면
+인사 문구도 간결화했다.
+
+\smallskip
+\noindent{\raggedright\chip{차시$\cdot$미션 통합 아코디언} \chip{차시정보 블루화} %
+\chip{슬라이드$\cdot$페이드 전환} \chip{하단바 코딩 탭(4탭)} \chip{하단 내비 데스크톱 표시} %
+\chip{미션 기록(localStorage)}\par}
+
+\begin{itemize}
+  \item \textbf{차시$\cdot$미션 아코디언} — 차시를 아코디언으로 접고 펴며 차시별 미션(0/4 진행)을
+  리스트로 노출. 차시 정보를 미션 위로 이동하고 블루 계열로 차별화.
+  \item \textbf{화면 전환 애니메이션} — 뷰 전환 슬라이드-인 + 미션 내부 모드 전환 페이드(1s),
+  아코디언 여닫이 \textbf{열림 2s$\cdot$닫힘 1s}.
+  \item \textbf{하단 내비 데스크톱 표시} — \code{@media (min-width:769px)}의 강제 숨김을 제거하고,
+  고정 바가 콘텐츠를 가리지 않도록 \textbf{컨테이너 높이를 내비 높이만큼 축소}. AI 패널도 내비 위로 올림.
+\end{itemize}
+
+\subsection{블록코딩 페이지 — 디자인 개선 계획 \& 블록 카테고리 색상}
+블록코딩 화면의 \textbf{디자인 개선 계획}을 시안으로 정리했다. 좌측 \textbf{카테고리
+팔레트}(동작$\cdot$출력$\cdot$발사$\cdot$감지$\cdot$제어$\cdot$변수$\cdot$수학$\cdot$함수), 가운데
+\textbf{워크스페이스}(``블록을 끌어와 미션을 만들어보세요!''), \textbf{전송$\cdot$실행} 버튼과
+\textbf{+/$-$$\cdot$휴지통} 도구, \textbf{AI 도움} 패널, 하단 4탭 내비를 한 화면에 배치한 모바일
+레이아웃이다. 함께 \textbf{블록 카테고리 색상 팔레트}도 새로 정의했다(동작 \code{\#cf3d37}$\cdot$%
+출력 \code{\#d68fa5}$\cdot$발사 \code{\#dcc342}$\cdot$감지 \code{\#7daa4d}$\cdot$제어 \code{\#2b638f}$\cdot$%
+변수 \code{\#5483b5}$\cdot$수학 \code{\#cacacb}$\cdot$함수 \code{\#727171}).
+
+\smallskip
+\noindent\chip{블록코딩 디자인 시안} \chip{카테고리 팔레트} \chip{워크스페이스$\cdot$전송/실행} %
+\chip{AI 도움 패널} \chip{카테고리 색상 재정의}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.82\linewidth}\centering
+    \figbox{../img/8일차_블록코딩_디자인.png}
+    \caption{블록코딩 페이지 디자인 시안 — (좌) 카테고리 팔레트$\cdot$빈 워크스페이스, (중) 전송$\cdot$실행 도구$\cdot$AI 도움, (우) 소리$\cdot$DC 모터 블록 예제. 하단 4탭(미션$\cdot$코딩$\cdot$시뮬레이션$\cdot$AI도움)}
+  \end{subfigure}
+  \caption{8일차 — 블록코딩 페이지 디자인 개선 시안}
+\end{figure}
+
+\subsection{주요 코드 변경 요약 (오늘 커밋 기준)}
+오늘(2026.07.02) 커밋 \textbf{8건}을 반영했다. 개발용 \code{dev.html} 문서를 포함해
+\textbf{6개 파일에서 +817 / $-$79 라인}(\code{git} 기준)이 바뀌었다. 세 갈래로 요약한다.
+
+\begin{itemize}
+  \item \textbf{관제실$\cdot$개요 UX 개편}(\code{main.js} +274$\cdot$\code{styles.css}$\cdot$%
+  \code{main.html}$\cdot$\code{overview.html}) — 차시$\cdot$미션 통합 아코디언(여닫이 2s/1s), 뷰 전환
+  슬라이드$\cdot$페이드, 차시정보 블루화, 하단바 코딩 탭(3$\to$4), 미션 기록(\code{localStorage}).
+  \item \textbf{하단 내비 데스크톱 표시}(\code{styles.css}) — \code{$\geq$769px} 강제 숨김 제거 +
+  컨테이너 높이 축소로 여백 확보, AI 패널 위치 보정.
+  \item \textbf{블록 카테고리 색상}(\code{main.html}) — 8개 카테고리 색상을 새 팔레트로 교체. 아울러
+  개발용 \code{dev.html}에 \textbf{2차 Refactoring$\cdot$디자인 계획}(+396)을 문서화.
+\end{itemize}
+
+\begin{lstlisting}[style=json, caption={\code{Web/styles.css} --- 하단 내비를 데스크톱에서도 표시(강제 숨김 제거 + 컨테이너 높이 축소)}]
+/* desktop (>=769px): show bottom nav, shrink container by nav height */
+@media (min-width: 769px) {
+    .container {
+        height: calc(100dvh - var(--mobile-bottom-nav-height));
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height));
+    }
+}
+.mobile-bottom-nav { display: grid; }          /* shown on mobile + desktop */
+.ai-panel { bottom: calc(20px + var(--mobile-bottom-nav-height)); }  /* above nav */
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={\code{Web/main.js} --- 아코디언 여닫이 애니메이션(열림 2s·닫힘 1s)}]
+const ACCORDION_OPEN_MS  = 2000;
+const ACCORDION_CLOSE_MS = 1000;
+
+function openAccordion(el) {
+  el.classList.remove('accordion-closing', 'accordion-opening');
+  el.classList.add('accordion-opening');
+  el._accTimer = setTimeout(done, ACCORDION_OPEN_MS + 120);
+}
+function closeAccordion(el) {
+  if (el.classList.contains('accordion-closing')) return; // ignore if already closing
+  el.classList.add('accordion-closing');
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=json, caption={\code{Web/main.html} --- 블록 카테고리 색상 팔레트 재정의}]
+<category id="category_motion"  colour="#cf3d37">   <!-- motion:  orange -> red   -->
+<category id="category_output"  colour="#d68fa5">   <!-- output:  red    -> pink  -->
+<category id="category_gun"     colour="#dcc342">   <!-- launch:  orange -> gold  -->
+<category id="category_sensors" colour="#7daa4d">   <!-- sensor:  blue   -> green -->
+<category id="category_control" colour="#2b638f">   <!-- control -->
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.82\linewidth}\centering
+    \figbox{../img/8일차_커밋히스토리.png}
+    \caption{오늘 커밋 히스토리 — GitHub Desktop에서 본 2026.07.02 커밋 목록과 \code{blockly label color change}(카테고리 \code{colour} 값 교체) diff}
+  \end{subfigure}
+  \caption{8일차 — 오늘(2026.07.02) 커밋 히스토리}
+\end{figure}
