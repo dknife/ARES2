@@ -6,7 +6,7 @@ const GUN_SMOKE_POOL = 18;
 const GUN_SMOKE_BURST = 12;
 const GUN_SMOKE_BURST_DUR = 0.18;
 
-export class GunSubsystem {
+export class Gun {
   constructor(ctx) {
     this.ctx = ctx;
     this.gunMesh = null;
@@ -23,6 +23,31 @@ export class GunSubsystem {
     this.gunSmokePool = [];
     this.gunSmokeRemaining = 0;
     this.gunSmokeAcc = 0;
+  }
+
+  // Setup the Gun mesh, its positioning, and calculate muzzle parameters
+  setupGun(roverGroup, root, editor) {
+    const THREE = this.ctx.THREE;
+    root.position.set(0.55, 0.5, -0.5);
+    root.rotation.y = Math.PI / 2;
+    roverGroup.add(root);
+    editor?.register(root, 'Rover Gun');
+    this.gunMesh = root;
+
+    // Calculate muzzle world position and forward vector using bounding box
+    const bbox = new THREE.Box3().setFromObject(root);
+    const size = bbox.getSize(new THREE.Vector3());
+    const center = bbox.getCenter(new THREE.Vector3());
+    let ax = 0;
+    if (size.y > size.x && size.y > size.z) ax = 1;
+    else if (size.z > size.x) ax = 2;
+    const minV = bbox.min.getComponent(ax);
+    const maxV = bbox.max.getComponent(ax);
+    const muzzleEnd = Math.abs(maxV) > Math.abs(minV) ? minV : maxV;
+    this.muzzleWorldPos.copy(center);
+    this.muzzleWorldPos.setComponent(ax, muzzleEnd);
+    this.muzzleForward.set(0, 0, 0);
+    this.muzzleForward.setComponent(ax, Math.sign(muzzleEnd - center.getComponent(ax)) || -1);
   }
 
   ensureMuzzleFlash() {

@@ -6,7 +6,7 @@
 // ============================================================
 import { CommandExecutor } from './commandexecutor.js';
 import { state } from './state.js';
-import { buildSim } from './Sim_Parts/context.js';
+import { Simulation_Main } from './Simulation/Simulation_Main.js';
 import {
   TOPICS,
   TOPIC_ORDER,
@@ -105,7 +105,7 @@ export function setupSimulation({ workspace, onOpen, onClose }) {
         cfg.radar   ? HINT_LAUNCH  :
         cfg.parts   ? HINT_ROVER   : HINT_DEFAULT;
     }
-    sim = buildSim(THREE, A, stage, loadingEl, cfg, { logLine, ensureAudio, state });
+    sim = Simulation_Main.buildSim(THREE, A, stage, loadingEl, cfg, { logLine, ensureAudio, state });
     builtTopic = topicKey;
   };
 

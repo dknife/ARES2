@@ -1,20 +1,20 @@
 // Web/Sim_Parts/context.js
 // Shared state container and Three.js scene setup.
 
-import { AssetLoader, makeGLTFLoader } from './assets.js';
-import { RenderEngine } from './render.js';
-import { LedSubsystem } from './leds.js';
-import { MovementSubsystem } from './movement.js';
-import { RocketSubsystem } from './rocket.js';
-import { TrafficSubsystem } from './traffic.js';
-import { WavesSubsystem } from './waves.js';
-import { OledSubsystem } from './oled.js';
-import { GunSubsystem } from './gun.js';
-import { AudioSynthesizer } from './audio.js';
-import { CommandDispatcher } from './dispatch.js';
-import { EditorControls } from './editor_controls.js';
+import { Assets } from './assets.js';
+import { Render } from './render.js';
+import { Leds } from './leds.js';
+import { Movement } from './movement.js';
+import { Rocket } from './rocket.js';
+import { Traffic } from './traffic.js';
+import { Waves } from './waves.js';
+import { Oled } from './oled.js';
+import { Gun } from './gun.js';
+import { Audio } from './audio.js';
+import { Dispatch } from './dispatch.js';
+import { Editor_Controls } from './editor_controls.js';
 
-export class SimContext {
+export class Context {
   constructor(THREE, A, stage, loadingEl, cfg, options = {}) {
     this.THREE = THREE;
     this.A = A;
@@ -81,18 +81,18 @@ export class SimContext {
     this.lastRenderTime = 0;
 
     // Shared subsystem refs (OOP Class instances)
-    this.leds = new LedSubsystem(this);
-    this.movement = new MovementSubsystem(this);
-    this.gun = new GunSubsystem(this);
-    this.rocket = new RocketSubsystem(this);
-    this.traffic = new TrafficSubsystem(this);
-    this.waves = new WavesSubsystem(this);
-    this.oled = new OledSubsystem(this);
-    this.audio = new AudioSynthesizer(this);
-    this.assets = new AssetLoader(this);
-    this.renderEngine = new RenderEngine(this);
-    this.dispatcher = new CommandDispatcher(this);
-    this.editor = new EditorControls(this);
+    this.leds = new Leds(this);
+    this.movement = new Movement(this);
+    this.gun = new Gun(this);
+    this.rocket = new Rocket(this);
+    this.traffic = new Traffic(this);
+    this.waves = new Waves(this);
+    this.oled = new Oled(this);
+    this.audio = new Audio(this);
+    this.assets = new Assets(this);
+    this.renderEngine = new Render(this);
+    this.dispatcher = new Dispatch(this);
+    this.editor = new Editor_Controls(this);
   }
 
   getAudioCtx() {
@@ -152,93 +152,4 @@ export class SimContext {
     this.waves?.dispose?.();
     this.rocket?.dispose?.();
   }
-}
-
-export function buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
-  const ctx = new SimContext(THREE, A, stage, loadingEl, cfg, options);
-
-  // Load standard models or parts
-  ctx.assets.loadAssets();
-
-  return {
-    render() { ctx.renderEngine.render(); },
-    resize() { ctx.resize(); },
-    dispose() {
-      ctx.dispose();
-    },
-    
-    // Albi LEDs
-    get hasEyes() { return !!ctx.cfg.eyes; },
-    get eyeL() { return ctx.leds?.eyeL; },
-    get eyeR() { return ctx.leds?.eyeR; },
-    setEye(side, val) { ctx.leds.setEye(side, val); },
-    get hasChest() { return !!ctx.cfg.chest; },
-    get chestLed() { return ctx.leds?.chestLed; },
-    setChest(val) { ctx.leds.setChest(val); },
-
-    // Launchpad
-    get hasLaunchLeds() { return !!ctx.cfg.launch && ctx.leds?.launchLeds?.length > 0; },
-    get launchLeds() { return ctx.leds?.launchLeds; },
-    setLaunchLed(i, val) { ctx.leds.setLaunchLed(i, val); },
-    get hasLaunchWave() { return !!ctx.cfg.launch; },
-    setLaunchWave(val) { ctx.waves.setLaunchWave(val); },
-    get hasRocket() { return !!ctx.rocket?.rocketGroup; },
-    get rocketLaunchOn() { return ctx.rocket?.rocketLaunchOn; },
-    get rocketAtRest() { return !ctx.rocket?.rocketLaunchOn && ctx.rocket?.rocketAnimT === 0; },
-    setRocketLaunch(on, follow) { ctx.rocket.setRocketLaunch(on, follow); },
-
-    // Traffic light
-    get hasTraffic() { return !!ctx.cfg.traffic; },
-    placeLamps() { ctx.traffic.placeLamps(() => makeGLTFLoader(ctx.A)); },
-    placeHands() { ctx.traffic.placeHands(() => makeGLTFLoader(ctx.A)); },
-    resetTraffic() { ctx.traffic.resetTraffic(); },
-    toggleSlot(idx) { ctx.traffic.toggleSlot(idx); },
-    setSlot(idx, val) { ctx.traffic.setSlotOn(idx, val); },
-
-    // Rover
-    get hasRoverLeds() { return ctx.leds?.roverLeds?.length > 0; },
-    setRoverLed(num, val) { ctx.leds.setRoverLed(num, val); },
-    get hasServo() { return !!ctx.worldGroup; },
-    setServoMove(on, dir) { ctx.movement.setServoMove(on, dir); },
-    setServoTurn(on, dir) { ctx.movement.setServoTurn(on, dir); },
-    stopServo() { ctx.movement.stopServo(); },
-    get servoActive() { return ctx.movement?.servoOn || ctx.movement?.servoTurnOn; },
-    get hasDistanceSensor() { return ctx.movement?.irSensorBalls?.length > 0; },
-    setDistanceSensor(on) { ctx.movement.setDistanceSensor(on); },
-    measureDistance() { return ctx.movement.measureDistance(); },
-    get hasBoxes() { return ctx.movement?.boxes?.length > 0; },
-    respawnBoxes() { ctx.movement.respawnBoxes(); },
-    get obstaclesOn() { return ctx.movement?.obstaclesOn; },
-    setObstacles(on) { ctx.movement.setObstacles(on); },
-    get hasRoverWave() { return !!ctx.worldGroup; },
-    setRoverWave(on) { ctx.waves.setRoverWave(on); },
-    get hasOled() { return !!ctx.oled?.oledCanvas; },
-    oledClear() { ctx.oled.clear(); },
-    oledClearRect(x, y, w, h) { ctx.oled.clearRect(x, y, w, h); },
-    oledText(x, y, text) { ctx.oled.text(x, y, text); },
-    oledIcon(name, x, y) { ctx.oled.icon(name, x, y); },
-    get hasGun() { return !!ctx.gun?.gunMesh; },
-    setGunFire() { ctx.gun.setGunFire(); },
-
-    // Radar / Helpers
-    get hasRadar() { return !!ctx.movement?.antennaPivot; },
-    get radarOn() { return ctx.movement?.radarOn; },
-    setRadar(on, dir) { ctx.movement.setRadar(on, dir); },
-    get hasGrids() { return !!ctx.planeGrids; },
-    toggleGrids() {
-      if (ctx.planeGrids) {
-        ctx.planeGrids.visible = !ctx.planeGrids.visible;
-        return ctx.planeGrids.visible;
-      }
-      return false;
-    },
-
-    // Audio triggers
-    playRocketLaunch() { ctx.audio.playRocketLaunch(); },
-    playGunFire() { ctx.audio.playGunFire(); },
-
-    // Command sink API
-    simSink(command, waitResp) { return ctx.dispatcher.simSink(command, waitResp); },
-    cancelActiveWait() { ctx.dispatcher.cancelActiveWait(); }
-  };
 }
