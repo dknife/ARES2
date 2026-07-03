@@ -2,7 +2,11 @@
 // This is the first step toward Unity-like scene objects in Sim_Parts.
 
 function disposeObject3D(root) {
-  root.traverse((node) => {
+  const stack = [root];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node !== root && node.userData?.simObject) continue;
+
     if (node.isMesh || node.isSprite) {
       node.geometry?.dispose?.();
       const material = node.material;
@@ -11,7 +15,11 @@ function disposeObject3D(root) {
         m?.dispose?.();
       });
     }
-  });
+
+    for (let i = node.children.length - 1; i >= 0; i--) {
+      stack.push(node.children[i]);
+    }
+  }
 }
 
 export class SimulationObject {
@@ -86,6 +94,7 @@ export class SimulationObjectRegistry {
     this.items = [];
     this.byRoot = new Map();
     this.nextId = 1;
+    this.version = 0;
   }
 
   makeId(type = 'object') {
@@ -100,6 +109,7 @@ export class SimulationObjectRegistry {
     this.byRoot.set(simObject.root, simObject);
     simObject.root.userData.simObjectId = simObject.id;
     simObject.onAdd(this.ctx);
+    this.version += 1;
 
     if (simObject.selectable) {
       this.ctx.editor?.register(simObject.root, simObject.label);
@@ -118,15 +128,35 @@ export class SimulationObjectRegistry {
     return null;
   }
 
+  getParentOf(simObject) {
+    let node = simObject?.root?.parent || null;
+    while (node) {
+      const parent = this.byRoot.get(node);
+      if (parent) return parent;
+      node = node.parent;
+    }
+    return null;
+  }
+
+  getChildrenOf(simObject) {
+    return this.items.filter((item) => this.getParentOf(item) === simObject);
+  }
+
+  getRoots() {
+    return this.items.filter((item) => !this.getParentOf(item));
+  }
+
   update(dt) {
     this.items.forEach((item) => item.update(dt, this.ctx));
   }
 
   remove(simObject) {
     if (!simObject) return;
+    this.getChildrenOf(simObject).forEach((child) => this.remove(child));
     this.ctx.editor?.unregister(simObject.root);
     this.items = this.items.filter((item) => item !== simObject);
     this.byRoot.delete(simObject.root);
+    this.version += 1;
     simObject.dispose(this.ctx);
   }
 

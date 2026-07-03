@@ -1,10 +1,11 @@
 // ARES Simulation Editor Controls
 // Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
 
-import { createPrimitiveObject } from './object_factory.js';
+import { createAlbiRobotObjects, createPrimitiveObject } from './object_factory.js';
 
 const MODES = ['translate', 'rotate', 'scale'];
 const SPAWN_MENU = [
+  { type: 'albi', label: 'Albi Robot' },
   { type: 'box', label: 'Box' },
   { type: 'sphere', label: 'Sphere' },
   { type: 'marker', label: 'Marker' },
@@ -26,6 +27,7 @@ export class EditorControls {
     this.selected = null;
     this.mode = 'translate';
     this.lastSpawnPoint = new this.THREE.Vector3();
+    this.hierarchyVersion = -1;
 
     this.raycaster = new this.THREE.Raycaster();
     this.pointer = new this.THREE.Vector2();
@@ -40,6 +42,8 @@ export class EditorControls {
     this.ctx.stage.appendChild(this.toolbar);
     this.menu = this.createContextMenu();
     this.ctx.stage.appendChild(this.menu);
+    this.hierarchy = this.createHierarchyPanel();
+    this.ctx.stage.appendChild(this.hierarchy);
 
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onContextMenu = this.onContextMenu.bind(this);
@@ -101,14 +105,48 @@ export class EditorControls {
       menu.appendChild(btn);
     });
 
+    const childTitle = document.createElement('div');
+    childTitle.className = 'sim-editor-context-title';
+    childTitle.textContent = 'Create child';
+    menu.appendChild(childTitle);
+
+    SPAWN_MENU.forEach((item) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.spawnChild = item.type;
+      btn.textContent = item.label;
+      btn.addEventListener('click', () => this.spawn(item.type, { asChild: true }));
+      menu.appendChild(btn);
+    });
+
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.dataset.action = 'delete-selected';
-    deleteBtn.textContent = 'Delete spawned';
+    deleteBtn.textContent = 'Delete runtime object';
     deleteBtn.addEventListener('click', () => this.deleteSelected());
     menu.appendChild(deleteBtn);
 
     return menu;
+  }
+
+  createHierarchyPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'sim-editor-hierarchy';
+    panel.innerHTML = `
+      <div class="sim-editor-hierarchy-head">
+        <span>Hierarchy</span>
+        <button type="button" data-action="toggle-hierarchy" title="Collapse hierarchy">-</button>
+      </div>
+      <div class="sim-editor-hierarchy-list"></div>
+    `;
+
+    panel.querySelector('[data-action="toggle-hierarchy"]')?.addEventListener('click', () => {
+      panel.classList.toggle('collapsed');
+      const btn = panel.querySelector('[data-action="toggle-hierarchy"]');
+      if (btn) btn.textContent = panel.classList.contains('collapsed') ? '+' : '-';
+    });
+
+    return panel;
   }
 
   register(object, label = 'Object') {
@@ -152,15 +190,32 @@ export class EditorControls {
     const label = this.selected?.userData?.simEditorLabel || 'No selection';
     const text = this.toolbar.querySelector('.sim-editor-selection');
     if (text) text.textContent = label;
+    this.updateHierarchy(true);
   }
 
   getSpawnParent() {
     return this.ctx.worldGroup || this.ctx.scene;
   }
 
-  spawn(type) {
+  getSelectedSimObject() {
+    return this.selected ? this.ctx.objects?.getByRoot(this.selected) : null;
+  }
+
+  getSpawnParentFor(options = {}) {
+    const selectedObject = this.getSelectedSimObject();
+    if (options.asChild && selectedObject) {
+      return selectedObject.root;
+    }
+    return this.getSpawnParent();
+  }
+
+  async spawn(type, options = {}) {
+    if (type === 'albi') {
+      return this.spawnAlbi(options);
+    }
+
     const simObject = createPrimitiveObject(this.ctx, type);
-    const parent = this.getSpawnParent();
+    const parent = this.getSpawnParentFor(options);
     const worldPoint = this.lastSpawnPoint.clone();
 
     this.ctx.objects.add(simObject, parent);
@@ -168,7 +223,36 @@ export class EditorControls {
 
     this.select(simObject.root);
     this.hideContextMenu();
+    this.updateHierarchy(true);
     return simObject.root;
+  }
+
+  async spawnAlbi(options = {}) {
+    const parent = this.getSpawnParentFor(options);
+    const worldPoint = this.lastSpawnPoint.clone();
+
+    this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
+    try {
+      const simObjects = await createAlbiRobotObjects(this.ctx);
+      const body = simObjects[0];
+      this.ctx.objects.add(body, parent);
+      body.setWorldPosition(worldPoint, parent);
+
+      simObjects.slice(1).forEach((child) => {
+        this.ctx.objects.add(child, body.root);
+      });
+
+      this.select(body.root);
+      this.hideContextMenu();
+      this.updateHierarchy(true);
+      return body.root;
+    } catch (err) {
+      console.error('Failed to spawn Albi robot:', err);
+      return null;
+    } finally {
+      this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = false; });
+      this.updateContextMenuState();
+    }
   }
 
   deleteSelected() {
@@ -181,6 +265,7 @@ export class EditorControls {
 
     this.ctx.objects.remove(simObject);
     this.hideContextMenu();
+    this.updateHierarchy(true);
   }
 
   onKeyDown(event) {
@@ -193,7 +278,7 @@ export class EditorControls {
     else if (key === 'escape') {
       this.select(null);
       this.hideContextMenu();
-    } else if ((key === 'delete' || key === 'backspace') && this.selected?.userData?.simEditorSpawned) {
+    } else if ((key === 'delete' || key === 'backspace') && this.getSelectedSimObject()?.spawned) {
       this.deleteSelected();
     }
   }
@@ -235,16 +320,25 @@ export class EditorControls {
   showContextMenu(event) {
     const rect = this.ctx.stage.getBoundingClientRect();
     const menuW = 172;
-    const menuH = 178;
+    const menuH = Math.min(360, rect.height - 16);
     const x = Math.min(Math.max(8, event.clientX - rect.left), Math.max(8, rect.width - menuW - 8));
     const y = Math.min(Math.max(8, event.clientY - rect.top), Math.max(8, rect.height - menuH - 8));
 
     this.menu.style.left = `${x}px`;
     this.menu.style.top = `${y}px`;
     this.menu.hidden = false;
+    this.updateContextMenuState();
+  }
+
+  updateContextMenuState() {
+    const hasSelectedObject = !!this.getSelectedSimObject();
+    this.menu.querySelectorAll('[data-spawn-child]').forEach((btn) => {
+      btn.disabled = !hasSelectedObject;
+    });
 
     const deleteBtn = this.menu.querySelector('[data-action="delete-selected"]');
-    if (deleteBtn) deleteBtn.disabled = !this.selected?.userData?.simEditorSpawned;
+    const selectedObject = this.getSelectedSimObject();
+    if (deleteBtn) deleteBtn.disabled = !selectedObject?.spawned;
   }
 
   hideContextMenu() {
@@ -276,6 +370,53 @@ export class EditorControls {
     this.showContextMenu(event);
   }
 
+  renderHierarchyItem(simObject, depth, list) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'sim-editor-hierarchy-item';
+    row.dataset.simObjectId = simObject.id;
+    row.style.setProperty('--depth', depth);
+    row.setAttribute('aria-pressed', String(this.selected === simObject.root));
+
+    const type = document.createElement('span');
+    type.className = 'sim-editor-hierarchy-type';
+    type.textContent = simObject.type;
+
+    const label = document.createElement('span');
+    label.className = 'sim-editor-hierarchy-label';
+    label.textContent = simObject.label;
+
+    row.append(type, label);
+    row.addEventListener('click', () => this.select(simObject.root));
+    list.appendChild(row);
+
+    this.ctx.objects.getChildrenOf(simObject).forEach((child) => {
+      this.renderHierarchyItem(child, depth + 1, list);
+    });
+  }
+
+  updateHierarchy(force = false) {
+    if (!this.hierarchy) return;
+    const version = this.ctx.objects?.version ?? 0;
+    if (!force && this.hierarchyVersion === version) return;
+    this.hierarchyVersion = version;
+
+    const list = this.hierarchy.querySelector('.sim-editor-hierarchy-list');
+    if (!list) return;
+    list.textContent = '';
+
+    const roots = this.ctx.objects?.getRoots?.() || [];
+    if (roots.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'sim-editor-hierarchy-empty';
+      empty.textContent = 'No objects';
+      list.appendChild(empty);
+      return;
+    }
+
+    roots.forEach((simObject) => this.renderHierarchyItem(simObject, 0, list));
+  }
+
   onDocumentPointerDown(event) {
     if (this.menu.hidden || this.menu.contains(event.target) || event.target === this.dom) return;
     this.hideContextMenu();
@@ -287,6 +428,7 @@ export class EditorControls {
 
   update() {
     if (this.selected) this.boxHelper.setFromObject(this.selected);
+    this.updateHierarchy();
   }
 
   dispose() {
@@ -296,6 +438,7 @@ export class EditorControls {
     window.removeEventListener('keydown', this.onKeyDown);
     this.toolbar?.remove();
     this.menu?.remove();
+    this.hierarchy?.remove();
 
     if (this.transform) {
       this.transform.removeEventListener('dragging-changed', this.onDraggingChanged);
