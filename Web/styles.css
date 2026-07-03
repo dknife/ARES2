@@ -263,9 +263,9 @@ button:focus-visible {
     outline-offset: 2px;
 }
 
-/* ===== 모바일 하단 내비게이션 ===== */
+/* ===== 하단 내비게이션 (모바일 + 데스크톱 공통 표시) ===== */
 .mobile-bottom-nav {
-    display: none;
+    display: grid;
     position: fixed;
     left: 0;
     right: 0;
@@ -349,9 +349,13 @@ button:focus-visible {
     white-space: nowrap;
 }
 
+/* 데스크톱(≥769px): 하단 내비를 그대로 표시하되, 고정 바가 콘텐츠를
+   가리지 않도록 컨테이너 높이를 내비 높이만큼 줄여 하단 공간을 확보한다.
+   (모바일 ≤768px 은 아래 스크롤 레이아웃 규칙이 별도로 여백을 처리) */
 @media (min-width: 769px) {
-    .mobile-bottom-nav {
-        display: none !important;
+    .container {
+        height: calc(100dvh - var(--mobile-bottom-nav-height));
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height));
     }
 }
 
@@ -1577,6 +1581,148 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     font-size: 0.72em;
     font-weight: 600;
 }
+.sim-editor-context-menu {
+    position: absolute;
+    z-index: 6;
+    width: 172px;
+    max-height: min(360px, calc(100% - 16px));
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: auto;
+    background: rgba(11, 13, 35, 0.92);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+    user-select: none;
+}
+.sim-editor-context-menu[hidden] {
+    display: none;
+}
+.sim-editor-context-title {
+    padding: 5px 7px 4px;
+    color: rgba(238, 243, 251, 0.62);
+    font-size: 0.68em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.sim-editor-context-menu button {
+    width: 100%;
+    padding: 8px 9px;
+    color: #eef3fb;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.76em;
+    font-weight: 700;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.sim-editor-context-menu button:hover:not(:disabled),
+.sim-editor-context-menu button:focus-visible:not(:disabled) {
+    color: #1f2430;
+    background: #FFC400;
+    border-color: #FFB300;
+    outline: none;
+}
+.sim-editor-context-menu button:disabled {
+    color: rgba(238, 243, 251, 0.34);
+    cursor: default;
+}
+.sim-editor-hierarchy {
+    position: absolute;
+    top: 58px;
+    right: 10px;
+    z-index: 5;
+    width: 236px;
+    max-height: min(46vh, 340px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(11, 13, 35, 0.72);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+    user-select: none;
+}
+.sim-editor-hierarchy-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 7px 10px;
+    color: rgba(238, 243, 251, 0.86);
+    font-size: 0.74em;
+    font-weight: 800;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sim-editor-hierarchy-head button {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    color: #eef3fb;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 5px;
+    cursor: pointer;
+}
+.sim-editor-hierarchy-list {
+    overflow: auto;
+    padding: 5px;
+}
+.sim-editor-hierarchy.collapsed .sim-editor-hierarchy-list {
+    display: none;
+}
+.sim-editor-hierarchy-item {
+    width: 100%;
+    min-height: 28px;
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+    margin: 2px 0;
+    padding: 5px 7px 5px calc(7px + (var(--depth, 0) * 14px));
+    color: #eef3fb;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.sim-editor-hierarchy-item:hover,
+.sim-editor-hierarchy-item[aria-pressed="true"] {
+    color: #1f2430;
+    background: #FFC400;
+    border-color: #FFB300;
+}
+.sim-editor-hierarchy-type {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: inherit;
+    opacity: 0.72;
+    font-size: 0.66em;
+    font-weight: 800;
+}
+.sim-editor-hierarchy-label {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.72em;
+    font-weight: 700;
+}
+.sim-editor-hierarchy-empty {
+    padding: 10px 8px;
+    color: rgba(238, 243, 251, 0.48);
+    font-size: 0.72em;
+    text-align: center;
+}
 @media (max-width: 760px) {
     .sim-editor-toolbar {
         top: auto; right: 10px; bottom: 86px; left: 10px;
@@ -1588,6 +1734,12 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
         flex: 1 1 100%;
         max-width: none;
         text-align: center;
+    }
+    .sim-editor-hierarchy {
+        top: 10px;
+        right: 10px;
+        width: min(236px, calc(100% - 20px));
+        max-height: 32vh;
     }
 }
 .sim-loading {
@@ -1993,7 +2145,8 @@ details.mission-section summary {
 .ai-panel {
     position: fixed;
     right: 20px;
-    bottom: 20px;
+    /* 하단 고정 내비 위로 띄운다 (내비 높이 + 여백) */
+    bottom: calc(20px + var(--mobile-bottom-nav-height));
     width: 340px;
     max-width: calc(100% - 32px);
     max-height: 70vh;
