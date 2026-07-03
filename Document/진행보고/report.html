@@ -195,12 +195,12 @@
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
             <h1>현장 진행 보고<br><span class="accent">1 ~ 9일차</span></h1>
-            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편.</p>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검.</p>
             <div class="stat-row">
-                <div class="stat"><b>8</b><span>DAYS</span></div>
-                <div class="stat"><b>35</b><span>PHOTOS</span></div>
-                <div class="stat"><b>16</b><span>LIVE SCREENS</span></div>
-                <div class="stat"><b>06.23~07.02</b><span>2026 · KST</span></div>
+                <div class="stat"><b>9</b><span>DAYS</span></div>
+                <div class="stat"><b>39</b><span>PHOTOS</span></div>
+                <div class="stat"><b>18</b><span>LIVE SCREENS</span></div>
+                <div class="stat"><b>06.23~07.03</b><span>2026 · KST</span></div>
             </div>
         </div>
     </header>
@@ -1422,10 +1422,141 @@ function closeAccordion(el) {
         <section class="day">
             <div class="day-head">
                 <span class="day-badge">DAY 9</span>
-                <h2>전체 코드 점검 · 치명 결함 4건 수정 — 비상정지 즉시화·BLE 응답 동기화·설정 안전화</h2>
-                <span class="day-date">2026.07.03 (금) · 개발 KST</span>
+                <h2>UI 디자인 시안·실서비스 적용 · 시뮬레이터 Hierarchy 편집기 · 발사대 조립 테스트 · 전체 코드 점검(치명 결함 4건 수정)</h2>
+                <span class="day-date">2026.07.03 (금) · 컴퓨터실 개발 KST</span>
             </div>
-            <p class="day-summary">서비스 전체 코드를 대상으로 <b>정밀 점검(코드 리뷰)</b>을 수행했다. <b>웹 코어</b>(블록코딩 실행기·BLE 통신), <b>3D 시뮬레이터</b>, <b>Pico 펌웨어</b>, 그리고 <b>웹↔펌웨어↔시뮬레이터 명령 프로토콜 정합성</b>의 네 영역으로 나눠 검토해 <b>치명(HIGH) 결함 4건</b>과 중간·경미 문제 20여 건을 발견했다. HIGH 4건 — <b>① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅 불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연</b> — 은 당일 <b>수정 계획 수립 → 코드 수정 → 자동화 검증(펌웨어 8·웹 17 시나리오 전체 통과)</b>까지 완료했다. 이어 <b>중간(MEDIUM) 등급 5건</b> — 한글 명령 유실·블록 인터프리터 누락·UI 배선·대시보드 연결 표시·프레임레이트 종속 애니메이션 — 도 같은 날 수정·검증했다.</p>
+            <p class="day-summary">컴퓨터실에서 <b>디자인·서비스·시뮬레이터·실물 교구·펌웨어</b> 트랙을 병행했다. <b>UI 디자인 시안</b>을 Adobe Illustrator로 정리해 <b>랜딩(탐사선 연결)·학습 관제실(12차시)·미션 화면(아레스·알비 대화)·블록코딩·대시보드</b>까지 앱 전 화면의 설계안을 완성하고, 이를 <b>실제 웹 서비스에 적용</b>했다. <b>시뮬레이터</b>는 5일차에 방향을 잡은 <b>메시 계층(Hierarchy) 편집기</b>를 구현해, 씬의 객체(알비 본체·눈/가슴 LED·삽입 박스)를 <b>계층 목록으로 관리</b>하고 선택·<b>이동·회전·크기</b> 편집을 하도록 했다. 실물 교구는 <b>화성발사대 조립 테스트</b>를 진행해, 6일차 디자인 고도화 방향대로 <b>크림슨 톤 외장과 기능적 그래픽(‘KSLV-II NURI’·‘LAUNCH AREA KEEP CLEAR’)</b>을 입힌 3D 프린팅 부품의 조립성을 실물로 확인했다. 아울러 <b>서비스 전체 코드 정밀 점검(코드 리뷰)</b>으로 <b>치명(HIGH) 결함 4건</b>(자석 표시 반전·설정 오타 부팅 불가·BLE 응답 어긋남·비상정지 지연)과 <b>중간(MEDIUM) 5건</b>을 발견해 당일 <b>수정·자동화 검증</b>까지 완료했다.</p>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/9일차_개발현장1.jpg" alt="개발 현장 — 코딩·설계 병행"></div>
+                    <figcaption><b>개발 현장</b> — 컴퓨터실에서 코딩과 디자인 설계를 나란히 진행. 앞자리에서 코드 편집·설계 검토를 병행.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/9일차_개발현장2.jpg" alt="컴퓨터실 전경"></div>
+                    <figcaption><b>컴퓨터실 전경</b> — 좌석마다 부품·장비를 두고 서비스·시뮬레이터·펌웨어 트랙을 병행 작업.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/9일차_UI디자인작업.jpg" alt="Illustrator UI 디자인 작업"></div>
+                    <figcaption><b>Illustrator UI 디자인 작업</b> — Adobe Illustrator로 앱 화면 시안과 아이콘을 설계. 책상에는 3D 프린팅 부품도 놓여 있다.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 디자인 — UI 설계안(시안) 완성 (앱 전 화면)</h3>
+                <p class="lead">6·8일차의 디자인 방향과 개선 계획을 이어받아, Adobe Illustrator로 앱 <b>전 화면의 UI 설계안(시안)</b>을 정리했다. <b>랜딩</b>(‘화성 탐사선 제어 — 탐사선 연결’), <b>학습 관제실</b>(12차시 카드형 목록 + 차시별 미션 접기/펴기), <b>미션 화면</b>(아레스·알비 캐릭터 대화 + 학습 목표 + ‘샘플 코드 보기’ 토글 + 이전/다음 미션), <b>블록코딩</b>(8개 카테고리 팔레트·워크스페이스·실행/전송/로그·AI 도움), <b>대시보드(점검)</b>까지 한 벌의 시안으로 묶어, <b>하단 5-탭 내비게이션</b>(미션·코딩·신호연결·시뮬레이션·AI도움)과 <b>화성 주황 포인트</b>로 화면 간 톤을 통일했다.</p>
+                <div class="chips">
+                    <span class="chip t">랜딩·탐사선 연결</span>
+                    <span class="chip">학습 관제실(12차시)</span>
+                    <span class="chip">미션 대화·학습 목표</span>
+                    <span class="chip">블록코딩 팔레트</span>
+                    <span class="chip">대시보드(점검)</span>
+                    <span class="chip">하단 5-탭 내비</span>
+                    <span class="chip">화성 주황 포인트</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:936/2080; background:#e9e9ec;"><img src="img/9일차_설계안_랜딩.png" alt="랜딩 — 탐사선 연결 시안"></div>
+                    <figcaption><b>① 랜딩 — 탐사선 연결</b> — 우주 배경의 알비 히어로와 ‘화성 탐사선 제어’ 카피, ‘탐사선 연결’ CTA.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:936/2080; background:#e9e9ec;"><img src="img/9일차_설계안_관제실.png" alt="학습 관제실 시안"></div>
+                    <figcaption><b>② 학습 관제실(12차시)</b> — 12차시 카드형 목록. 각 차시를 접고 펴며 하위 미션을 노출.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:936/2080; background:#e9e9ec;"><img src="img/9일차_설계안_미션.png" alt="미션 화면 시안"></div>
+                    <figcaption><b>③ 미션 — 아레스·알비 대화</b> — 캐릭터 대화로 학습 목표를 안내하고, ‘샘플 코드 보기’ 토글·이전/다음 미션 이동.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:936/2080; background:#e9e9ec;"><img src="img/9일차_설계안_블록코딩.png" alt="블록코딩 화면 시안"></div>
+                    <figcaption><b>④ 블록코딩 — 팔레트·완성 블록</b> — 8개 카테고리 팔레트와 소리·DC 모터로 구성한 예제. 실행/전송/로그·AI 도움.</figcaption>
+                </figure>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:936/3647; background:#f0f0f2;"><img src="img/9일차_설계안_대시보드.png" alt="대시보드(점검) 시안"></div>
+                    <figcaption><b>⑤ 대시보드(점검) 시안</b> — ‘ARES 미션 컨트롤’의 <b>연결 상태·센서 텔레메트리·시스템 자원·수동 제어</b> 카드(스크롤 전체).</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🖥️ UI 적용 — 설계안의 실제 웹 서비스 반영</h3>
+                <p class="lead">완성한 시안을 <b>실제 웹 서비스에 적용</b>했다. 학습 관제실(개요)과 미션 화면을 시안대로 반영해, <b>차시·미션 아코디언</b>과 <b>미션별 아레스·알비 대화·학습 목표·샘플(생성) 코드 보기</b>가 실제 화면에서 동작함을 확인했다. 아래는 배포 서비스를 실기(모니터)에서 구동한 모습으로, 시안의 톤·구성이 그대로 반영됐다.</p>
+                <div class="chips">
+                    <span class="chip t">시안 → 실서비스 반영</span>
+                    <span class="chip">차시·미션 아코디언</span>
+                    <span class="chip">아레스·알비 대화</span>
+                    <span class="chip">학습 목표·생성 코드 보기</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1050/1400; background:#dcdcdc;"><img src="img/9일차_UI적용_개요.jpg" alt="학습 관제실(개요) 적용"></div>
+                    <figcaption><b>학습 관제실(개요) 적용</b> — 차시·미션 아코디언이 실제 서비스에 반영된 모습.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1050/1400; background:#dcdcdc;"><img src="img/9일차_UI적용_미션.jpg" alt="미션 화면 적용"></div>
+                    <figcaption><b>미션 화면 적용</b> — ‘3차시 미션 1: 알비의 눈 반짝!’ 대화·학습 목표·생성 코드 보기가 시안대로 동작.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎮 시뮬레이터 — 메시 계층(Hierarchy) 편집기 구현 (5일차 방향 실현)</h3>
+                <p class="lead">5일차 토론에서 방향을 잡고 8일차에 <b>객체 삽입 기능</b>으로 이어진 시뮬레이터 개선을, <b>메시 계층(Hierarchy) 편집기</b>로 발전시켰다. 화면 우측에 <b>Hierarchy 패널</b>을 두어 씬의 객체를 <b>계층 목록</b>으로 보여준다 — 루트 <code>albi-body</code>(‘알비와 함께’) 아래 <b>Albi Eye L/R LED·Albi Chest LED</b> 등 알비의 부품과, 사용자가 삽입한 <b>Box</b> 객체가 함께 나열된다. 목록에서 객체를 <b>선택</b>하면 3D 뷰에 바운딩 박스·기즈모가 표시되고, 하단의 <b>Move·Rotate·Scale</b>로 위치·방향·크기를 편집한다. 이로써 8일차의 단순 삽입을 넘어 <b>씬 그래프 기반의 객체 관리</b>가 가능해졌다. 아래 캡처는 기능 시연 <b>동영상에서 발췌</b>했다.</p>
+                <div class="chips">
+                    <span class="chip t">Hierarchy 패널</span>
+                    <span class="chip">albi-body → Eye/Chest LED 계층</span>
+                    <span class="chip">삽입 Box 관리</span>
+                    <span class="chip">목록 선택 ↔ 기즈모</span>
+                    <span class="chip">Move·Rotate·Scale</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901; background:#111;"><img src="img/9일차_시뮬_hierarchy구현.jpg" alt="Hierarchy 편집기 구현 현장"></div>
+                    <figcaption><b>① 구현 현장</b> — 시뮬레이터(좌)와 편집기 코드(우)를 나란히 두고 Hierarchy 편집기를 구현.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1080/1920; background:#1a1030;"><img src="img/9일차_시뮬_hierarchy_박스A.jpg" alt="Hierarchy 목록 + Box 선택·이동 기즈모"></div>
+                    <figcaption><b>② Hierarchy 목록·기즈모</b> — <code>albi-body</code>→Eye/Chest LED·Box 목록에서 Box를 선택해 이동 기즈모로 편집.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1080/1920; background:#1a1030;"><img src="img/9일차_시뮬_hierarchy_박스B.jpg" alt="다중 Box 계층 관리"></div>
+                    <figcaption><b>③ 다중 Box 관리</b> — Box 7·8을 함께 계층에 두고 목록·기즈모로 각각 선택·편집.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🚀 실물 교구 — 화성발사대 조립 테스트 (디자인 고도화 반영)</h3>
+                <p class="lead">6일차 디자인 고도화 방향(다크 톤·기능적 그래픽)을 반영한 <b>화성발사대</b>의 3D 프린팅 부품으로 <b>조립 테스트</b>를 진행했다. <b>크림슨(다크 레드) 외장 패널</b>과 <b>흰색 내부 본체</b>가 끼워 맞춰지는 모듈형 구조로, 전면에 <b>디스플레이 창·제어 패널</b>, 측면에 <b>DC 기어모터·LED 어레이</b>, 외장에 <b>기능적 그래픽 데칼</b>(‘<b>KSLV-II NURI</b>’ 로켓 마킹, ‘<b>LAUNCH AREA KEEP CLEAR</b>’ 경고 그래픽)을 입혔다. 부품 전개 → 그래픽 패널 결합 → 전면 컨트롤부 조립까지 실물로 맞춰 보며 <b>조립성·끼움 정밀도·배선 정리</b>를 점검했다. 아래 캡처는 조립 <b>동영상에서 발췌</b>했다.</p>
+                <div class="chips">
+                    <span class="chip t">크림슨 외장 + 흰색 본체</span>
+                    <span class="chip">디스플레이 창·제어 패널</span>
+                    <span class="chip">DC 기어모터·LED 어레이</span>
+                    <span class="chip">기능적 그래픽 데칼(KSLV-II NURI)</span>
+                    <span class="chip">모듈형 조립성 점검</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1920/1080; background:#eee;"><img src="img/9일차_조립_부품전개.jpg" alt="발사대 부품 전개"></div>
+                    <figcaption><b>① 부품 전개</b> — 크림슨 외장·그래픽 데칼·DC 기어모터·LED 어레이·흰색 본체를 펼쳐 배치.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1920/1080; background:#eee;"><img src="img/9일차_조립_그래픽패널.jpg" alt="그래픽 패널 결합"></div>
+                    <figcaption><b>② 그래픽 패널 결합</b> — ‘KSLV-II NURI’·‘LAUNCH AREA KEEP CLEAR’ 데칼이 인쇄된 발사대 패널을 결합.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1080/1920; background:#eee;"><img src="img/9일차_조립_완성.jpg" alt="전면 컨트롤부 조립"></div>
+                    <figcaption><b>③ 전면 컨트롤부 조립</b> — 크림슨 제어 패널과 디스플레이 창을 흰색 본체에 결합한 조립 완성 형태.</figcaption>
+                </figure>
+            </div>
 
             <div class="tasks">
                 <h3>🔍 문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)</h3>
@@ -1552,7 +1683,7 @@ async _executeFunctionCall(callBlock) {
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 70매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 86매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->
