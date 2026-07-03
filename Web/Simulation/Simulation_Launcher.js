@@ -11,7 +11,10 @@ export class Simulation_Launcher extends Simulation_Base {
     this.rocket = ctx.rocket;
     this.waves = ctx.waves;
     this.movement = ctx.movement;
+  }
 
+  init() {
+    const ctx = this.ctx;
     const THREE = ctx.THREE;
     const scene = ctx.scene;
     const cfg = ctx.cfg;
