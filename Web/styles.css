@@ -849,6 +849,7 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .tag-SEQUENCE { background:#D4F4DD; color:#1E7E34; }
 .tag-SYNC     { background:#FFD6F2; color:#A02080; }
 .tag-LAUNCH   { background:#FFE2CC; color:#D94A00; }
+.tag-BONUS    { background:#FFF1E6; color:#D94A00; border:1px dashed #F0A472; }
 
 /* ----- 개요 뷰 ----- */
 .overview-hero h2 {
@@ -1217,6 +1218,151 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     align-items: center;
     justify-content: center;
     font-size: 1.1em;
+}
+
+/* 보너스(+) 항목 — "+" 배지는 점선 테두리 + 흰 바탕으로 정규 차시와 구분 */
+.lesson-accordion-item.bonus .flow-num {
+    background: #fff;
+    color: var(--accent-color);
+    border: 2px dashed var(--accent-color);
+    font-size: 1.4em;
+    line-height: 1;
+}
+.lesson-table tr.bonus td.lesson-n { color: var(--accent-color); font-weight: 800; }
+.lesson-panel .bonus-teaser p { margin: 6px 0 0; color: var(--text-secondary); line-height: 1.5; }
+.landing-start-btn {
+    margin-top: 12px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 100px;
+    background: var(--accent-color);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(255,106,0,0.35);
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.landing-start-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.landing-start-btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(255,106,0,0.3); }
+
+/* ===== 화성 착륙 게임 오버레이 ===== */
+.landing-overlay {
+    position: fixed; inset: 0; z-index: 100000;
+    background: #05030a;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.landing-canvas { display: block; width: 100%; height: 100%; }
+
+.landing-hud {
+    position: absolute; top: 16px; left: 16px; z-index: 2;
+    background: rgba(10, 8, 20, 0.6);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #eaf2ff;
+    font-family: ui-monospace, 'Inter Tight', monospace;
+    font-size: 0.92em;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    min-width: 168px;
+}
+.landing-hud .hud-row { display: flex; justify-content: space-between; gap: 12px; line-height: 1.7; }
+.landing-hud .hud-row span { color: #9fb2cc; }
+.landing-hud .hud-row b { color: #fff; font-weight: 700; }
+.landing-hud .hud-fuel {
+    margin-top: 8px; height: 8px; border-radius: 100px;
+    background: rgba(255,255,255,0.14); overflow: hidden;
+}
+.landing-hud .hud-fuel i { display: block; height: 100%; width: 100%; background: #4fd1ff; transition: width .1s linear; }
+
+.landing-help {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2;
+    max-width: min(560px, 78vw);
+    text-align: center;
+    color: #cfe0ff; font-size: 0.86em; line-height: 1.5;
+    background: rgba(10, 8, 20, 0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 10px 16px;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.landing-help b { color: #fff; }
+
+.landing-close {
+    position: absolute; top: 16px; right: 16px; z-index: 3;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(10, 8, 20, 0.6); color: #fff;
+    font-size: 1.2em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.landing-close:hover { background: rgba(231,76,60,0.85); }
+
+/* 역추진 버튼(하나, 화면 하단 중앙) */
+.thrust-btn {
+    position: absolute; z-index: 3;
+    border: 2px solid rgba(79,209,255,0.55);
+    background: rgba(30, 40, 70, 0.42);
+    color: #bfe6ff; line-height: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    cursor: pointer; touch-action: none;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: background .08s ease, transform .08s ease, box-shadow .08s ease;
+}
+.thrust-btn:hover { background: rgba(79,209,255,0.22); }
+.thrust-btn.active {
+    background: rgba(79,209,255,0.85); color: #05233a;
+    box-shadow: 0 0 30px rgba(79,209,255,0.8);
+}
+.thrust-main {
+    bottom: 34px; left: 50%; transform: translateX(-50%);
+    width: 150px; height: 92px; border-radius: 24px;
+}
+.thrust-main.active { transform: translateX(-50%) scale(0.96); }
+.thrust-main .thrust-ico { font-size: 1.7em; }
+.thrust-main .thrust-label { font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.9em; }
+
+/* 결과: 화면 전체를 어둡게 덮지 않고, 중앙의 반투명 패널로만 표시 */
+.landing-result {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    background: transparent;              /* 뒤 장면을 어둡게 하지 않음 */
+    pointer-events: none;                 /* 패널만 상호작용 */
+}
+.landing-result[hidden] { display: none; }
+.landing-result-panel {
+    pointer-events: auto;
+    max-width: min(460px, 90vw);
+    text-align: center; color: #fff;
+    background: transparent;              /* 완전 투명 — 카드 배경 없음 */
+    padding: 26px 28px;
+    /* 밝은 장면 위에서도 글자가 읽히도록 그림자로 가독성 확보 */
+    text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.75);
+}
+.landing-result-panel h2 { font-size: clamp(26px, 5.5vw, 40px); font-weight: 800; margin-bottom: 10px; }
+.landing-result.ok .landing-result-panel h2 { color: #86f0a8; }
+.landing-result:not(.ok) .landing-result-panel h2 { color: #ff9184; }
+.landing-result-msg { color: #ffffff; font-size: 1.05em; line-height: 1.6; }
+.landing-result-stat { color: #dbe6f5; font-size: 0.88em; margin-top: 10px; }
+.landing-result-btns { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+.landing-result-btns button {
+    padding: 12px 26px; border-radius: 100px; border: none;
+    font-family: inherit; font-weight: 800; font-size: 1em; cursor: pointer;
+}
+.landing-retry { background: var(--accent-color); color: #fff; }
+.landing-quit  { background: rgba(255,255,255,0.16); color: #fff; }
+.landing-retry:hover { filter: brightness(1.08); }
+.landing-quit:hover  { background: rgba(255,255,255,0.26); }
+
+@media (max-width: 600px) {
+    .thrust-main { width: 132px; height: 84px; bottom: 26px; }
+    .landing-help { font-size: 0.78em; top: 12px; }
 }
 
 .flow-step strong {

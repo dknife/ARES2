@@ -24,6 +24,7 @@ const LESSON_CATALOG = [
   { n: 10, title: "LED 5개 시퀀스와 카운트다운",    tag: "SEQUENCE", hardware: "LED 5개",                 concept: "발사 시퀀스, 모듈화 사고" },
   { n: 11, title: "LED와 부저 동기화",             tag: "SYNC",     hardware: "LED 5개 + 부저",          concept: "빛/소리 동기, 음계(도레미파솔)" },
   { n: 12, title: "화성 로켓 최종 발사!",           tag: "LAUNCH",   hardware: "LED 5개 + 부저 + DC모터", concept: "통합 시나리오, 자유 창작 발표" },
+  { n: "+", title: "화성에 착륙하기",               tag: "BONUS",    hardware: "곧 만나요",                concept: "지금까지 배운 모든 것을 모아 화성 착륙에 도전!", bonus: true },
 ];
 
 const MISSION_PROGRESS_KEY = 'ares_completed_missions_v1';
@@ -846,7 +847,15 @@ async function enterOverview() {
       // 개요 차시 표 렌더링
       const tbody = document.getElementById('overviewLessonTableBody');
       if (tbody) {
-        tbody.innerHTML = LESSON_CATALOG.map(l => `
+        tbody.innerHTML = LESSON_CATALOG.map(l => l.bonus ? `
+          <tr class="bonus" data-lesson-item="bonus">
+            <td class="lesson-n">${l.n}</td>
+            <td class="lesson-title-cell">${escapeHtml(l.title)}</td>
+            <td>${escapeHtml(l.hardware)}</td>
+            <td>${escapeHtml(l.concept)}</td>
+            <td><span class="tag tag-BONUS">${escapeHtml(l.tag)}</span></td>
+          </tr>
+         ` : `
           <tr data-lesson="${l.n}">
             <td class="lesson-n">${l.n}</td>
             <td class="lesson-title-cell">
@@ -859,10 +868,22 @@ async function enterOverview() {
          `).join('');
        }
 
-       // 12개 차시를 아코디언형 버튼 목록으로 생성
+       // 12개 차시 + 보너스(+) 항목을 아코디언형 버튼 목록으로 생성
        const flowContainer = document.getElementById('lessonFlowContainer');
        if (flowContainer) {
-         flowContainer.innerHTML = LESSON_CATALOG.map(lesson => `
+         flowContainer.innerHTML = LESSON_CATALOG.map(lesson => lesson.bonus ? `
+           <section class="lesson-accordion-item bonus" data-lesson-item="bonus">
+             <button class="flow-step-btn" data-bonus="1" aria-expanded="false" aria-controls="inlineMissionsBonus">
+               <span class="flow-num">${lesson.n}</span>
+               <span class="flow-main">
+                 <strong>${escapeHtml(lesson.title)}</strong>
+                 <small>${escapeHtml(lesson.hardware)}</small>
+               </span>
+               <span class="flow-arrow" aria-hidden="true">▶</span>
+             </button>
+             <div id="inlineMissionsBonus" class="lesson-panel" hidden></div>
+           </section>
+         ` : `
            <section class="lesson-accordion-item" data-lesson-item="${lesson.n}">
              <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
                <span class="flow-num">${lesson.n}</span>
@@ -878,6 +899,17 @@ async function enterOverview() {
          `).join('');
 
          flowContainer.addEventListener('click', async (event) => {
+           // (0) 「착륙 실시」 버튼 → 착륙 게임 모듈을 필요할 때만 로드해 실행
+           if (event.target.closest('.landing-start-btn')) {
+             try {
+               const { launchLandingGame } = await import('./landing_game.js');
+               launchLandingGame();
+             } catch (e) {
+               Logger.add(`[오류] 착륙 게임 로드 실패: ${e.message}`, 'error');
+             }
+             return;
+           }
+
            // (1) 미션 코딩 버튼 → 해당 미션 선택 + 블록코딩 모드로 전환
            const codeBtn = event.target.closest('.mission-code-btn');
            if (codeBtn) {
@@ -895,7 +927,6 @@ async function enterOverview() {
            // (3) 차시 버튼 → 미션 리스트 + 차시 정보를 펼침
            const lessonButton = event.target.closest('.flow-step-btn');
            if (!lessonButton) return;
-           const lessonNum = Number(lessonButton.dataset.lesson);
            const item = lessonButton.closest('.lesson-accordion-item');
            const panel = item?.querySelector('.lesson-panel');
            if (!panel) return;
@@ -914,6 +945,21 @@ async function enterOverview() {
              return;
            }
 
+           // 보너스(+) 항목 — 착륙 게임을 로드하는 「착륙 실시」 버튼을 펼친다
+           if (lessonButton.dataset.bonus === '1') {
+             panel.innerHTML = `
+               <div class="inline-lesson-info bonus-teaser">
+                 <h4 class="inline-lesson-info-title">🚀 화성에 착륙하기</h4>
+                 <p>불규칙한 행성 지면 위로 떨어지는 우주선을 <strong>역추진</strong>으로 감속해 착륙시켜요.<br>위쪽 화살표(↑)나 화면의 <strong>역추진</strong> 버튼을 눌러, 지면에 <strong>천천히</strong> 내려앉히면 성공!</p>
+                 <button type="button" class="landing-start-btn">🛸 착륙 실시</button>
+               </div>`;
+             openAccordion(panel);
+             lessonButton.setAttribute('aria-expanded', 'true');
+             item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+             return;
+           }
+
+           const lessonNum = Number(lessonButton.dataset.lesson);
            const data = await loadLesson(lessonNum);
            if (!data?.missions) return;
            // (위) 차시 정보 + (그 아래) 미션 리스트
@@ -1217,6 +1263,7 @@ async function enterMission(n, m) {
 // lesson.json 로더 + 캐시
 // ============================================================
 async function loadLesson(n) {
+  if (!Number.isFinite(Number(n))) return null;   // 보너스(+) 등 비정상 차시 방어
   if (lessonCache.has(n)) return lessonCache.get(n);
   const padded = String(n).padStart(2, '0');
   const url = `Lesson${padded}/lesson.json`;
@@ -1239,6 +1286,7 @@ function buildLessonSelect() {
   const sel = document.getElementById('lessonSelect');
   if (!sel) return;
   for (const l of LESSON_CATALOG) {
+    if (l.bonus) continue;   // 보너스(+) 항목은 드롭다운에서 제외
     const opt = document.createElement('option');
     opt.value = String(l.n);
     opt.textContent = `${l.n}차시 — ${l.title}`;
