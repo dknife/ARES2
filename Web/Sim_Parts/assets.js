@@ -2,6 +2,7 @@
 // GLTF asset loading, model bounding box centering, and multi-part placement.
 
 import { recolorAntenna } from './rocket.js';
+import { createAlbiLedObject, createAlbiModelObject } from './object_factory.js';
 
 export function makeGLTFLoader(A) {
   const loader = new A.GLTFLoader();
@@ -109,8 +110,21 @@ export class AssetLoader {
           this.ctx.traffic.setupTraffic(root, () => makeGLTFLoader(A), cfg.traffic);
         }
 
-        scene.add(root);
-        this.ctx.editor?.register(root, cfg.label || 'Model');
+        if (cfg.eyes || cfg.chest) {
+          this.ctx.objects.add(createAlbiModelObject(this.ctx, root, cfg.label || 'Albi Body'), scene);
+          if (this.ctx.leds.eyeL) {
+            this.ctx.objects.add(createAlbiLedObject(this.ctx, this.ctx.leds.eyeL, 'Albi Eye L LED', 'eye-l'), root);
+          }
+          if (this.ctx.leds.eyeR) {
+            this.ctx.objects.add(createAlbiLedObject(this.ctx, this.ctx.leds.eyeR, 'Albi Eye R LED', 'eye-r'), root);
+          }
+          if (this.ctx.leds.chestLed) {
+            this.ctx.objects.add(createAlbiLedObject(this.ctx, this.ctx.leds.chestLed, 'Albi Chest LED', 'chest'), root);
+          }
+        } else {
+          scene.add(root);
+          this.ctx.editor?.register(root, cfg.label || 'Model');
+        }
 
         const maxDim = Math.max(sz.x, sz.y, sz.z);
         const fov = this.ctx.camera.fov * Math.PI / 180;
