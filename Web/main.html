@@ -6,7 +6,7 @@
     <title>ARES 관제실</title>
     <!-- 데스크톱에서 ?mobile=true 로 모바일 화면 미리보기 (다른 스크립트보다 먼저 실행) -->
     <script src="mobile-preview.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="fonts/fonts.css">
     <link rel="stylesheet" href="styles.css?v=20260703c">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
@@ -29,17 +29,16 @@
     <div class="container">
         <header class="header">
             <div class="header-main">
-                <h1>ARES 관제실</h1>
-                <div id="controls">
-                    <!-- 개요 버튼을 상단바로 이동: 신호 연결 버튼 왼쪽에 배치 -->
+                <a class="ares-brand" href="#" aria-label="ARES 화성탐사 홈">
+                    <img src="assets/design/ares-logo.png" alt="ARES 화성탐사">
+                </a>
+                <button id="inspectButton" class="header-settings" type="button" aria-label="점검 화면 열기" title="점검 화면 열기"><span class="header-settings-icon" aria-hidden="true"></span></button>
+                <div id="controls" class="utility-controls" aria-hidden="true">
                     <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
-                    <button id="connectButton">🔗 신호 연결</button>
                     <button id="runButton" disabled>▶️ 미션 전송</button>
                     <button id="saveButton" disabled>💾 미션 저장</button>
                     <button id="loadButton" disabled>📂 미션 읽기</button>
                     <button id="blockCodingButton">🧩 블록코딩</button>
-                    <!-- 상단바에 점검 화면으로 들어가는 버튼을 추가합니다 -->
-                    <button id="inspectButton">🔍 점검</button>
                     <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
                 </div>
             </div>
@@ -105,12 +104,18 @@
                         <p class="mission-meta" id="missionHardware"></p>
                     </div>
                     <div class="mission-story" id="missionStory"></div>
-                    <div class="mission-section">
-                        <h4>🎯 학습 목표</h4>
-                        <ul id="missionGoals"></ul>
+                    <div class="mission-goal-dialog">
+                        <div class="story-line story-albi story-goals">
+                            <span class="story-avatar"><img src="assets/design/avatar-albi.png" alt="알비"></span>
+                            <span class="story-name">알비</span>
+                            <div class="goal-bubble">
+                                <h4>학습 목표</h4>
+                                <ul id="missionGoals"></ul>
+                            </div>
+                        </div>
                     </div>
-                    <details class="mission-section">
-                        <summary>💡 샘플 코드 보기</summary>
+                    <details class="mission-section mission-sample" open>
+                        <summary># 샘플 코드 보기</summary>
                         <pre id="missionSampleCode" class="sample-code"></pre>
                     </details>
                     <div class="mission-prev-next">
@@ -176,23 +181,27 @@
         </section>
     </div>
 
-    <!-- 모바일 하단바: 빠른 이동/도구 버튼 -->
+    <!-- 목업 공통 하단바: 중앙의 신호연결은 실제 BLE 연결 버튼 -->
     <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="모바일 빠른 메뉴">
         <button type="button" class="mobile-nav-btn active" data-mobile-action="mission" aria-label="미션 메뉴로 이동">
-             <span class="mobile-nav-icon" aria-hidden="true">🚀</span>
+             <span class="mobile-nav-icon mobile-nav-icon-mission" aria-hidden="true"></span>
              <span class="mobile-nav-label">미션</span>
          </button>
          <button type="button" class="mobile-nav-btn" data-mobile-action="coding" aria-label="선택한 미션의 코딩 화면으로 이동">
-             <span class="mobile-nav-icon" aria-hidden="true">🧩</span>
+             <span class="mobile-nav-icon mobile-nav-icon-coding" aria-hidden="true"></span>
              <span class="mobile-nav-label">코딩</span>
          </button>
+         <button id="connectButton" type="button" class="mobile-nav-btn mobile-connect-btn" data-mobile-action="connect" aria-label="탐사선 신호 연결">
+             <span class="mobile-connect-icon" aria-hidden="true"></span>
+             <span class="mobile-nav-label">신호연결</span>
+         </button>
+         <button type="button" class="mobile-nav-btn" data-mobile-action="simulation" aria-label="시뮬레이션 화면으로 이동">
+             <span class="mobile-nav-icon mobile-nav-icon-simulation" aria-hidden="true"></span>
+             <span class="mobile-nav-label">시뮬레이션</span>
+         </button>
          <button type="button" class="mobile-nav-btn" data-mobile-action="ai" aria-label="AI 도움 열기 또는 닫기">
-            <span class="mobile-nav-icon" aria-hidden="true">🤖</span>
-            <span class="mobile-nav-label">AI</span>
-        </button>
-        <button type="button" class="mobile-nav-btn" data-mobile-action="log" aria-label="로그 펼치기 또는 접기">
-            <span class="mobile-nav-icon" aria-hidden="true">📝</span>
-            <span class="mobile-nav-label">로그</span>
+            <span class="mobile-nav-icon mobile-nav-icon-ai" aria-hidden="true"></span>
+            <span class="mobile-nav-label">AI도움</span>
         </button>
     </nav>
 

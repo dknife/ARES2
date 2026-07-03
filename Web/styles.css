@@ -38,7 +38,7 @@ body {
     display: block;
     background: var(--background-main);
     color: var(--text-primary);
-    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-family: 'Noto Sans KR', 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 17px;      /* 강원교육튼튼 기준 — 초등 대상에 맞춰 적당히 크게 */
     font-weight: 700;     /* 대체로 굵게 */
     overflow: hidden;
@@ -324,6 +324,11 @@ button:focus-visible {
     outline: none;
     box-shadow: none;
 }
+
+.mobile-bottom-nav [data-mobile-action="mission"] { grid-column: 1; }
+.mobile-bottom-nav [data-mobile-action="coding"] { grid-column: 2; }
+.mobile-bottom-nav [data-mobile-action="simulation"] { grid-column: 4; }
+.mobile-bottom-nav [data-mobile-action="ai"] { grid-column: 5; }
 
 @media (hover: hover) and (pointer: fine) {
     .mobile-bottom-nav .mobile-nav-btn:hover {
@@ -1165,18 +1170,18 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     to   { opacity: 0; max-height: 0;                 transform: translateY(-6px); }
 }
 
-/* 펼쳐질 때: 2초 (천천히 열림) */
+/* 펼쳐질 때: 모바일 UI에 맞춘 빠른 전환 */
 .lesson-panel.accordion-opening,
 .inline-mission-detail.accordion-opening {
     overflow: hidden;
-    animation: accordionExpand 2s ease-out;
+    animation: accordionExpand 240ms ease-out;
 }
 
-/* 접힐 때: 1초 (천천히 닫힘) */
+/* 접힐 때는 열림보다 조금 더 빠르게 */
 .lesson-panel.accordion-closing,
 .inline-mission-detail.accordion-closing {
     overflow: hidden;
-    animation: accordionCollapse 1s ease-in forwards;
+    animation: accordionCollapse 180ms ease-in forwards;
 }
 
 /* 모션 최소화 설정 사용자는 애니메이션 생략 (JS 폴백 타이머가 상태를 마무리) */
@@ -2145,6 +2150,327 @@ details.mission-section summary {
     }
 }
 
+/* ============================================================
+   2026 모바일 목업 공통 셸 — 미션 목록 1차 적용
+   ============================================================ */
+:root {
+    --mockup-red: #e65448;
+    --mockup-ink: #272526;
+    --mockup-line: #d7d7d9;
+    --mockup-panel: #e7e7e9;
+    --mobile-bottom-nav-height: 88px;
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.header-main {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 74px;
+    padding: 9px 24px 8px;
+    background: #fff;
+    border-bottom: 1px solid var(--mockup-line);
+}
+
+.ares-brand {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--mockup-ink);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.ares-brand img {
+    display: block;
+    width: 112px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.header-settings {
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: #aeb1b5;
+    font-family: sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.header-settings:hover,
+.header-settings:active {
+    background: #f2f2f3;
+    color: #85898d;
+    transform: none;
+    box-shadow: none;
+}
+
+.header-settings-icon,
+.mobile-nav-icon,
+.mobile-connect-icon {
+    display: block;
+    background: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+.header-settings-icon {
+    width: 34px;
+    height: 34px;
+    margin: auto;
+    mask-image: url('assets/design/icon-settings.png');
+    -webkit-mask-image: url('assets/design/icon-settings.png');
+}
+
+#controls.utility-controls {
+    display: none !important;
+}
+
+#missionNav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 30%);
+    gap: 10px;
+    padding: 10px 16px;
+    background: #f3f3f4;
+    border-bottom: 1px solid var(--mockup-line);
+}
+
+#missionNav select {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+    margin: 0;
+    border: 1px solid #c9c9cc;
+    border-radius: 20px;
+    background: #fff;
+    color: #5c5c60;
+    font-size: .92rem;
+    padding: 0 36px 0 16px;
+}
+
+#missionNav > :not(#lessonSelect):not(#missionSelect) {
+    display: none !important;
+}
+
+#overviewView {
+    padding: 12px 16px 28px;
+    background: #fff;
+}
+
+#overviewContent {
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+#logContainer:not(.expanded) {
+    display: none;
+}
+
+.overview-flow {
+    gap: 10px;
+    margin: 0;
+}
+
+.lesson-accordion-item {
+    border: 0;
+    border-radius: 3px;
+    background: var(--mockup-panel);
+}
+
+.flow-step-btn {
+    grid-template-columns: 30px minmax(0, 1fr) 18px;
+    min-height: 54px;
+    gap: 9px;
+    padding: 9px 14px;
+    background: var(--mockup-panel);
+}
+
+.flow-step-btn:hover,
+.flow-step-btn:active,
+.flow-step-btn[aria-expanded="true"] {
+    background: #dddddf;
+}
+
+.flow-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #8a8b8f;
+    color: #fff;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: .74rem;
+    font-weight: 700;
+}
+
+.flow-step-btn strong {
+    margin: 0;
+    color: #454549;
+    font-size: .92rem;
+    font-weight: 700;
+}
+
+.flow-step-btn small,
+.flow-count {
+    display: none;
+}
+
+.flow-arrow {
+    color: #65666a;
+    font-size: .72rem;
+}
+
+.lesson-panel,
+.inline-mission-list,
+.inline-mission-btn {
+    background: #f6f6f7;
+}
+
+.mobile-bottom-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+    padding: 8px 4px calc(5px + env(safe-area-inset-bottom));
+    overflow: visible;
+    background: #dddde0;
+    border-top: 1px solid #d2d2d4;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.mobile-bottom-nav .mobile-nav-btn {
+    min-height: 66px;
+    padding: clamp(5px, 1.2vw, 9px) 2px 3px;
+    border-radius: 0;
+    color: #444448;
+    font-size: .78rem;
+    gap: clamp(3px, .8vw, 6px);
+}
+
+.mobile-bottom-nav .mobile-nav-btn.active {
+    background: transparent;
+    color: var(--mockup-red);
+}
+
+.mobile-bottom-nav .mobile-nav-icon {
+    width: clamp(36px, 6.5vw, 44px);
+    height: clamp(36px, 6.5vw, 44px);
+}
+
+.mobile-nav-icon-mission {
+    mask-image: url('assets/design/nav-mission.png');
+    -webkit-mask-image: url('assets/design/nav-mission.png');
+}
+
+.mobile-nav-icon-coding {
+    mask-image: url('assets/design/nav-coding.png');
+    -webkit-mask-image: url('assets/design/nav-coding.png');
+}
+
+.mobile-nav-icon-simulation {
+    mask-image: url('assets/design/nav-simulation.png');
+    -webkit-mask-image: url('assets/design/nav-simulation.png');
+}
+
+.mobile-nav-icon-ai {
+    mask-image: url('assets/design/nav-ai.png');
+    -webkit-mask-image: url('assets/design/nav-ai.png');
+}
+
+.mobile-bottom-nav .mobile-nav-label {
+    font-size: clamp(.78rem, 2.2vw, .92rem);
+    font-weight: 800;
+}
+
+.mobile-bottom-nav .mobile-connect-btn {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    width: clamp(108px, 22vw, 120px);
+    min-width: clamp(108px, 22vw, 120px);
+    height: clamp(108px, 22vw, 120px);
+    min-height: clamp(108px, 22vw, 120px);
+    margin: 0;
+    padding: 14px 6px 10px;
+    border-radius: 50%;
+    background: var(--mockup-red) !important;
+    color: #fff !important;
+    border: 4px solid #fff;
+    z-index: 2;
+    transform: translateX(-50%) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .08) !important;
+}
+
+.mobile-bottom-nav .mobile-connect-btn:hover,
+.mobile-bottom-nav .mobile-connect-btn:active {
+    transform: translateX(-50%) !important;
+}
+
+.mobile-bottom-nav .mobile-connect-btn.connected {
+    background: #65a35b !important;
+}
+
+.mobile-connect-icon {
+    width: 36px;
+    height: 36px;
+    mask-image: url('assets/design/nav-connect.png');
+    -webkit-mask-image: url('assets/design/nav-connect.png');
+}
+
+@media (max-width: 768px) {
+    .header-main {
+        min-height: 72px;
+        padding: 8px 18px;
+    }
+
+    #missionNav {
+        display: grid;
+        padding: 8px 14px;
+        gap: 8px;
+    }
+
+    #missionNav select {
+        height: 36px;
+        padding: 0 30px 0 14px;
+        font-size: .82rem;
+    }
+
+    #overviewView {
+        padding: 12px 14px 24px;
+    }
+
+    .flow-step-btn {
+        min-height: 52px;
+        padding: 8px 12px;
+    }
+
+    .flow-step-btn strong {
+        font-size: .86rem;
+    }
+}
+
 /* ===== 🤖 AI 도움 채팅 패널 ===== */
 .ai-panel {
     position: fixed;
@@ -2283,5 +2609,305 @@ details.mission-section summary {
         bottom: calc(8px + var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
         width: auto;
         max-height: calc(75vh - var(--mobile-bottom-nav-height));
+    }
+}
+
+/* ============================================================
+   PDF 3페이지 — 차시를 펼쳤을 때의 미션 목록
+   ============================================================ */
+.lesson-accordion-item:has(.lesson-panel:not([hidden])) {
+    background: #e3e4e6;
+}
+
+.flow-step-btn[aria-expanded="true"] {
+    padding-bottom: 5px;
+    background: #e3e4e6;
+    border-bottom: 0;
+}
+
+.flow-step-btn[aria-expanded="true"] .flow-arrow {
+    transform: rotate(180deg);
+}
+
+.lesson-panel {
+    position: relative;
+    padding: 0 12px 10px;
+    border-left: 0;
+    background: #e3e4e6;
+}
+
+.lesson-panel::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 0;
+    bottom: 17px;
+    width: 1px;
+    background: #a6a7aa;
+}
+
+.inline-mission-list,
+.inline-mission-item,
+.inline-mission-btn,
+.inline-mission-btn.completed {
+    background: transparent;
+}
+
+.inline-mission-item {
+    border: 0;
+}
+
+.inline-mission-btn {
+    grid-template-columns: 24px minmax(0, 1fr) 18px;
+    gap: 10px;
+    min-height: 39px;
+    padding: 4px 0;
+    border: 0;
+    color: #5d5e62;
+}
+
+.inline-mission-btn:hover,
+.inline-mission-btn:active,
+.inline-mission-btn.completed:hover,
+.inline-mission-btn.completed:active {
+    background: rgba(255, 255, 255, .38);
+}
+
+.inline-mission-marker {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    background: #e3e4e6;
+    color: #696a6e;
+    font-size: .6rem;
+}
+
+.inline-mission-main strong {
+    margin: 0;
+    color: inherit;
+    font-size: clamp(.84rem, 2.25vw, 1rem);
+    font-weight: 500;
+}
+
+.inline-mission-check {
+    color: #e65448;
+    text-align: center;
+}
+
+/* ============================================================
+   PDF 4페이지 — 미션 상세 대화 화면
+   ============================================================ */
+#missionView .mission-panel {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 34px 34px calc(var(--mobile-bottom-nav-height) + 34px);
+    background: #fff;
+}
+
+.mission-panel-head .lesson-tag {
+    display: none;
+}
+
+.mission-panel-head h3 {
+    margin: 0 0 4px;
+    color: #28282b;
+    font-size: clamp(1.08rem, 3.2vw, 1.34rem);
+    line-height: 1.35;
+}
+
+.mission-meta {
+    margin: 0 0 26px;
+    color: #65666a;
+    font-size: clamp(.8rem, 2.1vw, .94rem);
+}
+
+.mission-story {
+    padding: 0;
+    margin: 0;
+}
+
+.mission-story .story-line,
+.mission-goal-dialog .story-line {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: start;
+    margin: 0 0 22px;
+    font-size: 1rem;
+}
+
+.story-avatar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: block;
+    width: 58px;
+    height: 58px;
+    margin: 0;
+}
+
+.story-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.story-name {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0 0 4px;
+    color: #e65448;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.story-text {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    max-width: min(100%, 330px);
+    padding: 8px 12px;
+    border: 1px solid #c7c9cc;
+    border-radius: 7px;
+    background: #f3f4f5;
+    color: #45464a;
+    font-size: clamp(.8rem, 2.15vw, .96rem);
+    line-height: 1.4;
+}
+
+.story-line.story-albi {
+    grid-template-columns: minmax(0, 1fr) 58px;
+}
+
+.story-albi .story-avatar {
+    grid-column: 2;
+}
+
+.story-albi .story-name {
+    grid-column: 1;
+    justify-self: end;
+    color: #4680a6;
+}
+
+.story-albi .story-text {
+    grid-column: 1;
+    justify-self: end;
+    background: #bfc1c4;
+    border-color: #bfc1c4;
+}
+
+.story-goal-question {
+    margin-top: 4px !important;
+}
+
+.mission-goal-dialog {
+    margin: 0 0 30px;
+}
+
+.mission-goal-dialog .story-goals {
+    margin-bottom: 0;
+}
+
+.goal-bubble {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
+    width: min(100%, 390px);
+    padding: 14px 18px;
+    border-radius: 7px;
+    background: #bfc1c4;
+    color: #343539;
+}
+
+.goal-bubble h4 {
+    margin: 0 0 8px;
+    font-size: .88rem;
+    font-weight: 500;
+}
+
+#missionGoals {
+    margin: 0;
+    padding-left: 18px;
+    color: #343539;
+    font-size: clamp(.76rem, 2vw, .9rem);
+    line-height: 1.55;
+}
+
+#missionGoals li {
+    margin: 0;
+}
+
+.mission-sample {
+    margin: 0;
+    padding: 0 16px 16px;
+    border: 1px solid #c9cbce;
+    border-radius: 12px;
+    background: #fff;
+}
+
+details.mission-sample summary {
+    padding: 16px 0 12px;
+    border-bottom: 1px solid #c9cbce;
+    color: #292a2d;
+    font-size: clamp(.92rem, 2.5vw, 1.08rem);
+    font-weight: 800;
+    list-style-position: outside;
+}
+
+.mission-sample .sample-code {
+    margin: 12px 0 0;
+    color: #617e9c;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: clamp(.74rem, 1.9vw, .86rem);
+    line-height: 1.8;
+}
+
+.mission-prev-next {
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.mission-prev-next .nav-btn-small {
+    height: 50px;
+    margin: 0;
+    border-radius: 9px;
+    font-size: clamp(.84rem, 2.2vw, 1rem);
+}
+
+#nextMissionBtn {
+    background: #272324;
+    color: #fff;
+    border-color: #272324;
+}
+
+@media (max-width: 520px) {
+    #missionView .mission-panel {
+        padding: 26px 20px calc(var(--mobile-bottom-nav-height) + 28px);
+    }
+
+    .mission-story .story-line,
+    .mission-goal-dialog .story-line {
+        grid-template-columns: 50px minmax(0, 1fr);
+        column-gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .story-line.story-albi {
+        grid-template-columns: minmax(0, 1fr) 50px;
+    }
+
+    .story-avatar {
+        width: 50px;
+        height: 50px;
+    }
+
+    .goal-bubble {
+        padding: 12px 14px;
     }
 }
