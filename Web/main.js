@@ -455,6 +455,7 @@ function updateRunButtonUI() {
     btn.title = '실행 중인 미션을 즉시 멈춥니다';
     btn.classList.add('btn-stop');
     btn.disabled = false;
+    updateMobileBottomNav();
     return;
   }
   btn.textContent = '▶️ 미션 전송';
@@ -464,6 +465,7 @@ function updateRunButtonUI() {
   const dashboardFrame = document.getElementById('dashboardFrame');
   const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
   btn.disabled = !inMission || inDashboard || !isBleConnected();
+  updateMobileBottomNav();
 }
 
 function isInBlockCodingStage() {
@@ -607,7 +609,7 @@ function isLogExpanded() {
 
 function getMobileActiveAction() {
   if (isAiPanelOpen()) return 'ai';
-  if (isLogExpanded()) return 'log';
+  if (_contentMode === 'simulation' && currentView === 'mission') return 'simulation';
   if (isDashboardVisible()) return 'dashboard';
   // 미션(코딩 영역) 뷰 → "코딩" 탭, 개요·차시 메뉴 → "미션" 탭
   if (currentView === 'mission') return 'coding';
@@ -632,6 +634,23 @@ function updateMobileBottomNav() {
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-pressed', String(active));
   });
+
+  const connectBtn = nav.querySelector('[data-mobile-action="connect"]');
+  if (connectBtn) {
+    const connected = isBleConnected();
+    connectBtn.classList.toggle('connected', connected);
+    connectBtn.setAttribute('aria-pressed', String(connected));
+    const label = connectBtn.querySelector('.mobile-nav-label');
+    if (label) {
+      label.textContent = connected
+        ? '연결됨'
+        : state.isConnecting
+          ? '연결 중…'
+          : state.connectFailed
+            ? '재연결'
+            : '신호연결';
+    }
+  }
 }
 
 function bindMobileBottomNav() {
@@ -648,6 +667,11 @@ function bindMobileBottomNav() {
     const parsed = parseHash();
     const lesson = currentLesson ?? parsed.lesson ?? 1;
     const mission = currentMission ?? parsed.mission ?? 1;
+
+    if (action === 'connect') {
+      document.getElementById('connectButton')?.blur?.();
+      return;
+    }
 
     // 하단바 재클릭 시 토글 해제
     if (action === activeAction) {
@@ -696,6 +720,18 @@ function bindMobileBottomNav() {
         mobileDashboardReturnHash = null;
         mobileAiReturnHash = null;
         openMissionCoding(codingLesson, codingMission);
+        break;
+      }
+      case 'simulation': {
+        if (currentView === 'mission') {
+          document.getElementById('simToggle')?.click();
+        } else {
+          const simTarget = getLastCodingMission();
+          const simLesson = simTarget?.lesson ?? lesson;
+          const simMission = simTarget?.mission ?? mission;
+          navigate({ lesson: simLesson, mission: simMission });
+          setTimeout(() => document.getElementById('simToggle')?.click(), 450);
+        }
         break;
       }
       case 'dashboard':
@@ -867,32 +903,28 @@ async function enterOverview() {
              <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
                <span class="flow-num">${lesson.n}</span>
                <span class="flow-main">
-                 <strong>${lesson.n}차시 — ${escapeHtml(lesson.title)}</strong>
+                 <strong>${escapeHtml(lesson.title)}</strong>
                  <small>${escapeHtml(lesson.hardware)}</small>
                </span>
                <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
-               <span class="flow-arrow" aria-hidden="true">▶</span>
+               <span class="flow-arrow" aria-hidden="true">▼</span>
              </button>
              <div id="inlineMissions${lesson.n}" class="lesson-panel" hidden></div>
            </section>
          `).join('');
 
          flowContainer.addEventListener('click', async (event) => {
-           // (1) 미션 코딩 버튼 → 해당 미션 선택 + 블록코딩 모드로 전환
-           const codeBtn = event.target.closest('.mission-code-btn');
-           if (codeBtn) {
-             openMissionCoding(Number(codeBtn.dataset.lesson), Number(codeBtn.dataset.mission));
-             return;
-           }
-
-           // (2) 미션 버튼 → 미션 상세 정보를 아래로 펼침 (개요를 떠나지 않음)
+           // 미션 버튼 → 해당 미션 설명 화면으로 이동
            const missionButton = event.target.closest('.inline-mission-btn');
            if (missionButton) {
-             toggleInlineMissionDetail(missionButton);
+             navigate({
+               lesson: Number(missionButton.dataset.lesson),
+               mission: Number(missionButton.dataset.inlineMission),
+             });
              return;
            }
 
-           // (3) 차시 버튼 → 미션 리스트 + 차시 정보를 펼침
+           // 차시 버튼 → 네 개의 미션 리스트를 펼침
            const lessonButton = event.target.closest('.flow-step-btn');
            if (!lessonButton) return;
            const lessonNum = Number(lessonButton.dataset.lesson);
@@ -916,9 +948,8 @@ async function enterOverview() {
 
            const data = await loadLesson(lessonNum);
            if (!data?.missions) return;
-           // (위) 차시 정보 + (그 아래) 미션 리스트
+           // PDF 3페이지처럼 펼친 카드 안에는 미션 4개만 간결하게 표시
            panel.innerHTML = `
-             ${renderInlineLessonInfo(data)}
              <div class="inline-mission-list">
                ${data.missions.map(m => renderInlineMissionItem(lessonNum, m)).join('')}
              </div>
@@ -936,71 +967,28 @@ async function enterOverview() {
 }
 
 // ============================================================
-// 개요 인라인 렌더 헬퍼 (차시 → 미션 → 미션 상세 아코디언)
+// 개요 인라인 렌더 헬퍼 (차시 → 미션 목록)
 // ============================================================
-function renderInlineMissionDetail(n, mission) {
-  const story = (mission.story || []).map(line => `
-      <div class="story-line story-${line.speaker}">
-        <span class="story-avatar">${line.speaker === 'ares' ? '🧑‍🚀' : '🤖'}</span>
-        <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
-        <span class="story-text">${escapeHtml(line.text)}</span>
-      </div>`).join('');
-  const goals = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
-  return `
-    <div id="missionDetail${n}_${mission.id}" class="inline-mission-detail" hidden>
-      <div class="mission-story">${story}</div>
-      <div class="mission-section">
-        <h4>🎯 학습 목표</h4>
-        <ul class="inline-goal-list">${goals}</ul>
-      </div>
-      <details class="mission-section">
-        <summary>💡 샘플 코드 보기</summary>
-        <pre class="sample-code">${escapeHtml(mission.sampleCode || '')}</pre>
-      </details>
-      <button type="button" class="mission-code-btn" data-lesson="${n}" data-mission="${mission.id}">🧩 미션 코딩 시작 →</button>
-    </div>`;
-}
-
 function renderInlineMissionItem(n, mission) {
   const completed = isMissionCompleted(n, mission.id);
   return `
     <div class="inline-mission-item" data-mission-item="${mission.id}">
       <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}"
               data-lesson="${n}" data-inline-mission="${mission.id}"
-              aria-expanded="false" aria-controls="missionDetail${n}_${mission.id}">
-        <span class="inline-mission-num">${mission.id}</span>
+              aria-label="${escapeHtml(mission.title)} 미션 열기">
+        <span class="inline-mission-marker" aria-hidden="true">▶</span>
         <span class="inline-mission-main">
-          <strong>${escapeHtml(mission.title)} <span class="inline-mission-check" ${completed ? '' : 'hidden'}>✓</span></strong>
-          <small>${escapeHtml(mission.hardware || '')}</small>
+          <strong>${escapeHtml(mission.title)}</strong>
         </span>
-        <span class="inline-mission-arrow" aria-hidden="true">›</span>
+        <span class="inline-mission-check" ${completed ? '' : 'hidden'} aria-label="완료">✓</span>
       </button>
-      ${renderInlineMissionDetail(n, mission)}
     </div>`;
 }
 
-function renderInlineLessonInfo(data) {
-  const summary = data.summary ? `
-      <div class="summary-box summary-${data.summary.type}">
-        <h4>${escapeHtml(data.summary.title)}</h4>
-        <p>${escapeHtml(data.summary.text)}</p>
-      </div>` : '';
-  return `
-    <div class="inline-lesson-info">
-      <h4 class="inline-lesson-info-title">📘 차시 정보</h4>
-      <div class="inline-lesson-info-head">
-        <span class="lesson-tag tag-${data.tag}">${escapeHtml(data.tag)}</span>
-        <span class="inline-lesson-meta">🔧 ${escapeHtml(data.hardware)} <span class="dot-sep">·</span> 💡 ${escapeHtml(data.concept)}</span>
-      </div>
-      <p class="inline-lesson-intro">${escapeHtml(data.intro)}</p>
-      ${summary}
-    </div>`;
-}
-
-// 아코디언 여닫이 애니메이션 (열림 2초 / 닫힘 1초). CSS 클래스로 제어하고,
+// 아코디언 여닫이 애니메이션 (열림 240ms / 닫힘 180ms). CSS 클래스로 제어하고,
 // 실제 콘텐츠 높이를 --acc-h 로 넘겨 높이 변화가 자연스럽게 보이도록 한다.
-const ACCORDION_OPEN_MS = 2000;
-const ACCORDION_CLOSE_MS = 1000;
+const ACCORDION_OPEN_MS = 240;
+const ACCORDION_CLOSE_MS = 180;
 
 function openAccordion(el) {
   if (!el) return;
@@ -1039,29 +1027,6 @@ function closeAccordion(el) {
   };
   el.addEventListener('animationend', done);
   el._accTimer = setTimeout(done, ACCORDION_CLOSE_MS + 120);
-}
-
-// 미션 버튼 클릭 → 그 미션 상세를 아래로 펼치고, 같은 차시의 다른 미션 상세는 접는다
-function toggleInlineMissionDetail(btn) {
-  const item = btn.closest('.inline-mission-item');
-  const detail = item?.querySelector('.inline-mission-detail');
-  if (!detail) return;
-  const list = item.closest('.inline-mission-list');
-  const willOpen = detail.hasAttribute('hidden');
-  list?.querySelectorAll('.inline-mission-detail:not([hidden])').forEach(d => {
-    if (d !== detail) {
-      closeAccordion(d);
-      d.previousElementSibling?.setAttribute('aria-expanded', 'false');
-    }
-  });
-  if (willOpen) {
-    openAccordion(detail);
-    btn.setAttribute('aria-expanded', 'true');
-    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  } else {
-    closeAccordion(detail);
-    btn.setAttribute('aria-expanded', 'false');
-  }
 }
 
 // 미션 코딩 시작 → 해당 미션으로 이동 후 블록코딩 모드로 전환
@@ -1162,20 +1127,26 @@ async function enterMission(n, m) {
     window.updateToolboxForActiveState();
   }
 
-  document.getElementById('missionHeading').textContent = `${n}차시 미션 ${m} — ${mission.title}`;
+  document.getElementById('missionHeading').textContent = `${n}차시 미션 ${m} - ${mission.title}`;
   document.getElementById('missionTagBadge').textContent = mission.tag;
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
-  document.getElementById('missionHardware').textContent = `🔧 ${mission.hardware}`;
+  document.getElementById('missionHardware').textContent = mission.hardware;
 
   // 스토리
   const storyEl = document.getElementById('missionStory');
-  storyEl.innerHTML = (mission.story || []).map(line => `
+  const storyLines = (mission.story || []).map(line => `
     <div class="story-line story-${line.speaker}">
-      <span class="story-avatar">${line.speaker === 'ares' ? '🧑‍🚀' : '🤖'}</span>
+      <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${line.speaker === 'ares' ? '아레스' : '알비'}"></span>
       <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
       <span class="story-text">${escapeHtml(line.text)}</span>
     </div>
   `).join('');
+  storyEl.innerHTML = `${storyLines}
+    <div class="story-line story-ares story-goal-question">
+      <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="아레스"></span>
+      <span class="story-name">아레스</span>
+      <span class="story-text">우와! 그러면 오늘 학습목표는 뭐야?</span>
+    </div>`;
 
   // 학습 목표
   const goalsEl = document.getElementById('missionGoals');
