@@ -1281,13 +1281,14 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 .landing-hud .hud-fuel i { display: block; height: 100%; width: 100%; background: #4fd1ff; transition: width .1s linear; }
 
 .landing-help {
-    position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2;
-    max-width: min(560px, 78vw);
-    text-align: center;
-    color: #cfe0ff; font-size: 0.86em; line-height: 1.5;
+    position: absolute; z-index: 3;
+    bottom: 40px; left: calc(50% + 95px);   /* 역추진 버튼 오른쪽에 붙임 */
+    max-width: min(300px, 40vw);
+    text-align: left;
+    color: #cfe0ff; font-size: 0.84em; line-height: 1.5;
     background: rgba(10, 8, 20, 0.5);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 12px; padding: 10px 16px;
+    border-radius: 12px; padding: 10px 14px;
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .landing-help b { color: #fff; }
@@ -1323,15 +1324,16 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     bottom: 34px; left: 50%; transform: translateX(-50%);
     width: 150px; height: 92px; border-radius: 24px;
 }
-.thrust-main.active { transform: translateX(-50%) scale(0.96); }
+/* 눌러도 크기·위치 변화 없이 고정 — 색/발광으로만 피드백(떨림 방지) */
+.thrust-main.active { transform: translateX(-50%); }
 .thrust-main .thrust-ico { font-size: 1.7em; }
 .thrust-main .thrust-label { font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.9em; }
 
 /* 결과: 화면 전체를 어둡게 덮지 않고, 중앙의 반투명 패널로만 표시 */
 .landing-result {
     position: absolute; inset: 0; z-index: 5;
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
+    display: flex; align-items: flex-start; justify-content: center;  /* 위쪽에 표시 */
+    padding: 7vh 20px 20px;
     background: transparent;              /* 뒤 장면을 어둡게 하지 않음 */
     pointer-events: none;                 /* 패널만 상호작용 */
 }
@@ -1362,7 +1364,11 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 
 @media (max-width: 600px) {
     .thrust-main { width: 132px; height: 84px; bottom: 26px; }
-    .landing-help { font-size: 0.78em; top: 12px; }
+    /* 좁은 화면에선 설명을 버튼 위에 가로 중앙으로 */
+    .landing-help {
+        bottom: 122px; left: 50%; transform: translateX(-50%);
+        text-align: center; max-width: 84vw; font-size: 0.78em;
+    }
 }
 
 .flow-step strong {
