@@ -219,7 +219,7 @@
 
     <xml id="toolbox" style="display: none">
         <!-- ========== 동작 ========== -->
-        <category id="category_motion" name="동작" colour="#FF8C00">
+        <category id="category_motion" name="동작" colour="#cf3d37">
             <block type="timed_forward">
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
                 <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
@@ -268,7 +268,7 @@
         </category>
 
         <!-- ========== 출력 ========== -->
-        <category id="category_output" name="출력" colour="#FF5555">
+        <category id="category_output" name="출력" colour="#d68fa5">
             <block type="led_on">
                 <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
                 <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
@@ -316,19 +316,19 @@
         </category>
 
         <!-- ========== 발사 ========== -->
-        <category id="category_gun" name="발사" colour="#FF4500">
+        <category id="category_gun" name="발사" colour="#dcc342">
             <block type="gun_fire"></block>
         </category>
 
         <!-- ========== 감지 ========== -->
-        <category id="category_sensors" name="감지" colour="#5C81A6">
+        <category id="category_sensors" name="감지" colour="#7daa4d">
             <block type="pico_check_device"></block>
             <block type="check_distance"></block>
             <block type="check_magnetic"></block>
         </category>
 
         <!-- ========== 제어 ========== -->
-        <category id="category_control" name="제어" colour="210">
+        <category id="category_control" name="제어" colour="#2b638f">
             <block type="time_sleep">
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
@@ -343,10 +343,10 @@
         </category>
 
         <!-- ========== 변수 ========== -->
-        <category id="category_variables" name="변수" colour="330" custom="VARIABLE"></category>
+        <category id="category_variables" name="변수" colour="#5483b5" custom="VARIABLE"></category>
 
         <!-- ========== 수학 ========== -->
-        <category id="category_math" name="수학" colour="230">
+        <category id="category_math" name="수학" colour="#cacacb">
             <block type="math_number"><field name="NUM">0</field></block>
             <block type="math_arithmetic">
                 <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
@@ -366,7 +366,7 @@
         </category>
 
         <!-- ========== 함수 ========== -->
-        <category id="category_functions" name="함수" colour="290" custom="PROCEDURE"></category>
+        <category id="category_functions" name="함수" colour="#727171" custom="PROCEDURE"></category>
     </xml>
 </body>
 </html>

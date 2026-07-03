@@ -2,7 +2,9 @@
 // Rocket launching animation, camera tracking, and exhaust cloud particles.
 
 const ROCKET_RISE = 10;
-const ROCKET_SPEED = 0.00267;
+// rocketAnimT(0~1)의 초당 증가량. 기존 프레임당 0.00267(60fps 기준 ≈ 상승 6.3초)을
+// 초당 값으로 환산 — dt를 곱하지 않으면 고주사율 모니터에서 로켓이 빨라진다.
+const ROCKET_SPEED = 0.16;
 const SMOKE_POOL = 80;
 const SMOKE_RATE = 42;
 
@@ -272,7 +274,7 @@ export class Rocket {
     const targetT = this.rocketLaunchOn ? 1 : 0;
     if (this.rocketAnimT !== targetT) {
       const dir = Math.sign(targetT - this.rocketAnimT);
-      this.rocketAnimT = Math.max(0, Math.min(1, this.rocketAnimT + dir * ROCKET_SPEED));
+      this.rocketAnimT = Math.max(0, Math.min(1, this.rocketAnimT + dir * ROCKET_SPEED * dt));
     }
     
     const eased = this.rocketLaunchOn

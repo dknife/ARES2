@@ -974,3 +974,333 @@ function completedMissionCount(lesson) {     // count 0..4 done per lesson
   return n;
 }
 \end{lstlisting}
+
+\section{8일차 — 시뮬레이터 객체 삽입 기능 구현 · 관제실·개요 UX 개편 · 블록코딩 페이지 디자인 개선}
+\textit{2026.07.02 (목) · 컴퓨터실 개발 KST}
+
+\begin{summarybox}
+컴퓨터실에서 개발을 이어갔다. \textbf{시뮬레이터}는 7일차에 계획한 \textbf{객체 삽입 기능}을
+실제로 구현해, 3D 장면에 \textbf{박스$\cdot$구$\cdot$마커}를 생성하고 \textbf{이동$\cdot$회전$\cdot$크기}
+기즈모로 배치$\cdot$변형할 수 있게 했다. \textbf{웹 인터페이스}는 관제실$\cdot$개요 화면을
+\textbf{차시$\cdot$미션 통합 아코디언}으로 재구성하고, 뷰 전환에 \textbf{슬라이드$\cdot$페이드
+애니메이션}과 \textbf{차시 정보 블루화}$\cdot$\textbf{하단바 코딩 탭}을 추가했으며,
+\textbf{하단 내비게이션을 데스크톱에서도 표시}하도록 반응형 정책을 바꿨다.
+\textbf{블록 카테고리 색상 팔레트}를 새로 정의하고, \textbf{블록코딩 페이지의 디자인 개선 계획}을
+시안으로 정리했다.
+\end{summarybox}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_개발현장1.jpg}
+    \caption{개발 현장 — 코딩$\cdot$실행 로그}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_개발현장2.jpg}
+    \caption{컴퓨터실 전경}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_개발현장3.jpg}
+    \caption{페어 개발$\cdot$논의}
+  \end{subfigure}
+  \caption{8일차 — 개발 현장: 서비스$\cdot$시뮬레이터$\cdot$펌웨어 트랙 병행}
+\end{figure}
+
+\subsection{시뮬레이터 — 객체 삽입 기능 구현 (7일차 계획 실현)}
+7일차에 세운 \textbf{컴포넌트 기반 객체 삽입 계획}을 실제 기능으로 구현했다. 시뮬레이터 화면의
+\textbf{CREATE OBJECT} 메뉴에서 \textbf{Box$\cdot$Sphere$\cdot$Marker}를 3D 장면에 생성하고,
+\textbf{Move$\cdot$Rotate$\cdot$Scale} 기즈모로 위치$\cdot$방향$\cdot$크기를 조정할 수 있다. 생성한
+객체는 \textbf{Delete spawned}로 일괄 제거한다. 아래 캡처는 기능 시연 \textbf{동영상에서 발췌}한
+삽입 흐름이다.
+
+\smallskip
+\noindent\chip{CREATE OBJECT (Box$\cdot$Sphere$\cdot$Marker)} \chip{Move$\cdot$Rotate$\cdot$Scale 기즈모} %
+\chip{다중 객체 배치$\cdot$선택} \chip{Delete spawned}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_시뮬_객체메뉴.jpg}
+    \caption{\textcircled{1} 객체 생성 메뉴(Box$\cdot$Sphere$\cdot$Marker)}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_시뮬_박스삽입.jpg}
+    \caption{\textcircled{2} 박스 삽입 + 이동 기즈모(RGB 축)}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \figbox{../img/8일차_시뮬_객체배치.jpg}
+    \caption{\textcircled{3} 박스$\cdot$구$\cdot$마커 다중 배치}
+  \end{subfigure}
+  \caption{8일차 — 시뮬레이터 객체 삽입 기능(동영상 발췌): 메뉴 → 박스 생성 → 다중 객체 배치$\cdot$변형}
+\end{figure}
+
+\subsection{웹 인터페이스 — 관제실·개요 UX 개편 \& 하단 내비 데스크톱 표시}
+관제실$\cdot$개요 화면을 \textbf{차시$\cdot$미션 통합 아코디언}으로 재구성했다. 차시 정보를 미션 목록
+위로 올리고 \textbf{푸른색 팔레트}로 구분했으며, 개요/차시/미션 뷰 전환에 \textbf{슬라이드-인},
+미션 내부 모드 전환에 \textbf{페이드(1s)} 애니메이션을 넣었다. 아코디언 여닫이는
+\textbf{열림 2s$\cdot$닫힘 1s}로 조정했다. 하단바에 \textbf{코딩 탭}을 추가해 \code{localStorage}에
+기록된 미션의 블록코딩으로 바로 진입하도록 하고(3$\to$4탭), 기존에 모바일($\leq$768px)에서만
+보이던 \textbf{하단 내비게이션을 데스크톱에서도 표시}하도록 반응형 정책을 바꿨다. 서비스 첫 화면
+인사 문구도 간결화했다.
+
+\smallskip
+\noindent{\raggedright\chip{차시$\cdot$미션 통합 아코디언} \chip{차시정보 블루화} %
+\chip{슬라이드$\cdot$페이드 전환} \chip{하단바 코딩 탭(4탭)} \chip{하단 내비 데스크톱 표시} %
+\chip{미션 기록(localStorage)}\par}
+
+\begin{itemize}
+  \item \textbf{차시$\cdot$미션 아코디언} — 차시를 아코디언으로 접고 펴며 차시별 미션(0/4 진행)을
+  리스트로 노출. 차시 정보를 미션 위로 이동하고 블루 계열로 차별화.
+  \item \textbf{화면 전환 애니메이션} — 뷰 전환 슬라이드-인 + 미션 내부 모드 전환 페이드(1s),
+  아코디언 여닫이 \textbf{열림 2s$\cdot$닫힘 1s}.
+  \item \textbf{하단 내비 데스크톱 표시} — \code{@media (min-width:769px)}의 강제 숨김을 제거하고,
+  고정 바가 콘텐츠를 가리지 않도록 \textbf{컨테이너 높이를 내비 높이만큼 축소}. AI 패널도 내비 위로 올림.
+\end{itemize}
+
+\subsection{블록코딩 페이지 — 디자인 개선 계획 \& 블록 카테고리 색상}
+블록코딩 화면의 \textbf{디자인 개선 계획}을 시안으로 정리했다. 좌측 \textbf{카테고리
+팔레트}(동작$\cdot$출력$\cdot$발사$\cdot$감지$\cdot$제어$\cdot$변수$\cdot$수학$\cdot$함수), 가운데
+\textbf{워크스페이스}(``블록을 끌어와 미션을 만들어보세요!''), \textbf{전송$\cdot$실행} 버튼과
+\textbf{+/$-$$\cdot$휴지통} 도구, \textbf{AI 도움} 패널, 하단 4탭 내비를 한 화면에 배치한 모바일
+레이아웃이다. 함께 \textbf{블록 카테고리 색상 팔레트}도 새로 정의했다(동작 \code{\#cf3d37}$\cdot$%
+출력 \code{\#d68fa5}$\cdot$발사 \code{\#dcc342}$\cdot$감지 \code{\#7daa4d}$\cdot$제어 \code{\#2b638f}$\cdot$%
+변수 \code{\#5483b5}$\cdot$수학 \code{\#cacacb}$\cdot$함수 \code{\#727171}).
+
+\smallskip
+\noindent\chip{블록코딩 디자인 시안} \chip{카테고리 팔레트} \chip{워크스페이스$\cdot$전송/실행} %
+\chip{AI 도움 패널} \chip{카테고리 색상 재정의}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.82\linewidth}\centering
+    \figbox{../img/8일차_블록코딩_디자인.png}
+    \caption{블록코딩 페이지 디자인 시안 — (좌) 카테고리 팔레트$\cdot$빈 워크스페이스, (중) 전송$\cdot$실행 도구$\cdot$AI 도움, (우) 소리$\cdot$DC 모터 블록 예제. 하단 4탭(미션$\cdot$코딩$\cdot$시뮬레이션$\cdot$AI도움)}
+  \end{subfigure}
+  \caption{8일차 — 블록코딩 페이지 디자인 개선 시안}
+\end{figure}
+
+\subsection{주요 코드 변경 요약 (오늘 커밋 기준)}
+오늘(2026.07.02) 커밋 \textbf{8건}을 반영했다. 개발용 \code{dev.html} 문서를 포함해
+\textbf{6개 파일에서 +817 / $-$79 라인}(\code{git} 기준)이 바뀌었다. 세 갈래로 요약한다.
+
+\begin{itemize}
+  \item \textbf{관제실$\cdot$개요 UX 개편}(\code{main.js} +274$\cdot$\code{styles.css}$\cdot$%
+  \code{main.html}$\cdot$\code{overview.html}) — 차시$\cdot$미션 통합 아코디언(여닫이 2s/1s), 뷰 전환
+  슬라이드$\cdot$페이드, 차시정보 블루화, 하단바 코딩 탭(3$\to$4), 미션 기록(\code{localStorage}).
+  \item \textbf{하단 내비 데스크톱 표시}(\code{styles.css}) — \code{$\geq$769px} 강제 숨김 제거 +
+  컨테이너 높이 축소로 여백 확보, AI 패널 위치 보정.
+  \item \textbf{블록 카테고리 색상}(\code{main.html}) — 8개 카테고리 색상을 새 팔레트로 교체. 아울러
+  개발용 \code{dev.html}에 \textbf{2차 Refactoring$\cdot$디자인 계획}(+396)을 문서화.
+\end{itemize}
+
+\begin{lstlisting}[style=json, caption={\code{Web/styles.css} --- 하단 내비를 데스크톱에서도 표시(강제 숨김 제거 + 컨테이너 높이 축소)}]
+/* desktop (>=769px): show bottom nav, shrink container by nav height */
+@media (min-width: 769px) {
+    .container {
+        height: calc(100dvh - var(--mobile-bottom-nav-height));
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height));
+    }
+}
+.mobile-bottom-nav { display: grid; }          /* shown on mobile + desktop */
+.ai-panel { bottom: calc(20px + var(--mobile-bottom-nav-height)); }  /* above nav */
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={\code{Web/main.js} --- 아코디언 여닫이 애니메이션(열림 2s·닫힘 1s)}]
+const ACCORDION_OPEN_MS  = 2000;
+const ACCORDION_CLOSE_MS = 1000;
+
+function openAccordion(el) {
+  el.classList.remove('accordion-closing', 'accordion-opening');
+  el.classList.add('accordion-opening');
+  el._accTimer = setTimeout(done, ACCORDION_OPEN_MS + 120);
+}
+function closeAccordion(el) {
+  if (el.classList.contains('accordion-closing')) return; // ignore if already closing
+  el.classList.add('accordion-closing');
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=json, caption={\code{Web/main.html} --- 블록 카테고리 색상 팔레트 재정의}]
+<category id="category_motion"  colour="#cf3d37">   <!-- motion:  orange -> red   -->
+<category id="category_output"  colour="#d68fa5">   <!-- output:  red    -> pink  -->
+<category id="category_gun"     colour="#dcc342">   <!-- launch:  orange -> gold  -->
+<category id="category_sensors" colour="#7daa4d">   <!-- sensor:  blue   -> green -->
+<category id="category_control" colour="#2b638f">   <!-- control -->
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.82\linewidth}\centering
+    \figbox{../img/8일차_커밋히스토리.png}
+    \caption{오늘 커밋 히스토리 — GitHub Desktop에서 본 2026.07.02 커밋 목록과 \code{blockly label color change}(카테고리 \code{colour} 값 교체) diff}
+  \end{subfigure}
+  \caption{8일차 — 오늘(2026.07.02) 커밋 히스토리}
+\end{figure}
+
+\section{9일차 — 전체 코드 점검 · 치명 결함 4건 수정(비상정지 즉시화·BLE 응답 동기화·설정 안전화)}
+\textit{2026.07.03 (금) · 개발 KST}
+
+\begin{summarybox}
+서비스 전체 코드를 대상으로 \textbf{정밀 점검(코드 리뷰)}을 수행했다. \textbf{웹 코어}(블록코딩
+실행기$\cdot$BLE 통신), \textbf{3D 시뮬레이터}, \textbf{Pico 펌웨어}, 그리고 \textbf{웹$\leftrightarrow$펌웨어$\leftrightarrow$시뮬레이터
+명령 프로토콜 정합성}의 네 영역으로 나눠 검토해 \textbf{치명(HIGH) 결함 4건}과 중간$\cdot$경미
+문제 20여 건을 발견했다. HIGH 4건 --- \textbf{① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅
+불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연} --- 은 당일 \textbf{수정 계획 수립
+$\to$ 코드 수정 $\to$ 자동화 검증(펌웨어 8$\cdot$웹 17 시나리오 전체 통과)}까지 완료했다.
+이어 \textbf{중간(MEDIUM) 등급 5건} --- 한글 명령 유실$\cdot$블록 인터프리터 누락$\cdot$UI
+배선$\cdot$대시보드 연결 표시$\cdot$프레임레이트 종속 애니메이션 --- 도 같은 날 수정$\cdot$검증했다.
+\end{summarybox}
+
+\subsection{문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)}
+네 영역을 병렬로 정밀 점검했다: ① 웹 코어(블록 정의$\leftrightarrow$툴박스$\leftrightarrow$실행기 연결$\cdot$BLE 송수신),
+② 3D 시뮬레이터(모듈 import/export$\cdot$에셋 경로$\cdot$디스패치), ③ Pico 펌웨어(명령 디스패치$\cdot$모듈
+가드$\cdot$MicroPython 제약), ④ 세 계층이 주고받는 \textbf{명령 문자열 프로토콜의 상호 정합성}.
+블록$\leftrightarrow$툴박스 매핑, 파일명 대소문자, GLTF 경로, BLE 20바이트 청킹, fire-and-forget 명령 목록의
+웹$\leftrightarrow$펌웨어 동기화 등은 \textbf{이상 없음}을 확인했고, 아래 4건을 \textbf{치명(HIGH)}으로 분류했다.
+
+\smallskip
+\noindent{\raggedright\chip{4개 영역 병렬 점검} \chip{HIGH 4건} \chip{MEDIUM$\cdot$LOW 20여 건} %
+\chip{연결$\cdot$정합성 다수 확인}\par}
+
+\begin{itemize}
+  \item \textbf{① 자석 센서 표시 반전}(\code{dashboard.html}) — 펌웨어(\code{magsensor.py})는
+  \textbf{1=감지}로 보내는데 대시보드는 \code{mag===0}일 때 ``감지됨''을 표시. 자석이 없으면
+  ``감지됨'', 있으면 ``정상''으로 나오는 \textbf{완전 반전} 버그.
+  \item \textbf{② 설정 파일 오타 한 줄로 로버 부팅 불가}(\code{system\_config.py}) —
+  \code{is\_module\_enabled()}가 \code{int()}를 보호 없이 호출. 사용자가 설정 파일에
+  \code{enable\_wheel=yes}처럼 쓰면 \textbf{import 시점}(\code{hardware.py}가 호출)에 예외가 발생해
+  \code{main.py}가 아예 시작하지 못함.
+  \item \textbf{③ 5초 초과 명령의 BLE 응답 어긋남}(\code{bluetooth.js}) — 시간지정 이동(예:
+  10초 전진)은 펌웨어가 동작 완료 후에야 ack를 보내는데 웹 타임아웃은 고정 5초. 타임아웃 뒤
+  도착한 \textbf{늦은 ack가 다음 명령의 응답 슬롯을 오염}시켜, 이후 ``거리 측정'' 값이 어긋나는 등
+  응답 스트림이 한 칸씩 밀림.
+  \item \textbf{④ 비상정지 지연} — 이중 차단: 웹은 STOP\_ALL이 \textbf{전송 큐에 갇혀} 앞 명령의
+  응답/타임아웃까지 대기하고, 펌웨어는 시간지정 이동을 \textbf{상한 없는 blocking sleep}으로 처리해
+  그동안 어떤 명령도 못 받음(\code{tFORWARD,9999}면 수 시간). 어린이용 로봇에서 실질적 안전 결함.
+  \item \textbf{MEDIUM$\cdot$LOW(후속 수정 예정)} — \code{Web/Simulation/} 폴더가 실제로는 어디서도
+  import되지 않는 죽은 코드(문서와 불일치), \code{SET\_PIN}이 저장만 되고 미적용, 블록 실행기의
+  else-if$\cdot$반환값 함수 본문 누락, 대시보드 연결 상태 5초 후 오표시, 프레임레이트 종속
+  애니메이션 등.
+\end{itemize}
+
+\subsection{수정 계획 — 치명(HIGH) 4건}
+발견 당일 4건의 수정 계획을 수립했다. 원칙은 \textbf{(a) 근본 원인 제거, (b) 웹$\cdot$펌웨어 양쪽
+방어, (c) 자동화 검증 동반}이다.
+
+\begin{itemize}
+  \item \textbf{① 자석 반전} — 대시보드 판정 조건을 펌웨어 규약(1=감지)에 맞게 뒤집는다(한 줄).
+  \item \textbf{② 부팅 안전화} — \code{is\_module\_enabled()}를 try/except로 감싸 잘못된 값이면
+  \textbf{크래시 대신 해당 모듈만 비활성}으로 강등하고 시리얼 로그로 원인을 알린다.
+  \item \textbf{③ 응답 동기화(2단 방어)} — (a) 명령 문자열에서 예상 소요시간을 계산해 \textbf{타임아웃을
+  동적으로 연장}(SERVO\_t*/DC\_t*/SLEEP은 초 인자, BATCH는 하위 명령 합산), (b) 값 반환 명령
+  (DISTANCE$\to$\code{DIST:} 등)은 \textbf{기대 응답 접두어를 검증}해 무관한 늦은 ack를 버리고 계속
+  대기. 부수로 대시보드 저장 타임아웃 기본값(20000ms)을 5000ms로 일치.
+  \item \textbf{④ 비상정지 즉시화} — 웹: 비상정지 시 \textbf{대기 중 응답 promise를 즉시 취소}해
+  전송 큐를 비우고 STOP\_ALL을 바로 내보냄. 펌웨어: blocking sleep을 \textbf{50ms 슬라이스}로
+  바꾸고 매 슬라이스 UART를 폴링해 STOP\_ALL 도착 시 즉시 정지. \textbf{시간 상한 60초}를
+  웹$\cdot$펌웨어 양쪽에 동기 적용.
+\end{itemize}
+
+\subsection{수정 내용 — 적용 결과 및 자동화 검증}
+계획대로 \textbf{8개 파일에서 +224 / $-$34 라인}을 수정했다(웹 5$\cdot$펌웨어 3). 핵심 구현은
+펌웨어의 \textbf{중단 가능 sleep}과 웹의 \textbf{동적 타임아웃$\cdot$응답 짝 검증}이다.
+
+\smallskip
+\noindent{\raggedright\chip{비상정지 $\sim$0.1s 반응} \chip{시간 상한 60s(웹$\cdot$펌웨어 동기)} %
+\chip{동적 타임아웃} \chip{응답 접두어 검증} \chip{부팅 크래시 방지} \chip{자석 표시 정상화}\par}
+
+\begin{itemize}
+  \item \textbf{펌웨어}(\code{process\_data.py}$\cdot$\code{main.py}$\cdot$\code{system\_config.py}) —
+  \code{\_interruptible\_sleep()} 도입(시간지정 휠$\cdot$DC$\cdot$SLEEP$\cdot$BATCH 부저 대기 5곳 교체),
+  \code{main.py}의 \code{\_poll\_abort()}가 동작 중 UART를 폴링해 STOP\_ALL만 선별 소비,
+  BATCH는 중단 시 남은 하위 명령을 건너뜀. \code{MAX\_TIMED\_SEC=60} 클램프.
+  \item \textbf{웹}(\code{bluetooth.js}$\cdot$\code{commandexecutor.js}$\cdot$\code{main.js}$\cdot$%
+  \code{constants.js}$\cdot$\code{dashboard.html}) — \code{\_estimateBlockingMs()} 동적 타임아웃,
+  \code{\_expectedResponsePrefix()} 응답 짝 검증, \code{cancelPendingResponse()} 비상정지 경로,
+  블록 초 입력 클램프(\code{\_clampSeconds}), 자석 판정 반전 수정, 타임아웃 기본값 일치.
+  \item \textbf{자동화 검증} — MicroPython 모듈(machine$\cdot$utime$\cdot$hardware)을 스텁으로 대체한
+  CPython 하니스로 펌웨어 \textbf{8개 시나리오}(``10초 전진'' 중 STOP\_ALL 주입 $\to$
+  \textbf{0.36초 내 정지}, 9999초 요청 $\to$ 60초 클램프, BATCH 중단 전파, 콜백 예외 안전성 등)와
+  node로 실제 웹 모듈을 import한 \textbf{17개 케이스}(타임아웃 추정 8$\cdot$응답 짝 검증 6$\cdot$취소
+  경로 3)를 실행해 \textbf{전체 통과}를 확인했다.
+\end{itemize}
+
+\begin{lstlisting}[style=py, caption={\code{Pico/process\_data.py} --- 중단 가능 sleep: 50ms 슬라이스마다 비상정지 폴링 + 60초 상한}]
+MAX_TIMED_SEC = 60   # 시간지정 이동/대기 상한 (웹 _clampSeconds와 동기)
+
+def _interruptible_sleep(self, sec):
+    """50ms 슬라이스로 대기하며 매 슬라이스 비상정지 도착을 확인한다."""
+    if sec > MAX_TIMED_SEC:
+        sec = MAX_TIMED_SEC
+    end = utime.ticks_add(utime.ticks_ms(), int(sec * 1000))
+    while utime.ticks_diff(end, utime.ticks_ms()) > 0:
+        if self._abort_requested():   # main.py의 _poll_abort가 STOP_ALL 감지
+            return False              # -> 핸들러가 즉시 stop_all()
+        utime.sleep_ms(50)
+    return True
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={\code{Web/bluetooth.js} --- 동적 타임아웃(예상 소요시간 합산)과 기대 응답 접두어 검증}]
+// 시간지정 명령은 예상 소요시간만큼 타임아웃을 연장 (BATCH는 하위 명령 합산)
+_estimateTimeoutMs(command) {
+    return BLUETOOTH_CONFIG.RESPONSE_TIMEOUT + this._estimateBlockingMs(command);
+}
+
+// 값 반환 명령 대기 중 도착한 무관 데이터(직전 blocking 명령의 늦은 ack "1")를
+// 버리고 진짜 응답(DIST:/SYS_VALUES/...)을 계속 기다린다 -> 응답 밀림 차단
+_resolvePromise(data) {
+    const expected = this._expectedResponsePrefix(state.pendingCommand);
+    if (expected && !String(data).toUpperCase().startsWith(expected)) return;
+    /* ... resolve ... */
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=py, caption={검증 하니스 실행 결과 발췌 --- 10초 이동이 비상정지로 0.36초 만에 중단}]
+[PASS] STOP_ALL 감지·앞 명령 폐기·꼬리 보존 (buffer='DIST')
+[PASS] 10초 이동이 ~0.3초에 중단 (elapsed=0.36s)
+[PASS] SLEEP,10 이 ~0.3초에 중단 + stop_all (elapsed=0.35s)
+[PASS] BATCH: 중단 후 나머지 하위 명령 건너뜀
+[timed] 9999.0s 요청 -> 60s로 제한
+실패: 없음 — 펌웨어 8·웹 17 시나리오 전체 통과
+\end{lstlisting}
+
+\subsection{후속 수정 — 중간(MEDIUM) 결함 5건 (당일 처리)}
+점검에서 발견한 중간 등급 문제 가운데 5건을 이어서 수정했다(\textbf{6개 파일 +178 / $-$37}).
+나머지 2건은 보류했다 --- \code{Web/Simulation/} 죽은 코드는 \textbf{팀원 브랜치}
+(\code{Simulation\_LeeMinhyuck})가 해당 폴더의 재배선을 진행 중이어서 main에서 손대면 충돌만
+만들고(머지 리뷰 때 확인), \code{SET\_PIN} 미적용은 후속 작업으로 넘겼다.
+
+\smallskip
+\noindent{\raggedright\chip{한글 명령 유실 해결} \chip{else-if$\cdot$함수 본문 실행} %
+\chip{버튼 라벨$\cdot$코딩 탭 배선} \chip{대시보드 상태 폴링} \chip{dt 기반 애니메이션}\par}
+
+\begin{itemize}
+  \item \textbf{한글 명령 유실}(\code{Pico/main.py}) — 수신 버퍼를 str에서 \textbf{bytes}로
+  전환하고 완성된 라인만 디코드. 한글 장치명 등 멀티바이트 문자가 20바이트 BLE 청크 경계에서
+  잘려도 다음 청크와 합쳐 복원되며(MicroPython rp2는 \code{decode}의 errors 인자를 무시하고
+  예외를 던져 명령이 유실됐다), 깨진 라인은 폐기하고 다음 명령을 정상 처리한다.
+  \item \textbf{블록 인터프리터 2건}(\code{commandexecutor.js}) — \code{controls\_if}가
+  IF0..IF$n$을 순회해 ``아니면 만약''(else-if) 절을 실행. 반환값 함수는 \textbf{비동기 사전
+  해석} 방식 도입 --- 값 평가 전에 트리 안의 함수 호출을 찾아 본문(STACK)을 실행하고 반환값을
+  캐시하며, while 조건은 매 반복 재해석, 재귀는 16단계로 제한.
+  \item \textbf{UI 배선 2건}(\code{main.js}) — 툴바 버튼이 화면 상태에 따라
+  ``블록코딩$\cdot$메인$\cdot$코딩''으로 정상 전환되도록 상태 헬퍼를 전달하는 래퍼로 호출부 4곳
+  통일. 하단바 ``코딩'' 탭이 열려 있는 점검(대시보드) 화면을 닫고 진입하도록 수정(화면 갇힘 해소).
+  \item \textbf{대시보드 연결 표시}(\code{dashboard.html}) — \code{GET\_STATUS}를 \textbf{3초
+  주기}로 폴링(iframe이 숨겨진 동안은 건너뜀)하고 끊김 판정 임계를 7.5초로 조정. 정상 연결이
+  5초 뒤 항상 ``연결 끊김''으로 표시되던 문제 해소.
+  \item \textbf{프레임레이트 종속 애니메이션}(\code{Sim\_Parts/render.js}$\cdot$\code{rocket.js}) —
+  레이더 회전$\cdot$로켓 상승을 프레임당 고정 증분에서 \textbf{초당 속도 $\times$ dt}로 환산
+  (\code{RADAR\_SPIN}=9 rad/s, \code{ROCKET\_SPEED}=0.16/s). 60Hz 체감은 동일, 120Hz+에서
+  2배 빨라지던 문제 해소.
+  \item \textbf{검증} — 펌웨어 하니스에 한글 청크 분할 복원$\cdot$깨진 라인 폐기 시나리오를
+  추가해 \textbf{11개} 통과, 블록 인터프리터는 목업 워크스페이스로 else-if 분기$\cdot$함수
+  본문 실행(본문이 설정한 변수 42 반환)$\cdot$무한재귀 방어까지 \textbf{6개} 통과.
+\end{itemize}
+
+\begin{lstlisting}[style=js, caption={\code{Web/commandexecutor.js} --- 반환값 함수의 비동기 사전 해석: 본문 실행 후 반환값을 캐시}]
+// evaluateValueBlock은 동기 함수라 명령 전송이 필요한 함수 본문을 직접 실행할
+// 수 없다. 값 평가 전에 트리 안의 함수 호출을 실행해 반환값을 캐시해 둔다.
+async _executeFunctionCall(callBlock) {
+  await this._setupProcedureArgs(callBlock, defBlock);
+  await this.processBlock(defBlock.getInputTargetBlock('STACK'));  // 본문 실행
+  const value = this.evaluateValueBlock(returnBlock);              // 반환값 평가
+  this._funcResults.set(callBlock.id, value);                     // 캐시 -> 동기 평가가 사용
+}
+\end{lstlisting}
