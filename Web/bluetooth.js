@@ -470,23 +470,28 @@ export const BluetoothManager = {
 
         const btn = elements.connectButton;
         if (btn) {
+            const label = btn.querySelector('.mobile-nav-label');
+            const setLabel = (text) => {
+                if (label) label.textContent = text;
+                else btn.textContent = text;
+            };
             btn.classList.remove('btn-connected', 'btn-failed');
             if (connected) {
-                btn.textContent = '🔌 연결 - 신호 끊기';
+                setLabel('연결됨');
                 btn.classList.add('btn-connected');
                 btn.disabled = false;
                 btn.title = '연결을 끊으려면 클릭';
             } else if (state.isConnecting) {
-                btn.textContent = '🔗 연결 중...';
+                setLabel('연결 중…');
                 btn.disabled = true;
                 btn.title = '연결 시도 중';
             } else if (state.connectFailed) {
-                btn.textContent = '❌ 연결실패 - 재연결';
+                setLabel('재연결');
                 btn.classList.add('btn-failed');
                 btn.disabled = false;
                 btn.title = '다시 연결을 시도합니다';
             } else {
-                btn.textContent = '🔗 신호 연결';
+                setLabel('신호연결');
                 btn.disabled = false;
                 btn.title = '아레스 탐사선과 연결';
             }
