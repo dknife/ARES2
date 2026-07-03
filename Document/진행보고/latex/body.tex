@@ -1133,19 +1133,156 @@ function closeAccordion(el) {
   \caption{8일차 — 오늘(2026.07.02) 커밋 히스토리}
 \end{figure}
 
-\section{9일차 — 전체 코드 점검 · 치명 결함 4건 수정(비상정지 즉시화·BLE 응답 동기화·설정 안전화)}
-\textit{2026.07.03 (금) · 개발 KST}
+\section{9일차 — UI 디자인 시안·실서비스 적용 · 시뮬레이터 Hierarchy 편집기 · 발사대 조립 테스트 · 전체 코드 점검(치명 결함 4건 수정)}
+\textit{2026.07.03 (금) · 컴퓨터실 개발 KST}
 
 \begin{summarybox}
-서비스 전체 코드를 대상으로 \textbf{정밀 점검(코드 리뷰)}을 수행했다. \textbf{웹 코어}(블록코딩
-실행기$\cdot$BLE 통신), \textbf{3D 시뮬레이터}, \textbf{Pico 펌웨어}, 그리고 \textbf{웹$\leftrightarrow$펌웨어$\leftrightarrow$시뮬레이터
-명령 프로토콜 정합성}의 네 영역으로 나눠 검토해 \textbf{치명(HIGH) 결함 4건}과 중간$\cdot$경미
-문제 20여 건을 발견했다. HIGH 4건 --- \textbf{① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅
-불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연} --- 은 당일 \textbf{수정 계획 수립
-$\to$ 코드 수정 $\to$ 자동화 검증(펌웨어 8$\cdot$웹 17 시나리오 전체 통과)}까지 완료했다.
-이어 \textbf{중간(MEDIUM) 등급 5건} --- 한글 명령 유실$\cdot$블록 인터프리터 누락$\cdot$UI
-배선$\cdot$대시보드 연결 표시$\cdot$프레임레이트 종속 애니메이션 --- 도 같은 날 수정$\cdot$검증했다.
+컴퓨터실에서 \textbf{디자인$\cdot$서비스$\cdot$시뮬레이터$\cdot$실물 교구$\cdot$펌웨어} 트랙을 병행했다.
+\textbf{UI 디자인 시안}을 Adobe Illustrator로 정리해 \textbf{랜딩(탐사선 연결)$\cdot$학습 관제실(12차시)$\cdot$%
+미션 화면(아레스$\cdot$알비 대화)$\cdot$블록코딩$\cdot$대시보드}까지 앱 전 화면의 설계안을 완성하고,
+이를 \textbf{실제 웹 서비스에 적용}했다. \textbf{시뮬레이터}는 5일차에 방향을 잡은 \textbf{메시
+계층(Hierarchy) 편집기}를 구현해, 씬의 객체(알비 본체$\cdot$눈/가슴 LED$\cdot$삽입 박스)를
+\textbf{계층 목록으로 관리}하고 선택$\cdot$\textbf{이동$\cdot$회전$\cdot$크기} 편집을 하도록 했다.
+실물 교구는 \textbf{화성발사대 조립 테스트}를 진행해, 6일차 디자인 고도화 방향대로 \textbf{크림슨 톤
+외장과 기능적 그래픽(‘KSLV-II NURI’$\cdot$‘LAUNCH AREA KEEP CLEAR’)}을 입힌 3D 프린팅
+부품의 조립성을 실물로 확인했다. 아울러 \textbf{서비스 전체 코드 정밀 점검(코드 리뷰)}으로
+\textbf{치명(HIGH) 결함 4건}(자석 표시 반전$\cdot$설정 오타 부팅 불가$\cdot$BLE 응답 어긋남$\cdot$%
+비상정지 지연)과 \textbf{중간(MEDIUM) 5건}을 발견해 당일 \textbf{수정$\cdot$자동화 검증}까지 완료했다.
 \end{summarybox}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=4.6cm, keepaspectratio]{../img/9일차_개발현장1.jpg}
+    \caption{개발 현장 — 코딩$\cdot$설계 병행}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=4.6cm, keepaspectratio]{../img/9일차_개발현장2.jpg}
+    \caption{컴퓨터실 전경}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=4.6cm, keepaspectratio]{../img/9일차_UI디자인작업.jpg}
+    \caption{Illustrator UI 디자인 작업}
+  \end{subfigure}
+  \caption{9일차 — 개발 현장: 디자인$\cdot$서비스$\cdot$시뮬레이터$\cdot$펌웨어 트랙 병행}
+\end{figure}
+
+\subsection{디자인 — UI 설계안(시안) 완성 (앱 전 화면)}
+6$\cdot$8일차의 디자인 방향과 개선 계획을 이어받아, Adobe Illustrator로 앱 \textbf{전 화면의 UI
+설계안(시안)}을 정리했다. \textbf{랜딩(‘화성 탐사선 제어 --- 탐사선 연결’)}, \textbf{학습 관제실}(12차시
+카드형 목록 + 차시별 미션 접기/펴기), \textbf{미션 화면}(아레스$\cdot$알비 캐릭터 대화 + 학습 목표 +
+‘샘플 코드 보기’ 토글 + 이전/다음 미션), \textbf{블록코딩}(8개 카테고리 팔레트$\cdot$워크스페이스$\cdot$%
+실행/전송/로그$\cdot$AI 도움), \textbf{대시보드(점검)}까지 한 벌의 시안으로 묶어, \textbf{하단 5-탭
+내비게이션(미션$\cdot$코딩$\cdot$신호연결$\cdot$시뮬레이션$\cdot$AI도움)}과 \textbf{화성 주황 포인트}로 화면 간
+톤을 통일했다.
+
+\smallskip
+\noindent{\raggedright\chip{랜딩$\cdot$탐사선 연결} \chip{학습 관제실(12차시)} \chip{미션 대화$\cdot$학습 목표} %
+\chip{블록코딩 팔레트} \chip{대시보드(점검)} \chip{하단 5-탭 내비} \chip{화성 주황 포인트}\par}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.24\linewidth}\centering
+    \fbox{\includegraphics[width=\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax, height=7.2cm, keepaspectratio]{../img/9일차_설계안_랜딩.png}}
+    \caption{랜딩 — 탐사선 연결}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.24\linewidth}\centering
+    \fbox{\includegraphics[width=\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax, height=7.2cm, keepaspectratio]{../img/9일차_설계안_관제실.png}}
+    \caption{학습 관제실(12차시)}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.24\linewidth}\centering
+    \fbox{\includegraphics[width=\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax, height=7.2cm, keepaspectratio]{../img/9일차_설계안_미션.png}}
+    \caption{미션 — 아레스$\cdot$알비 대화}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.24\linewidth}\centering
+    \fbox{\includegraphics[width=\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax, height=7.2cm, keepaspectratio]{../img/9일차_설계안_블록코딩.png}}
+    \caption{블록코딩 — 팔레트$\cdot$완성 블록}
+  \end{subfigure}
+  \caption{9일차 — UI 디자인 시안: 랜딩 $\to$ 학습 관제실 $\to$ 미션 화면 $\to$ 블록코딩(하단 5-탭 내비 공통)}
+\end{figure}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.30\linewidth}\centering
+    \fbox{\includegraphics[width=\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax, height=12.5cm, keepaspectratio]{../img/9일차_설계안_대시보드.png}}
+    \caption{대시보드(점검) 시안 — 연결 상태$\cdot$센서 텔레메트리$\cdot$시스템 자원$\cdot$수동 제어}
+  \end{subfigure}
+  \caption{9일차 — 대시보드(점검) 화면 시안(스크롤 전체): ‘ARES 미션 컨트롤’의 연결$\cdot$센서$\cdot$자원$\cdot$수동 제어 카드}
+\end{figure}
+
+\subsection{UI 적용 — 설계안의 실제 웹 서비스 반영}
+완성한 시안을 \textbf{실제 웹 서비스에 적용}했다. 학습 관제실(개요)과 미션 화면을 시안대로
+반영해, \textbf{차시$\cdot$미션 아코디언}과 \textbf{미션별 아레스$\cdot$알비 대화$\cdot$학습 목표$\cdot$샘플(생성)
+코드 보기}가 실제 화면에서 동작함을 확인했다. 아래는 배포 서비스를 실기(모니터)에서 구동한
+모습으로, 시안의 톤$\cdot$구성이 그대로 반영됐다.
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.44\linewidth}\centering
+    \includegraphics[width=\linewidth, height=6.6cm, keepaspectratio]{../img/9일차_UI적용_개요.jpg}
+    \caption{학습 관제실(개요) 적용 — 차시$\cdot$미션 아코디언}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.44\linewidth}\centering
+    \includegraphics[width=\linewidth, height=6.6cm, keepaspectratio]{../img/9일차_UI적용_미션.jpg}
+    \caption{미션 화면 적용 — ‘3차시 미션 1: 알비의 눈 반짝!’ 대화$\cdot$학습 목표}
+  \end{subfigure}
+  \caption{9일차 — UI 설계안의 실제 웹 서비스 적용(배포본 실기 구동)}
+\end{figure}
+
+\subsection{시뮬레이터 — 메시 계층(Hierarchy) 편집기 구현 (5일차 방향 실현)}
+5일차 토론에서 방향을 잡고 8일차에 \textbf{객체 삽입 기능}으로 이어진 시뮬레이터 개선을,
+\textbf{메시 계층(Hierarchy) 편집기}로 발전시켰다. 화면 우측에 \textbf{Hierarchy 패널}을 두어 씬의
+객체를 \textbf{계층 목록}으로 보여준다 --- 루트 \code{albi-body}(‘알비와 함께’) 아래
+\textbf{Albi Eye L/R LED$\cdot$Albi Chest LED} 등 알비의 부품과, 사용자가 삽입한 \textbf{Box}
+객체가 함께 나열된다. 목록에서 객체를 \textbf{선택}하면 3D 뷰에 바운딩 박스$\cdot$기즈모가 표시되고,
+하단의 \textbf{Move$\cdot$Rotate$\cdot$Scale}로 위치$\cdot$방향$\cdot$크기를 편집한다. 이로써 8일차의 단순
+삽입을 넘어 \textbf{씬 그래프 기반의 객체 관리}가 가능해졌다. 아래 캡처는 기능 시연
+\textbf{동영상에서 발췌}했다.
+
+\smallskip
+\noindent{\raggedright\chip{Hierarchy 패널} \chip{albi-body $\to$ Eye/Chest LED 계층} %
+\chip{삽입 Box 관리} \chip{목록 선택 $\leftrightarrow$ 기즈모} \chip{Move$\cdot$Rotate$\cdot$Scale}\par}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=5.2cm, keepaspectratio]{../img/9일차_시뮬_hierarchy구현.jpg}
+    \caption{\textcircled{1} 구현 현장 — 시뮬레이터 + 편집기 코드}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=5.2cm, keepaspectratio]{../img/9일차_시뮬_hierarchy_박스A.jpg}
+    \caption{\textcircled{2} Hierarchy 목록 + Box 선택$\cdot$이동 기즈모}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=5.2cm, keepaspectratio]{../img/9일차_시뮬_hierarchy_박스B.jpg}
+    \caption{\textcircled{3} 다중 Box(7$\cdot$8) 계층 관리}
+  \end{subfigure}
+  \caption{9일차 — 시뮬레이터 메시 계층(Hierarchy) 편집기(동영상 발췌): 계층 목록 $\to$ 객체 선택 $\to$ 기즈모 편집}
+\end{figure}
+
+\subsection{실물 교구 — 화성발사대 조립 테스트 (디자인 고도화 반영)}
+6일차 디자인 고도화 방향(다크 톤$\cdot$기능적 그래픽)을 반영한 \textbf{화성발사대}의 3D 프린팅
+부품으로 \textbf{조립 테스트}를 진행했다. \textbf{크림슨(다크 레드) 외장 패널}과 \textbf{흰색 내부 본체}가
+끼워 맞춰지는 모듈형 구조로, 전면에 \textbf{디스플레이 창$\cdot$제어 패널}, 측면에 \textbf{DC 기어모터$\cdot$%
+LED 어레이}, 외장에 \textbf{기능적 그래픽 데칼}(‘\textbf{KSLV-II NURI}’ 로켓 마킹, ‘\textbf{LAUNCH
+AREA KEEP CLEAR}’ 경고 그래픽)을 입혔다. 부품 전개 $\to$ 그래픽 패널 결합 $\to$ 전면 컨트롤부
+조립까지 실물로 맞춰 보며 \textbf{조립성$\cdot$끼움 정밀도$\cdot$배선 정리}를 점검했다. 아래 캡처는
+조립 \textbf{동영상에서 발췌}했다.
+
+\smallskip
+\noindent{\raggedright\chip{크림슨 외장 + 흰색 본체} \chip{디스플레이 창$\cdot$제어 패널} %
+\chip{DC 기어모터$\cdot$LED 어레이} \chip{기능적 그래픽 데칼(KSLV-II NURI)} \chip{모듈형 조립성 점검}\par}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=5.4cm, keepaspectratio]{../img/9일차_조립_부품전개.jpg}
+    \caption{\textcircled{1} 부품 전개 — 외장$\cdot$데칼$\cdot$DC모터$\cdot$LED}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=5.4cm, keepaspectratio]{../img/9일차_조립_그래픽패널.jpg}
+    \caption{\textcircled{2} 그래픽 패널(‘KSLV-II NURI’) 결합}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.32\linewidth}\centering
+    \includegraphics[width=\linewidth, height=5.4cm, keepaspectratio]{../img/9일차_조립_완성.jpg}
+    \caption{\textcircled{3} 전면 컨트롤부$\cdot$디스플레이 창 조립}
+  \end{subfigure}
+  \caption{9일차 — 화성발사대 조립 테스트(동영상 발췌): 부품 전개 $\to$ 그래픽 패널 결합 $\to$ 전면 컨트롤부 조립}
+\end{figure}
 
 \subsection{문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)}
 네 영역을 병렬로 정밀 점검했다: ① 웹 코어(블록 정의$\leftrightarrow$툴박스$\leftrightarrow$실행기 연결$\cdot$BLE 송수신),
