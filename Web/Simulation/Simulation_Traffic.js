@@ -8,7 +8,10 @@ export class Simulation_Traffic extends Simulation_Base {
   constructor(ctx) {
     super(ctx);
     this.traffic = ctx.traffic;
+  }
 
+  init() {
+    const ctx = this.ctx;
     const THREE = ctx.THREE;
     const scene = ctx.scene;
     const cfg = ctx.cfg;

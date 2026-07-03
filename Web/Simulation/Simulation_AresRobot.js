@@ -7,7 +7,10 @@ export class Simulation_AresRobot extends Simulation_Base {
   constructor(ctx) {
     super(ctx);
     this.leds = ctx.leds;
+  }
 
+  init() {
+    const ctx = this.ctx;
     const THREE = ctx.THREE;
     const scene = ctx.scene;
     const cfg = ctx.cfg;

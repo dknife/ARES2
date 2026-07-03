@@ -6,6 +6,10 @@ export class Simulation_Base {
     this.ctx = ctx;
   }
 
+  init() {
+    // To be overridden by subclasses
+  }
+
   // Base Controller interface methods forwarded to context components
   render() {
     this.ctx.renderEngine.render();

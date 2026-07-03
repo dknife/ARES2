@@ -1,10 +1,10 @@
-﻿import { state } from './state.js';
+import { state } from './state.js';
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BluetoothManager } from './bluetooth.js';
 import { BlocklyConfig, attachBatchBlockValidator, attachDynamicNaming, updateWorkspaceBlocks } from './blocklyconfig.js';
 import { CommandExecutor } from './commandexecutor.js';
-import { setupSimulation } from './simulation.js';
+import { setupSimulation } from './Simulation/Simulation_Main.js';
 import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js';
 import { parse as aiParse } from './ai_helper.js';
 
@@ -1316,7 +1316,7 @@ function toggleDashboard() {
 // 로그 컨테이너 토글
 // ============================================================
 // ============================================================
-// 3D 시뮬레이션 컨트롤러 — 실제 구현은 simulation.js
+// 3D 시뮬레이션 컨트롤러 — 실제 구현은 Simulation/Simulation_Main.js
 //   showView() 에서 미션 뷰를 떠날 때 close() 호출.
 // ============================================================
 let simController = null;

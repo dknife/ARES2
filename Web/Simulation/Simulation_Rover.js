@@ -11,7 +11,11 @@ export class Simulation_Rover extends Simulation_Base {
     this.oled = ctx.oled;
     this.gun = ctx.gun;
     this.waves = ctx.waves;
+    this.roverGroup = null;
+  }
 
+  init() {
+    const ctx = this.ctx;
     const THREE = ctx.THREE;
     const scene = ctx.scene;
     const cfg = ctx.cfg;
@@ -179,7 +183,7 @@ export class Simulation_Rover extends Simulation_Base {
     this.gun.setGunFire();
   }
 
-  // Properties checked by outside simulation.js wrapper
+  // Properties checked by outside Simulation_Main wrapper
   get hasRoverLeds() { return this.leds.roverLeds.length > 0; }
   get hasDistanceSensor() { return this.movement.irSensorBalls.length > 0; }
   get hasServo() { return !!this.worldGroup; }
