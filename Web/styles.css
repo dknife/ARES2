@@ -263,9 +263,9 @@ button:focus-visible {
     outline-offset: 2px;
 }
 
-/* ===== 모바일 하단 내비게이션 ===== */
+/* ===== 하단 내비게이션 (모바일 + 데스크톱 공통 표시) ===== */
 .mobile-bottom-nav {
-    display: none;
+    display: grid;
     position: fixed;
     left: 0;
     right: 0;
@@ -349,9 +349,13 @@ button:focus-visible {
     white-space: nowrap;
 }
 
+/* 데스크톱(≥769px): 하단 내비를 그대로 표시하되, 고정 바가 콘텐츠를
+   가리지 않도록 컨테이너 높이를 내비 높이만큼 줄여 하단 공간을 확보한다.
+   (모바일 ≤768px 은 아래 스크롤 레이아웃 규칙이 별도로 여백을 처리) */
 @media (min-width: 769px) {
-    .mobile-bottom-nav {
-        display: none !important;
+    .container {
+        height: calc(100dvh - var(--mobile-bottom-nav-height));
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height));
     }
 }
 
@@ -2043,7 +2047,8 @@ details.mission-section summary {
 .ai-panel {
     position: fixed;
     right: 20px;
-    bottom: 20px;
+    /* 하단 고정 내비 위로 띄운다 (내비 높이 + 여백) */
+    bottom: calc(20px + var(--mobile-bottom-nav-height));
     width: 340px;
     max-width: calc(100% - 32px);
     max-height: 70vh;

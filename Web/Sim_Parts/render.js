@@ -5,6 +5,9 @@ const SERVO_WHEEL_SPIN = 4.0;
 const SERVO_WORLD_SPEED = 1.2;
 const SERVO_TURN_SPEED = 0.9;
 const BOX_COLLIDE_R = 1.5;
+// 레이더 회전 속도 (rad/s). 기존 프레임당 0.15rad(60fps 기준)을 초당 값으로
+// 환산 — dt를 곱지 않으면 120Hz 모니터에서 2배로 빨라진다.
+const RADAR_SPIN = 9.0;
 
 export class RenderEngine {
   constructor(ctx) {
@@ -25,7 +28,7 @@ export class RenderEngine {
 
     // 1) Radar antenna rotation
     if (m && m.radarOn && m.antennaPivot) {
-      m.antennaPivot.rotation.y += 0.15 * m.radarDir;
+      m.antennaPivot.rotation.y += RADAR_SPIN * dt * m.radarDir;
     }
 
     // 2) Servo translation (Z)
