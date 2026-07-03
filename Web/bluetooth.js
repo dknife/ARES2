@@ -379,9 +379,30 @@ export const BluetoothManager = {
         this._resolvePromise(data);
     },
 
+    // 명령별 기대 응답 접두어. 값 반환 명령 대기 중에 도착한 무관 데이터
+    // (대개 직전 blocking 명령의 늦은 ack "1")가 promise를 잘못 resolve해
+    // 이후 응답 스트림이 한 칸씩 밀리던 desync를 차단한다.
+    _expectedResponsePrefix(command) {
+        if (!command) return null;
+        switch (command.split(',')[0]) {
+            case 'DISTANCE':    return 'DIST';
+            case 'MAGNET':      return 'MAG';
+            case 'GET_SYS':     return 'SYS_VALUES';
+            case 'GET_MODULES': return 'MODULES';
+            case 'GET_NAMES':   return 'NAMES';
+            case 'GET_STATUS':  return 'STATUS';
+            default:            return null;
+        }
+    },
+
     // Promise 해결
     _resolvePromise(data) {
         if (state.pendingResolve) {
+            const expected = this._expectedResponsePrefix(state.pendingCommand);
+            if (expected && !String(data).toUpperCase().startsWith(expected)) {
+                Logger.add(`[BLE] ${state.pendingCommand} 대기 중 무관 응답 무시: ${data}`, 'warning');
+                return;
+            }
             if (state.pendingTimeout) clearTimeout(state.pendingTimeout);
             const resolve = state.pendingResolve;
             state.pendingCommand = null;
@@ -490,15 +511,67 @@ export const BluetoothManager = {
         }
     },
 
+    // 대기 중인 응답 promise를 즉시 종료한다(비상정지 등).
+    // _sendQueue가 [쓰기+응답대기]를 통째로 직렬화하므로, 이걸 끊어야
+    // 뒤이어 보내는 STOP_ALL이 앞 명령의 응답/타임아웃까지 기다리지 않고
+    // 곧장 전송된다.
+    cancelPendingResponse(reason) {
+        if (!state.pendingReject) return;
+        if (state.pendingTimeout) clearTimeout(state.pendingTimeout);
+        const reject = state.pendingReject;
+        const command = state.pendingCommand;
+        state.pendingCommand = null;
+        state.pendingResolve = null;
+        state.pendingReject = null;
+        state.pendingTimeout = null;
+        reject(new Error(`${reason || '취소됨'}: ${command || ''}`));
+    },
+
+    // 응답 타임아웃 계산. 펌웨어가 blocking 처리하는 시간지정 명령
+    // (SERVO_t*/DC_t*/SLEEP/BATCH/SING)은 동작이 끝난 뒤에야 ack를 보내므로
+    // 예상 소요시간을 기본 타임아웃에 더한다. (5초 넘는 이동이 항상
+    // 타임아웃되고 늦은 ack가 다음 명령 promise를 오염시키던 문제의 근본 수정)
+    _estimateTimeoutMs(command) {
+        return BLUETOOTH_CONFIG.RESPONSE_TIMEOUT + this._estimateBlockingMs(command);
+    },
+
+    _estimateBlockingMs(command) {
+        if (typeof command !== 'string') return 0;
+        if (command.startsWith('BATCH;')) {
+            let total = 0;
+            for (const sub of command.slice(6).split('|')) {
+                total += this._estimateBlockingMs(sub.trim());
+            }
+            return total;
+        }
+        const parts = command.split(',');
+        const head = parts[0];
+        let sec = 0;
+        if (head.startsWith('SERVO_t') || head.startsWith('DC_t') ||
+            head === 'SLEEP' || head === 'tFORWARD' || head === 'tBACKWARD' ||
+            head === 'tLEFT' || head === 'tRIGHT') {
+            sec = parseFloat(parts[1]) || 0;
+        } else if (head === 'tDCMOTOR') {
+            sec = parseFloat(parts[2]) || 0;
+        } else if (head === 'BUZZER_ON') {
+            // 단독 BUZZER_ON은 논블로킹이지만 BATCH 안에서는 펌웨어가
+            // 음이 끝날 때까지 대기하므로 합산 대상이다.
+            sec = parseFloat(parts[2]) || 0;
+        } else if (head === 'SING') {
+            sec = 20; // 내장 멜로디 대략치
+        }
+        return Math.min(Math.max(sec, 0), 120) * 1000;
+    },
+
     // 데이터 전송
-    async sendData(data, waitForResponse = false) {
-        const sendTask = () => this._sendDataNow(data, waitForResponse);
+    async sendData(data, waitForResponse = false, timeoutMs = null) {
+        const sendTask = () => this._sendDataNow(data, waitForResponse, timeoutMs);
         const queuedSend = this._sendQueue.then(sendTask, sendTask);
         this._sendQueue = queuedSend.catch(() => {});
         return queuedSend;
     },
 
-    async _sendDataNow(data, waitForResponse = false) {
+    async _sendDataNow(data, waitForResponse = false, timeoutMs = null) {
         if (!state.characteristic) {
             throw new Error('BLE 장치에 연결되어 있지 않습니다.');
         }
@@ -518,6 +591,7 @@ export const BluetoothManager = {
         // race를 막는다. 일반 응답 대기 명령(센서 등)에도 같은 안전성이 적용된다.
         let responsePromise = null;
         if (waitForResponse) {
+            const timeout = timeoutMs || this._estimateTimeoutMs(data);
             responsePromise = new Promise((resolve, reject) => {
                 state.pendingCommand = data;
                 state.pendingResolve = resolve;
@@ -529,7 +603,7 @@ export const BluetoothManager = {
                     state.pendingReject = null;
                     state.pendingTimeout = null;
                     reject(new Error(`응답 시간 초과: ${command || data}`));
-                }, BLUETOOTH_CONFIG.RESPONSE_TIMEOUT);
+                }, timeout);
             });
         }
 

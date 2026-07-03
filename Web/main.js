@@ -472,6 +472,12 @@ function isInBlockCodingStage() {
   return currentView === 'mission' && _contentMode === 'coding' && !inDashboard;
 }
 
+// ui.js의 updateBlockCodingButtonUI에 상태 판별 헬퍼를 넘기는 래퍼.
+// (인자 없이 호출하면 헬퍼가 () => false로 고정돼 라벨이 "🧩 블록코딩"에 머문다)
+function refreshBlockCodingButtonUI() {
+  updateBlockCodingButtonUI(undefined, { isDashboardVisible, isInBlockCodingStage });
+}
+
 function openBlockCodingWorkspace() {
   const lessonValue = parseInt(document.getElementById('lessonSelect')?.value, 10);
   const missionValue = parseInt(document.getElementById('missionSelect')?.value, 10);
@@ -520,7 +526,7 @@ function closeDashboardToCoding() {
   if (elements.loadButton) elements.loadButton.disabled = false;
   if (setContentMode) setContentMode('coding');
   updateRunButtonUI();
-  updateBlockCodingButtonUI();
+  refreshBlockCodingButtonUI();
   updateMobileBottomNav();
   Logger.add('[모드] 블록코딩 전환', 'info');
 }
@@ -813,7 +819,7 @@ function showView(view) {
   if (inMission && workspace) {
     setTimeout(() => { try { Blockly.svgResize(workspace); } catch {} }, 0);
   }
-  updateBlockCodingButtonUI();
+  refreshBlockCodingButtonUI();
   if (!inMission) pendingDashboardOpen = false;
   updateMobileBottomNav();
 }
@@ -1066,7 +1072,14 @@ function openMissionCoding(lesson, mission) {
   let attempts = 0;
   const poll = () => {
     if (currentView === 'mission') {
-      if (setContentMode) setContentMode('coding');
+      // 점검(대시보드) iframe이 열려 있으면 닫아야 blocklyDiv가 드러난다
+      // (openBlockCodingWorkspace와 동일한 처리 — 안 닫으면 화면에 갇힘)
+      const dashboardFrame = document.getElementById('dashboardFrame');
+      if (dashboardFrame && dashboardFrame.style.display === 'block') {
+        closeDashboardToCoding();
+      } else if (setContentMode) {
+        setContentMode('coding');
+      }
       return;
     }
     if (attempts++ < 60) setTimeout(poll, 50);
@@ -1402,6 +1415,9 @@ function initializeMissionListeners(ws) {
       updateRunButtonUI();
       if (isBleConnected()) {
         try {
+          // 진행 중 명령의 응답 대기를 끊어 전송 큐를 즉시 비운다.
+          // (안 끊으면 STOP_ALL이 앞 명령의 응답/타임아웃까지 큐에 갇힌다)
+          BluetoothManager.cancelPendingResponse('비상정지');
           await BluetoothManager.sendData('STOP_ALL', false);
           Logger.add('[비상정지] 모든 하드웨어 정지 완료', 'info');
         } catch (error) {
@@ -1711,7 +1727,7 @@ function main() {
       }
     },
     getSimController: () => simController,
-    updateBlockCodingButtonUI: () => updateBlockCodingButtonUI(),
+    updateBlockCodingButtonUI: () => refreshBlockCodingButtonUI(),
   });
   bindMobileBottomNav();
   simController = setupSimulation({
@@ -1732,7 +1748,7 @@ function main() {
 
   // 6) 상태 초기화 + 라우팅
   BluetoothManager.updateConnectionStatus(false);
-  updateBlockCodingButtonUI();
+  refreshBlockCodingButtonUI();
   updateMobileBottomNav();
   Logger.add('[시작] ARES 준비 완료 - BLE 연결을 시작하세요', 'info');
   Logger.refresh();

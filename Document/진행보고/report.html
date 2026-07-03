@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~7일차</title>
+    <title>ARES 진행 보고 — 1~9일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,13 +194,13 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 7일차</span></h1>
-            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검.</p>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 9일차</span></h1>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편.</p>
             <div class="stat-row">
-                <div class="stat"><b>5</b><span>DAYS</span></div>
-                <div class="stat"><b>32</b><span>PHOTOS</span></div>
-                <div class="stat"><b>11</b><span>LIVE SCREENS</span></div>
-                <div class="stat"><b>06.23~29</b><span>2026 · KST</span></div>
+                <div class="stat"><b>8</b><span>DAYS</span></div>
+                <div class="stat"><b>35</b><span>PHOTOS</span></div>
+                <div class="stat"><b>16</b><span>LIVE SCREENS</span></div>
+                <div class="stat"><b>06.23~07.02</b><span>2026 · KST</span></div>
             </div>
         </div>
     </header>
@@ -1275,11 +1275,284 @@ function completedMissionCount(lesson) {     // 차시별 0~4 완료 집계
                 </figure>
             </div>
         </section>
+
+        <!-- ============ DAY 8 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 8</span>
+                <h2>시뮬레이터 객체 삽입 기능 구현 · 관제실·개요 UX 개편 · 블록코딩 페이지 디자인 개선</h2>
+                <span class="day-date">2026.07.02 (목) · 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">컴퓨터실에서 개발을 이어갔다. <b>시뮬레이터</b>는 7일차에 계획한 <b>객체 삽입 기능</b>을 실제로 구현해, 3D 장면에 <b>박스·구·마커</b>를 생성하고 <b>이동·회전·크기</b> 기즈모로 배치·변형할 수 있게 했다. <b>웹 인터페이스</b>는 관제실·개요 화면을 <b>차시·미션 통합 아코디언</b>으로 재구성하고, 뷰 전환에 <b>슬라이드·페이드 애니메이션</b>과 <b>차시 정보 블루화</b>·<b>하단바 코딩 탭</b>을 추가했으며, <b>하단 내비게이션을 데스크톱에서도 표시</b>하도록 반응형 정책을 바꿨다. <b>블록 카테고리 색상 팔레트</b>를 새로 정의하고, <b>블록코딩 페이지의 디자인 개선 계획</b>을 시안으로 정리했다.</p>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/8일차_개발현장1.jpg" alt="컴퓨터실 개발 현장 — 코딩·시뮬레이터 병행"></div>
+                    <figcaption><b>개발 현장</b> — 컴퓨터실에서 서비스·시뮬레이터·펌웨어 작업을 나란히 진행. 노트북에서 코드 편집, 옆 모니터에서 실행 로그를 확인.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/8일차_개발현장2.jpg" alt="컴퓨터실 전경"></div>
+                    <figcaption><b>컴퓨터실 전경</b> — 좌석마다 로버·컨트롤러 부품과 개발 장비를 두고 팀원별로 병행 작업.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1600/901"><img src="img/8일차_개발현장3.jpg" alt="페어 개발·논의"></div>
+                    <figcaption><b>페어 개발·논의</b> — 노트북으로 시뮬레이터를 구동하며 화면을 함께 보고 구현 방향을 논의.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎮 시뮬레이터 — 객체 삽입 기능 구현 (7일차 계획 실현)</h3>
+                <p class="lead">7일차에 세운 <b>컴포넌트 기반 객체 삽입 계획</b>을 실제 기능으로 구현했다. 시뮬레이터 화면의 <b>CREATE OBJECT</b> 메뉴에서 <b>Box·Sphere·Marker</b>를 3D 장면에 생성하고, <b>Move·Rotate·Scale</b> 기즈모로 위치·방향·크기를 조정할 수 있다. 생성한 객체는 <b>Delete spawned</b>로 일괄 제거한다. 아래 캡처는 기능 시연 <b>동영상에서 발췌</b>한 삽입 흐름이다.</p>
+                <div class="chips">
+                    <span class="chip t">CREATE OBJECT (Box·Sphere·Marker)</span>
+                    <span class="chip">Move·Rotate·Scale 기즈모</span>
+                    <span class="chip">다중 객체 배치·선택</span>
+                    <span class="chip">Delete spawned</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:939/1210; background:#1a1030;"><img src="img/8일차_시뮬_객체메뉴.jpg" alt="CREATE OBJECT 메뉴 — Box·Sphere·Marker"></div>
+                    <figcaption><b>① 객체 생성 메뉴</b> — 시뮬레이터에 <b>CREATE OBJECT</b> 메뉴(Box·Sphere·Marker·Delete spawned)와 <b>Move·Rotate·Scale</b> 도구를 노출. 선택 전에는 "No selection".</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:982/1056; background:#1a1030;"><img src="img/8일차_시뮬_박스삽입.jpg" alt="박스 삽입 + 이동 기즈모"></div>
+                    <figcaption><b>② 박스 삽입·이동</b> — 생성한 박스(Box 3)에 <b>이동 기즈모(RGB 축)</b>가 붙어 드래그로 위치를 조정. 이어 Sphere를 추가 생성.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:950/998; background:#1a1030;"><img src="img/8일차_시뮬_객체배치.jpg" alt="박스·구·마커 다중 배치"></div>
+                    <figcaption><b>③ 다중 객체 배치</b> — 박스·구·마커를 함께 장면에 배치하고, 선택한 마커(Marker 5)를 기즈모로 이동. 여러 객체를 자유롭게 구성.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 웹 인터페이스 — 관제실·개요 UX 개편 &amp; 하단 내비 데스크톱 표시</h3>
+                <p class="lead">관제실·개요 화면을 <b>차시·미션 통합 아코디언</b>으로 재구성했다. 차시 정보를 미션 목록 위로 올리고 <b>푸른색 팔레트</b>로 구분했으며, 개요/차시/미션 뷰 전환에 <b>슬라이드-인</b>, 미션 내부 모드 전환에 <b>페이드(1s)</b> 애니메이션을 넣었다. 아코디언 여닫이는 <b>열림 2s·닫힘 1s</b>로 조정했다. 하단바에 <b>코딩 탭</b>을 추가해 <code>localStorage</code>에 기록된 미션의 블록코딩으로 바로 진입하도록 하고(3→4탭), 기존에 모바일(≤768px)에서만 보이던 <b>하단 내비게이션을 데스크톱에서도 표시</b>하도록 반응형 정책을 바꿨다. 서비스 첫 화면 인사 문구도 간결화했다.</p>
+                <div class="chips">
+                    <span class="chip t">차시·미션 통합 아코디언</span>
+                    <span class="chip">차시정보 블루화</span>
+                    <span class="chip">슬라이드·페이드 전환</span>
+                    <span class="chip">하단바 코딩 탭(4탭)</span>
+                    <span class="chip">하단 내비 데스크톱 표시</span>
+                    <span class="chip">미션 기록(localStorage)</span>
+                </div>
+                <ul>
+                    <li><b>차시·미션 아코디언</b> — 차시를 아코디언으로 접고 펴며 차시별 미션(0/4 진행)을 리스트로 노출. 차시 정보를 미션 위로 이동하고 블루 계열로 차별화.</li>
+                    <li><b>화면 전환 애니메이션</b> — 뷰 전환 슬라이드-인 + 미션 내부 모드 전환 페이드(1s), 아코디언 여닫이 <code>열림 2s·닫힘 1s</code>.</li>
+                    <li><b>하단 내비 데스크톱 표시</b> — <code>@media (min-width:769px)</code>의 강제 숨김을 제거하고, 고정 바가 콘텐츠를 가리지 않도록 <b>컨테이너 높이를 내비 높이만큼 축소</b>. AI 패널도 내비 위로 올림.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🧩 블록코딩 페이지 — 디자인 개선 계획 &amp; 블록 카테고리 색상</h3>
+                <p class="lead">블록코딩 화면의 <b>디자인 개선 계획</b>을 시안으로 정리했다. 좌측 <b>카테고리 팔레트</b>(동작·출력·발사·감지·제어·변수·수학·함수), 가운데 <b>워크스페이스</b>("블록을 끌어와 미션을 만들어보세요!"), <b>전송·실행</b> 버튼과 <b>+/−·휴지통</b> 도구, <b>AI 도움</b> 패널, 하단 4탭 내비를 한 화면에 배치한 모바일 레이아웃이다. 함께 <b>블록 카테고리 색상 팔레트</b>도 새로 정의했다(동작 <code>#cf3d37</code>·출력 <code>#d68fa5</code>·발사 <code>#dcc342</code>·감지 <code>#7daa4d</code>·제어 <code>#2b638f</code>·변수 <code>#5483b5</code>·수학 <code>#cacacb</code>·함수 <code>#727171</code>).</p>
+                <div class="chips">
+                    <span class="chip t">블록코딩 디자인 시안</span>
+                    <span class="chip">카테고리 팔레트</span>
+                    <span class="chip">워크스페이스·전송/실행</span>
+                    <span class="chip">AI 도움 패널</span>
+                    <span class="chip">카테고리 색상 재정의</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1197/791; background:#fff;"><img src="img/8일차_블록코딩_디자인.png" alt="블록코딩 페이지 디자인 개선 시안"></div>
+                    <figcaption><b>블록코딩 페이지 디자인 시안</b> — (좌) 카테고리 팔레트와 빈 워크스페이스, (중) 전송·실행 도구와 AI 도움 패널, (우) 소리·DC 모터 블록으로 구성한 예제 프로그램. 하단 4탭(미션·코딩·시뮬레이션·AI도움).</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🧾 주요 코드 변경 요약 (오늘 커밋 기준)</h3>
+                <p class="lead">오늘(2026.07.02) 커밋 <b>8건</b>을 반영했다. 개발용 <code>dev.html</code> 문서를 포함해 <b>6개 파일에서 +817 / −79 라인</b>(<code>git</code> 기준)이 바뀌었다. 세 갈래로 요약한다.</p>
+                <ul>
+                    <li>🎨 <b>관제실·개요 UX 개편</b> (<code>main.js</code> +274·<code>styles.css</code>·<code>main.html</code>·<code>overview.html</code>) — 차시·미션 통합 아코디언(여닫이 2s/1s), 뷰 전환 슬라이드·페이드, 차시정보 블루화, 하단바 코딩 탭(3→4), 미션 기록(<code>localStorage</code>).</li>
+                    <li>🖥️ <b>하단 내비 데스크톱 표시</b> (<code>styles.css</code>) — <code>≥769px</code> 강제 숨김 제거 + 컨테이너 높이 축소로 여백 확보, AI 패널 위치 보정.</li>
+                    <li>🧩 <b>블록 카테고리 색상</b> (<code>main.html</code>) — 8개 카테고리 색상을 새 팔레트로 교체. 아울러 개발용 <code>dev.html</code>에 <b>2차 Refactoring·디자인 계획</b>(+396)을 문서화.</li>
+                </ul>
+
+                <figure class="code">
+                    <figcaption><b>Web/styles.css</b> — 하단 내비를 데스크톱에서도 표시(강제 숨김 제거 + 컨테이너 높이 축소)</figcaption>
+                    <pre class="code"><code>/* 데스크톱(≥769px): 하단 내비를 표시하되 고정 바가 콘텐츠를 가리지 않도록
+   컨테이너 높이를 내비 높이만큼 줄여 하단 공간을 확보 */
+@media (min-width: 769px) {
+    .container {
+        height: calc(100dvh - var(--mobile-bottom-nav-height));
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height));
+    }
+}
+.mobile-bottom-nav { display: grid; }          /* 기본 표시(모바일+데스크톱) */
+.ai-panel { bottom: calc(20px + var(--mobile-bottom-nav-height)); }  /* 내비 위로 */</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/main.js</b> — 아코디언 여닫이 애니메이션(열림 2s·닫힘 1s)</figcaption>
+                    <pre class="code"><code>const ACCORDION_OPEN_MS  = 2000;
+const ACCORDION_CLOSE_MS = 1000;
+
+function openAccordion(el) {
+  el.classList.remove('accordion-closing', 'accordion-opening');
+  el.classList.add('accordion-opening');
+  el._accTimer = setTimeout(done, ACCORDION_OPEN_MS + 120);
+}
+function closeAccordion(el) {
+  if (el.classList.contains('accordion-closing')) return; // 이미 닫히는 중이면 무시
+  el.classList.add('accordion-closing');
+}</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/main.html</b> — 블록 카테고리 색상 팔레트 재정의</figcaption>
+                    <pre class="code"><code>&lt;category id="category_motion"  name="동작" colour="#cf3d37"&gt;   &lt;!-- 주황→적 --&gt;
+&lt;category id="category_output"  name="출력" colour="#d68fa5"&gt;   &lt;!-- 적→분홍 --&gt;
+&lt;category id="category_gun"     name="발사" colour="#dcc342"&gt;   &lt;!-- 주황→금 --&gt;
+&lt;category id="category_sensors" name="감지" colour="#7daa4d"&gt;   &lt;!-- 청→녹 --&gt;
+&lt;category id="category_control" name="제어" colour="#2b638f"&gt;</code></pre>
+                </figure>
+
+                <figure>
+                    <div class="imgbox" style="aspect-ratio:1091/657; background:#1e1e1e;"><img src="img/8일차_커밋히스토리.png" alt="오늘 커밋 히스토리와 blockly 카테고리 색상 diff"></div>
+                    <figcaption><b>오늘 커밋 히스토리</b> — GitHub Desktop에서 본 2026.07.02 커밋 목록과 <code>blockly label color change</code> 변경(카테고리 <code>colour</code> 값 교체) diff.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ DAY 9 ============ -->
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">DAY 9</span>
+                <h2>전체 코드 점검 · 치명 결함 4건 수정 — 비상정지 즉시화·BLE 응답 동기화·설정 안전화</h2>
+                <span class="day-date">2026.07.03 (금) · 개발 KST</span>
+            </div>
+            <p class="day-summary">서비스 전체 코드를 대상으로 <b>정밀 점검(코드 리뷰)</b>을 수행했다. <b>웹 코어</b>(블록코딩 실행기·BLE 통신), <b>3D 시뮬레이터</b>, <b>Pico 펌웨어</b>, 그리고 <b>웹↔펌웨어↔시뮬레이터 명령 프로토콜 정합성</b>의 네 영역으로 나눠 검토해 <b>치명(HIGH) 결함 4건</b>과 중간·경미 문제 20여 건을 발견했다. HIGH 4건 — <b>① 자석 센서 표시 반전, ② 설정 파일 오타 시 부팅 불가, ③ 5초 초과 명령의 BLE 응답 어긋남, ④ 비상정지 지연</b> — 은 당일 <b>수정 계획 수립 → 코드 수정 → 자동화 검증(펌웨어 8·웹 17 시나리오 전체 통과)</b>까지 완료했다. 이어 <b>중간(MEDIUM) 등급 5건</b> — 한글 명령 유실·블록 인터프리터 누락·UI 배선·대시보드 연결 표시·프레임레이트 종속 애니메이션 — 도 같은 날 수정·검증했다.</p>
+
+            <div class="tasks">
+                <h3>🔍 문제 점검 — 전체 코드 리뷰 (웹·펌웨어·시뮬레이터·통신 프로토콜)</h3>
+                <p class="lead">네 영역을 병렬로 정밀 점검했다: ① 웹 코어(블록 정의↔툴박스↔실행기 연결·BLE 송수신), ② 3D 시뮬레이터(모듈 import/export·에셋 경로·디스패치), ③ Pico 펌웨어(명령 디스패치·모듈 가드·MicroPython 제약), ④ 세 계층이 주고받는 <b>명령 문자열 프로토콜의 상호 정합성</b>. 블록↔툴박스 매핑, 파일명 대소문자, GLTF 경로, BLE 20바이트 청킹, fire-and-forget 명령 목록의 웹↔펌웨어 동기화 등은 <b>이상 없음</b>을 확인했고, 아래 4건을 <b>치명(HIGH)</b>으로 분류했다.</p>
+                <div class="chips">
+                    <span class="chip t">4개 영역 병렬 점검</span>
+                    <span class="chip">HIGH 4건</span>
+                    <span class="chip">MEDIUM·LOW 20여 건</span>
+                    <span class="chip">연결·정합성 다수 확인</span>
+                </div>
+                <ul>
+                    <li><b>① 자석 센서 표시 반전</b> (<code>dashboard.html</code>) — 펌웨어(<code>magsensor.py</code>)는 <b>1=감지</b>로 보내는데 대시보드는 <code>mag===0</code>일 때 "감지됨"을 표시. 자석이 없으면 "감지됨", 있으면 "정상"으로 나오는 <b>완전 반전</b> 버그.</li>
+                    <li><b>② 설정 파일 오타 한 줄로 로버 부팅 불가</b> (<code>system_config.py</code>) — <code>is_module_enabled()</code>가 <code>int()</code>를 보호 없이 호출. 사용자가 설정 파일에 <code>enable_wheel=yes</code>처럼 쓰면 <b>import 시점</b>(<code>hardware.py</code>가 호출)에 예외가 발생해 <code>main.py</code>가 아예 시작하지 못함.</li>
+                    <li><b>③ 5초 초과 명령의 BLE 응답 어긋남</b> (<code>bluetooth.js</code>) — 시간지정 이동(예: 10초 전진)은 펌웨어가 동작 완료 후에야 ack를 보내는데 웹 타임아웃은 고정 5초. 타임아웃 뒤 도착한 <b>늦은 ack가 다음 명령의 응답 슬롯을 오염</b>시켜, 이후 "거리 측정" 값이 어긋나는 등 응답 스트림이 한 칸씩 밀림.</li>
+                    <li><b>④ 비상정지 지연</b> — 이중 차단: 웹은 STOP_ALL이 <b>전송 큐에 갇혀</b> 앞 명령의 응답/타임아웃까지 대기하고, 펌웨어는 시간지정 이동을 <b>상한 없는 blocking sleep</b>으로 처리해 그동안 어떤 명령도 못 받음(<code>tFORWARD,9999</code>면 수 시간). 어린이용 로봇에서 실질적 안전 결함.</li>
+                    <li><b>MEDIUM·LOW (후속 수정 예정)</b> — <code>Web/Simulation/</code> 폴더가 실제로는 어디서도 import되지 않는 죽은 코드(문서와 불일치), <code>SET_PIN</code>이 저장만 되고 미적용, 블록 실행기의 else-if·반환값 함수 본문 누락, 대시보드 연결 상태 5초 후 오표시, 프레임레이트 종속 애니메이션 등.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>📝 수정 계획 — 치명(HIGH) 4건</h3>
+                <p class="lead">발견 당일 4건의 수정 계획을 수립했다. 원칙은 <b>(a) 근본 원인 제거, (b) 웹·펌웨어 양쪽 방어, (c) 자동화 검증 동반</b>이다.</p>
+                <ul>
+                    <li><b>① 자석 반전</b> — 대시보드 판정 조건을 펌웨어 규약(1=감지)에 맞게 뒤집는다(한 줄).</li>
+                    <li><b>② 부팅 안전화</b> — <code>is_module_enabled()</code>를 try/except로 감싸 잘못된 값이면 <b>크래시 대신 해당 모듈만 비활성</b>으로 강등하고 시리얼 로그로 원인을 알린다.</li>
+                    <li><b>③ 응답 동기화(2단 방어)</b> — (a) 명령 문자열에서 예상 소요시간을 계산해 <b>타임아웃을 동적으로 연장</b>(SERVO_t*/DC_t*/SLEEP은 초 인자, BATCH는 하위 명령 합산), (b) 값 반환 명령(DISTANCE→<code>DIST:</code> 등)은 <b>기대 응답 접두어를 검증</b>해 무관한 늦은 ack를 버리고 계속 대기. 부수로 대시보드 저장 타임아웃 기본값(20000ms)을 5000ms로 일치.</li>
+                    <li><b>④ 비상정지 즉시화</b> — 웹: 비상정지 시 <b>대기 중 응답 promise를 즉시 취소</b>해 전송 큐를 비우고 STOP_ALL을 바로 내보냄. 펌웨어: blocking sleep을 <b>50ms 슬라이스</b>로 바꾸고 매 슬라이스 UART를 폴링해 STOP_ALL 도착 시 즉시 정지. <b>시간 상한 60초</b>를 웹·펌웨어 양쪽에 동기 적용.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🔧 수정 내용 — 적용 결과 및 자동화 검증</h3>
+                <p class="lead">계획대로 <b>8개 파일에서 +224 / −34 라인</b>을 수정했다(웹 5·펌웨어 3). 핵심 구현은 펌웨어의 <b>중단 가능 sleep</b>과 웹의 <b>동적 타임아웃·응답 짝 검증</b>이다.</p>
+                <div class="chips">
+                    <span class="chip t">비상정지 ~0.1s 반응</span>
+                    <span class="chip">시간 상한 60s(웹·펌웨어 동기)</span>
+                    <span class="chip">동적 타임아웃</span>
+                    <span class="chip">응답 접두어 검증</span>
+                    <span class="chip">부팅 크래시 방지</span>
+                    <span class="chip">자석 표시 정상화</span>
+                </div>
+                <ul>
+                    <li>🔩 <b>펌웨어</b> (<code>process_data.py</code>·<code>main.py</code>·<code>system_config.py</code>) — <code>_interruptible_sleep()</code> 도입(시간지정 휠·DC·SLEEP·BATCH 부저 대기 5곳 교체), <code>main.py</code>의 <code>_poll_abort()</code>가 동작 중 UART를 폴링해 STOP_ALL만 선별 소비, BATCH는 중단 시 남은 하위 명령을 건너뜀. <code>MAX_TIMED_SEC=60</code> 클램프.</li>
+                    <li>🌐 <b>웹</b> (<code>bluetooth.js</code>·<code>commandexecutor.js</code>·<code>main.js</code>·<code>constants.js</code>·<code>dashboard.html</code>) — <code>_estimateBlockingMs()</code> 동적 타임아웃, <code>_expectedResponsePrefix()</code> 응답 짝 검증, <code>cancelPendingResponse()</code> 비상정지 경로, 블록 초 입력 클램프(<code>_clampSeconds</code>), 자석 판정 반전 수정, 타임아웃 기본값 일치.</li>
+                    <li>✅ <b>자동화 검증</b> — MicroPython 모듈(machine·utime·hardware)을 스텁으로 대체한 CPython 하니스로 펌웨어 <b>8개 시나리오</b>("10초 전진" 중 STOP_ALL 주입 → <b>0.36초 내 정지</b>, 9999초 요청 → 60초 클램프, BATCH 중단 전파, 콜백 예외 안전성 등)와 node로 실제 웹 모듈을 import한 <b>17개 케이스</b>(타임아웃 추정 8·응답 짝 검증 6·취소 경로 3)를 실행해 <b>전체 통과</b>를 확인했다.</li>
+                </ul>
+
+                <figure class="code">
+                    <figcaption><b>Pico/process_data.py</b> — 중단 가능 sleep: 50ms 슬라이스마다 비상정지 폴링 + 60초 상한</figcaption>
+                    <pre class="code"><code>MAX_TIMED_SEC = 60   # 시간지정 이동/대기 상한 (웹 _clampSeconds와 동기)
+
+def _interruptible_sleep(self, sec):
+    """50ms 슬라이스로 대기하며 매 슬라이스 비상정지 도착을 확인한다."""
+    if sec &gt; MAX_TIMED_SEC:
+        sec = MAX_TIMED_SEC
+    end = utime.ticks_add(utime.ticks_ms(), int(sec * 1000))
+    while utime.ticks_diff(end, utime.ticks_ms()) &gt; 0:
+        if self._abort_requested():   # main.py의 _poll_abort가 STOP_ALL 감지
+            return False              # -&gt; 핸들러가 즉시 stop_all()
+        utime.sleep_ms(50)
+    return True</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>Web/bluetooth.js</b> — 동적 타임아웃(예상 소요시간 합산)과 기대 응답 접두어 검증</figcaption>
+                    <pre class="code"><code>// 시간지정 명령은 예상 소요시간만큼 타임아웃을 연장 (BATCH는 하위 명령 합산)
+_estimateTimeoutMs(command) {
+    return BLUETOOTH_CONFIG.RESPONSE_TIMEOUT + this._estimateBlockingMs(command);
+}
+
+// 값 반환 명령 대기 중 도착한 무관 데이터(직전 blocking 명령의 늦은 ack "1")를
+// 버리고 진짜 응답(DIST:/SYS_VALUES/...)을 계속 기다린다 -&gt; 응답 밀림 차단
+_resolvePromise(data) {
+    const expected = this._expectedResponsePrefix(state.pendingCommand);
+    if (expected &amp;&amp; !String(data).toUpperCase().startsWith(expected)) return;
+    /* ... resolve ... */
+}</code></pre>
+                </figure>
+
+                <figure class="code">
+                    <figcaption><b>검증 하니스 실행 결과 발췌</b> — 10초 이동이 비상정지로 0.36초 만에 중단</figcaption>
+                    <pre class="code"><code>[PASS] STOP_ALL 감지·앞 명령 폐기·꼬리 보존 (buffer='DIST')
+[PASS] 10초 이동이 ~0.3초에 중단 (elapsed=0.36s)
+[PASS] SLEEP,10 이 ~0.3초에 중단 + stop_all (elapsed=0.35s)
+[PASS] BATCH: 중단 후 나머지 하위 명령 건너뜀
+[timed] 9999.0s 요청 -&gt; 60s로 제한
+실패: 없음 — 펌웨어 8·웹 17 시나리오 전체 통과</code></pre>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🔧 후속 수정 — 중간(MEDIUM) 결함 5건 (당일 처리)</h3>
+                <p class="lead">점검에서 발견한 중간 등급 문제 가운데 5건을 이어서 수정했다(<b>6개 파일 +178 / −37</b>). 나머지 2건은 보류했다 — <code>Web/Simulation/</code> 죽은 코드는 <b>팀원 브랜치</b>(<code>Simulation_LeeMinhyuck</code>)가 해당 폴더의 재배선을 진행 중이어서 main에서 손대면 충돌만 만들고(머지 리뷰 때 확인), <code>SET_PIN</code> 미적용은 후속 작업으로 넘겼다.</p>
+                <div class="chips">
+                    <span class="chip t">한글 명령 유실 해결</span>
+                    <span class="chip">else-if·함수 본문 실행</span>
+                    <span class="chip">버튼 라벨·코딩 탭 배선</span>
+                    <span class="chip">대시보드 상태 폴링</span>
+                    <span class="chip">dt 기반 애니메이션</span>
+                </div>
+                <ul>
+                    <li>🔩 <b>한글 명령 유실</b> (<code>Pico/main.py</code>) — 수신 버퍼를 str에서 <b>bytes</b>로 전환하고 완성된 라인만 디코드. 한글 장치명 등 멀티바이트 문자가 20바이트 BLE 청크 경계에서 잘려도 다음 청크와 합쳐 복원되며(MicroPython rp2는 <code>decode</code>의 errors 인자를 무시하고 예외를 던져 명령이 유실됐다), 깨진 라인은 폐기하고 다음 명령을 정상 처리한다.</li>
+                    <li>🧩 <b>블록 인터프리터 2건</b> (<code>commandexecutor.js</code>) — <code>controls_if</code>가 IF0..IFn을 순회해 "아니면 만약"(else-if) 절을 실행. 반환값 함수는 <b>비동기 사전 해석</b> 방식 도입 — 값 평가 전에 트리 안의 함수 호출을 찾아 본문(STACK)을 실행하고 반환값을 캐시하며, while 조건은 매 반복 재해석, 재귀는 16단계로 제한.</li>
+                    <li>🎨 <b>UI 배선 2건</b> (<code>main.js</code>) — 툴바 버튼이 화면 상태에 따라 "블록코딩·메인·코딩"으로 정상 전환되도록 상태 헬퍼를 전달하는 래퍼로 호출부 4곳 통일. 하단바 "코딩" 탭이 열려 있는 점검(대시보드) 화면을 닫고 진입하도록 수정(화면 갇힘 해소).</li>
+                    <li>📡 <b>대시보드 연결 표시</b> (<code>dashboard.html</code>) — <code>GET_STATUS</code>를 <b>3초 주기</b>로 폴링(iframe이 숨겨진 동안은 건너뜀)하고 끊김 판정 임계를 7.5초로 조정. 정상 연결이 5초 뒤 항상 "연결 끊김"으로 표시되던 문제 해소.</li>
+                    <li>🎮 <b>프레임레이트 종속 애니메이션</b> (<code>Sim_Parts/render.js</code>·<code>rocket.js</code>) — 레이더 회전·로켓 상승을 프레임당 고정 증분에서 <b>초당 속도 × dt</b>로 환산(<code>RADAR_SPIN</code>=9 rad/s, <code>ROCKET_SPEED</code>=0.16/s). 60Hz 체감은 동일, 120Hz+에서 2배 빨라지던 문제 해소.</li>
+                    <li>✅ <b>검증</b> — 펌웨어 하니스에 한글 청크 분할 복원·깨진 라인 폐기 시나리오를 추가해 <b>11개</b> 통과, 블록 인터프리터는 목업 워크스페이스로 else-if 분기·함수 본문 실행(본문이 설정한 변수 42 반환)·무한재귀 방어까지 <b>6개</b> 통과.</li>
+                </ul>
+
+                <figure class="code">
+                    <figcaption><b>Web/commandexecutor.js</b> — 반환값 함수의 비동기 사전 해석: 본문 실행 후 반환값을 캐시</figcaption>
+                    <pre class="code"><code>// evaluateValueBlock은 동기 함수라 명령 전송이 필요한 함수 본문을 직접 실행할
+// 수 없다. 값 평가 전에 트리 안의 함수 호출을 실행해 반환값을 캐시해 둔다.
+async _executeFunctionCall(callBlock) {
+  await this._setupProcedureArgs(callBlock, defBlock);
+  await this.processBlock(defBlock.getInputTargetBlock('STACK'));  // 본문 실행
+  const value = this.evaluateValueBlock(returnBlock);              // 반환값 평가
+  this._funcResults.set(callBlock.id, value);                     // 캐시 -&gt; 동기 평가가 사용
+}</code></pre>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 62매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 70매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->

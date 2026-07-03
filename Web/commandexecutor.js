@@ -58,6 +58,16 @@ export const CommandExecutor = {
     if (magMatch) state.variables['_last_magnetic'] = magMatch[1];
   },
 
+  // 시간지정 이동/대기의 초 입력 상한 (펌웨어 MAX_TIMED_SEC와 동기화).
+  // 펌웨어가 blocking 처리하므로 과도한 값은 비상정지 지연·타임아웃을 유발한다.
+  MAX_TIMED_SEC: 60,
+
+  _clampSeconds(raw) {
+    const sec = parseFloat(raw);
+    if (!isFinite(sec) || sec < 0) return '0';
+    return String(Math.min(sec, this.MAX_TIMED_SEC));
+  },
+
   evaluateValueBlock(block) {
     if (!block) return '0';
     if (block.type === 'math_number') {
@@ -127,6 +137,13 @@ export const CommandExecutor = {
       const result = Math.floor(Math.random() * (max - min + 1)) + min;
       return result.toString();
     } else if (block.type === 'procedures_callreturn') {
+      // 함수 본문(STACK)은 명령 전송이 필요해 비동기로만 실행할 수 있다.
+      // processBlock/handleLogicBlock의 사전 해석(_resolveFunctionCalls)이
+      // 본문을 실행하고 반환값을 캐시해 두므로 여기서는 그 값을 읽는다.
+      if (this._funcResults.has(block.id)) {
+        return this._funcResults.get(block.id);
+      }
+      // 사전 해석이 닿지 않은 경로용 폴백 — 본문 없이 RETURN만 평가(구 동작)
       const funcName = block.getFieldValue('NAME');
       const defBlock = this._findProcedureDefinition(block.workspace, funcName, true);
       if (defBlock) {
@@ -148,6 +165,68 @@ export const CommandExecutor = {
     }
   },
 
+  // ----- 반환값 함수 호출의 비동기 사전 해석 -----
+  // evaluateValueBlock은 동기 함수라 함수 본문(STACK — 명령 전송 필요)을 직접
+  // 실행할 수 없다. 값 평가 전에 여기서 트리 안의 procedures_callreturn을 찾아
+  // 본문을 실행하고 반환값을 블록 id로 캐시한다(재평가 시 덮어씀).
+  _funcResults: new Map(),
+  _funcCallDepth: 0,
+  MAX_FUNC_CALL_DEPTH: 16,
+
+  _valueInputs(block) {
+    const VALUE = (Blockly.inputs && Blockly.inputs.inputTypes && Blockly.inputs.inputTypes.VALUE)
+      || (Blockly.inputTypes && Blockly.inputTypes.VALUE) || 1;
+    return (block.inputList || []).filter(input => input.type === VALUE);
+  },
+
+  async _resolveFunctionCalls(block) {
+    if (!block || !state.isExecuting) return;
+    if (block.type === 'procedures_callreturn') {
+      await this._executeFunctionCall(block);
+      return;
+    }
+    for (const input of this._valueInputs(block)) {
+      const target = input.connection && input.connection.targetBlock();
+      if (target) await this._resolveFunctionCalls(target);
+    }
+  },
+
+  async _executeFunctionCall(callBlock) {
+    // 인자 값 트리 안의 함수 호출부터 해석
+    for (const input of this._valueInputs(callBlock)) {
+      const target = input.connection && input.connection.targetBlock();
+      if (target) await this._resolveFunctionCalls(target);
+    }
+
+    const funcName = callBlock.getFieldValue('NAME');
+    const defBlock = this._findProcedureDefinition(callBlock.workspace, funcName, true);
+    if (!defBlock) {
+      Logger.add(`[오류] 함수 찾을 수 없음: ${funcName}`, 'error');
+      this._funcResults.set(callBlock.id, '0');
+      return;
+    }
+    if (this._funcCallDepth >= this.MAX_FUNC_CALL_DEPTH) {
+      Logger.add(`[오류] 함수 호출이 너무 깊습니다(재귀 ${this.MAX_FUNC_CALL_DEPTH}단계 초과): ${funcName}`, 'error');
+      this._funcResults.set(callBlock.id, '0');
+      return;
+    }
+
+    this._funcCallDepth++;
+    try {
+      await this._setupProcedureArgs(callBlock, defBlock);
+      await this.processBlock(defBlock.getInputTargetBlock('STACK'));   // 함수 본문 실행
+      const returnBlock = defBlock.getInputTargetBlock('RETURN');
+      let value = '0';
+      if (returnBlock) {
+        await this._resolveFunctionCalls(returnBlock);
+        value = this.evaluateValueBlock(returnBlock);
+      }
+      this._funcResults.set(callBlock.id, value);
+    } finally {
+      this._funcCallDepth--;
+    }
+  },
+
   async processBlock(block) {
     if (!block) return;
     if (!state.isExecuting) return;
@@ -158,6 +237,9 @@ export const CommandExecutor = {
       await this.processBlock(block.getNextBlock());
       return;
     }
+
+    // 값 입력 안의 반환값 함수 호출을 먼저 실행해 결과를 캐시한다.
+    await this._resolveFunctionCalls(block);
 
     const command = this.generateCommand(block);
     if (command) {
@@ -178,6 +260,8 @@ export const CommandExecutor = {
         state.isExecuting = false;
         return;
       }
+      // 값 입력의 반환값 함수 호출을 먼저 해석 (본문은 배치 밖에서 즉시 실행됨)
+      await this._resolveFunctionCalls(cur);
       const cmd = this.generateCommand(cur);
       if (cmd) commands.push(cmd);
       cur = cur.getNextBlock();
@@ -261,22 +345,22 @@ export const CommandExecutor = {
 
       // 서보 모터 (시간 제한) - SERVO_t방향,초,속도
       case 'timed_forward': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tFORWARD,${seconds},${speed}`;
       }
       case 'timed_backward': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tBACKWARD,${seconds},${speed}`;
       }
       case 'timed_right': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tRIGHT,${seconds},${speed}`;
       }
       case 'timed_left': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `SERVO_tLEFT,${seconds},${speed}`;
       }
@@ -302,12 +386,12 @@ export const CommandExecutor = {
 
       // DC 모터 (시간 제한) - DC_t방향,초,속도
       case 'main_motor_forward_timed': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `DC_tFORWARD,${seconds},${speed}`;
       }
       case 'main_motor_backward_timed': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '1');
         const speed = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
         return `DC_tBACKWARD,${seconds},${speed}`;
       }
@@ -323,7 +407,7 @@ export const CommandExecutor = {
       }
       case 'main_motor_stop': return 'DC_STOP';
       case 'time_sleep': {
-        const seconds = this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0';
+        const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
         return `SLEEP,${seconds}`;
       }
       case 'pico_check_device': return 'PING';
@@ -414,10 +498,17 @@ export const CommandExecutor = {
       state.variables[varName] = magnetic;
 
     } else if (block.type === 'controls_if') {
-      const condition = this.evaluateValueBlock(block.getInputTargetBlock('IF0')) === 'true';
-      if (condition) {
-        await this.processBlock(block.getInputTargetBlock('DO0'));
-      } else if (block.getInput('ELSE')) {
+      // mutator로 추가한 "아니면 만약"(IF1/DO1, IF2/DO2, ...)까지 순서대로 평가
+      let ran = false;
+      for (let n = 0; block.getInput('IF' + n); n++) {
+        const condition = this.evaluateValueBlock(block.getInputTargetBlock('IF' + n)) === 'true';
+        if (condition) {
+          await this.processBlock(block.getInputTargetBlock('DO' + n));
+          ran = true;
+          break;
+        }
+      }
+      if (!ran && block.getInput('ELSE')) {
         await this.processBlock(block.getInputTargetBlock('ELSE'));
       }
 
@@ -430,6 +521,8 @@ export const CommandExecutor = {
       while ((mode === 'WHILE' ? condition : !condition) && loopCount < maxLoops && state.isExecuting) {
         const doBlock = block.getInputTargetBlock('DO');
         await this.processBlock(doBlock);
+        // 조건 안의 함수 호출을 매 반복 다시 실행해 최신 값으로 재평가
+        await this._resolveFunctionCalls(block.getInputTargetBlock('BOOL'));
         condition = this.evaluateValueBlock(block.getInputTargetBlock('BOOL')) === 'true';
         loopCount++;
       }
@@ -504,6 +597,8 @@ export const CommandExecutor = {
 
   async executeWorkspace(workspace) {
     state.isExecuting = true;
+    this._funcResults.clear();
+    this._funcCallDepth = 0;
     // runButton 라벨/색 갱신은 main.js 의 updateRunButtonUI 가 담당
     window.dispatchEvent(new CustomEvent('ares:execution', { detail: { executing: true } }));
 
