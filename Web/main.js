@@ -515,23 +515,12 @@ function openBlockCodingWorkspace() {
   setTimeout(poll, 50);
 }
 
+// 블록코딩 버튼/탭에서 호출: 점검 오버레이를 닫고 (미션 뷰라면) 코딩 모드로 전환.
 function closeDashboardToCoding() {
-  const blocklyDiv = document.getElementById('blocklyDiv');
-  const dashboardFrame = document.getElementById('dashboardFrame');
+  closeDashboard();
   const contentToggleBtn = document.getElementById('contentToggleBtn');
-  if (!blocklyDiv || !dashboardFrame) return;
-
-  blocklyDiv.style.display = 'block';
-  dashboardFrame.style.display = 'none';
   if (contentToggleBtn) contentToggleBtn.style.display = '';
-
-  if (elements.saveButton) elements.saveButton.disabled = false;
-  if (elements.loadButton) elements.loadButton.disabled = false;
-  if (setContentMode) setContentMode('coding');
-  updateRunButtonUI();
-  refreshBlockCodingButtonUI();
-  updateMobileBottomNav();
-  Logger.add('[모드] 블록코딩 전환', 'info');
+  if (currentView === 'mission' && setContentMode) setContentMode('coding');
 }
 
 function handleBlockCodingButtonClick() {
@@ -546,56 +535,36 @@ function handleBlockCodingButtonClick() {
   openBlockCodingWorkspace();
 }
 
+// 점검(대시보드)은 전역 오버레이다. 개요·미션설명·코딩·시뮬 어느 화면에서든
+// 그대로 위에 띄우며, 아래 화면 상태는 건드리지 않는다 → 닫으면 원래 위치로 복귀.
+function openDashboard() {
+  const f = document.getElementById('dashboardFrame');
+  if (!f || f.style.display === 'block') return;
+  f.style.display = 'block';
+  updateRunButtonUI();
+  refreshBlockCodingButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 점검 화면 열기', 'info');
+}
+
+function closeDashboard() {
+  const f = document.getElementById('dashboardFrame');
+  if (!f || f.style.display !== 'block') return;
+  f.style.display = 'none';
+  updateRunButtonUI();
+  refreshBlockCodingButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 점검 화면 닫기', 'info');
+}
+
+// 상단 설정 버튼 / 하단바 점검 탭 공통 진입점 — 어디서 눌러도 오버레이로 연다.
 function openDashboardFromAnywhere() {
-  const parsed = parseHash();
-  const lesson = currentLesson ?? parsed.lesson ?? 1;
-  const mission = currentMission ?? parsed.mission ?? 1;
-
-  if (isDashboardVisible()) return;
-
-  // Request dashboard open. If we're not in mission view yet, navigate there
-  // and install a one-shot listener + timeout to ensure the dashboard opens
-  // after routing (some environments may not trigger the pending flag flow).
-  pendingDashboardOpen = true;
-  if (currentView !== 'mission') {
-    navigate({ lesson, mission });
-
-    const tryOpen = () => {
-      if (currentView === 'mission') {
-        // consume the pending flag so enterMission won't double-toggle
-        if (pendingDashboardOpen) pendingDashboardOpen = false;
-        // only toggle if not already visible
-        if (!isDashboardVisible()) toggleDashboard();
-        return true;
-      }
-      return false;
-    };
-
-    const onHash = () => {
-      if (tryOpen()) {
-        window.removeEventListener('hashchange', onHash);
-        clearTimeout(fallbackT);
-      }
-    };
-
-    window.addEventListener('hashchange', onHash);
-    // Fallback: try after short delay in case hashchange already applied
-    const fallbackT = setTimeout(() => {
-      tryOpen();
-      window.removeEventListener('hashchange', onHash);
-    }, 300);
-
-    // Safety: clear pending flag after a few seconds to avoid stale state
-    setTimeout(() => { pendingDashboardOpen = false; }, 4000);
-    return;
-  }
-
-  toggleDashboard();
+  openDashboard();
 }
 
 function isDashboardVisible() {
   const dashboardFrame = document.getElementById('dashboardFrame');
-  return currentView === 'mission' && !!dashboardFrame && dashboardFrame.style.display === 'block';
+  return !!dashboardFrame && dashboardFrame.style.display === 'block';
 }
 
 function isAiPanelOpen() {
@@ -677,12 +646,8 @@ function bindMobileBottomNav() {
     // 하단바 재클릭 시 토글 해제
     if (action === activeAction) {
       if (action === 'dashboard' && isDashboardVisible()) {
-        closeDashboardToCoding();
-        if (mobileDashboardReturnHash !== null) {
-          const backHash = mobileDashboardReturnHash;
-          mobileDashboardReturnHash = null;
-          restoreHash(backHash);
-        }
+        // 점검은 전역 오버레이 → 그냥 닫으면 아래 원래 화면으로 복귀
+        closeDashboard();
       } else if (action === 'ai' && isAiPanelOpen()) {
         document.getElementById('aiPanel')?.setAttribute('hidden', '');
         if (mobileAiReturnHash !== null) {
@@ -736,11 +701,6 @@ function bindMobileBottomNav() {
         break;
       }
       case 'dashboard':
-        if (currentView !== 'mission') {
-          mobileDashboardReturnHash = window.location.hash || '';
-        } else {
-          mobileDashboardReturnHash = null;
-        }
         openDashboardFromAnywhere();
         break;
       case 'ai':
@@ -814,12 +774,34 @@ async function applyRoute() {
 // ============================================================
 // 뷰 전환 + 버튼 활성/비활성
 // ============================================================
+// 뷰/모드 전환 시 페이지 스크롤을 상단으로 되돌린다. 모바일 레이아웃에선 window 가
+// 스크롤 컨테이너이고, 전환 직후 콘텐츠 리플로우가 스크롤을 되돌릴 수 있어
+// 다음 프레임에 한 번 더 초기화한다.
+function resetScrollTop() {
+  const toTop = () => {
+    window.scrollTo(0, 0);
+    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+  };
+  toTop();
+  requestAnimationFrame(toTop);
+}
+
 function showView(view) {
   for (const v of ['overview', 'lesson', 'mission']) {
     const el = document.getElementById(v + 'View');
     if (el) el.hidden = (v !== view);
   }
   currentView = view;
+
+  // 내비게이션으로 뷰가 바뀌면 그 화면의 스크롤을 항상 상단으로 초기화.
+  // 데스크톱(≥769px)은 뷰 요소가 스크롤 컨테이너, 모바일(≤768px)은 뷰가
+  // overflow:visible 이라 페이지(window) 자체가 스크롤된다 → 둘 다 초기화.
+  const activeView = document.getElementById(view + 'View');
+  if (activeView) {
+    activeView.scrollTop = 0;
+    activeView.querySelector('.mission-panel')?.scrollTo?.({ top: 0 });
+  }
+  resetScrollTop();
 
   const inMission = view === 'mission';
   // 미션 뷰일 때만 코딩 관련 버튼 활성화
@@ -1324,30 +1306,8 @@ function escapeHtml(s) {
 // 대시보드 전환
 // ============================================================
 function toggleDashboard() {
-  const blocklyDiv = document.getElementById('blocklyDiv');
-  const dashboardFrame = document.getElementById('dashboardFrame');
-  const contentToggleBtn = document.getElementById('contentToggleBtn');
-  if (!blocklyDiv || !dashboardFrame) return;
-
-  const showing = dashboardFrame.style.display === 'block';
-  if (showing) {
-    // 이미 열려있다면 블록코딩으로 복귀
-    closeDashboardToCoding();
-    return;
-  }
-
-  // 대시보드 보이기: 블록 영역 숨기고 iframe 보이기
-  blocklyDiv.style.display = 'none';
-  dashboardFrame.style.display = 'block';
-  if (contentToggleBtn) contentToggleBtn.style.display = 'none';
-
-  // 저장/불러오기 등 블록 관련 UI 비활성화
-  if (elements.saveButton) elements.saveButton.disabled = true;
-  if (elements.loadButton) elements.loadButton.disabled = true;
-
-  updateRunButtonUI();
-  updateMobileBottomNav();
-  Logger.add('[모드] 점검 화면 열기', 'info');
+  if (isDashboardVisible()) closeDashboard();
+  else openDashboard();
 }
 
 
@@ -1692,12 +1652,9 @@ function initializeMissionListeners(ws) {
       }
     }
     if (data.type === 'exit_dashboard') {
-      // dashboard iframe 안의 "점검완료 관제실로 복귀" 버튼.
-      // 현재 대시보드가 표시 중이면 블록 코딩 뷰로 복귀.
-      const dashboardFrame = document.getElementById('dashboardFrame');
-      if (dashboardFrame && dashboardFrame.style.display === 'block') {
-        closeDashboardToCoding();
-      }
+      // dashboard iframe 안의 "점검완료 복귀" 버튼 → 오버레이만 닫아
+      // 점검을 열기 직전에 있던 원래 화면(개요/미션설명/코딩/시뮬)으로 복귀.
+      if (isDashboardVisible()) closeDashboard();
       return;
     }
     if (data.type === 'log_toggle') {
