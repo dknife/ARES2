@@ -169,24 +169,45 @@ function updateDynamicToolbox() {
 // 이미지형 툴박스 카테고리 위에 마우스가 놓이면(호버) 그 카테고리의 플라이아웃을
 // 연다. Blockly 는 기본적으로 클릭(pointerdown)에서 열리므로, 호버로도 열리게
 // setSelectedItem 을 호출한다. 이벤트 위임이라 카테고리 DOM 이 재생성돼도 유지된다.
-// 툴박스 카테고리는 Blockly 기본 클릭(pointerdown)으로 열린다(호버 아님).
-// 추가로, 플라이아웃이 열린 상태에서 블록이 아닌 빈 곳을 누르면 닫는다.
-function setupToolboxInteraction(ws) {
+// 카테고리 색(툴박스 XML 순서와 동일) — 플라이아웃 배경 색조에 사용
+const CATEGORY_COLORS = ['#cf3d37', '#d68fa5', '#dcc342', '#7daa4d', '#2b638f', '#5483b5', '#cacacb', '#727171'];
+
+// #RRGGBB 를 흰색 쪽으로 amt(0~1) 만큼 밝게 → 배경용 밝은 톤
+function lightenColor(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.round(r + (255 - r) * amt);
+  g = Math.round(g + (255 - g) * amt);
+  b = Math.round(b + (255 - b) * amt);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+// 플라이아웃(블록 선택 영역) 동작·모양 설정:
+//  - autoClose 끔: 블록을 배치하거나 빈 곳을 눌러도 닫히지 않는다
+//  - 블록 사이 간격을 절반(기본 GAP_Y 24 → 12)으로
+//  - 카테고리 선택 시 배경을 그 카테고리 색의 밝은 톤으로
+function setupFlyoutBehavior(ws) {
   const toolbox = ws.getToolbox?.();
   if (!toolbox) return;
 
-  document.addEventListener('pointerdown', (event) => {
+  const applyFlyoutCfg = () => {
     const flyout = toolbox.getFlyout?.();
-    if (!flyout || !flyout.isVisible?.()) return;
-    const t = event.target;
-    if (!t || !t.closest) return;
-    // 카테고리 클릭(다른 카테고리 열기/토글)은 그대로 둔다
-    if (t.closest('.blocklyToolboxCategory')) return;
-    // 플라이아웃 안의 '블록'을 누르면 배치 동작이므로 그대로 둔다
-    if (t.closest('.blocklyFlyout') && t.closest('.blocklyDraggable')) return;
-    // 그 외(플라이아웃 빈 배경 / 워크스페이스 / 기타) → 열린 선택 영역 닫기
-    try { toolbox.clearSelection(); } catch {}
-  }, true);
+    if (!flyout) return;
+    flyout.autoClose = false;
+    flyout.GAP_Y = 12;
+  };
+  applyFlyoutCfg();
+
+  // 카테고리 선택을 가로채 배경색을 갱신한다(원래 동작은 그대로 수행).
+  const origSetSelected = toolbox.setSelectedItem.bind(toolbox);
+  toolbox.setSelectedItem = function (item) {
+    origSetSelected(item);
+    applyFlyoutCfg();
+    const idx = toolbox.getToolboxItems().indexOf(item);
+    const color = CATEGORY_COLORS[idx];
+    const bg = document.querySelector('.blocklyFlyoutBackground');
+    if (bg && color) bg.style.fill = lightenColor(color, 0.82);
+  };
 }
 
 // 블록 선택 메뉴(플라이아웃)의 블록을 워크스페이스 줌과 무관하게 고정 크기로 표시.
@@ -202,6 +223,36 @@ function setupFlyoutFixedScale(ws) {
     proto.__aresFixedFlyoutScale = true;
   }
   try { flyout.getWorkspace().setScale(FLYOUT_SCALE); } catch {}
+}
+
+// 툴박스 서랍: 기본은 접힘(라벨만 보임). 툴박스를 클릭하면 펼쳐지고(아이콘까지),
+// 펼쳐진 상태에서 카테고리를 클릭하면 블록이 열린다. 빈 곳을 클릭하면 다시 접힌다.
+function setupToolboxDrawer(ws) {
+  const div = document.querySelector('.blocklyToolboxDiv');
+  if (!div) return;
+  document.body.classList.add('toolbox-collapsed');   // 시작은 접힘
+
+  const reflow = () => { try { Blockly.svgResize(ws); } catch {} };
+
+  div.addEventListener('pointerdown', (event) => {
+    const collapsed = document.body.classList.contains('toolbox-collapsed');
+    const onCategory = !!(event.target.closest && event.target.closest('.blocklyToolboxCategory'));
+    if (collapsed) {
+      // 접힘 상태의 첫 클릭 → 펼치기(카테고리 선택은 막는다)
+      document.body.classList.remove('toolbox-collapsed');
+      reflow();
+      event.stopPropagation();
+      event.preventDefault();
+    } else if (!onCategory) {
+      // 펼침 상태에서 카테고리가 아닌 빈 곳 클릭 → 접기(열린 플라이아웃도 닫음)
+      document.body.classList.add('toolbox-collapsed');
+      try { ws.getToolbox().clearSelection(); } catch {}
+      reflow();
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    // 펼침 상태 + 카테고리 클릭 → Blockly 기본 선택(플라이아웃 열림)
+  }, true);
 }
 
 function initializeBlockly() {
@@ -243,8 +294,9 @@ function initializeBlockly() {
 
   Blockly.Python.init(workspace);
   setupBlockContextMenu(workspace);
-  setupToolboxInteraction(workspace);
+  setupFlyoutBehavior(workspace);
   setupFlyoutFixedScale(workspace);
+  setupToolboxDrawer(workspace);
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
