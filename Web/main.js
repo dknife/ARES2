@@ -479,6 +479,7 @@ function updateRunButtonUI() {
     btn.title = '실행 중인 미션을 즉시 멈춥니다';
     btn.classList.add('btn-stop');
     btn.disabled = false;
+    syncToolboxRunAction(btn);
     updateMobileBottomNav();
     return;
   }
@@ -489,7 +490,36 @@ function updateRunButtonUI() {
   const dashboardFrame = document.getElementById('dashboardFrame');
   const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
   btn.disabled = !inMission || inDashboard || !isBleConnected();
+  syncToolboxRunAction(btn);
   updateMobileBottomNav();
+}
+
+// 툴박스 하단 '미션전송' 버튼을 상단 runButton 상태(활성/비상정지)에 맞춰 동기화
+function syncToolboxRunAction(btn) {
+  const proxy = document.querySelector('#toolboxActions .tbx-action[data-action="run"]');
+  if (!proxy || !btn) return;
+  const isStop = btn.classList.contains('btn-stop');
+  proxy.disabled = btn.disabled;
+  proxy.classList.toggle('is-stop', isStop);
+  const ico = proxy.querySelector('.tbx-ico');
+  const lbl = proxy.querySelector('.tbx-lbl');
+  if (ico) ico.textContent = isStop ? '🛑' : '▶️';
+  if (lbl) lbl.innerHTML = isStop ? '비상<br>정지' : '미션<br>전송';
+}
+
+// 툴박스 하단 도구 버튼(미션전송·저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
+// 동일 로직(검증·비상정지·저장 프롬프트·파일입력)을 그대로 실행한다.
+function setupToolboxActions() {
+  const box = document.getElementById('toolboxActions');
+  if (!box) return;
+  box.addEventListener('click', (event) => {
+    const btn = event.target.closest('.tbx-action');
+    if (!btn || btn.disabled) return;
+    const action = btn.dataset.action;
+    if (action === 'run') elements.runButton?.click();
+    else if (action === 'save') elements.saveButton?.click();
+    else if (action === 'load') elements.loadButton?.click();
+  });
 }
 
 function isInBlockCodingStage() {
@@ -1186,6 +1216,9 @@ async function enterMission(n, m) {
   }
 
   document.getElementById('missionHeading').textContent = `${n}차시 미션 ${m} - ${mission.title}`;
+  // 코딩 영역 상단 배너: 기록된(현재) 차시·미션 표시
+  const codingLabel = document.getElementById('codingMissionLabel');
+  if (codingLabel) codingLabel.textContent = `${n}차시 · 미션 ${m} — ${mission.title}`;
   document.getElementById('missionTagBadge').textContent = mission.tag;
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
   document.getElementById('missionHardware').textContent = mission.hardware;
@@ -1352,6 +1385,9 @@ let simController = null;
 // 항상 켜 있는 이벤트 리스너 (BLE, 비상 정지, 로그 등)
 // ============================================================
 function initializeAlwaysOnListeners() {
+  // 툴박스 하단 도구 버튼(미션전송·저장·읽기) 위임 배선
+  setupToolboxActions();
+
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
     if (isBleConnected()) {
@@ -1451,10 +1487,31 @@ function initializeMissionListeners(ws) {
     }
   });
 
-  // 저장
-  elements.saveButton?.addEventListener('click', () => {
+  // 저장 — 지원 브라우저(Chrome/Edge)에서는 "다른 이름으로 저장" 창으로 위치·이름을
+  // 직접 지정. 미지원/차단 시 기존 다운로드(브라우저 다운로드 폴더) 방식으로 폴백.
+  elements.saveButton?.addEventListener('click', async () => {
     const xml = Blockly.Xml.workspaceToDom(ws);
     const xmlText = Blockly.Xml.domToPrettyText(xml);
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'Ares_Workspace.xml',
+          types: [{ description: 'ARES 미션 파일', accept: { 'application/xml': ['.xml'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(xmlText);
+        await writable.close();
+        Logger.add(`[파일] ${handle.name} 저장 완료`, 'info');
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;   // 사용자가 저장창을 취소
+        // iframe 차단 등으로 실패하면 아래 다운로드 방식으로 폴백
+        console.warn('showSaveFilePicker 실패 → 다운로드로 폴백:', err);
+      }
+    }
+
+    // 폴백: 파일명만 입력받아 브라우저 다운로드 폴더에 저장
     const fileName = prompt("저장할 파일 이름을 입력하세요 (확장자 제외):", "Ares_Workspace");
     if (!fileName) return;
     const blob = new Blob([xmlText], { type: 'application/xml' });
@@ -1466,6 +1523,7 @@ function initializeMissionListeners(ws) {
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    Logger.add(`[파일] ${fileName}.xml 다운로드`, 'info');
   });
 
   // 불러오기
@@ -1524,6 +1582,15 @@ function initializeMissionListeners(ws) {
     } finally {
       e.target.value = '';
     }
+  });
+
+  // 배너의 예제 드롭다운 → 기존 exampleSelect 로 위임(예제 로드 로직 재사용)
+  document.getElementById('codingExampleSelect')?.addEventListener('change', (e) => {
+    const val = e.target.value;
+    e.target.selectedIndex = 0;   // 배너 드롭다운은 다시 "예제 선택"으로 복귀
+    if (!val) return;
+    const orig = document.getElementById('exampleSelect');
+    if (orig) { orig.value = val; orig.dispatchEvent(new Event('change')); }
   });
 
   // ===== 🤖 AI 도움 — 자연어 → 블록 (오프라인 규칙 기반, 외부 통신 없음) =====

@@ -8,13 +8,13 @@
     <script src="mobile-preview.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="fonts/fonts.css">
-    <link rel="stylesheet" href="styles.css?v=20260704b">
+    <link rel="stylesheet" href="styles.css?v=20260704j">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
     <script src="vendor/three-bundle.min.js"></script>
     <script src="vendor/meshopt_decoder.js"></script>
-    <script type="module" src="main.js?v=20260704d"></script>
+    <script type="module" src="main.js?v=20260704h"></script>
     <style>
         /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
            버튼으로 닫으면 아래 원래 화면이 그대로 드러난다(원위치 복귀). */
@@ -102,6 +102,20 @@
 
             <!-- 미션 코딩 뷰 (description / coding / simulation 모드 전환) -->
             <section id="missionView" class="content-view" data-view="mission" data-mode="description" hidden>
+                <!-- 차시·미션 표시 + 예제 선택 — 코딩·시뮬레이션 모드 공유 상단 배너 -->
+                <div id="codingMissionBanner">
+                    <span id="codingMissionLabel" aria-live="polite"></span>
+                    <select id="codingExampleSelect" title="예제 불러오기" aria-label="예제 불러오기">
+                        <option value="">예제 선택</option>
+                        <option value="greeting">👋 인사하기</option>
+                        <option value="countdown">⏰ 카운트다운</option>
+                        <option value="radar_demo">📡 레이더 데모</option>
+                        <option value="albi_song">🎵 알비의 노래</option>
+                        <option value="led_variable">🔢 변수로 LED 켜기</option>
+                        <option value="obstacle_avoid">🚧 장애물 피하기</option>
+                        <option value="rover_wakeup">🤖 로버 깨우기</option>
+                    </select>
+                </div>
                 <aside id="missionPanel" class="mission-panel">
                     <div class="mission-panel-head">
                         <span class="lesson-tag" id="missionTagBadge"></span>
@@ -130,6 +144,18 @@
                 </aside>
                 <div class="mission-workspace">
                     <div id="blocklyDiv"></div>
+                    <!-- 툴박스 이미지 메뉴 아래 도구 버튼: UI 개편 전 상단에 있던 기능 복원 -->
+                    <div id="toolboxActions" aria-label="미션 도구">
+                        <button type="button" class="tbx-action" data-action="run" title="미션 전송 — 블록 명령을 연결된 탐사선으로 보냅니다">
+                            <span class="tbx-ico">▶️</span><span class="tbx-lbl">미션<br>전송</span>
+                        </button>
+                        <button type="button" class="tbx-action" data-action="save" title="미션 저장 — 현재 코드를 파일로 저장">
+                            <span class="tbx-ico">💾</span><span class="tbx-lbl">미션<br>저장</span>
+                        </button>
+                        <button type="button" class="tbx-action" data-action="load" title="미션 읽기 — 저장된 코드 파일 불러오기">
+                            <span class="tbx-ico">📂</span><span class="tbx-lbl">미션<br>읽기</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 3D 시뮬레이션 카드 — 카드 전체가 하나의 렌더링 영역이며,
