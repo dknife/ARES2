@@ -14,14 +14,19 @@
     <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
     <script src="vendor/three-bundle.min.js"></script>
     <script src="vendor/meshopt_decoder.js"></script>
-    <script type="module" src="main.js?v=20260703c"></script>
+    <script type="module" src="main.js?v=20260704c"></script>
     <style>
+        /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
+           버튼으로 닫으면 아래 원래 화면이 그대로 드러난다(원위치 복귀). */
         #dashboardFrame {
+            position: fixed;
+            inset: 0;
             width: 100%;
             height: 100%;
-            min-height: 500px;
             border: none;
             display: none;
+            z-index: 10000;
+            background: #fff;
         }
     </style>
 </head>
@@ -125,7 +130,6 @@
                 </aside>
                 <div class="mission-workspace">
                     <div id="blocklyDiv"></div>
-                    <iframe id="dashboardFrame" src="dashboard.html"></iframe>
                 </div>
 
                 <!-- 3D 시뮬레이션 카드 — 카드 전체가 하나의 렌더링 영역이며,
@@ -180,6 +184,10 @@
             <div id="logContent"></div>
         </section>
     </div>
+
+    <!-- 아레스 점검(대시보드) — 어느 화면에서든 설정 버튼으로 여는 전역 오버레이.
+         닫으면(자체 "점검완료 복귀" 버튼) 아래에 있던 원래 화면이 그대로 드러난다. -->
+    <iframe id="dashboardFrame" src="dashboard.html" title="아레스 점검"></iframe>
 
     <!-- 목업 공통 하단바: 중앙의 신호연결은 실제 BLE 연결 버튼 -->
     <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="모바일 빠른 메뉴">
