@@ -2084,9 +2084,11 @@ details.mission-section summary {
 
     /* 블록 코딩 모드: 남는 4개(미션 설명·시뮬레이션·예제·AI 도움)를 한 줄에 배치.
        버튼은 내용 너비로, '예제' 셀렉트가 남는 폭을 채우며 줄어들어 줄바꿈을 막는다. */
-    body[data-content-mode="coding"] #missionNav {
-        flex-wrap: nowrap;
-        gap: 6px;
+    body[data-content-mode="coding"] #missionNav,
+    body[data-content-mode="simulation"] #missionNav {
+        /* 코딩·시뮬 모드에선 상단 nav 컨트롤이 전부 하단 네비로 대체돼 비어 있으므로
+           빈 띠를 없애 헤더(제목)와 차시 배너가 바로 붙게 한다 */
+        display: none;
     }
     body[data-content-mode="coding"] #missionNav > #contentToggleBtn,
     body[data-content-mode="coding"] #missionNav > #simToggle,
@@ -2978,3 +2980,100 @@ details.mission-sample summary {
     filter: brightness(1.08) saturate(1.05);
     box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.38);
 }
+
+/* 툴박스 이미지 메뉴 아래 도구 버튼(미션전송·저장·읽기) — 코딩 모드에서만 노출
+   (mission-workspace 는 data-mode="coding" 일 때만 표시되므로 자연히 코딩 전용) */
+/* 차시·미션 표시 + 예제 선택 배너 — 코딩·시뮬레이션 모드 공유 상단 바.
+   missionView 자식으로 두고, 두 모드 패널을 배너 높이만큼 아래로 내린다. */
+#missionView { --coding-banner-h: 30px; }
+/* 설명 모드에선 배너를 숨기고(설명 패널이 자체 제목 보유), 코딩·시뮬에서만 표시 */
+#missionView[data-mode="description"] > #codingMissionBanner { display: none; }
+/* 배너가 보이는 모드에선 해당 패널을 배너 높이만큼 아래에서 시작 */
+#missionView[data-mode="coding"] > .mission-workspace,
+#missionView[data-mode="simulation"] > .sim-card { top: var(--coding-banner-h); }
+#codingMissionBanner {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: var(--coding-banner-h);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    background: #f2f2f3;
+    border-bottom: 1px solid #e4e4e6;
+    z-index: 6;
+}
+#codingMissionLabel {
+    flex: 1 1 auto;
+    min-width: 0;                 /* ellipsis 가 동작하도록 */
+    color: #3f4147;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#codingExampleSelect {
+    flex: 0 0 auto;
+    max-width: 45%;
+    height: 22px;
+    padding: 0 4px;
+    border: 1px solid #d0d0d3;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #3f4147;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+/* mission-workspace 가 이미 배너 아래에서 시작하므로 캔버스는 이를 꽉 채운다 */
+.mission-workspace > #blocklyDiv {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+}
+
+#toolboxActions {
+    position: absolute;
+    left: 0;
+    /* 카테고리 8칸 바로 아래 (workspace 가 이미 배너 아래에서 시작) */
+    top: calc(var(--tb-cell) * 8 + 8px);
+    width: var(--tb-rail);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px 4px 8px;
+    box-sizing: border-box;
+    /* Blockly 툴박스 div 가 전체 높이로 이 영역을 덮으므로 그 위로 올린다
+       (점검 오버레이 z:10000 보다는 낮게 유지) */
+    z-index: 900;
+}
+.tbx-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    padding: 6px 2px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;          /* 색 없음 — 배경 채우지 않음 */
+    color: #454549;                   /* 중립 다크 텍스트 */
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1.05;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+.tbx-action .tbx-ico { font-size: 1rem; line-height: 1; }
+/* 호버/클릭은 색이 아닌 은은한 중립 음영으로만 표시 */
+.tbx-action:hover { background: rgba(0, 0, 0, 0.06); }
+.tbx-action:active { background: rgba(0, 0, 0, 0.12); }
+.tbx-action:disabled { opacity: 0.4; cursor: default; background: transparent; }
