@@ -1985,6 +1985,23 @@ details.mission-section summary {
         overflow-x: hidden !important;
         box-sizing: border-box;
     }
+    /* 코딩·시뮬 모드는 스크롤되는 문서가 아니라 고정 캔버스이므로, body/컨테이너를
+       뷰포트 높이로 고정해 캔버스(blocklyDiv)가 하단 네비 아래로 넘치지 않게 한다.
+       (이래야 블록이 넘칠 때 Blockly 플라이아웃이 스크롤된다) */
+    body[data-content-mode="coding"],
+    body[data-content-mode="simulation"] {
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+    body[data-content-mode="coding"] .container,
+    body[data-content-mode="simulation"] .container {
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
     .header {
         position: static;
         top: auto;
@@ -2047,8 +2064,12 @@ details.mission-section summary {
     }
     /* 블럭코딩: 고정 뷰포트 높이로 작업 공간 확보 */
     #missionView[data-mode="coding"] > .mission-workspace {
-        height: 75dvh;
-        min-height: 480px;
+        /* 배너 아래부터 missionView(뷰포트에 맞춰짐) 바닥까지만 차지해서 캔버스가
+           하단 네비 위에서 끝나게 한다. (예전 min-height:480px 는 뷰포트를 넘겨
+           캔버스가 네비 아래로 잠기고 플라이아웃 스크롤이 안 됐다) */
+        top: var(--coding-banner-h) !important;
+        height: calc(100% - var(--coding-banner-h)) !important;
+        min-height: 0 !important;
     }
     /* 시뮬레이션: 카드 전체가 하나의 렌더링 영역. 확정 높이를 줘서(스테이지가 채움)
        캔버스(height:100%)가 정확히 창에 맞게 풀리도록 한다. */
