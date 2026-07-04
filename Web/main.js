@@ -189,6 +189,21 @@ function setupToolboxInteraction(ws) {
   }, true);
 }
 
+// 블록 선택 메뉴(플라이아웃)의 블록을 워크스페이스 줌과 무관하게 고정 크기로 표시.
+// 기본은 flyout.getFlyoutScale() 이 메인 워크스페이스 scale 을 따라가므로, 이를
+// 고정값(자연 크기의 120% ≈ 1.2)으로 오버라이드한다.
+function setupFlyoutFixedScale(ws) {
+  const FLYOUT_SCALE = 1.2;
+  const flyout = ws.getFlyout?.();
+  if (!flyout) return;
+  const proto = Object.getPrototypeOf(flyout);
+  if (proto && typeof proto.getFlyoutScale === 'function' && !proto.__aresFixedFlyoutScale) {
+    proto.getFlyoutScale = function () { return FLYOUT_SCALE; };
+    proto.__aresFixedFlyoutScale = true;
+  }
+  try { flyout.getWorkspace().setScale(FLYOUT_SCALE); } catch {}
+}
+
 function initializeBlockly() {
   if (!navigator.bluetooth) {
     alert('이 블라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
@@ -229,6 +244,7 @@ function initializeBlockly() {
   Blockly.Python.init(workspace);
   setupBlockContextMenu(workspace);
   setupToolboxInteraction(workspace);
+  setupFlyoutFixedScale(workspace);
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
