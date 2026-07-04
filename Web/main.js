@@ -166,6 +166,28 @@ function updateDynamicToolbox() {
 // ============================================================
 // Blockly 한글 메시지 + 워크스페이스 초기화
 // ============================================================
+// 이미지형 툴박스 카테고리 위에 마우스가 놓이면(호버) 그 카테고리의 플라이아웃을
+// 연다. Blockly 는 기본적으로 클릭(pointerdown)에서 열리므로, 호버로도 열리게
+// setSelectedItem 을 호출한다. 이벤트 위임이라 카테고리 DOM 이 재생성돼도 유지된다.
+function setupToolboxHover(ws) {
+  const toolbox = ws.getToolbox?.();
+  const div = document.querySelector('.blocklyToolboxDiv');
+  if (!toolbox || !div) return;
+
+  div.addEventListener('mouseover', (event) => {
+    const cat = event.target.closest('.blocklyToolboxCategory');
+    if (!cat || !div.contains(cat)) return;
+    const cats = Array.from(div.querySelectorAll('.blocklyToolboxCategory'));
+    const idx = cats.indexOf(cat);
+    if (idx < 0) return;
+    const items = toolbox.getToolboxItems?.() || [];
+    const item = items[idx];
+    if (item && toolbox.getSelectedItem?.() !== item) {
+      try { toolbox.setSelectedItem(item); } catch {}
+    }
+  });
+}
+
 function initializeBlockly() {
   if (!navigator.bluetooth) {
     alert('이 블라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
@@ -205,6 +227,7 @@ function initializeBlockly() {
 
   Blockly.Python.init(workspace);
   setupBlockContextMenu(workspace);
+  setupToolboxHover(workspace);
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {

@@ -2911,3 +2911,70 @@ details.mission-sample summary {
         padding: 12px 14px;
     }
 }
+
+/* ============================================================
+   이미지형 툴박스 카테고리 메뉴
+   (동작·출력·발사·감지·제어·변수·수학·함수 — XML 카테고리 순서와 동일)
+   272×1470 스프라이트(assets/design/toolbox-menu.png)를 8칸으로 슬라이스해
+   각 Blockly 카테고리 배경으로 깐다. 기본 라벨/아이콘/색상바는 숨긴다.
+   마우스 호버 시 setupToolboxHover() 가 해당 카테고리 플라이아웃을 연다.
+   (미디어쿼리 밖 + 파일 맨 끝 + !important 로 모바일 규칙보다 우선.)
+   ============================================================ */
+:root {
+    --tb-rail: 52px;                               /* 카테고리 레일 폭 (메뉴 이미지 1/2 크기) */
+    --tb-cell: calc(var(--tb-rail) * 0.675551);    /* = rail * (1470/272/8), 드리프트 없음 */
+}
+.blocklyToolboxDiv {
+    width: var(--tb-rail) !important;
+    max-width: var(--tb-rail) !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background: #ffffff !important;
+}
+.blocklyToolboxContents { padding: 0 !important; }
+
+.blocklyToolboxCategory {
+    position: relative;
+    width: var(--tb-rail) !important;
+    min-width: var(--tb-rail) !important;
+    max-width: var(--tb-rail) !important;
+    height: var(--tb-cell) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    background-image: url('assets/design/toolbox-menu.png');
+    background-repeat: no-repeat;
+    background-size: var(--tb-rail) auto;
+    cursor: pointer;
+}
+.blocklyToolboxCategory:nth-child(1) { background-position: left top; }
+.blocklyToolboxCategory:nth-child(2) { background-position: left calc(var(--tb-cell) * -1); }
+.blocklyToolboxCategory:nth-child(3) { background-position: left calc(var(--tb-cell) * -2); }
+.blocklyToolboxCategory:nth-child(4) { background-position: left calc(var(--tb-cell) * -3); }
+.blocklyToolboxCategory:nth-child(5) { background-position: left calc(var(--tb-cell) * -4); }
+.blocklyToolboxCategory:nth-child(6) { background-position: left calc(var(--tb-cell) * -5); }
+.blocklyToolboxCategory:nth-child(7) { background-position: left calc(var(--tb-cell) * -6); }
+.blocklyToolboxCategory:nth-child(8) { background-position: left calc(var(--tb-cell) * -7); }
+
+/* Blockly 기본 행/라벨/아이콘/색상바 제거 (이미지가 전부 담고 있음) */
+.blocklyToolboxCategory .blocklyTreeRow {
+    width: var(--tb-rail) !important;
+    max-width: var(--tb-rail) !important;
+    height: var(--tb-cell) !important;
+    min-height: var(--tb-cell) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+}
+.blocklyToolboxCategory .blocklyTreeLabel,
+.blocklyToolboxCategory .blocklyTreeIcon { display: none !important; }
+
+/* 호버/선택 강조 */
+.blocklyToolboxCategory:hover,
+.blocklyToolboxCategory[aria-selected="true"] {
+    filter: brightness(1.08) saturate(1.05);
+    box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.38);
+}
