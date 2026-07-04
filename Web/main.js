@@ -169,23 +169,24 @@ function updateDynamicToolbox() {
 // 이미지형 툴박스 카테고리 위에 마우스가 놓이면(호버) 그 카테고리의 플라이아웃을
 // 연다. Blockly 는 기본적으로 클릭(pointerdown)에서 열리므로, 호버로도 열리게
 // setSelectedItem 을 호출한다. 이벤트 위임이라 카테고리 DOM 이 재생성돼도 유지된다.
-function setupToolboxHover(ws) {
+// 툴박스 카테고리는 Blockly 기본 클릭(pointerdown)으로 열린다(호버 아님).
+// 추가로, 플라이아웃이 열린 상태에서 블록이 아닌 빈 곳을 누르면 닫는다.
+function setupToolboxInteraction(ws) {
   const toolbox = ws.getToolbox?.();
-  const div = document.querySelector('.blocklyToolboxDiv');
-  if (!toolbox || !div) return;
+  if (!toolbox) return;
 
-  div.addEventListener('mouseover', (event) => {
-    const cat = event.target.closest('.blocklyToolboxCategory');
-    if (!cat || !div.contains(cat)) return;
-    const cats = Array.from(div.querySelectorAll('.blocklyToolboxCategory'));
-    const idx = cats.indexOf(cat);
-    if (idx < 0) return;
-    const items = toolbox.getToolboxItems?.() || [];
-    const item = items[idx];
-    if (item && toolbox.getSelectedItem?.() !== item) {
-      try { toolbox.setSelectedItem(item); } catch {}
-    }
-  });
+  document.addEventListener('pointerdown', (event) => {
+    const flyout = toolbox.getFlyout?.();
+    if (!flyout || !flyout.isVisible?.()) return;
+    const t = event.target;
+    if (!t || !t.closest) return;
+    // 카테고리 클릭(다른 카테고리 열기/토글)은 그대로 둔다
+    if (t.closest('.blocklyToolboxCategory')) return;
+    // 플라이아웃 안의 '블록'을 누르면 배치 동작이므로 그대로 둔다
+    if (t.closest('.blocklyFlyout') && t.closest('.blocklyDraggable')) return;
+    // 그 외(플라이아웃 빈 배경 / 워크스페이스 / 기타) → 열린 선택 영역 닫기
+    try { toolbox.clearSelection(); } catch {}
+  }, true);
 }
 
 function initializeBlockly() {
@@ -227,7 +228,7 @@ function initializeBlockly() {
 
   Blockly.Python.init(workspace);
   setupBlockContextMenu(workspace);
-  setupToolboxHover(workspace);
+  setupToolboxInteraction(workspace);
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
