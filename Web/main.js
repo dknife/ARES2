@@ -191,9 +191,9 @@ function setupToolboxInteraction(ws) {
 
 // 블록 선택 메뉴(플라이아웃)의 블록을 워크스페이스 줌과 무관하게 고정 크기로 표시.
 // 기본은 flyout.getFlyoutScale() 이 메인 워크스페이스 scale 을 따라가므로, 이를
-// 고정값(자연 크기의 0.7배)으로 오버라이드한다.
+// 고정값(자연 크기의 0.5배)으로 오버라이드한다.
 function setupFlyoutFixedScale(ws) {
-  const FLYOUT_SCALE = 0.7;
+  const FLYOUT_SCALE = 0.5;
   const flyout = ws.getFlyout?.();
   if (!flyout) return;
   const proto = Object.getPrototypeOf(flyout);
