@@ -183,7 +183,7 @@ function lightenColor(hex, amt) {
 }
 
 // 플라이아웃(블록 선택 영역) 동작·모양 설정:
-//  - autoClose 끔: 블록을 배치하거나 빈 곳을 눌러도 닫히지 않는다
+//  - autoClose 켬: 블록 클릭 시 코딩창에 배치+닫힘, 코딩창 클릭 시에도 닫힘
 //  - 블록 사이 간격을 절반(기본 GAP_Y 24 → 12)으로
 //  - 카테고리 선택 시 배경을 그 카테고리 색의 밝은 톤으로
 function setupFlyoutBehavior(ws) {
@@ -193,8 +193,10 @@ function setupFlyoutBehavior(ws) {
   const applyFlyoutCfg = () => {
     const flyout = toolbox.getFlyout?.();
     if (!flyout) return;
-    flyout.autoClose = false;
-    flyout.GAP_Y = 12;
+    // autoClose=true(기본): 블록을 클릭하면 코딩창에 배치되고 플라이아웃이 닫히며,
+    // 코딩창(워크스페이스)을 눌러도 닫힌다.
+    flyout.autoClose = true;
+    flyout.GAP_Y = 12;   // 블록 사이 간격 절반
   };
   applyFlyoutCfg();
 
