@@ -2981,6 +2981,18 @@ details.mission-sample summary {
     box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.38);
 }
 
+/* 카테고리를 클릭해 관련 블록(플라이아웃)이 열릴 때 0.5초 부드럽게 나타난다 */
+@keyframes aresFlyoutIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.blocklyFlyout {
+    animation: aresFlyoutIn 0.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+    .blocklyFlyout { animation: none; }
+}
+
 /* 툴박스 이미지 메뉴 아래 도구 버튼(미션전송·저장·읽기) — 코딩 모드에서만 노출
    (mission-workspace 는 data-mode="coding" 일 때만 표시되므로 자연히 코딩 전용) */
 /* 차시·미션 표시 + 예제 선택 배너 — 코딩·시뮬레이션 모드 공유 상단 바.
