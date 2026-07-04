@@ -2923,12 +2923,20 @@ details.mission-sample summary {
    (미디어쿼리 밖 + 파일 맨 끝 + !important 로 모바일 규칙보다 우선.)
    ============================================================ */
 :root {
-    --tb-rail: 52px;                               /* 카테고리 레일 폭 (메뉴 이미지 1/2 크기) */
+    --tb-rail: 52px;                               /* 펼침(전체 아이콘+라벨) 폭 */
+    --tb-rail-col: 30px;                           /* 접힘(라벨만) 폭 */
     --tb-cell: calc(var(--tb-rail) * 0.675551);    /* = rail * (1470/272/8), 드리프트 없음 */
+    --tb-w: var(--tb-rail);                        /* 현재 보이는 폭(기본=펼침) */
+    --tb-bg-x: 0px;                                /* 스프라이트 X 이동(기본=펼침) */
+}
+/* 접힘 상태: 라벨 부분만 보이도록 폭을 줄이고 스프라이트를 좌로 이동 */
+body.toolbox-collapsed {
+    --tb-w: var(--tb-rail-col);
+    --tb-bg-x: -22px;
 }
 .blocklyToolboxDiv {
-    width: var(--tb-rail) !important;
-    max-width: var(--tb-rail) !important;
+    width: var(--tb-w) !important;
+    max-width: var(--tb-w) !important;
     padding: 0 !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
@@ -2938,31 +2946,33 @@ details.mission-sample summary {
 
 .blocklyToolboxCategory {
     position: relative;
-    width: var(--tb-rail) !important;
-    min-width: var(--tb-rail) !important;
-    max-width: var(--tb-rail) !important;
+    width: var(--tb-w) !important;
+    min-width: var(--tb-w) !important;
+    max-width: var(--tb-w) !important;
     height: var(--tb-cell) !important;
     padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     background-image: url('assets/design/toolbox-menu.png');
     background-repeat: no-repeat;
-    background-size: var(--tb-rail) auto;
+    background-size: var(--tb-rail) auto;      /* 스프라이트 스케일은 항상 펼침 폭 기준 */
+    background-position-x: var(--tb-bg-x);     /* 접힘 시 라벨 부분만 보이도록 좌로 이동 */
     cursor: pointer;
+    transition: background-position-x 0.18s ease;
 }
-.blocklyToolboxCategory:nth-child(1) { background-position: left top; }
-.blocklyToolboxCategory:nth-child(2) { background-position: left calc(var(--tb-cell) * -1); }
-.blocklyToolboxCategory:nth-child(3) { background-position: left calc(var(--tb-cell) * -2); }
-.blocklyToolboxCategory:nth-child(4) { background-position: left calc(var(--tb-cell) * -3); }
-.blocklyToolboxCategory:nth-child(5) { background-position: left calc(var(--tb-cell) * -4); }
-.blocklyToolboxCategory:nth-child(6) { background-position: left calc(var(--tb-cell) * -5); }
-.blocklyToolboxCategory:nth-child(7) { background-position: left calc(var(--tb-cell) * -6); }
-.blocklyToolboxCategory:nth-child(8) { background-position: left calc(var(--tb-cell) * -7); }
+.blocklyToolboxCategory:nth-child(1) { background-position-y: top; }
+.blocklyToolboxCategory:nth-child(2) { background-position-y: calc(var(--tb-cell) * -1); }
+.blocklyToolboxCategory:nth-child(3) { background-position-y: calc(var(--tb-cell) * -2); }
+.blocklyToolboxCategory:nth-child(4) { background-position-y: calc(var(--tb-cell) * -3); }
+.blocklyToolboxCategory:nth-child(5) { background-position-y: calc(var(--tb-cell) * -4); }
+.blocklyToolboxCategory:nth-child(6) { background-position-y: calc(var(--tb-cell) * -5); }
+.blocklyToolboxCategory:nth-child(7) { background-position-y: calc(var(--tb-cell) * -6); }
+.blocklyToolboxCategory:nth-child(8) { background-position-y: calc(var(--tb-cell) * -7); }
 
 /* Blockly 기본 행/라벨/아이콘/색상바 제거 (이미지가 전부 담고 있음) */
 .blocklyToolboxCategory .blocklyTreeRow {
-    width: var(--tb-rail) !important;
-    max-width: var(--tb-rail) !important;
+    width: var(--tb-w) !important;
+    max-width: var(--tb-w) !important;
     height: var(--tb-cell) !important;
     min-height: var(--tb-cell) !important;
     padding: 0 !important;
@@ -3054,7 +3064,7 @@ details.mission-sample summary {
     left: 0;
     /* 카테고리 8칸 바로 아래 (workspace 가 이미 배너 아래에서 시작) */
     top: calc(var(--tb-cell) * 8 + 8px);
-    width: var(--tb-rail);
+    width: var(--tb-w);
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -3085,6 +3095,8 @@ details.mission-sample summary {
     transition: background 0.15s ease, opacity 0.15s ease;
 }
 .tbx-action .tbx-ico { font-size: 1rem; line-height: 1; }
+/* 접힘 상태에서는 도구 버튼도 좁아지므로 글자 라벨은 숨기고 아이콘만 */
+body.toolbox-collapsed .tbx-action .tbx-lbl { display: none; }
 /* 호버/클릭은 색이 아닌 은은한 중립 음영으로만 표시 */
 .tbx-action:hover { background: rgba(0, 0, 0, 0.06); }
 .tbx-action:active { background: rgba(0, 0, 0, 0.12); }
