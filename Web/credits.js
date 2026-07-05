@@ -23,6 +23,7 @@ const CREDITS = [
 
 // 대관람차(X축 회전) 파라미터 — 월드 단위
 const WHEEL_R = 3.4;                 // 관람차 반지름
+const WHEEL_X = -1.6;                // 관람차 중심 X (음수 = 왼쪽으로)
 const ASTRO_H = 2.0;                 // 각 우주인 높이
 const OMEGA = (2 * Math.PI) / 26;    // 한 바퀴 26초
 const CAM_Z = 13.0;
@@ -194,20 +195,20 @@ export function openCredits() {
       // X축 회전 대관람차: Y-Z 평면 원. 위(θ=0) → 앞(θ=π/2, +z, 카메라 가까이)
       //  → 아래(θ=π) → 뒤(θ=3π/2, -z, 멀어짐) 를 반복.
       const th = it.baseAngle + OMEGA * t;
-      it.holder.position.set(0, WHEEL_R * Math.cos(th), WHEEL_R * Math.sin(th));
+      it.holder.position.set(WHEEL_X, WHEEL_R * Math.cos(th), WHEEL_R * Math.sin(th));
       // 좌석은 항상 정면(카메라)을 향하고 살짝 흔들림
       it.wrap.rotation.y = Math.sin(t * 0.7 + it.baseAngle) * 0.22;
 
       it.holder.getWorldPosition(world);
-      const camDist = camera.position.distanceTo(world);
       world.project(camera);
       const sx = (world.x * 0.5 + 0.5) * w;
       const sy = (-world.y * 0.5 + 0.5) * h;
-      const near = CAM_Z - WHEEL_R * 0.6, far = CAM_Z + WHEEL_R * 0.7;
-      let op = 1 - (camDist - near) / (far - near);
-      op = Math.max(0, Math.min(1, op));
+      // 앞쪽(θ=π/2, sin=1)일수록 1, 옆/뒤로 갈수록 급격히 투명 → 전면 캐릭터만 뚜렷
+      const frontness = (Math.sin(th) + 1) / 2;   // 0(뒤)~1(앞)
+      const op = Math.pow(frontness, 2.2);
       it.el.style.opacity = world.z < 1 ? op.toFixed(2) : '0';
-      it.el.style.transform = `translate(${Math.round(sx + 24)}px, ${Math.round(sy)}px) translateY(-50%)`;
+      // 캐릭터 오른쪽에 문자 — 오프셋을 키워 더 오른쪽으로
+      it.el.style.transform = `translate(${Math.round(sx + 44)}px, ${Math.round(sy)}px) translateY(-50%)`;
     }
     renderer.render(scene, camera);
   }
