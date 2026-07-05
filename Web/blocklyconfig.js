@@ -307,6 +307,7 @@ export const BlocklyConfig = {
         { type: "input_value", name: "Y", check: "Number" },
         { type: "input_value", name: "Msg", check: "String" }
       ],
+      inputsInline: true,
       previousStatement: null,
       nextStatement: null,
       colour: "#9966FF",
