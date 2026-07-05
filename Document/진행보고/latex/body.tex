@@ -47,7 +47,7 @@ ARES 저장소~\cite{ares-repo} 전체를 코드 수준에서 분석한 \textbf{
 코드 분석 종합 보고서」(전 14장)}를 작성했다. 웹$\cdot$펌웨어$\cdot$AI 세 런타임
 도메인이 \emph{개행 구분 텍스트 명령}이라는 단일 계약으로 느슨하게 결합되는
 구조를 중심으로, 하드웨어부터 향후 연구 방향까지 망라했다. 핵심 내용은 본문
-「산출물」에 요약하고, 전문은 부록~\ref{app:code}에 수록한다.
+「산출물」에 요약하고, 전문은 \ref{app:code}에 수록한다.
 
 \smallskip
 \noindent{\raggedright\chip{개요·구성요소} \chip{하드웨어·핀 배치} \chip{피코 펌웨어} %
@@ -64,7 +64,7 @@ ARES 저장소~\cite{ares-repo} 전체를 코드 수준에서 분석한 \textbf{
 \end{itemize}
 
 %% ---- 부록 발췌 1: 데이터 흐름 ----
-\begin{diagram}{데이터 흐름 — 블록에서 하드웨어까지 (부록~\ref{app:code} 발췌)}{fig:dataflow}
+\begin{diagram}{데이터 흐름 — 블록에서 하드웨어까지 (\ref{app:code} 발췌)}{fig:dataflow}
   \node[dom] (web) {웹 UI\\\footnotesize Blockly};
   \node[box, right=12mm of web] (ble) {Web Bluetooth\\\footnotesize 20B 청크};
   \node[dom, right=12mm of ble] (pico) {피코 펌웨어\\\footnotesize CommandProcessor};
@@ -197,11 +197,11 @@ ARES 저장소~\cite{ares-repo} 전체를 코드 수준에서 분석한 \textbf{
 지나치게 큰 함수$\cdot$파일로 분석이 어려운 소스를 기능 단위로 분할하기 위한
 \textbf{「1차 Refactoring 계획」}을 수립했다. \emph{동작 보존(behavior-preserving)}을
 원칙으로, 비대 지점을 네 가지 문제 유형으로 분류하고 6단계 로드맵을
-도출했다~\cite{fowler2018refactoring, martin2008cleancode}. 전문은 부록~\ref{app:refactor1}.
+도출했다~\cite{fowler2018refactoring, martin2008cleancode}. 전문은 \ref{app:refactor1}.
 
 %% ---- 부록 발췌 2: 진단표 ----
 \begin{table}[H]\centering\small
-\caption{비대 지점 진단 (상위 4건, 부록~\ref{app:refactor1} 발췌)}
+\caption{비대 지점 진단 (상위 4건, \ref{app:refactor1} 발췌)}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l c L{0.5\linewidth}@{}}
 \toprule
@@ -217,7 +217,7 @@ Pico/process\_data.py & 653  & 거대 if/elif 디스패처 + 30개 핸들러 한
 
 \noindent 위 비대 지점은 네 유형으로 분류된다 ---
 \chip{A · 거대 클로저} \chip{B · 거대 디스패처} \chip{C · 데이터 덩어리} \chip{D · 인라인 자산}.
-각 유형의 대응 패턴과 6단계 로드맵은 부록~\ref{app:refactor1}을 참조한다.
+각 유형의 대응 패턴과 6단계 로드맵은 \ref{app:refactor1}을 참조한다.
 
 \subsection{주요 업무 — 디자인 프로토타입 출력 \& 추가 디자인 계획}
 자체 설계한 디자인을 \textbf{3D 프린터로 출력}해 실물 프로토타입의 형상$\cdot$조립성을
@@ -278,7 +278,7 @@ ARES 키트의 실제 수업 적용을 앞두고 1차시 운영을 점검했다.
 \subsection{주요 업무 — 웹 인터페이스·3D 시뮬레이션 점검 \& 2차 Refactoring 계획}
 ARES 웹 서비스의 인터페이스와 WebGL 3D 시뮬레이션~\cite{threejs, webgl}을 팀이
 함께 점검하고, 그 결과를 바탕으로 시뮬레이터$\cdot$피코+블록코딩$\cdot$웹 인터페이스
-세 트랙의 \textbf{「2차 Refactoring 계획」}을 수립했다. 전문은 부록~\ref{app:refactor2}.
+세 트랙의 \textbf{「2차 Refactoring 계획」}을 수립했다. 전문은 \ref{app:refactor2}.
 
 \begin{figure}[H]\centering
   \begin{subfigure}{0.32\linewidth}\centering
@@ -349,7 +349,7 @@ ARES 웹 서비스의 인터페이스와 WebGL 3D 시뮬레이션~\cite{threejs,
 
 %% ---- 부록 발췌 4: 명령 프로토콜 ----
 \begin{table}[H]\centering\small
-\caption{명령 프로토콜 발췌 — 속도 기능 추가 형식 (부록~\ref{app:code} 연계)}
+\caption{명령 프로토콜 발췌 — 속도 기능 추가 형식 (\ref{app:code} 연계)}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l L{0.56\linewidth}@{}}
 \toprule
