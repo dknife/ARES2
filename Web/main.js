@@ -251,8 +251,20 @@ function setupToolboxDrawer(ws) {
   div.addEventListener('pointerdown', (event) => {
     const onCategory = !!(event.target.closest && event.target.closest('.blocklyToolboxCategory'));
     if (isCollapsed()) {
-      // 접힘 상태의 첫 클릭 → 펼치기(카테고리 선택은 막는다)
+      // 접힘 상태에서 클릭 → 펼친다. 클릭 위치가 특정 카테고리(라벨)면 그 영역의
+      // 블록 선택(플라이아웃)까지 함께 연다.
       expand();
+      const cat = event.target.closest && event.target.closest('.blocklyToolboxCategory');
+      if (cat) {
+        const cats = Array.from(div.querySelectorAll('.blocklyToolboxCategory'));
+        const idx = cats.indexOf(cat);
+        const toolbox = ws.getToolbox && ws.getToolbox();
+        const items = (toolbox && toolbox.getToolboxItems) ? toolbox.getToolboxItems() : [];
+        if (idx >= 0 && items[idx]) {
+          // 펼침(폭 변경·svgResize)이 반영된 뒤 선택되도록 다음 프레임에
+          requestAnimationFrame(() => { try { toolbox.setSelectedItem(items[idx]); } catch {} });
+        }
+      }
       event.stopPropagation();
       event.preventDefault();
     } else if (!onCategory) {
