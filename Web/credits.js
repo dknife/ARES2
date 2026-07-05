@@ -39,9 +39,11 @@ function injectStyleOnce() {
     #creditsOverlay { position: fixed; inset: 0; z-index: 10050; background: transparent;
       touch-action: none; }
     /* WebGL 렌더 공간: 화면 전체의 2/3 크기(가운데 패널) */
+    /* 반투명 패널 — 뒤의 앱이 블러로 흐릿하게 비친다(반투명 어둠은 WebGL clear 로) */
     #creditsStage { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
       width: 66.6%; height: 66.6%; border-radius: 18px; overflow: hidden;
-      background: #05060f; box-shadow: 0 20px 70px rgba(0,0,0,0.55); }
+      background: transparent; box-shadow: 0 20px 70px rgba(0,0,0,0.5);
+      backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
     #creditsCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     #creditsLabels { position: absolute; inset: 0; pointer-events: none; }
     .credit-label { position: absolute; top: 0; left: 0; will-change: transform, opacity;
@@ -96,14 +98,16 @@ export function openCredits() {
   overlay.addEventListener('pointerdown', (e) => { if (e.target === overlay) closeCredits(); });
 
   // ---- Three.js ----
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.1;
+  // 반투명 어두운 우주 배경 — 뒤의 앱이 이 사이로 흐릿하게 비친다
+  renderer.setClearColor(0x05060f, 0.5);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x05060f);
+  // scene.background 은 두지 않음(투명) — clearColor 의 알파로 반투명 처리
   scene.fog = new THREE.Fog(0x05060f, CAM_Z - WHEEL_R * 0.1, CAM_Z + WHEEL_R * 1.5);
   if (ARES3.RoomEnvironment) {
     try {
