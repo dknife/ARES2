@@ -1329,7 +1329,9 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     bottom: 34px; left: 50%; transform: translateX(-50%);
     width: 150px; height: 92px; border-radius: 24px;
 }
-/* 눌러도 크기·위치 변화 없이 고정 — 색/발광으로만 피드백(떨림 방지) */
+/* hover·터치·누름 어느 상태에서도 위치 고정 — 색/발광으로만 피드백(떨림 방지).
+   전역 `button:hover{transform:translateY(-1px)}` 가 중앙정렬을 덮어 버튼이 튀는 것을 방지. */
+.thrust-main:hover,
 .thrust-main.active { transform: translateX(-50%); }
 .thrust-main .thrust-ico { font-size: 1.7em; }
 .thrust-main .thrust-label { font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.9em; }
