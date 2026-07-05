@@ -24,7 +24,7 @@ const CREDITS = [
 // 대관람차(X축 회전) 파라미터 — 월드 단위
 const WHEEL_R = 5.1;                 // 관람차 반지름 (우주인 간격 ↑)
 const WHEEL_X = -1.6;                // 관람차 중심 X (음수 = 왼쪽으로)
-const ASTRO_H = 2.0;                 // 각 우주인 높이
+const ASTRO_H = 1.4;                 // 각 우주인 높이 (기존의 70%)
 const OMEGA = (2 * Math.PI) / 26;    // 한 바퀴 26초
 const CAM_Z = 13.0;
 
@@ -47,11 +47,13 @@ function injectStyleOnce() {
     #creditsCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     #creditsLabels { position: absolute; inset: 0; pointer-events: none; }
     .credit-label { position: absolute; top: 0; left: 0; will-change: transform, opacity;
-      color: #fff; white-space: nowrap; font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
-      text-shadow: 0 1px 7px rgba(0,0,0,0.9); }
+      color: #ffd21e; white-space: nowrap; font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+      /* 검은 테두리(외곽선) — 4방향 오프셋 그림자 + 살짝의 드롭섀도 */
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000,
+        0 0 2px #000, 0 2px 5px rgba(0,0,0,0.55); }
     .credit-label .credit-role { display: block; font-size: 0.92rem; font-weight: 700;
-      color: #9fb4e6; letter-spacing: .3px; margin-bottom: 1px; }
-    .credit-label .credit-name { display: block; font-size: 0.92rem; font-weight: 800; }
+      color: #ffd21e; letter-spacing: .3px; margin-bottom: 1px; }
+    .credit-label .credit-name { display: block; font-size: 0.92rem; font-weight: 800; color: #ffd21e; }
     #creditsTitle { position: absolute; top: 14px; left: 0; right: 0; text-align: center;
       color: #fff; font-family: 'GangwonEduTeun','Inter Tight',sans-serif; font-weight: 800;
       font-size: 1.05rem; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,.7);
@@ -104,7 +106,7 @@ export function openCredits() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.1;
   // 반투명 어두운 우주 배경 — 뒤의 앱이 이 사이로 흐릿하게 비친다
-  renderer.setClearColor(0x05060f, 0.5);
+  renderer.setClearColor(0x000000, 0);   // 배경 완전 투명 (틴트 없음)
 
   const scene = new THREE.Scene();
   // scene.background 은 두지 않음(투명) — clearColor 의 알파로 반투명 처리
