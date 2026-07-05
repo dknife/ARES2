@@ -167,17 +167,30 @@ export function openCredits() {
       const wrap = new THREE.Group();
       wrap.scale.setScalar(scl);
       wrap.add(model);
-      wrap.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+      const mats = [];
+      wrap.traverse((o) => {
+        if (!o.isMesh) return;
+        o.frustumCulled = false;
+        // 각 우주인이 독립적으로 페이드되도록 재질을 복제
+        o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone();
+        (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
+          m.transparent = true; m.depthWrite = true; mats.push(m);
+        });
+      });
       const holder = new THREE.Group();
       holder.add(wrap);
       scene.add(holder);
       it.holder = holder;
       it.wrap = wrap;
+      it.mats = mats;
     });
   }, undefined, (e) => console.warn('[크레딧] 우주인 로드 실패', e));
 
   const clock = new THREE.Clock();
   const world = new THREE.Vector3();
+  // 원(대관람차)의 중심 → 이 중심에서 카메라로 향하는 단위벡터(루프 불변)
+  const wheelCenter = new THREE.Vector3(WHEEL_X, 0, 0);
+  const centerToCam = new THREE.Vector3().subVectors(camera.position, wheelCenter).normalize();
   let raf = 0;
   function tick() {
     raf = requestAnimationFrame(tick);
@@ -191,16 +204,27 @@ export function openCredits() {
       //  → 아래(θ=π) → 뒤(θ=3π/2, -z, 멀어짐) 를 반복.
       const th = it.baseAngle - OMEGA * t;   // 회전 방향 반대로
       it.holder.position.set(WHEEL_X, WHEEL_R * Math.cos(th), WHEEL_R * Math.sin(th));
-      // 좌석은 항상 정면(카메라)을 향하고 살짝 흔들림
-      it.wrap.rotation.y = Math.sin(t * 0.7 + it.baseAngle) * 0.22;
 
-      it.holder.getWorldPosition(world);
+      // 좌우로 흔들리며 무중력에서 유영하듯 자연스러운 표류 모션(캐릭터별 위상차)
+      const ph = t * 0.8 + it.baseAngle * 1.7;
+      it.wrap.position.set(Math.sin(ph) * 0.45, Math.sin(ph * 0.6 + 1.1) * 0.28, 0);
+      it.wrap.rotation.set(
+        Math.sin(ph * 0.5 + 0.7) * 0.14,               // 앞뒤로 끄덕
+        Math.sin(t * 0.7 + it.baseAngle) * 0.22,        // 좌우 방향 틀기
+        Math.sin(ph * 0.85) * 0.20                      // 좌우로 기우뚱(유영감)
+      );
+
+      // 중심→캐릭터 방향(단위)과 중심→카메라 방향의 내적.
+      //  둔각(내적<0)이면 카메라 반대편 → 거의 보이지 않게.
+      const dot = Math.cos(th) * centerToCam.y + Math.sin(th) * centerToCam.z; // 캐릭터방향 x=0
+      const front = Math.max(0, dot);                   // 둔각이면 0
+      const op = Math.pow(front, 2.6);                  // 뒤로 갈수록 빠르게 흐려짐
+      for (const m of it.mats) m.opacity = op;
+
+      it.wrap.getWorldPosition(world);
       world.project(camera);
       const sx = (world.x * 0.5 + 0.5) * w;
       const sy = (-world.y * 0.5 + 0.5) * h;
-      // 앞쪽(θ=π/2, sin=1)일수록 1, 옆/뒤로 갈수록 급격히 투명 → 전면 캐릭터만 뚜렷
-      const frontness = (Math.sin(th) + 1) / 2;   // 0(뒤)~1(앞)
-      const op = Math.pow(frontness, 3.8);         // 뒤로 갈수록 더 빠르게 흐려짐
       it.el.style.opacity = world.z < 1 ? op.toFixed(2) : '0';
       // 캐릭터 오른쪽에 문자 — 오프셋을 키워 더 오른쪽으로
       it.el.style.transform = `translate(${Math.round(sx + 44)}px, ${Math.round(sy)}px) translateY(-50%)`;
