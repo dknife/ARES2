@@ -1679,6 +1679,140 @@ async _executeFunctionCall(callBlock) {
                 </figure>
             </div>
         </section>
+
+        <section class="day">
+            <div class="day-head">
+                <span class="day-badge">중간 보고</span>
+                <h2>2주 중간 보고 — 개발·디자인 종합</h2>
+                <span class="day-date">보고 기간 종합 · 2026.06.23–07.05 KST</span>
+            </div>
+            <p class="day-summary">1~9일차의 현장 기록을 <b>2주차 중간 시점</b>에서 종합한다. 이 기간 ARES는 <b>웹 UI·3D 시뮬레이션·피코 펌웨어</b>의 세 런타임을 병행 개발하면서, <b>팀원 브랜치의 main 통합 머지</b>로 흩어진 작업을 하나의 서비스로 합치고, <b>전체 코드 정밀 점검(치명 4건·중간 5건 수정)</b>으로 안정성을 끌어올렸다. 구조 면에서는 부록 A 기준선의 <b>모놀리식 <code>simulation.js</code>(약 2,300줄)</b>를 <b>공유 컨텍스트 + 14개 서브시스템</b>으로 분할(유형 A)했고, 디자인 면에서는 코리아사이언스 멘토링을 거쳐 <b>화성 탐사 콘셉트의 컬러·모듈 디자인 전략</b>을 확정하고 이를 <b>앱 전 화면 UI 시안 → 실제 웹 서비스</b>와 <b>실물 교구(슬라이드형 로버·화성발사대)</b>로 완성했다. 아래 다섯 절에서 (1) 개발 주요 요소, (2) 부록 A 대비 SW 구조 개선, (3) 코드 분할·연계성, (4) 교구 시제품 디자인, (5) UI/UX 개선을 정리한다.</p>
+
+            <div class="tasks">
+                <h3>🧭 개발 주요 요소 — SW 개발 · 디자인 개발 핵심</h3>
+                <p class="lead">2주간 저장소에는 <b>약 120건의 커밋</b>이 6인(교수·학생) 기여로 쌓였다. 개발은 크게 <b>SW 5트랙</b>과 <b>디자인 3축</b>으로 진행됐다.</p>
+                <div class="chips">
+                    <span class="chip t">약 120 커밋 / 6인 기여</span>
+                    <span class="chip">4개 팀 브랜치 통합 머지</span>
+                    <span class="chip">치명 4 · 중간 5 결함 수정</span>
+                    <span class="chip">시뮬 모놀리스 → 14 모듈 분할</span>
+                    <span class="chip">앱 전 화면 UI 시안 · 실서비스 적용</span>
+                    <span class="chip">화성발사대 조립 완성</span>
+                </div>
+                <p class="lead" style="margin-bottom:6px;"><b>SW 개발 핵심 (5트랙)</b></p>
+                <ul>
+                    <li><b>웹 UI · 블록코딩</b> — 이미지형 툴박스 카테고리 메뉴 + 플라이아웃, 도구 액션(미션 전송·저장·읽기), 차시 배너·예제 선택, 블록 카테고리 8색 팔레트.</li>
+                    <li><b>3D 시뮬레이션</b> — 기즈모(바운딩 박스·Move/Rotate/Scale) 통합, 객체 삽입 → 메시 계층(Hierarchy) 편집기, 홈 3D 히어로(우주인·제트팩).</li>
+                    <li><b>피코 펌웨어</b> — 설정 정본 <code>system.json</code>(JSON) → <code>ModelFactorySetting.txt</code>(텍스트) 전환, 속도 인자 명령(<code>SERVO_</code>/<code>DC_</code>), <code>GET_NAMES</code> 신설.</li>
+                    <li><b>코드 리뷰 · 안정화</b> — 4개 영역 병렬 정밀 점검 → 치명(HIGH) 4건 + 중간(MEDIUM) 5건 수정 + CPython/node 자동화 검증(펌웨어 8·웹 17 시나리오 통과).</li>
+                    <li><b>리팩터링 · 모듈화</b> — <code>simulation.js</code> 유형 A 분할, <code>Simulation_*.js</code> 중복 제거(−2,076줄), <code>main.js</code>에서 <code>ui.js</code> 추출.</li>
+                </ul>
+                <p class="lead" style="margin-bottom:6px;"><b>디자인 개발 핵심 (3축)</b></p>
+                <ul>
+                    <li><b>디자인 전략 확정</b> — 6일차 코리아사이언스 디자인 멘토링을 통해 <b>화성 탐사 콘셉트</b>의 컬러 시스템·모듈별 제품화 방향·기능적 그래픽(스티커) 전략을 정립.</li>
+                    <li><b>UI 시안 → 실서비스</b> — Adobe Illustrator로 <b>앱 전 화면(랜딩·관제실·미션·블록코딩·대시보드)</b> 설계안을 완성하고 실제 웹 서비스에 반영. 서체를 <b>강원교육튼튼</b> 단일 폰트로, 포인트를 <b>화성 주황(#FF6A00)</b>으로 통일.</li>
+                    <li><b>실물 교구 완성</b> — <b>슬라이드형 조립 로버</b>와 <b>화성발사대</b>(크림슨 외장 + 기능적 그래픽 데칼)의 3D 프린팅·조립을 실물로 검증.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🧱 SW 구조 개선 — 부록 A 코드의 구조 변화 · 내용 변화 요약</h3>
+                <p class="lead"><b>부록 A</b>는 프로젝트 1일차에 작성한 「ARES 코드 분석 종합 보고서」(전 14장 + 소스별 API Reference)로, <b>통합 머지 이전 main</b>(기준 커밋 <code>6f49e27</code>, 기준 시점 2026-06-21)의 코드 상태를 서술한 <b>기준선</b>이다. 그 기준선 대비 2주간의 <b>구조·내용</b> 변화를 요약한다(전문 대조는 부록 D).</p>
+                <p class="lead" style="margin-bottom:6px;"><b>구조 변화 — 모놀리식에서 모듈 분할로</b></p>
+                <ul>
+                    <li><b>시뮬레이터</b> — <code>simulation.js</code> 단일 파일 약 2,300줄(<code>buildSim()</code> 거대 클로저) → <code>simulation.js</code> 383줄(얇은 오케스트레이터) + <code>Sim_Parts/</code> 14모듈 + <code>Simulation/</code> 5래퍼. 원본은 <code>simulation_backup.js</code>로 보존.</li>
+                    <li><b>웹 코어</b> — <code>main.js</code> 약 1,051줄 → <code>ui.js</code>(신규 97줄) 추출(버튼 UI·로그/콘텐츠 토글). 나머지 코어(<code>bluetooth</code>·<code>commandexecutor</code> 등)는 응집도 높아 유지.</li>
+                    <li><b>피코 설정</b> — 정본 <code>system.json</code>(JSON) → 텍스트 <code>ModelFactorySetting.txt</code>(키=값, 주석·가이드 보존). 싱글턴 <code>sys_config</code>·모듈 가드 패턴은 유지.</li>
+                </ul>
+                <p class="lead" style="margin-bottom:6px;"><b>내용 변화 — 안정성·프로토콜·성능</b> <span style="color:#666;">(통합 머지로 <code>Web/</code>·<code>Pico/</code>·<code>AI/</code>에서 35개 파일 +5,152/−2,563 라인 변경, 메시 자산·백업 제외)</span></p>
+                <div class="chips">
+                    <span class="chip t">치명 4건 수정</span>
+                    <span class="chip">중단 가능 sleep · 동적 타임아웃</span>
+                    <span class="chip">BLE ~250ms → ~40ms</span>
+                    <span class="chip">프로토콜 확장(속도·GET_NAMES)</span>
+                    <span class="chip">glb 7.21MB → 0.58MB</span>
+                </div>
+                <ul>
+                    <li><b>치명(HIGH) 4건 수정</b> — 자석 표시 반전·설정 오타 부팅 불가·BLE 응답 어긋남·비상정지 지연. 근본 원인 제거 + 웹·펌웨어 양쪽 방어 + 자동화 검증 원칙 적용.</li>
+                    <li><b>중단 가능 sleep · 동적 타임아웃</b> — 펌웨어가 시간지정 대기를 <b>50ms 슬라이스</b>로 쪼개 매번 비상정지를 폴링(상한 <code>MAX_TIMED_SEC</code>=60), 웹은 <code>_estimateBlockingMs()</code>로 타임아웃을 명령별로 산출. 실측 <b>10초 이동이 0.36초에 중단</b>.</li>
+                    <li><b>BLE 파이프라인 최적화</b> — fire-and-forget 정책(<code>FIRE_AND_FORGET_HEADS</code> ↔ <code>NO_RESPONSE_CMDS</code>)과 UART 라인 폴링으로 명령 지연 <b>~250ms → ~40ms</b>, 처리량 <b>~16 → 100+ cmd/s</b>.</li>
+                    <li><b>프로토콜 확장</b> — 속도 인자(<code>SERVO_방향,속도</code>·<code>DC_t방향,초,속도</code>), 한글 이름 조회 <code>GET_NAMES</code> 신설, 블록 인터프리터의 else-if·반환값 함수 실행.</li>
+                    <li><b>자산 최적화</b> — <code>ares_robot.glb</code> <b>7.21MB → 0.58MB(~92% 감소)</b>, <code>Astronaut.glb</code> 추가(meshopt + WebP).</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🔗 SW 코드 분할 내역 및 상호 연계성 분석</h3>
+                <p class="lead">분할의 핵심은 시뮬레이터이며, 부록 A의 <b>유형 A(거대 클로저)</b> 처방대로 <b>공유 컨텍스트 + 기능 서브시스템</b>으로 재편했다.</p>
+                <p class="lead" style="margin-bottom:6px;"><b>시뮬레이터 분할 내역 (1파일 → 14+5 모듈)</b></p>
+                <ul>
+                    <li><b>허브</b> — <code>context.js</code>(<code>SimContext</code>: 공유 상태 + 씬·카메라·렌더러, <code>buildSim</code> 조립), <code>topics.js</code>(<code>TOPICS</code>·<code>OLED_ICONS</code>·팔레트).</li>
+                    <li><b>표현</b> — <code>render.js</code>(렌더 루프), <code>assets.js</code>(GLTF 로딩), <code>oled.js</code>, <code>leds.js</code>, <code>gun.js</code>, <code>waves.js</code>(부저 음파), <code>audio.js</code>(사운드 합성).</li>
+                    <li><b>동작</b> — <code>movement.js</code>(주행·레이더·충돌·거리센서), <code>rocket.js</code>(로켓 발사·카메라 추적), <code>traffic.js</code>(신호등·가위바위보).</li>
+                    <li><b>연동 · 편집</b> — <code>dispatch.js</code>(<code>CommandDispatcher</code>: 명령 문자열 → 시각 효과), <code>editor_controls.js</code>(모바일 객체 Move/Rotate/Scale 배치 편집, 신규).</li>
+                    <li><b>토픽 래퍼</b> — <code>Simulation/</code>: <code>Simulation_Main·Launcher·Rover·Traffic·AresRobot</code>(각 <code>Sim_Parts</code>를 토픽별로 확장).</li>
+                </ul>
+                <div style="border-left:3px solid #FA5D29; background:#fff6f2; padding:9px 13px; border-radius:6px; font-size:0.86em; color:#333; margin:2px 0 16px;">
+                    <b>현행 배선 사실 확인</b> — 현재 main 배선은 <b><code>simulation.js</code> → <code>Sim_Parts/context.js</code> 직접</b>이며, <code>Simulation/</code>의 5개 래퍼는 <b>현재 어디에서도 import되지 않는 죽은 코드</b>이다(팀원 브랜치 <code>Simulation_LeeMinhyuck</code>가 <code>Simulation_Main</code> 경유 재배선 진행 중 — 머지 리뷰 대상). 문서(CLAUDE.md)의 "<code>Simulation_Main.js</code>로 배선" 설명은 후속 반영 예정으로 본다.
+                </div>
+                <p class="lead" style="margin-bottom:6px;"><b>상호 연계성 (의존 그래프)</b></p>
+                <ul>
+                    <li><b>웹</b> — 엔트리 <code>main.js</code>가 <code>state·elements·logger·bluetooth·blocklyconfig·commandexecutor·simulation·ui·ai_helper</code>를 import. <code>commandexecutor.js</code>는 <code>bluetooth.js</code>(송신)와 <code>blocklyconfig.js</code>(블록 정의)에 의존하고, <code>bluetooth.js</code>는 하위 의존이 없는 <b>하드웨어 통신 말단</b>. 시뮬레이터 허브 <code>context.js</code>가 <code>ctx(=this)</code>를 각 서브시스템에 주입.</li>
+                    <li><b>피코</b> — <code>main.py</code>(<code>AresRover</code>) → <code>process_data.py</code>(<code>CommandProcessor</code>, 유형 B 디스패처) → <code>hardware.py</code>(싱글턴 <code>robot</code>) → 각 모듈. <code>hardware</code>·<code>process_data</code>는 <code>system_config.py</code>(싱글턴 <code>sys_config</code>)의 모듈 활성 여부로 가드.</li>
+                    <li><b>데이터 흐름</b> — 블록 → <code>commandexecutor</code>가 명령 문자열 생성 → <code>bluetooth</code> → BLE → 피코 UART(9600) → <code>CommandProcessor</code> → 싱글턴 <code>robot</code>의 모듈 구동 → 값 반환/blocking 명령만 20바이트 청크 응답. 시뮬레이션 경로는 동일 명령을 <code>simSink</code> → <code>dispatch.js</code>가 시각 효과로 라우팅(하드웨어 없이 동작).</li>
+                    <li><b>횡단 결합점(동기화 필수)</b> — ① 블록 <b>3중 결합</b>(<code>blocklyconfig</code>의 <code>type</code> ↔ <code>commandexecutor</code>의 case ↔ <code>ai_helper</code>), ② <b>문자열 프로토콜</b>(컴파일 검증 불가 — <code>API_DOCUMENTATION.md</code>가 유일 계약, 웹·펌웨어 짝 갱신 필요), ③ <b>동기 상수쌍</b>(<code>MAX_TIMED_SEC</code>=60, fire-and-forget 목록, 수신 버퍼 bytes화).</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 교구 시제품 디자인 기본 전략 및 완성 결과</h3>
+                <p class="lead">6일차 <b>코리아사이언스 디자인 멘토링</b>(동명대 게임그래픽 협업)을 통해 "온라인 서비스와 실물 교구를 함께 완성하는 <b>조립형 코딩 어드벤처</b>"라는 방향을 확정했다.</p>
+                <p class="lead" style="margin-bottom:6px;"><b>기본 전략 (5축)</b></p>
+                <ul>
+                    <li><b>화성 탐사 콘셉트</b> — 주황 화성 톤 + 로켓·로버·발사대 세계관.</li>
+                    <li><b>관제실 경험</b> — 차시·미션·시뮬·점검을 하나의 흐름으로 연결.</li>
+                    <li><b>조립형 제품</b> — 3D 프린팅·교체형 부품·스티커 기반의 모듈형.</li>
+                    <li><b>학생 친화성</b> — 단순·명확한 버튼·아이콘·모듈명.</li>
+                    <li><b>수업 운영성</b> — "바로 이해·조립·작동 확인이 되는가"를 우선 기준으로.</li>
+                </ul>
+                <p class="lead" style="margin-bottom:6px;"><b>컬러 시스템 (실물 + 웹 통합)</b></p>
+                <ul>
+                    <li><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#FF6A00;vertical-align:middle;margin-right:5px;"></span><b>강조 · 포인트 · 경고</b> — 화성 주황 <code>#FF6A00</code>.</li>
+                    <li><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#0D1117;vertical-align:middle;margin-right:5px;"></span><b>본체 · 패널</b> — 다크 네이비 <code>#0D1117</code> · 차콜 <code>#4A515C</code>.</li>
+                    <li><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#D9DDE2;border:1px solid #ccc;vertical-align:middle;margin-right:5px;"></span><b>텍스트 · 정보구조</b> — 화이트 <code>#FFFFFF</code> · 라이트 그레이 <code>#D9DDE2</code>.</li>
+                    <li><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#1F6FAE;vertical-align:middle;margin-right:5px;"></span><b>알비(로버)</b> — 메탈릭 블루 <code>#1F6FAE</code>(기술·신뢰).</li>
+                </ul>
+                <p class="lead">모듈별 제품화 방향으로 룰렛(교체형 스티커), 알비&amp;알비카트(Silk Metallic Blue PLA 소재감), 화성신호등·가위바위보(공용 베이스 + 아크릴 슬롯 교체), <b>화성발사대</b>(둔탁한 박스 → 다크 톤 슬림 박스 + 유지보수 패널)로 재설계했고, 스티커는 장식이 아닌 <b>기능적 그래픽</b>(모듈명·조작 방향·경고·미션 의미)으로 통일했다.</p>
+                <p class="lead" style="margin-bottom:6px;"><b>완성 결과</b></p>
+                <ul>
+                    <li><b>슬라이드형 조립 로버</b>(4·5일차) — 내부 배선 → 외형 패널 → 상단 모듈 → 완성. 슬라이딩 패널로 내부를 여닫는 조립 구조를 실물로 완성.</li>
+                    <li><b>화성발사대 조립 테스트</b>(9일차) — <b>크림슨 외장 + 흰색 본체</b>의 모듈형. 전면 디스플레이 창·제어 패널, 측면 <b>DC 기어모터·LED 어레이</b>, 외장에 기능적 그래픽 데칼('KSLV-II NURI', 'LAUNCH AREA KEEP CLEAR'). 부품 전개 → 그래픽 패널 결합 → 전면 컨트롤부 조립로 <b>조립성·끼움 정밀도·배선 정리</b>를 검증.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 SW UI/UX 개선 내역</h3>
+                <p class="lead">UI 시안 확정과 병행해 실제 서비스의 UI/UX를 화면·영역별로 개선했다.</p>
+                <div class="chips">
+                    <span class="chip t">풀블리드 WebGL 랜딩</span>
+                    <span class="chip">학습 관제실 12차시 아코디언</span>
+                    <span class="chip">미션 대화 · 학습목표 · 샘플코드</span>
+                    <span class="chip">이미지 툴박스 · 플라이아웃</span>
+                    <span class="chip">하단 5-탭 내비</span>
+                    <span class="chip">화성 주황 테마 · 단일 폰트</span>
+                    <span class="chip">대시보드(점검) 개편</span>
+                </div>
+                <ul>
+                    <li><b>랜딩(탐사선 연결)</b> — 화면 전체 WebGL 히어로(3D 로봇·우주 배경) + 하단 rounded 가림판(로고·타이틀·인사·"탐사선 연결" CTA)로 개편.</li>
+                    <li><b>학습 관제실</b> — 12차시 나열의 압도감을 줄여 <b>차시·미션 통합 아코디언</b>(여닫이 애니메이션)으로 정리하고, <code>localStorage</code> 기반 차시별 미션 완료 추적을 추가.</li>
+                    <li><b>미션 화면</b> — <b>아레스·알비 캐릭터 대화</b> + 학습 목표 + "샘플(생성) 코드 보기" 토글 + 이전/다음 미션.</li>
+                    <li><b>블록코딩</b> — <b>이미지형 툴박스 카테고리 메뉴</b>(접힘/펼침 서랍) + 카테고리별 <b>플라이아웃</b>(고정 스케일·페이드·스크롤), 도구 액션 <b>미션 전송·저장·읽기</b>, 차시 배너 + 예제 선택 드롭다운, 블록 8색 팔레트.</li>
+                    <li><b>공통 내비 · 테마</b> — <b>하단 5-탭</b>(미션·코딩·신호연결·시뮬레이션·AI도움, 중앙 BLE 연결 버튼)과 <b>화성 주황(#FF6A00) 포인트</b>, <b>강원교육튼튼</b> 단일 폰트로 전 화면 톤을 통일(데스크톱은 태블릿/모바일 프레임 셸로 렌더).</li>
+                    <li><b>대시보드(점검)</b> — 'ARES 미션 컨트롤': 연결 상태·센서 텔레메트리·시스템 자원·수동 제어 카드형으로 개편(어느 화면에서도 열고 닫으면 원위치 복귀).</li>
+                    <li><b>최근 추가</b> — 로고 클릭 시 "만든 사람들" <b>크레딧 WebGL 오버레이</b>(우주인 유영 연출)와 보너스 차시 <b>화성 착륙 게임</b>을 더해 몰입 요소를 보강.</li>
+                </ul>
+            </div>
+        </section>
     </div>
 
     <footer>
