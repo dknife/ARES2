@@ -1463,7 +1463,7 @@ function initializeAlwaysOnListeners() {
   document.querySelector('.ares-brand')?.addEventListener('click', async (e) => {
     e.preventDefault();
     try {
-      const { openCredits } = await import('./credits.js?v=20260705f');
+      const { openCredits } = await import('./credits.js?v=20260705g');
       openCredits();
     } catch (err) {
       Logger.add(`[오류] 크레딧 로드 실패: ${err.message}`, 'error');

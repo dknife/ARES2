@@ -22,7 +22,7 @@ const CREDITS = [
 ];
 
 // 대관람차(X축 회전) 파라미터 — 월드 단위
-const WHEEL_R = 3.4;                 // 관람차 반지름
+const WHEEL_R = 5.1;                 // 관람차 반지름 (우주인 간격 ↑)
 const WHEEL_X = -1.6;                // 관람차 중심 X (음수 = 왼쪽으로)
 const ASTRO_H = 2.0;                 // 각 우주인 높이
 const OMEGA = (2 * Math.PI) / 26;    // 한 바퀴 26초
