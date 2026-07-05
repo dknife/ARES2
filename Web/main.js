@@ -235,25 +235,49 @@ function setupToolboxDrawer(ws) {
   document.body.classList.add('toolbox-collapsed');   // 시작은 접힘
 
   const reflow = () => { try { Blockly.svgResize(ws); } catch {} };
+  const isCollapsed = () => document.body.classList.contains('toolbox-collapsed');
+  const collapse = () => {
+    if (isCollapsed()) return;
+    document.body.classList.add('toolbox-collapsed');
+    try { ws.getToolbox().clearSelection(); } catch {}
+    reflow();
+  };
+  const expand = () => {
+    if (!isCollapsed()) return;
+    document.body.classList.remove('toolbox-collapsed');
+    reflow();
+  };
 
   div.addEventListener('pointerdown', (event) => {
-    const collapsed = document.body.classList.contains('toolbox-collapsed');
     const onCategory = !!(event.target.closest && event.target.closest('.blocklyToolboxCategory'));
-    if (collapsed) {
+    if (isCollapsed()) {
       // 접힘 상태의 첫 클릭 → 펼치기(카테고리 선택은 막는다)
-      document.body.classList.remove('toolbox-collapsed');
-      reflow();
+      expand();
       event.stopPropagation();
       event.preventDefault();
     } else if (!onCategory) {
       // 펼침 상태에서 카테고리가 아닌 빈 곳 클릭 → 접기(열린 플라이아웃도 닫음)
-      document.body.classList.add('toolbox-collapsed');
-      try { ws.getToolbox().clearSelection(); } catch {}
-      reflow();
+      collapse();
       event.stopPropagation();
       event.preventDefault();
     }
     // 펼침 상태 + 카테고리 클릭 → Blockly 기본 선택(플라이아웃 열림)
+  }, true);
+
+  // 블록을 선택(플라이아웃에서 코딩창으로 배치)하면 툴박스를 접는다
+  ws.addChangeListener((ev) => {
+    if (ev && ev.type === Blockly.Events.BLOCK_CREATE) collapse();
+  });
+
+  // 코딩 영역(메인 워크스페이스)을 누르면 툴박스를 접는다
+  // (툴박스 자체·플라이아웃 클릭은 제외 — 각자 로직으로 처리)
+  document.addEventListener('pointerdown', (event) => {
+    if (isCollapsed()) return;
+    const t = event.target;
+    if (!t || !t.closest) return;
+    if (!t.closest('#blocklyDiv')) return;
+    if (t.closest('.blocklyToolboxDiv') || t.closest('.blocklyFlyout')) return;
+    collapse();
   }, true);
 }
 
