@@ -39,11 +39,10 @@ function injectStyleOnce() {
     #creditsOverlay { position: fixed; inset: 0; z-index: 10050; background: transparent;
       touch-action: none; }
     /* WebGL 렌더 공간: 화면 전체의 2/3 크기(가운데 패널) */
-    /* 반투명 패널 — 뒤의 앱이 블러로 흐릿하게 비친다(반투명 어둠은 WebGL clear 로) */
+    /* 완전 투명 패널 — 뒤의 앱이 선명하게 그대로 비친다(블러 없음) */
     #creditsStage { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
       width: 66.6%; height: 66.6%; border-radius: 18px; overflow: hidden;
-      background: transparent; box-shadow: 0 20px 70px rgba(0,0,0,0.5);
-      backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
+      background: transparent; box-shadow: 0 20px 70px rgba(0,0,0,0.5); }
     #creditsCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     #creditsLabels { position: absolute; inset: 0; pointer-events: none; }
     .credit-label { position: absolute; top: 0; left: 0; will-change: transform, opacity;
@@ -96,8 +95,8 @@ export function openCredits() {
   overlay.append(stage);
   document.body.appendChild(overlay);
   closeBtn.addEventListener('click', closeCredits);
-  // 패널 바깥(투명 영역) 클릭 → 닫기
-  overlay.addEventListener('pointerdown', (e) => { if (e.target === overlay) closeCredits(); });
+  // 어디를 클릭하든(패널 안/밖 무관) 즉시 닫아 WebGL 애니메이션·렌더 자원을 정리한다
+  overlay.addEventListener('pointerdown', () => closeCredits());
 
   // ---- Three.js ----
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
