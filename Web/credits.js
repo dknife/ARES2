@@ -47,8 +47,8 @@ function injectStyleOnce() {
     .credit-label { position: absolute; top: 0; left: 0; will-change: transform, opacity;
       color: #fff; white-space: nowrap; font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
       text-shadow: 0 1px 7px rgba(0,0,0,0.9); }
-    .credit-label .credit-role { display: block; font-size: 0.64rem; font-weight: 600;
-      color: #9fb4e6; letter-spacing: .3px; }
+    .credit-label .credit-role { display: block; font-size: 0.92rem; font-weight: 700;
+      color: #9fb4e6; letter-spacing: .3px; margin-bottom: 1px; }
     .credit-label .credit-name { display: block; font-size: 0.92rem; font-weight: 800; }
     #creditsTitle { position: absolute; top: 14px; left: 0; right: 0; text-align: center;
       color: #fff; font-family: 'GangwonEduTeun','Inter Tight',sans-serif; font-weight: 800;
@@ -194,7 +194,7 @@ export function openCredits() {
       if (!it.holder) { it.el.style.opacity = '0'; continue; }
       // X축 회전 대관람차: Y-Z 평면 원. 위(θ=0) → 앞(θ=π/2, +z, 카메라 가까이)
       //  → 아래(θ=π) → 뒤(θ=3π/2, -z, 멀어짐) 를 반복.
-      const th = it.baseAngle + OMEGA * t;
+      const th = it.baseAngle - OMEGA * t;   // 회전 방향 반대로
       it.holder.position.set(WHEEL_X, WHEEL_R * Math.cos(th), WHEEL_R * Math.sin(th));
       // 좌석은 항상 정면(카메라)을 향하고 살짝 흔들림
       it.wrap.rotation.y = Math.sin(t * 0.7 + it.baseAngle) * 0.22;
@@ -205,7 +205,7 @@ export function openCredits() {
       const sy = (-world.y * 0.5 + 0.5) * h;
       // 앞쪽(θ=π/2, sin=1)일수록 1, 옆/뒤로 갈수록 급격히 투명 → 전면 캐릭터만 뚜렷
       const frontness = (Math.sin(th) + 1) / 2;   // 0(뒤)~1(앞)
-      const op = Math.pow(frontness, 2.2);
+      const op = Math.pow(frontness, 3.8);         // 뒤로 갈수록 더 빠르게 흐려짐
       it.el.style.opacity = world.z < 1 ? op.toFixed(2) : '0';
       // 캐릭터 오른쪽에 문자 — 오프셋을 키워 더 오른쪽으로
       it.el.style.transform = `translate(${Math.round(sx + 44)}px, ${Math.round(sy)}px) translateY(-50%)`;
