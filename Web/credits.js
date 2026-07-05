@@ -39,10 +39,10 @@ function injectStyleOnce() {
     #creditsOverlay { position: fixed; inset: 0; z-index: 10050; background: transparent;
       touch-action: none; }
     /* WebGL 렌더 공간: 화면 전체의 2/3 크기(가운데 패널) */
-    /* 완전 투명 패널 — 뒤의 앱이 선명하게 그대로 비친다(블러 없음) */
+    /* 완전 투명·무테두리 패널 — 뒤의 앱이 선명하게 그대로 비친다(블러·테두리선·음영 없음) */
     #creditsStage { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-      width: 66.6%; height: 66.6%; border-radius: 18px; overflow: hidden;
-      background: transparent; box-shadow: 0 20px 70px rgba(0,0,0,0.5); }
+      width: 66.6%; height: 66.6%; overflow: hidden;
+      background: transparent; border: none; box-shadow: none; }
     #creditsCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     #creditsLabels { position: absolute; inset: 0; pointer-events: none; }
     .credit-label { position: absolute; top: 0; left: 0; will-change: transform, opacity;
@@ -57,11 +57,6 @@ function injectStyleOnce() {
       color: #fff; font-family: 'GangwonEduTeun','Inter Tight',sans-serif; font-weight: 800;
       font-size: 1.05rem; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,.7);
       pointer-events: none; z-index: 2; }
-    #creditsClose { position: absolute; top: 10px; right: 10px; z-index: 3;
-      height: 36px; padding: 0 14px; border: none; border-radius: 18px;
-      background: rgba(255,255,255,0.16); color: #fff; font-weight: 700; cursor: pointer;
-      font-family: 'GangwonEduTeun','Inter Tight',sans-serif; font-size: 0.85rem; }
-    #creditsClose:hover { background: rgba(255,255,255,0.3); }
   `;
   document.head.appendChild(st);
 }
@@ -87,14 +82,9 @@ export function openCredits() {
   const title = document.createElement('div');
   title.id = 'creditsTitle';
   title.textContent = '만든 사람들';
-  const closeBtn = document.createElement('button');
-  closeBtn.id = 'creditsClose';
-  closeBtn.type = 'button';
-  closeBtn.textContent = '✕ 닫기';
-  stage.append(canvas, labels, title, closeBtn);
+  stage.append(canvas, labels, title);
   overlay.append(stage);
   document.body.appendChild(overlay);
-  closeBtn.addEventListener('click', closeCredits);
   // 어디를 클릭하든(패널 안/밖 무관) 즉시 닫아 WebGL 애니메이션·렌더 자원을 정리한다
   overlay.addEventListener('pointerdown', () => closeCredits());
 
