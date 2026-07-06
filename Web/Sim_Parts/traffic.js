@@ -30,6 +30,7 @@ export class Traffic {
   clearSlot(i) {
     const s = this.trafficSlotState[i];
     if (!s) return;
+    this.ctx.leds.unregister(`traffic-${i}`);
     if (s.inst) this.disposeSubtree(s.inst);
     if (s.light && s.light.parent) s.light.parent.remove(s.light);
     this.trafficSlotState[i] = null;
@@ -142,6 +143,7 @@ export class Traffic {
         const light = this.makeSlotLight(this.trafficSlots[i], color);
         this.ctx.scene.add(light);
         this.trafficSlotState[i] = { kind: 'lamp', inst, light, color, materials: this.collectMaterials(inst), on: false };
+        this.ctx.leds.register(`traffic-${i}`, { apply: (value) => this.setSlotOn(i, value), on: false });
         this.setSlotOn(i, false);
       }
     }, undefined, (err) => console.error('LampGeneral 로드 실패:', err));
@@ -178,6 +180,7 @@ export class Traffic {
         const light = this.makeSlotLight(slot, color);
         this.ctx.scene.add(light);
         this.trafficSlotState[idx] = { kind: 'hand', inst, light, color, materials: this.collectMaterials(inst), on: false };
+        this.ctx.leds.register(`traffic-${idx}`, { apply: (value) => this.setSlotOn(idx, value), on: false });
         this.setSlotOn(idx, false);
       }, undefined, (err) => console.error('LampHand 로드 실패:', err));
     }
