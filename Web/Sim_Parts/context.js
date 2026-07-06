@@ -8,7 +8,6 @@ import { Movement } from './movement.js';
 import { Rocket } from './rocket.js';
 import { Traffic } from './traffic.js';
 import { Waves } from './waves.js';
-import { Oled } from './oled.js';
 import { Gun } from './gun.js';
 import { Audio } from './audio.js';
 import { Dispatch } from './dispatch.js';
@@ -88,7 +87,6 @@ export class Context {
     this.rocket = new Rocket(this);
     this.traffic = new Traffic(this);
     this.waves = new Waves(this);
-    this.oled = new Oled(this);
     this.audio = new Audio(this);
     this.assets = new Assets(this);
     this.renderEngine = new Render(this);

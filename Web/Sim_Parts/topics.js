@@ -80,27 +80,3 @@ export const OLED_ICONS = {
   ]),
 };
 
-export const LED_PALETTES = {
-  eye: {
-    sphereBase: 0x0c2a18, emissive: 0x00ff66,
-    glowStops: ['rgba(180,255,210,1)', 'rgba(40,255,120,0.65)', 'rgba(0,255,90,0)'],
-    glowTint: 0x55ff99, lightColor: 0x33ff77,
-  },
-  chest: {
-    sphereBase: 0x2a0c0c, emissive: 0xff2030,
-    glowStops: ['rgba(255,210,200,1)', 'rgba(255,60,40,0.65)', 'rgba(255,0,0,0)'],
-    glowTint: 0xff5566, lightColor: 0xff3344,
-  },
-  launchStrip: {
-    sphereBase: 0x031a0a, emissive: 0x00ff33,
-    glowStops: ['rgba(20,255,80,1)', 'rgba(0,230,50,0.78)', 'rgba(0,255,40,0)'],
-    glowTint: 0x00ff44, lightColor: 0x00ff44,
-    intensityScale: 0.12, opacityOn: 0.99, glowScale: 0.55,
-  },
-  launchTorus: {
-    sphereBase: 0x1f0204, emissive: 0xff0a1e,
-    glowStops: ['rgba(255,80,70,1)', 'rgba(255,20,25,0.78)', 'rgba(255,0,0,0)'],
-    glowTint: 0xff1828, lightColor: 0xff1422,
-    intensityScale: 0.45, opacityOn: 0.99, glowScale: 0.55,
-  }
-};
