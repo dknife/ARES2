@@ -42,3 +42,7 @@ Missions/*.toc
 
 # pico test 용 임ㅅ파일
 Development/
+
+# 웹은 Web/fonts/*.woff2(서브셋)만 사용한다. 루트 Fonts/ 는 원본 소스 폰트(수 MB~10MB)
+# 백업 전용 — 대용량이라 추적 제외(로컬 보관). 배포용 woff2 는 Web/fonts/ 에서 추적.
+/Fonts/
