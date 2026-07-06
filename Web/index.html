@@ -10,45 +10,102 @@
     <link rel="stylesheet" href="fonts/fonts.css">
     <link rel="stylesheet" href="index.css">
     <style>
-        .container { max-width: 520px; }
-        /* 3D 로봇 히어로 무대 */
+        /* index.css 의 body flex-center 를 덮어써 전체화면 레이아웃으로 전환 */
+        html, body { height: 100%; overflow: hidden; }
+        body { display: block; background: #03030c; }
+
+        /* ── 전체 화면 WebGL 무대 (테두리·여백 없음) ── */
         #robot-stage {
-            width: 100%;
-            height: 300px;
-            margin: -12px 0 4px;
-            position: relative;
-            border-radius: 14px;
-            overflow: hidden;
+            position: fixed; inset: 0;
+            width: 100%; height: 100%;
+            margin: 0; border-radius: 0; overflow: hidden;
+            z-index: 0;
             /* WebGL 로드 전에도 우주처럼 보이도록 어두운 배경 */
-            background: radial-gradient(ellipse at 50% 38%, #161b33 0%, #07091a 62%, #03030c 100%);
+            background: radial-gradient(ellipse at 50% 34%, #161b33 0%, #07091a 60%, #03030c 100%);
         }
         #robot-stage canvas { display: block; cursor: grab; }
         #robot-stage canvas:active { cursor: grabbing; }
         #robot-stage .robot-loading {
             position: absolute; inset: 0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.85em; color: #c9d2ec;
+            font-size: 0.9em; color: #c9d2ec;
             transition: opacity 0.4s; pointer-events: none;
         }
         #robot-stage .robot-loading.hidden { opacity: 0; }
+
+        /* ── 하단 rounded 가림판 (타이틀 패널) ── */
+        .intro-panel {
+            position: fixed; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            background: #ffffff;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -12px 44px rgba(0, 0, 0, 0.30);
+            padding: 42px 32px calc(30px + env(safe-area-inset-bottom, 0px));
+            text-align: center;
+        }
+        /* 패널 상단 중앙의 빨간 사다리꼴 탭(가림판 손잡이) */
+        .panel-tab {
+            position: absolute; top: -13px; left: 50%;
+            transform: translateX(-50%);
+            width: 94px; height: 15px;
+            background: #C0392B;
+            clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
+            border-radius: 4px 4px 0 0;
+        }
+        /* ARES 화성탐사 로고 */
+        .ares-logo {
+            display: block; margin: 2px auto 24px;
+            width: min(58%, 250px); height: auto;
+        }
+        .intro-title {
+            font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+            font-size: 1.7em; font-weight: 800; line-height: 1.2;
+            color: #17181c; margin: 0 0 12px;
+        }
         .robot-greet {
-            font-size: 0.95em; color: #FF6A00; font-weight: 600;
-            margin: 0 0 18px; min-height: 1.2em;
+            font-size: 1em; color: #6b7280; font-weight: 600;
+            margin: 0 0 10px; min-height: 1.2em;
             opacity: 0; transform: translateY(6px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
         .robot-greet.show { opacity: 1; transform: translateY(0); }
+        .intro-desc {
+            font-size: 1.05em; color: #C0392B; font-weight: 700;
+            margin: 0 0 30px;
+        }
+        .start-btn {
+            font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+            font-size: 1.12em; font-weight: 700;
+            height: 56px; padding: 0 56px;
+            border: none; border-radius: 14px;
+            background: #17181c; color: #fff; cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .start-btn:hover {
+            background: #2c2e35; transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+        }
+        .start-btn:active { transform: translateY(0); }
+        .back-link {
+            display: block; margin-top: 16px;
+            font-size: 0.82em; color: #9aa1ad; text-decoration: none;
+        }
+        .back-link:hover { color: #C0392B; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="robot-stage">
-            <div class="robot-loading" id="robot-loading">알비를 깨우는 중…</div>
-        </div>
-        <div class="brand">ARES<span class="dot">.</span></div>
+    <!-- 전체 화면 WebGL 무대 -->
+    <div id="robot-stage">
+        <div class="robot-loading" id="robot-loading">알비를 깨우는 중…</div>
+    </div>
+
+    <!-- 무대 위로 뜨는 rounded 가림판(타이틀 패널) -->
+    <div class="intro-panel">
+        <span class="panel-tab" aria-hidden="true"></span>
+        <img class="ares-logo" src="assets/design/ares-logo.png" alt="ARES 화성탐사">
         <h1 class="intro-title">화성 탐사선 제어</h1>
-        <p class="robot-greet" id="robot-greet">안녕! 나는 탐사로봇 알비야 👋</p>
-        <p class="intro-desc">이제 탐험을 시작해!</p>
+        <p class="robot-greet" id="robot-greet">안녕! 나는 탐사로봇 알비야</p>
+        <p class="intro-desc">이제 탐험을 시작하자!</p>
         <a href="main.html"><button class="start-btn">탐사선 연결</button></a>
         <a href="../index.html" class="back-link">프로젝트 소개로 돌아가기</a>
     </div>
@@ -82,7 +139,7 @@
       };
       // 카메라 프레이밍(모델 높이 배수) — 머리·안테나 위 여백 확보를 위해 충분히 멀리
       // pan: 카메라/타깃을 함께 위로 올려 시야를 위로 패닝 → 객체들이 화면 아래쪽에 놓인다
-      const CAM = { y: 0.5, z: 7.5, lookY: 0.5, pan: 0.75 };
+      const CAM = { y: 0.5, z: 7.8, lookY: 0.5, pan: -0.55 };
 
       function size() {
         return { w: stage.clientWidth, h: stage.clientHeight };

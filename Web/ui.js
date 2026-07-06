@@ -53,6 +53,17 @@ export function setupContentToggle({
     view.setAttribute('data-mode', mode);
     document.body.setAttribute('data-content-mode', mode);
 
+    // 모드 전환 시 스크롤을 상단으로 초기화 (전환 후 각 모드의 상단부터 보이게).
+    // 모바일은 window 가 스크롤 컨테이너이므로 window 도 초기화하고,
+    // 전환 직후 리플로우가 스크롤을 되돌릴 수 있어 다음 프레임에 한 번 더.
+    view.querySelector('.mission-panel')?.scrollTo?.({ top: 0 });
+    const toTop = () => {
+      window.scrollTo(0, 0);
+      if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+    };
+    toTop();
+    requestAnimationFrame(toTop);
+
     if (wasSimulation && mode !== 'simulation') {
       const sim = getSimController?.();
       if (sim) sim.close();

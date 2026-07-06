@@ -16,7 +16,9 @@
 %% 설치: https://www.kopus.org (KoPubWorld/KoPub 글꼴). macOS 도 동일 이름.
 \setmainfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
 \setsansfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
-\setmonofont{Consolas}[Scale=0.86]
+%% 모노(코드)용 — Consolas(Windows/Office)가 있으면 사용, 없으면 Menlo(macOS 기본)로
+%% 폴백해 크로스플랫폼 빌드를 보장한다. (Consolas 부재 시 코드 글자가 누락되던 문제 방지)
+\IfFontExistsTF{Consolas}{\setmonofont{Consolas}[Scale=0.86]}{\setmonofont{Menlo}[Scale=0.80]}
 \setmainhangulfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2, Scale=1.0]
 \setsanshangulfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
 \setmonohangulfont{KoPubDotum Medium}[Scale=0.86]
