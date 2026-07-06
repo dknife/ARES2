@@ -28,7 +28,7 @@ const MODULE_LABEL_CONFIG = {
 
 export const BlocklyConfig = {
   blocks: [
-    // 서보 모터 블록 (주황색 #FF8C00)
+    // 서보 모터 블록 (동작 #cf3d37)
     {
       type: "timed_forward",
       message0: "%1 전진 %2 초 (속도 %3 %%)",
@@ -39,7 +39,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 전진합니다."
     },
     {
@@ -52,7 +52,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 후진합니다."
     },
     {
@@ -65,7 +65,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 좌회전합니다."
     },
     {
@@ -78,7 +78,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "서보 모터로 지정한 시간(초)만큼 지정한 속도(0~100%)로 우회전합니다."
     },
     {
@@ -90,7 +90,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 전진합니다."
     },
     {
@@ -102,7 +102,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 후진합니다."
     },
     {
@@ -114,7 +114,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 좌회전합니다."
     },
     {
@@ -126,7 +126,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "정지 명령 전까지 서보 모터로 지정한 속도(0~100%)로 계속 우회전합니다."
     },
     {
@@ -137,11 +137,11 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF8C00",
+      colour: "#cf3d37",
       tooltip: "서보 모터를 즉시 정지합니다."
     },
 
-    // DC 모터 블록 (노랑색 #FFCC00)
+    // DC 모터 블록 (동작 #cf3d37)
     {
       type: "main_motor_forward_timed",
       message0: "%1 전진 %2 초 (속도 %3 %%)",
@@ -152,7 +152,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FFCC00",
+      colour: "#cf3d37",
       tooltip: "DC 모터를 지정한 시간만큼 지정한 속도(0~100%)로 전진시킵니다."
     },
     {
@@ -165,7 +165,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FFCC00",
+      colour: "#cf3d37",
       tooltip: "DC 모터를 지정한 시간만큼 지정한 속도(0~100%)로 후진시킵니다."
     },
     {
@@ -177,7 +177,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FFCC00",
+      colour: "#cf3d37",
       tooltip: "정지 명령 전까지 DC 모터를 지정한 속도(0~100%)로 계속 전진시킵니다."
     },
     {
@@ -189,7 +189,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FFCC00",
+      colour: "#cf3d37",
       tooltip: "정지 명령 전까지 DC 모터를 지정한 속도(0~100%)로 계속 후진시킵니다."
     },
     {
@@ -200,11 +200,11 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FFCC00",
+      colour: "#cf3d37",
       tooltip: "DC 모터를 즉시 정지합니다."
     },
 
-    // LED 블록 (빨강색 #FF5555)
+    // LED 블록 (출력 #d68fa5)
     {
       type: "set_lamp",
       message0: "%1 전체 설정 [ %2 %3 %4 %5 %6 %7 ]",
@@ -219,7 +219,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF5555",
+      colour: "#d68fa5",
       tooltip: "6개 LED 밝기를 한번에 설정합니다. 값: 0(끔)~1(최대 밝기)"
     },
     {
@@ -232,7 +232,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF5555",
+      colour: "#d68fa5",
       tooltip: "특정 LED(0~5번)를 지정한 밝기로 켭니다. 번호에 숫자·변수·계산식을 꽂을 수 있습니다. 밝기: 0~1"
     },
     {
@@ -244,7 +244,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF5555",
+      colour: "#d68fa5",
       tooltip: "특정 LED(0~5번)를 끕니다. 번호에 숫자·변수·계산식을 꽂을 수 있습니다."
     },
     {
@@ -255,11 +255,11 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF5555",
+      colour: "#d68fa5",
       tooltip: "모든 LED를 한번에 끕니다."
     },
 
-    // 디스플레이 블록 (보라색 #9966FF)
+    // 디스플레이 블록 (출력 #d68fa5)
     {
       type: "send_message",
       message0: "%1에 표시: %2",
@@ -269,7 +269,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#9966FF",
+      colour: "#d68fa5",
       tooltip: "OLED 디스플레이에 텍스트를 표시합니다."
     },
     {
@@ -280,7 +280,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#9966FF",
+      colour: "#d68fa5",
       tooltip: "OLED 디스플레이 화면을 깨끗하게 지웁니다."
     },
     {
@@ -295,7 +295,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#9966FF",
+      colour: "#d68fa5",
       tooltip: "OLED 화면에서 지정한 사각 영역만 지웁니다. 기본 32×32 (아이콘 크기)."
     },
     {
@@ -310,7 +310,7 @@ export const BlocklyConfig = {
       inputsInline: true,
       previousStatement: null,
       nextStatement: null,
-      colour: "#9966FF",
+      colour: "#d68fa5",
       tooltip: "OLED 화면의 (x, y) 좌표에 텍스트를 표시합니다. 화면을 지우지 않으므로 여러 줄을 쌓을 수 있습니다."
     },
     {
@@ -333,11 +333,11 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#9966FF",
+      colour: "#d68fa5",
       tooltip: "OLED 화면의 (x, y) 좌표에 32×32 아이콘을 그립니다."
     },
 
-    // 소리 블록 (하늘색 #00CCFF)
+    // 소리 블록 (출력 #d68fa5)
     {
       type: "buzzer_on",
       message0: "%1 %2 Hz로 %3 초 울리기",
@@ -348,7 +348,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#00CCFF",
+      colour: "#d68fa5",
       tooltip: "지정한 주파수(Hz)와 시간(초)으로 부저를 울립니다. 예: 262Hz=도, 392Hz=솔"
     },
     {
@@ -386,11 +386,11 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#00CCFF",
+      colour: "#d68fa5",
       tooltip: "선택한 계명에 해당하는 주파수로 부저를 울립니다. 세 옥타브 지원 — (↓)낮은 옥타브 / 기본 가운데 / (↑)높은 옥타브. 가운데 도=262 Hz, 라=440 Hz."
     },
 
-    // 발사 블록 (빨강주황 #FF4500)
+    // 발사 블록 (발사 #dcc342)
     {
       type: "gun_fire",
       message0: "%1",
@@ -403,11 +403,11 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#FF4500",
+      colour: "#dcc342",
       tooltip: "BB탄을 한 발 발사합니다."
     },
 
-    // 센서 블록 (회청색 #5C81A6)
+    // 센서 블록 (감지 #7daa4d)
     {
       type: "pico_check_device",
       message0: "%1 연결 확인",
@@ -416,7 +416,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#5C81A6",
+      colour: "#7daa4d",
       tooltip: "Pico와 블루투스 연결 상태를 확인합니다. 연결되면 화면에 'CONNECTED' 표시."
     },
     {
@@ -428,7 +428,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#5C81A6",
+      colour: "#7daa4d",
       tooltip: "초음파 센서로 전방 물체까지 거리(cm)를 측정하여 변수에 저장합니다."
     },
     {
@@ -440,18 +440,18 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#5C81A6",
+      colour: "#7daa4d",
       tooltip: "자기장 센서로 자석 감지 여부(0=없음, 1=감지)를 변수에 저장합니다."
     },
 
-    // 시간 블록 (초록색 #5CA65C)
+    // 시간 블록 (제어 #2b638f)
     {
       type: "time_sleep",
       message0: "⏱️ 기다리기 %1 초",
       args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
-      colour: "#5CA65C",
+      colour: "#2b638f",
       tooltip: "지정한 시간(초)만큼 다음 명령 실행을 대기합니다."
     },
 
@@ -468,7 +468,7 @@ export const BlocklyConfig = {
       ],
       inputsInline: true,
       output: "Number",
-      colour: 230,
+      colour: "#cacacb",
       tooltip: "두 숫자를 사칙연산합니다. (+덧셈, -뺄셈, ×곱셈, ÷나눗셈)"
     },
     {
@@ -480,11 +480,11 @@ export const BlocklyConfig = {
       ],
       inputsInline: true,
       output: "Number",
-      colour: 230,
+      colour: "#cacacb",
       tooltip: "지정한 범위 내에서 무작위 정수를 반환합니다."
     },
 
-    // 묶음 실행 (보라색 #8E44AD)
+    // 묶음 실행 (제어 #2b638f)
     {
       type: "batch_block",
       message0: "🚀 한꺼번에 실행 %1 %2",
@@ -494,7 +494,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#8E44AD",
+      colour: "#2b638f",
       tooltip: "안에 담은 블록들을 한 묶음으로 Pico에 보내 빠르게 차례 실행합니다. 센서값을 받는 블록과 제어/반복 블록은 안에 넣을 수 없습니다."
     }
   ]
