@@ -4,7 +4,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('../../Fonts/NotoSansKR-VariableFont_wght.ttf') format('truetype');
+  src: url('./NotoSansKR.woff2') format('woff2');
 }
 
 @font-face {
@@ -12,7 +12,7 @@
   font-style: normal;
   font-weight: 400 900;
   font-display: swap;
-  src: url('../../Fonts/VITRO%20INSPIRE%20TTF.ttf') format('truetype');
+  src: url('./VITRO-Inspire.woff2') format('woff2');
 }
 
 /* 기존 컴포넌트의 서체 이름도 Noto Sans로 통일한다. */
@@ -21,7 +21,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('../../Fonts/NotoSansKR-VariableFont_wght.ttf') format('truetype');
+  src: url('./NotoSansKR.woff2') format('woff2');
 }
 
 html,
