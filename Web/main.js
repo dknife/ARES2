@@ -374,7 +374,8 @@ function initializeBlockly() {
   setupBlockContextMenu(workspace);
   setupFlyoutBehavior(workspace);
   setupFlyoutFixedScale(workspace);
-  setupToolboxDrawer(workspace);
+  // 카테고리 툴박스는 항상 펼친 상태로 유지한다.
+  document.body.classList.remove('toolbox-collapsed');
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
@@ -384,6 +385,15 @@ function initializeBlockly() {
 
   // Apply initial dynamic toolbox / names
   window.updateToolboxForActiveState();
+
+  // 빈 작업공간에서만 PDF 5페이지의 안내 카드를 표시한다.
+  const emptyHint = document.getElementById('workspaceEmptyHint');
+  const refreshEmptyHint = () => {
+    if (!emptyHint) return;
+    emptyHint.hidden = workspace.getAllBlocks(false).length > 0;
+  };
+  workspace.addChangeListener(refreshEmptyHint);
+  refreshEmptyHint();
 
   return workspace;
 }
@@ -651,7 +661,7 @@ function syncToolboxRunAction(btn) {
   const ico = proxy.querySelector('.tbx-ico');
   const lbl = proxy.querySelector('.tbx-lbl');
   if (ico) ico.textContent = isStop ? '🛑' : '▶️';
-  if (lbl) lbl.innerHTML = isStop ? '비상<br>정지' : '미션<br>전송';
+  if (lbl) lbl.textContent = isStop ? '비상정지' : '미션전송';
 }
 
 // 툴박스 하단 도구 버튼(미션전송·저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
@@ -781,8 +791,8 @@ function getMobileActiveAction() {
   if (isAiPanelOpen()) return 'ai';
   if (_contentMode === 'simulation' && currentView === 'mission') return 'simulation';
   if (isDashboardVisible()) return 'dashboard';
-  // 미션(코딩 영역) 뷰 → "코딩" 탭, 개요·차시 메뉴 → "미션" 탭
-  if (currentView === 'mission') return 'coding';
+  // 미션 설명 화면은 "미션", 실제 블록 코딩 화면만 "코딩" 탭을 활성화한다.
+  if (currentView === 'mission') return _contentMode === 'coding' ? 'coding' : 'mission';
   return 'mission';
 }
 
@@ -807,12 +817,17 @@ function updateMobileBottomNav() {
 
   const connectBtn = nav.querySelector('[data-mobile-action="connect"]');
   if (connectBtn) {
+    const codingMode = document.body.dataset.contentMode === 'coding';
     const connected = isBleConnected();
     connectBtn.classList.toggle('connected', connected);
+    connectBtn.classList.toggle('coding-run', codingMode);
     connectBtn.setAttribute('aria-pressed', String(connected));
+    connectBtn.setAttribute('aria-label', codingMode ? '블록 코딩 실행' : '탐사선 신호 연결');
     const label = connectBtn.querySelector('.mobile-nav-label');
     if (label) {
-      label.textContent = connected
+      label.textContent = codingMode
+        ? '실행'
+        : connected
         ? '연결됨'
         : state.isConnecting
           ? '연결 중…'
@@ -1097,7 +1112,7 @@ async function enterOverview() {
                  <strong>${escapeHtml(lesson.title)}</strong>
                  <small>${escapeHtml(lesson.hardware)}</small>
                </span>
-               <span class="flow-arrow" aria-hidden="true">▶</span>
+               <span class="flow-arrow" aria-hidden="true">◀</span>
              </button>
              <div id="inlineMissionsBonus" class="lesson-panel" hidden></div>
            </section>
@@ -1110,7 +1125,7 @@ async function enterOverview() {
                  <small>${escapeHtml(lesson.hardware)}</small>
                </span>
                <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
-               <span class="flow-arrow" aria-hidden="true">▼</span>
+               <span class="flow-arrow" aria-hidden="true">◀</span>
              </button>
              <div id="inlineMissions${lesson.n}" class="lesson-panel" hidden></div>
            </section>
@@ -1548,6 +1563,11 @@ function initializeAlwaysOnListeners() {
 
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
+    if (document.body.dataset.contentMode === 'coding') {
+      elements.runButton?.click();
+      e.currentTarget?.blur?.();
+      return;
+    }
     if (isBleConnected()) {
       BluetoothManager.disconnect();
     } else {
@@ -1578,6 +1598,7 @@ function initializeAlwaysOnListeners() {
   // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
   window.addEventListener('ares:connection', updateRunButtonUI);
   window.addEventListener('ares:execution',  updateRunButtonUI);
+  window.addEventListener('ares:contentmode', updateMobileBottomNav);
 
   // 홈(개요)
   document.getElementById('homeButton')?.addEventListener('click', (e) => {
