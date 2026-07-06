@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { elements } from './elements.js';
 import { Logger } from './logger.js';
 import { BluetoothManager } from './bluetooth.js';
-import { BlocklyConfig, attachBatchBlockValidator, attachDynamicNaming, updateWorkspaceBlocks } from './blocklyconfig.js';
+import { BlocklyConfig, attachBatchBlockValidator, attachDynamicNaming, updateWorkspaceBlocks } from './blocklyconfig.js?v=20260705a';
 import { CommandExecutor } from './commandexecutor.js';
 import { setupSimulation } from './Simulation/Simulation_Main.js';
 import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js';
@@ -24,6 +24,7 @@ const LESSON_CATALOG = [
   { n: 10, title: "LED 5개 시퀀스와 카운트다운",    tag: "SEQUENCE", hardware: "LED 5개",                 concept: "발사 시퀀스, 모듈화 사고" },
   { n: 11, title: "LED와 부저 동기화",             tag: "SYNC",     hardware: "LED 5개 + 부저",          concept: "빛/소리 동기, 음계(도레미파솔)" },
   { n: 12, title: "화성 로켓 최종 발사!",           tag: "LAUNCH",   hardware: "LED 5개 + 부저 + DC모터", concept: "통합 시나리오, 자유 창작 발표" },
+  { n: "+", title: "화성에 착륙하기",               tag: "BONUS",    hardware: "곧 만나요",                concept: "지금까지 배운 모든 것을 모아 화성 착륙에 도전!", bonus: true },
 ];
 
 const MISSION_PROGRESS_KEY = 'ares_completed_missions_v1';
@@ -103,12 +104,50 @@ let mobileBottomNavBound = false;
 let pendingDashboardOpen = false;
 let mobileDashboardReturnHash = null;
 let mobileAiReturnHash = null;
+let aresBlocklyTheme = null;
 
 // 미션 뷰는 description / coding / simulation 세 모드 중 하나만 표시한다.
 // _preSimMode 는 시뮬을 닫았을 때 복귀할 모드(description 또는 coding)를 기억.
 let _contentMode = 'description';
 let _preSimMode = 'description';
 let setContentMode = null;     // setupContentToggle() 에서 등록
+
+function getAresBlocklyTheme() {
+  if (aresBlocklyTheme) return aresBlocklyTheme;
+
+  aresBlocklyTheme = Blockly.Theme.defineTheme('aresTheme', {
+    base: Blockly.Themes.Classic,
+    blockStyles: {
+      logic_blocks: { colourPrimary: '#cacacb' },
+      math_blocks: { colourPrimary: '#cacacb' },
+      loop_blocks: { colourPrimary: '#2b638f' },
+      variable_blocks: { colourPrimary: '#5483b5' },
+      variable_dynamic_blocks: { colourPrimary: '#5483b5' },
+      procedure_blocks: { colourPrimary: '#727171' }
+    },
+    categoryStyles: {
+      logic_category: { colour: '#cacacb' },
+      math_category: { colour: '#cacacb' },
+      loop_category: { colour: '#2b638f' },
+      variable_category: { colour: '#5483b5' },
+      procedure_category: { colour: '#727171' }
+    }
+  });
+
+  return aresBlocklyTheme;
+}
+
+function applyAresBuiltinBlockColours() {
+  const ifBlock = Blockly.Blocks?.controls_if;
+  if (!ifBlock || ifBlock.__aresColourPatchAttached) return;
+
+  const originalInit = ifBlock.init;
+  ifBlock.init = function() {
+    originalInit.call(this);
+    this.setColour('#2b638f');
+  };
+  ifBlock.__aresColourPatchAttached = true;
+}
 
 // ============================================================
 // 동적 툴박스 필터링
@@ -165,6 +204,133 @@ function updateDynamicToolbox() {
 // ============================================================
 // Blockly 한글 메시지 + 워크스페이스 초기화
 // ============================================================
+// 이미지형 툴박스 카테고리 위에 마우스가 놓이면(호버) 그 카테고리의 플라이아웃을
+// 연다. Blockly 는 기본적으로 클릭(pointerdown)에서 열리므로, 호버로도 열리게
+// setSelectedItem 을 호출한다. 이벤트 위임이라 카테고리 DOM 이 재생성돼도 유지된다.
+// 카테고리 색(툴박스 XML 순서와 동일) — 플라이아웃 배경 색조에 사용
+const CATEGORY_COLORS = ['#cf3d37', '#d68fa5', '#dcc342', '#7daa4d', '#2b638f', '#5483b5', '#cacacb', '#727171'];
+
+// #RRGGBB 를 흰색 쪽으로 amt(0~1) 만큼 밝게 → 배경용 밝은 톤
+function lightenColor(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = Math.round(r + (255 - r) * amt);
+  g = Math.round(g + (255 - g) * amt);
+  b = Math.round(b + (255 - b) * amt);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+// 플라이아웃(블록 선택 영역) 동작·모양 설정:
+//  - autoClose 켬: 블록 클릭 시 코딩창에 배치+닫힘, 코딩창 클릭 시에도 닫힘
+//  - 블록 사이 간격을 절반(기본 GAP_Y 24 → 12)으로
+//  - 카테고리 선택 시 배경을 그 카테고리 색의 밝은 톤으로
+function setupFlyoutBehavior(ws) {
+  const toolbox = ws.getToolbox?.();
+  if (!toolbox) return;
+
+  const applyFlyoutCfg = () => {
+    const flyout = toolbox.getFlyout?.();
+    if (!flyout) return;
+    // autoClose=true(기본): 블록을 클릭하면 코딩창에 배치되고 플라이아웃이 닫히며,
+    // 코딩창(워크스페이스)을 눌러도 닫힌다.
+    flyout.autoClose = true;
+    flyout.GAP_Y = 12;   // 블록 사이 간격 절반
+  };
+  applyFlyoutCfg();
+
+  // 카테고리 선택을 가로채 배경색을 갱신한다(원래 동작은 그대로 수행).
+  const origSetSelected = toolbox.setSelectedItem.bind(toolbox);
+  toolbox.setSelectedItem = function (item) {
+    origSetSelected(item);
+    applyFlyoutCfg();
+    const idx = toolbox.getToolboxItems().indexOf(item);
+    const color = CATEGORY_COLORS[idx];
+    const bg = document.querySelector('.blocklyFlyoutBackground');
+    if (bg && color) bg.style.fill = lightenColor(color, 0.82);
+  };
+}
+
+// 블록 선택 메뉴(플라이아웃)의 블록을 워크스페이스 줌과 무관하게 고정 크기로 표시.
+// 기본은 flyout.getFlyoutScale() 이 메인 워크스페이스 scale 을 따라가므로, 이를
+// 고정값(자연 크기의 0.6배)으로 오버라이드한다.
+function setupFlyoutFixedScale(ws) {
+  const FLYOUT_SCALE = 0.6;
+  const flyout = ws.getFlyout?.();
+  if (!flyout) return;
+  const proto = Object.getPrototypeOf(flyout);
+  if (proto && typeof proto.getFlyoutScale === 'function' && !proto.__aresFixedFlyoutScale) {
+    proto.getFlyoutScale = function () { return FLYOUT_SCALE; };
+    proto.__aresFixedFlyoutScale = true;
+  }
+  try { flyout.getWorkspace().setScale(FLYOUT_SCALE); } catch {}
+}
+
+// 툴박스 서랍: 기본은 접힘(라벨만 보임). 툴박스를 클릭하면 펼쳐지고(아이콘까지),
+// 펼쳐진 상태에서 카테고리를 클릭하면 블록이 열린다. 빈 곳을 클릭하면 다시 접힌다.
+function setupToolboxDrawer(ws) {
+  const div = document.querySelector('.blocklyToolboxDiv');
+  if (!div) return;
+  document.body.classList.add('toolbox-collapsed');   // 시작은 접힘
+
+  const reflow = () => { try { Blockly.svgResize(ws); } catch {} };
+  const isCollapsed = () => document.body.classList.contains('toolbox-collapsed');
+  const collapse = () => {
+    if (isCollapsed()) return;
+    document.body.classList.add('toolbox-collapsed');
+    try { ws.getToolbox().clearSelection(); } catch {}
+    reflow();
+  };
+  const expand = () => {
+    if (!isCollapsed()) return;
+    document.body.classList.remove('toolbox-collapsed');
+    reflow();
+  };
+
+  div.addEventListener('pointerdown', (event) => {
+    const onCategory = !!(event.target.closest && event.target.closest('.blocklyToolboxCategory'));
+    if (isCollapsed()) {
+      // 접힘 상태에서 클릭 → 펼친다. 클릭 위치가 특정 카테고리(라벨)면 그 영역의
+      // 블록 선택(플라이아웃)까지 함께 연다.
+      expand();
+      const cat = event.target.closest && event.target.closest('.blocklyToolboxCategory');
+      if (cat) {
+        const cats = Array.from(div.querySelectorAll('.blocklyToolboxCategory'));
+        const idx = cats.indexOf(cat);
+        const toolbox = ws.getToolbox && ws.getToolbox();
+        const items = (toolbox && toolbox.getToolboxItems) ? toolbox.getToolboxItems() : [];
+        if (idx >= 0 && items[idx]) {
+          // 펼침(폭 변경·svgResize)이 반영된 뒤 선택되도록 다음 프레임에
+          requestAnimationFrame(() => { try { toolbox.setSelectedItem(items[idx]); } catch {} });
+        }
+      }
+      event.stopPropagation();
+      event.preventDefault();
+    } else if (!onCategory) {
+      // 펼침 상태에서 카테고리가 아닌 빈 곳 클릭 → 접기(열린 플라이아웃도 닫음)
+      collapse();
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    // 펼침 상태 + 카테고리 클릭 → Blockly 기본 선택(플라이아웃 열림)
+  }, true);
+
+  // 블록을 선택(플라이아웃에서 코딩창으로 배치)하면 툴박스를 접는다
+  ws.addChangeListener((ev) => {
+    if (ev && ev.type === Blockly.Events.BLOCK_CREATE) collapse();
+  });
+
+  // 코딩 영역(메인 워크스페이스)을 누르면 툴박스를 접는다
+  // (툴박스 자체·플라이아웃 클릭은 제외 — 각자 로직으로 처리)
+  document.addEventListener('pointerdown', (event) => {
+    if (isCollapsed()) return;
+    const t = event.target;
+    if (!t || !t.closest) return;
+    if (!t.closest('#blocklyDiv')) return;
+    if (t.closest('.blocklyToolboxDiv') || t.closest('.blocklyFlyout')) return;
+    collapse();
+  }, true);
+}
+
 function initializeBlockly() {
   if (!navigator.bluetooth) {
     alert('이 블라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
@@ -175,6 +341,7 @@ function initializeBlockly() {
   attachBatchBlockValidator(Blockly);
   attachDynamicNaming(Blockly, state);
   applyKoreanMessages();
+  applyAresBuiltinBlockColours();
 
   // 모바일에서는 카테고리 이름을 emoji 1자로 줄여 글자가 절대 새어 나오지 않도록
   // (Blockly 의 기본 선택 스타일이 텍스트 영역을 펼치는 케이스를 원천 차단)
@@ -189,6 +356,7 @@ function initializeBlockly() {
 
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox'),
+    theme: getAresBlocklyTheme(),
     scrollbars: true,
     trashcan: true,
     zoom: {
@@ -204,6 +372,9 @@ function initializeBlockly() {
 
   Blockly.Python.init(workspace);
   setupBlockContextMenu(workspace);
+  setupFlyoutBehavior(workspace);
+  setupFlyoutFixedScale(workspace);
+  setupToolboxDrawer(workspace);
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
@@ -455,6 +626,8 @@ function updateRunButtonUI() {
     btn.title = '실행 중인 미션을 즉시 멈춥니다';
     btn.classList.add('btn-stop');
     btn.disabled = false;
+    syncToolboxRunAction(btn);
+    updateMobileBottomNav();
     return;
   }
   btn.textContent = '▶️ 미션 전송';
@@ -464,6 +637,36 @@ function updateRunButtonUI() {
   const dashboardFrame = document.getElementById('dashboardFrame');
   const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
   btn.disabled = !inMission || inDashboard || !isBleConnected();
+  syncToolboxRunAction(btn);
+  updateMobileBottomNav();
+}
+
+// 툴박스 하단 '미션전송' 버튼을 상단 runButton 상태(활성/비상정지)에 맞춰 동기화
+function syncToolboxRunAction(btn) {
+  const proxy = document.querySelector('#toolboxActions .tbx-action[data-action="run"]');
+  if (!proxy || !btn) return;
+  const isStop = btn.classList.contains('btn-stop');
+  proxy.disabled = btn.disabled;
+  proxy.classList.toggle('is-stop', isStop);
+  const ico = proxy.querySelector('.tbx-ico');
+  const lbl = proxy.querySelector('.tbx-lbl');
+  if (ico) ico.textContent = isStop ? '🛑' : '▶️';
+  if (lbl) lbl.innerHTML = isStop ? '비상<br>정지' : '미션<br>전송';
+}
+
+// 툴박스 하단 도구 버튼(미션전송·저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
+// 동일 로직(검증·비상정지·저장 프롬프트·파일입력)을 그대로 실행한다.
+function setupToolboxActions() {
+  const box = document.getElementById('toolboxActions');
+  if (!box) return;
+  box.addEventListener('click', (event) => {
+    const btn = event.target.closest('.tbx-action');
+    if (!btn || btn.disabled) return;
+    const action = btn.dataset.action;
+    if (action === 'run') elements.runButton?.click();
+    else if (action === 'save') elements.saveButton?.click();
+    else if (action === 'load') elements.loadButton?.click();
+  });
 }
 
 function isInBlockCodingStage() {
@@ -512,23 +715,12 @@ function openBlockCodingWorkspace() {
   setTimeout(poll, 50);
 }
 
+// 블록코딩 버튼/탭에서 호출: 점검 오버레이를 닫고 (미션 뷰라면) 코딩 모드로 전환.
 function closeDashboardToCoding() {
-  const blocklyDiv = document.getElementById('blocklyDiv');
-  const dashboardFrame = document.getElementById('dashboardFrame');
+  closeDashboard();
   const contentToggleBtn = document.getElementById('contentToggleBtn');
-  if (!blocklyDiv || !dashboardFrame) return;
-
-  blocklyDiv.style.display = 'block';
-  dashboardFrame.style.display = 'none';
   if (contentToggleBtn) contentToggleBtn.style.display = '';
-
-  if (elements.saveButton) elements.saveButton.disabled = false;
-  if (elements.loadButton) elements.loadButton.disabled = false;
-  if (setContentMode) setContentMode('coding');
-  updateRunButtonUI();
-  refreshBlockCodingButtonUI();
-  updateMobileBottomNav();
-  Logger.add('[모드] 블록코딩 전환', 'info');
+  if (currentView === 'mission' && setContentMode) setContentMode('coding');
 }
 
 function handleBlockCodingButtonClick() {
@@ -543,56 +735,36 @@ function handleBlockCodingButtonClick() {
   openBlockCodingWorkspace();
 }
 
+// 점검(대시보드)은 전역 오버레이다. 개요·미션설명·코딩·시뮬 어느 화면에서든
+// 그대로 위에 띄우며, 아래 화면 상태는 건드리지 않는다 → 닫으면 원래 위치로 복귀.
+function openDashboard() {
+  const f = document.getElementById('dashboardFrame');
+  if (!f || f.style.display === 'block') return;
+  f.style.display = 'block';
+  updateRunButtonUI();
+  refreshBlockCodingButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 점검 화면 열기', 'info');
+}
+
+function closeDashboard() {
+  const f = document.getElementById('dashboardFrame');
+  if (!f || f.style.display !== 'block') return;
+  f.style.display = 'none';
+  updateRunButtonUI();
+  refreshBlockCodingButtonUI();
+  updateMobileBottomNav();
+  Logger.add('[모드] 점검 화면 닫기', 'info');
+}
+
+// 상단 설정 버튼 / 하단바 점검 탭 공통 진입점 — 어디서 눌러도 오버레이로 연다.
 function openDashboardFromAnywhere() {
-  const parsed = parseHash();
-  const lesson = currentLesson ?? parsed.lesson ?? 1;
-  const mission = currentMission ?? parsed.mission ?? 1;
-
-  if (isDashboardVisible()) return;
-
-  // Request dashboard open. If we're not in mission view yet, navigate there
-  // and install a one-shot listener + timeout to ensure the dashboard opens
-  // after routing (some environments may not trigger the pending flag flow).
-  pendingDashboardOpen = true;
-  if (currentView !== 'mission') {
-    navigate({ lesson, mission });
-
-    const tryOpen = () => {
-      if (currentView === 'mission') {
-        // consume the pending flag so enterMission won't double-toggle
-        if (pendingDashboardOpen) pendingDashboardOpen = false;
-        // only toggle if not already visible
-        if (!isDashboardVisible()) toggleDashboard();
-        return true;
-      }
-      return false;
-    };
-
-    const onHash = () => {
-      if (tryOpen()) {
-        window.removeEventListener('hashchange', onHash);
-        clearTimeout(fallbackT);
-      }
-    };
-
-    window.addEventListener('hashchange', onHash);
-    // Fallback: try after short delay in case hashchange already applied
-    const fallbackT = setTimeout(() => {
-      tryOpen();
-      window.removeEventListener('hashchange', onHash);
-    }, 300);
-
-    // Safety: clear pending flag after a few seconds to avoid stale state
-    setTimeout(() => { pendingDashboardOpen = false; }, 4000);
-    return;
-  }
-
-  toggleDashboard();
+  openDashboard();
 }
 
 function isDashboardVisible() {
   const dashboardFrame = document.getElementById('dashboardFrame');
-  return currentView === 'mission' && !!dashboardFrame && dashboardFrame.style.display === 'block';
+  return !!dashboardFrame && dashboardFrame.style.display === 'block';
 }
 
 function isAiPanelOpen() {
@@ -607,7 +779,7 @@ function isLogExpanded() {
 
 function getMobileActiveAction() {
   if (isAiPanelOpen()) return 'ai';
-  if (isLogExpanded()) return 'log';
+  if (_contentMode === 'simulation' && currentView === 'mission') return 'simulation';
   if (isDashboardVisible()) return 'dashboard';
   // 미션(코딩 영역) 뷰 → "코딩" 탭, 개요·차시 메뉴 → "미션" 탭
   if (currentView === 'mission') return 'coding';
@@ -632,6 +804,23 @@ function updateMobileBottomNav() {
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-pressed', String(active));
   });
+
+  const connectBtn = nav.querySelector('[data-mobile-action="connect"]');
+  if (connectBtn) {
+    const connected = isBleConnected();
+    connectBtn.classList.toggle('connected', connected);
+    connectBtn.setAttribute('aria-pressed', String(connected));
+    const label = connectBtn.querySelector('.mobile-nav-label');
+    if (label) {
+      label.textContent = connected
+        ? '연결됨'
+        : state.isConnecting
+          ? '연결 중…'
+          : state.connectFailed
+            ? '재연결'
+            : '신호연결';
+    }
+  }
 }
 
 function bindMobileBottomNav() {
@@ -649,15 +838,16 @@ function bindMobileBottomNav() {
     const lesson = currentLesson ?? parsed.lesson ?? 1;
     const mission = currentMission ?? parsed.mission ?? 1;
 
+    if (action === 'connect') {
+      document.getElementById('connectButton')?.blur?.();
+      return;
+    }
+
     // 하단바 재클릭 시 토글 해제
     if (action === activeAction) {
       if (action === 'dashboard' && isDashboardVisible()) {
-        closeDashboardToCoding();
-        if (mobileDashboardReturnHash !== null) {
-          const backHash = mobileDashboardReturnHash;
-          mobileDashboardReturnHash = null;
-          restoreHash(backHash);
-        }
+        // 점검은 전역 오버레이 → 그냥 닫으면 아래 원래 화면으로 복귀
+        closeDashboard();
       } else if (action === 'ai' && isAiPanelOpen()) {
         document.getElementById('aiPanel')?.setAttribute('hidden', '');
         if (mobileAiReturnHash !== null) {
@@ -698,12 +888,19 @@ function bindMobileBottomNav() {
         openMissionCoding(codingLesson, codingMission);
         break;
       }
-      case 'dashboard':
-        if (currentView !== 'mission') {
-          mobileDashboardReturnHash = window.location.hash || '';
+      case 'simulation': {
+        if (currentView === 'mission') {
+          document.getElementById('simToggle')?.click();
         } else {
-          mobileDashboardReturnHash = null;
+          const simTarget = getLastCodingMission();
+          const simLesson = simTarget?.lesson ?? lesson;
+          const simMission = simTarget?.mission ?? mission;
+          navigate({ lesson: simLesson, mission: simMission });
+          setTimeout(() => document.getElementById('simToggle')?.click(), 450);
         }
+        break;
+      }
+      case 'dashboard':
         openDashboardFromAnywhere();
         break;
       case 'ai':
@@ -777,12 +974,34 @@ async function applyRoute() {
 // ============================================================
 // 뷰 전환 + 버튼 활성/비활성
 // ============================================================
+// 뷰/모드 전환 시 페이지 스크롤을 상단으로 되돌린다. 모바일 레이아웃에선 window 가
+// 스크롤 컨테이너이고, 전환 직후 콘텐츠 리플로우가 스크롤을 되돌릴 수 있어
+// 다음 프레임에 한 번 더 초기화한다.
+function resetScrollTop() {
+  const toTop = () => {
+    window.scrollTo(0, 0);
+    if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+  };
+  toTop();
+  requestAnimationFrame(toTop);
+}
+
 function showView(view) {
   for (const v of ['overview', 'lesson', 'mission']) {
     const el = document.getElementById(v + 'View');
     if (el) el.hidden = (v !== view);
   }
   currentView = view;
+
+  // 내비게이션으로 뷰가 바뀌면 그 화면의 스크롤을 항상 상단으로 초기화.
+  // 데스크톱(≥769px)은 뷰 요소가 스크롤 컨테이너, 모바일(≤768px)은 뷰가
+  // overflow:visible 이라 페이지(window) 자체가 스크롤된다 → 둘 다 초기화.
+  const activeView = document.getElementById(view + 'View');
+  if (activeView) {
+    activeView.scrollTop = 0;
+    activeView.querySelector('.mission-panel')?.scrollTo?.({ top: 0 });
+  }
+  resetScrollTop();
 
   const inMission = view === 'mission';
   // 미션 뷰일 때만 코딩 관련 버튼 활성화
@@ -846,7 +1065,15 @@ async function enterOverview() {
       // 개요 차시 표 렌더링
       const tbody = document.getElementById('overviewLessonTableBody');
       if (tbody) {
-        tbody.innerHTML = LESSON_CATALOG.map(l => `
+        tbody.innerHTML = LESSON_CATALOG.map(l => l.bonus ? `
+          <tr class="bonus" data-lesson-item="bonus">
+            <td class="lesson-n">${l.n}</td>
+            <td class="lesson-title-cell">${escapeHtml(l.title)}</td>
+            <td>${escapeHtml(l.hardware)}</td>
+            <td>${escapeHtml(l.concept)}</td>
+            <td><span class="tag tag-BONUS">${escapeHtml(l.tag)}</span></td>
+          </tr>
+         ` : `
           <tr data-lesson="${l.n}">
             <td class="lesson-n">${l.n}</td>
             <td class="lesson-title-cell">
@@ -859,25 +1086,48 @@ async function enterOverview() {
          `).join('');
        }
 
-       // 12개 차시를 아코디언형 버튼 목록으로 생성
+       // 12개 차시 + 보너스(+) 항목을 아코디언형 버튼 목록으로 생성
        const flowContainer = document.getElementById('lessonFlowContainer');
        if (flowContainer) {
-         flowContainer.innerHTML = LESSON_CATALOG.map(lesson => `
+         flowContainer.innerHTML = LESSON_CATALOG.map(lesson => lesson.bonus ? `
+           <section class="lesson-accordion-item bonus" data-lesson-item="bonus">
+             <button class="flow-step-btn" data-bonus="1" aria-expanded="false" aria-controls="inlineMissionsBonus">
+               <span class="flow-num">${lesson.n}</span>
+               <span class="flow-main">
+                 <strong>${escapeHtml(lesson.title)}</strong>
+                 <small>${escapeHtml(lesson.hardware)}</small>
+               </span>
+               <span class="flow-arrow" aria-hidden="true">▶</span>
+             </button>
+             <div id="inlineMissionsBonus" class="lesson-panel" hidden></div>
+           </section>
+         ` : `
            <section class="lesson-accordion-item" data-lesson-item="${lesson.n}">
              <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
                <span class="flow-num">${lesson.n}</span>
                <span class="flow-main">
-                 <strong>${lesson.n}차시 — ${escapeHtml(lesson.title)}</strong>
+                 <strong>${escapeHtml(lesson.title)}</strong>
                  <small>${escapeHtml(lesson.hardware)}</small>
                </span>
                <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
-               <span class="flow-arrow" aria-hidden="true">▶</span>
+               <span class="flow-arrow" aria-hidden="true">▼</span>
              </button>
              <div id="inlineMissions${lesson.n}" class="lesson-panel" hidden></div>
            </section>
          `).join('');
 
          flowContainer.addEventListener('click', async (event) => {
+           // (0) 「착륙 실시」 버튼 → 착륙 게임 모듈을 필요할 때만 로드해 실행
+           if (event.target.closest('.landing-start-btn')) {
+             try {
+               const { launchLandingGame } = await import('./landing_game.js');
+               launchLandingGame();
+             } catch (e) {
+               Logger.add(`[오류] 착륙 게임 로드 실패: ${e.message}`, 'error');
+             }
+             return;
+           }
+
            // (1) 미션 코딩 버튼 → 해당 미션 선택 + 블록코딩 모드로 전환
            const codeBtn = event.target.closest('.mission-code-btn');
            if (codeBtn) {
@@ -888,14 +1138,16 @@ async function enterOverview() {
            // (2) 미션 버튼 → 미션 상세 정보를 아래로 펼침 (개요를 떠나지 않음)
            const missionButton = event.target.closest('.inline-mission-btn');
            if (missionButton) {
-             toggleInlineMissionDetail(missionButton);
+             navigate({
+               lesson: Number(missionButton.dataset.lesson),
+               mission: Number(missionButton.dataset.inlineMission),
+             });
              return;
            }
 
-           // (3) 차시 버튼 → 미션 리스트 + 차시 정보를 펼침
+           // 차시 버튼 → 네 개의 미션 리스트를 펼침
            const lessonButton = event.target.closest('.flow-step-btn');
            if (!lessonButton) return;
-           const lessonNum = Number(lessonButton.dataset.lesson);
            const item = lessonButton.closest('.lesson-accordion-item');
            const panel = item?.querySelector('.lesson-panel');
            if (!panel) return;
@@ -914,11 +1166,25 @@ async function enterOverview() {
              return;
            }
 
+           // 보너스(+) 항목 — 착륙 게임을 로드하는 「착륙 실시」 버튼을 펼친다
+           if (lessonButton.dataset.bonus === '1') {
+             panel.innerHTML = `
+               <div class="inline-lesson-info bonus-teaser">
+                 <h4 class="inline-lesson-info-title">🚀 화성에 착륙하기</h4>
+                 <p>불규칙한 행성 지면 위로 떨어지는 우주선을 <strong>역추진</strong>으로 감속해 착륙시켜요.<br>위쪽 화살표(↑)나 화면의 <strong>역추진</strong> 버튼을 눌러, 지면에 <strong>천천히</strong> 내려앉히면 성공!</p>
+                 <button type="button" class="landing-start-btn">🛸 착륙 실시</button>
+               </div>`;
+             openAccordion(panel);
+             lessonButton.setAttribute('aria-expanded', 'true');
+             item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+             return;
+           }
+
+           const lessonNum = Number(lessonButton.dataset.lesson);
            const data = await loadLesson(lessonNum);
            if (!data?.missions) return;
-           // (위) 차시 정보 + (그 아래) 미션 리스트
+           // PDF 3페이지처럼 펼친 카드 안에는 미션 4개만 간결하게 표시
            panel.innerHTML = `
-             ${renderInlineLessonInfo(data)}
              <div class="inline-mission-list">
                ${data.missions.map(m => renderInlineMissionItem(lessonNum, m)).join('')}
              </div>
@@ -936,71 +1202,28 @@ async function enterOverview() {
 }
 
 // ============================================================
-// 개요 인라인 렌더 헬퍼 (차시 → 미션 → 미션 상세 아코디언)
+// 개요 인라인 렌더 헬퍼 (차시 → 미션 목록)
 // ============================================================
-function renderInlineMissionDetail(n, mission) {
-  const story = (mission.story || []).map(line => `
-      <div class="story-line story-${line.speaker}">
-        <span class="story-avatar">${line.speaker === 'ares' ? '🧑‍🚀' : '🤖'}</span>
-        <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
-        <span class="story-text">${escapeHtml(line.text)}</span>
-      </div>`).join('');
-  const goals = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
-  return `
-    <div id="missionDetail${n}_${mission.id}" class="inline-mission-detail" hidden>
-      <div class="mission-story">${story}</div>
-      <div class="mission-section">
-        <h4>🎯 학습 목표</h4>
-        <ul class="inline-goal-list">${goals}</ul>
-      </div>
-      <details class="mission-section">
-        <summary>💡 샘플 코드 보기</summary>
-        <pre class="sample-code">${escapeHtml(mission.sampleCode || '')}</pre>
-      </details>
-      <button type="button" class="mission-code-btn" data-lesson="${n}" data-mission="${mission.id}">🧩 미션 코딩 시작 →</button>
-    </div>`;
-}
-
 function renderInlineMissionItem(n, mission) {
   const completed = isMissionCompleted(n, mission.id);
   return `
     <div class="inline-mission-item" data-mission-item="${mission.id}">
       <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}"
               data-lesson="${n}" data-inline-mission="${mission.id}"
-              aria-expanded="false" aria-controls="missionDetail${n}_${mission.id}">
-        <span class="inline-mission-num">${mission.id}</span>
+              aria-label="${escapeHtml(mission.title)} 미션 열기">
+        <span class="inline-mission-marker" aria-hidden="true">▶</span>
         <span class="inline-mission-main">
-          <strong>${escapeHtml(mission.title)} <span class="inline-mission-check" ${completed ? '' : 'hidden'}>✓</span></strong>
-          <small>${escapeHtml(mission.hardware || '')}</small>
+          <strong>${escapeHtml(mission.title)}</strong>
         </span>
-        <span class="inline-mission-arrow" aria-hidden="true">›</span>
+        <span class="inline-mission-check" ${completed ? '' : 'hidden'} aria-label="완료">✓</span>
       </button>
-      ${renderInlineMissionDetail(n, mission)}
     </div>`;
 }
 
-function renderInlineLessonInfo(data) {
-  const summary = data.summary ? `
-      <div class="summary-box summary-${data.summary.type}">
-        <h4>${escapeHtml(data.summary.title)}</h4>
-        <p>${escapeHtml(data.summary.text)}</p>
-      </div>` : '';
-  return `
-    <div class="inline-lesson-info">
-      <h4 class="inline-lesson-info-title">📘 차시 정보</h4>
-      <div class="inline-lesson-info-head">
-        <span class="lesson-tag tag-${data.tag}">${escapeHtml(data.tag)}</span>
-        <span class="inline-lesson-meta">🔧 ${escapeHtml(data.hardware)} <span class="dot-sep">·</span> 💡 ${escapeHtml(data.concept)}</span>
-      </div>
-      <p class="inline-lesson-intro">${escapeHtml(data.intro)}</p>
-      ${summary}
-    </div>`;
-}
-
-// 아코디언 여닫이 애니메이션 (열림 2초 / 닫힘 1초). CSS 클래스로 제어하고,
+// 아코디언 여닫이 애니메이션 (열림 240ms / 닫힘 180ms). CSS 클래스로 제어하고,
 // 실제 콘텐츠 높이를 --acc-h 로 넘겨 높이 변화가 자연스럽게 보이도록 한다.
-const ACCORDION_OPEN_MS = 2000;
-const ACCORDION_CLOSE_MS = 1000;
+const ACCORDION_OPEN_MS = 240;
+const ACCORDION_CLOSE_MS = 180;
 
 function openAccordion(el) {
   if (!el) return;
@@ -1039,29 +1262,6 @@ function closeAccordion(el) {
   };
   el.addEventListener('animationend', done);
   el._accTimer = setTimeout(done, ACCORDION_CLOSE_MS + 120);
-}
-
-// 미션 버튼 클릭 → 그 미션 상세를 아래로 펼치고, 같은 차시의 다른 미션 상세는 접는다
-function toggleInlineMissionDetail(btn) {
-  const item = btn.closest('.inline-mission-item');
-  const detail = item?.querySelector('.inline-mission-detail');
-  if (!detail) return;
-  const list = item.closest('.inline-mission-list');
-  const willOpen = detail.hasAttribute('hidden');
-  list?.querySelectorAll('.inline-mission-detail:not([hidden])').forEach(d => {
-    if (d !== detail) {
-      closeAccordion(d);
-      d.previousElementSibling?.setAttribute('aria-expanded', 'false');
-    }
-  });
-  if (willOpen) {
-    openAccordion(detail);
-    btn.setAttribute('aria-expanded', 'true');
-    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  } else {
-    closeAccordion(detail);
-    btn.setAttribute('aria-expanded', 'false');
-  }
 }
 
 // 미션 코딩 시작 → 해당 미션으로 이동 후 블록코딩 모드로 전환
@@ -1162,20 +1362,29 @@ async function enterMission(n, m) {
     window.updateToolboxForActiveState();
   }
 
-  document.getElementById('missionHeading').textContent = `${n}차시 미션 ${m} — ${mission.title}`;
+  document.getElementById('missionHeading').textContent = `${n}차시 미션 ${m} - ${mission.title}`;
+  // 코딩 영역 상단 배너: 기록된(현재) 차시·미션 표시
+  const codingLabel = document.getElementById('codingMissionLabel');
+  if (codingLabel) codingLabel.textContent = `${n}차시 · 미션 ${m} — ${mission.title}`;
   document.getElementById('missionTagBadge').textContent = mission.tag;
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
-  document.getElementById('missionHardware').textContent = `🔧 ${mission.hardware}`;
+  document.getElementById('missionHardware').textContent = mission.hardware;
 
   // 스토리
   const storyEl = document.getElementById('missionStory');
-  storyEl.innerHTML = (mission.story || []).map(line => `
+  const storyLines = (mission.story || []).map(line => `
     <div class="story-line story-${line.speaker}">
-      <span class="story-avatar">${line.speaker === 'ares' ? '🧑‍🚀' : '🤖'}</span>
+      <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${line.speaker === 'ares' ? '아레스' : '알비'}"></span>
       <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
       <span class="story-text">${escapeHtml(line.text)}</span>
     </div>
   `).join('');
+  storyEl.innerHTML = `${storyLines}
+    <div class="story-line story-ares story-goal-question">
+      <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="아레스"></span>
+      <span class="story-name">아레스</span>
+      <span class="story-text">우와! 그러면 오늘 학습목표는 뭐야?</span>
+    </div>`;
 
   // 학습 목표
   const goalsEl = document.getElementById('missionGoals');
@@ -1217,6 +1426,7 @@ async function enterMission(n, m) {
 // lesson.json 로더 + 캐시
 // ============================================================
 async function loadLesson(n) {
+  if (!Number.isFinite(Number(n))) return null;   // 보너스(+) 등 비정상 차시 방어
   if (lessonCache.has(n)) return lessonCache.get(n);
   const padded = String(n).padStart(2, '0');
   const url = `Lesson${padded}/lesson.json`;
@@ -1239,6 +1449,7 @@ function buildLessonSelect() {
   const sel = document.getElementById('lessonSelect');
   if (!sel) return;
   for (const l of LESSON_CATALOG) {
+    if (l.bonus) continue;   // 보너스(+) 항목은 드롭다운에서 제외
     const opt = document.createElement('option');
     opt.value = String(l.n);
     opt.textContent = `${l.n}차시 — ${l.title}`;
@@ -1298,30 +1509,8 @@ function escapeHtml(s) {
 // 대시보드 전환
 // ============================================================
 function toggleDashboard() {
-  const blocklyDiv = document.getElementById('blocklyDiv');
-  const dashboardFrame = document.getElementById('dashboardFrame');
-  const contentToggleBtn = document.getElementById('contentToggleBtn');
-  if (!blocklyDiv || !dashboardFrame) return;
-
-  const showing = dashboardFrame.style.display === 'block';
-  if (showing) {
-    // 이미 열려있다면 블록코딩으로 복귀
-    closeDashboardToCoding();
-    return;
-  }
-
-  // 대시보드 보이기: 블록 영역 숨기고 iframe 보이기
-  blocklyDiv.style.display = 'none';
-  dashboardFrame.style.display = 'block';
-  if (contentToggleBtn) contentToggleBtn.style.display = 'none';
-
-  // 저장/불러오기 등 블록 관련 UI 비활성화
-  if (elements.saveButton) elements.saveButton.disabled = true;
-  if (elements.loadButton) elements.loadButton.disabled = true;
-
-  updateRunButtonUI();
-  updateMobileBottomNav();
-  Logger.add('[모드] 점검 화면 열기', 'info');
+  if (isDashboardVisible()) closeDashboard();
+  else openDashboard();
 }
 
 
@@ -1343,6 +1532,20 @@ let simController = null;
 // 항상 켜 있는 이벤트 리스너 (BLE, 비상 정지, 로그 등)
 // ============================================================
 function initializeAlwaysOnListeners() {
+  // 툴박스 하단 도구 버튼(미션전송·저장·읽기) 위임 배선
+  setupToolboxActions();
+
+  // 상단 ARES 로고 → "만든 사람들"(크레딧) WebGL 오버레이 (필요할 때만 로드)
+  document.querySelector('.ares-brand')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      const { openCredits } = await import('./credits.js?v=20260705m');
+      openCredits();
+    } catch (err) {
+      Logger.add(`[오류] 크레딧 로드 실패: ${err.message}`, 'error');
+    }
+  });
+
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
     if (isBleConnected()) {
@@ -1442,10 +1645,31 @@ function initializeMissionListeners(ws) {
     }
   });
 
-  // 저장
-  elements.saveButton?.addEventListener('click', () => {
+  // 저장 — 지원 브라우저(Chrome/Edge)에서는 "다른 이름으로 저장" 창으로 위치·이름을
+  // 직접 지정. 미지원/차단 시 기존 다운로드(브라우저 다운로드 폴더) 방식으로 폴백.
+  elements.saveButton?.addEventListener('click', async () => {
     const xml = Blockly.Xml.workspaceToDom(ws);
     const xmlText = Blockly.Xml.domToPrettyText(xml);
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'Ares_Workspace.xml',
+          types: [{ description: 'ARES 미션 파일', accept: { 'application/xml': ['.xml'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(xmlText);
+        await writable.close();
+        Logger.add(`[파일] ${handle.name} 저장 완료`, 'info');
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;   // 사용자가 저장창을 취소
+        // iframe 차단 등으로 실패하면 아래 다운로드 방식으로 폴백
+        console.warn('showSaveFilePicker 실패 → 다운로드로 폴백:', err);
+      }
+    }
+
+    // 폴백: 파일명만 입력받아 브라우저 다운로드 폴더에 저장
     const fileName = prompt("저장할 파일 이름을 입력하세요 (확장자 제외):", "Ares_Workspace");
     if (!fileName) return;
     const blob = new Blob([xmlText], { type: 'application/xml' });
@@ -1457,6 +1681,7 @@ function initializeMissionListeners(ws) {
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    Logger.add(`[파일] ${fileName}.xml 다운로드`, 'info');
   });
 
   // 불러오기
@@ -1515,6 +1740,15 @@ function initializeMissionListeners(ws) {
     } finally {
       e.target.value = '';
     }
+  });
+
+  // 배너의 예제 드롭다운 → 기존 exampleSelect 로 위임(예제 로드 로직 재사용)
+  document.getElementById('codingExampleSelect')?.addEventListener('change', (e) => {
+    const val = e.target.value;
+    e.target.selectedIndex = 0;   // 배너 드롭다운은 다시 "예제 선택"으로 복귀
+    if (!val) return;
+    const orig = document.getElementById('exampleSelect');
+    if (orig) { orig.value = val; orig.dispatchEvent(new Event('change')); }
   });
 
   // ===== 🤖 AI 도움 — 자연어 → 블록 (오프라인 규칙 기반, 외부 통신 없음) =====
@@ -1666,12 +1900,9 @@ function initializeMissionListeners(ws) {
       }
     }
     if (data.type === 'exit_dashboard') {
-      // dashboard iframe 안의 "점검완료 관제실로 복귀" 버튼.
-      // 현재 대시보드가 표시 중이면 블록 코딩 뷰로 복귀.
-      const dashboardFrame = document.getElementById('dashboardFrame');
-      if (dashboardFrame && dashboardFrame.style.display === 'block') {
-        closeDashboardToCoding();
-      }
+      // dashboard iframe 안의 "점검완료 복귀" 버튼 → 오버레이만 닫아
+      // 점검을 열기 직전에 있던 원래 화면(개요/미션설명/코딩/시뮬)으로 복귀.
+      if (isDashboardVisible()) closeDashboard();
       return;
     }
     if (data.type === 'log_toggle') {

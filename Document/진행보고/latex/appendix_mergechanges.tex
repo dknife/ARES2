@@ -8,9 +8,9 @@
 \label{app:merge}
 
 본 부록은 \textbf{5일차 작업 브랜치 통합 머지}(2장 5일차 참조)로 \code{main}에 반영된
-주요 코드 변경을, \textbf{부록~\ref{app:code}(1일차 코드 분석 종합 보고서)가 기록한 머지 전
+주요 코드 변경을, \textbf{\ref{app:code}(1일차 코드 분석 종합 보고서)가 기록한 머지 전
 코드 상태}와 대조해 정리한 \emph{중간 점검}이다. 부록 A가 \emph{통합 전} 코드를 기술한
-기준선이라면, 본 부록은 그 위에 1$\cdot$2차 Refactoring 계획(부록~\ref{app:refactor1}$\cdot$%
+기준선이라면, 본 부록은 그 위에 1$\cdot$2차 Refactoring 계획(\ref{app:refactor1}$\cdot$%
 \ref{app:refactor2})이 \emph{실제로 실행}되어 달라진 점을 요약한다. 근거는 통합 전
 \code{main}과 통합 후 \code{main}의 형상 비교(\code{git diff})이다.
 
@@ -20,7 +20,7 @@
 핵심 파일의 전후 비교는 다음과 같다.
 
 \begin{table}[H]\centering\small
-\caption{핵심 파일 전후 비교 --- 부록~\ref{app:code} 기준선 대비 통합 후 \code{main}}
+\caption{핵심 파일 전후 비교 --- \ref{app:code} 기준선 대비 통합 후 \code{main}}
 \renewcommand{\arraystretch}{1.25}
 \begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l c c L{0.40\linewidth}@{}}
 \toprule
@@ -187,7 +187,7 @@ for i, line in enumerate(lines):
 \end{lstlisting}
 
 \begin{table}[H]\centering\small
-\caption{명령 프로토콜 변경 --- 부록~\ref{app:code} 명령 목록 대비 신규$\cdot$확장}
+\caption{명령 프로토콜 변경 --- \ref{app:code} 명령 목록 대비 신규$\cdot$확장}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabularx}{\linewidth}{@{}>{\ttfamily\footnotesize}l L{0.54\linewidth}@{}}
 \toprule
@@ -282,7 +282,7 @@ case 'move_forward': {
 
 \begin{infobox}[title=중간 점검 결론]
 \small
-1$\cdot$2차 Refactoring 계획(부록~\ref{app:refactor1}$\cdot$\ref{app:refactor2})의 핵심
+1$\cdot$2차 Refactoring 계획(\ref{app:refactor1}$\cdot$\ref{app:refactor2})의 핵심
 항목 --- \emph{유형 A 거대 클로저 분할}(시뮬레이터)과 \emph{피코 설정$\cdot$명령 체계
 정비} --- 이 통합 머지로 실제 코드에 반영됐다. 남은 과제는 부록 A가 짚은 \emph{설정
 이중화}(\code{system.json}$\leftrightarrow$\code{localStorage})의 단일화 마무리와,

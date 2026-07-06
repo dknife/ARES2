@@ -3,63 +3,63 @@
        NOTE: 미=330 라=440 시=494 솔=392 파=349 도(↑)=523 (Hz) -->
   <block type="buzzer_note" x="40" y="40">
     <field name="NOTE">330</field>
-    <value name="DURATION"><block type="math_number"><field name="NUM">1</field></block></value>
+    <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
     <next>
       <block type="buzzer_note">
         <field name="NOTE">440</field>
-        <value name="DURATION"><block type="math_number"><field name="NUM">2</field></block></value>
+        <value name="DURATION"><block type="math_number"><field name="NUM">1</field></block></value>
         <next>
           <block type="buzzer_note">
             <field name="NOTE">440</field>
-            <value name="DURATION"><block type="math_number"><field name="NUM">0.75</field></block></value>
+            <value name="DURATION"><block type="math_number"><field name="NUM">0.375</field></block></value>
             <next>
               <block type="buzzer_note">
                 <field name="NOTE">523</field>
-                <value name="DURATION"><block type="math_number"><field name="NUM">0.25</field></block></value>
+                <value name="DURATION"><block type="math_number"><field name="NUM">0.125</field></block></value>
                 <next>
                   <block type="buzzer_note">
                     <field name="NOTE">494</field>
-                    <value name="DURATION"><block type="math_number"><field name="NUM">0.75</field></block></value>
+                    <value name="DURATION"><block type="math_number"><field name="NUM">0.375</field></block></value>
                     <next>
                       <block type="buzzer_note">
                         <field name="NOTE">440</field>
-                        <value name="DURATION"><block type="math_number"><field name="NUM">0.25</field></block></value>
+                        <value name="DURATION"><block type="math_number"><field name="NUM">0.125</field></block></value>
                         <next>
                           <block type="buzzer_note">
                             <field name="NOTE">440</field>
-                            <value name="DURATION"><block type="math_number"><field name="NUM">2</field></block></value>
+                            <value name="DURATION"><block type="math_number"><field name="NUM">1</field></block></value>
                             <next>
                               <block type="buzzer_note">
                                 <field name="NOTE">392</field>
-                                <value name="DURATION"><block type="math_number"><field name="NUM">1</field></block></value>
+                                <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
                                 <next>
                                   <block type="buzzer_note">
                                     <field name="NOTE">330</field>
-                                    <value name="DURATION"><block type="math_number"><field name="NUM">1</field></block></value>
+                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.5</field></block></value>
                                     <next>
                                       <block type="buzzer_note">
                                         <field name="NOTE">349</field>
-                                        <value name="DURATION"><block type="math_number"><field name="NUM">2</field></block></value>
+                                        <value name="DURATION"><block type="math_number"><field name="NUM">1</field></block></value>
                                         <next>
                                           <block type="buzzer_note">
                                             <field name="NOTE">349</field>
-                                            <value name="DURATION"><block type="math_number"><field name="NUM">0.75</field></block></value>
+                                            <value name="DURATION"><block type="math_number"><field name="NUM">0.375</field></block></value>
                                             <next>
                                               <block type="buzzer_note">
                                                 <field name="NOTE">349</field>
-                                                <value name="DURATION"><block type="math_number"><field name="NUM">0.25</field></block></value>
+                                                <value name="DURATION"><block type="math_number"><field name="NUM">0.125</field></block></value>
                                                 <next>
                                                   <block type="buzzer_note">
                                                     <field name="NOTE">392</field>
-                                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.75</field></block></value>
+                                                    <value name="DURATION"><block type="math_number"><field name="NUM">0.375</field></block></value>
                                                     <next>
                                                       <block type="buzzer_note">
                                                         <field name="NOTE">440</field>
-                                                        <value name="DURATION"><block type="math_number"><field name="NUM">0.25</field></block></value>
+                                                        <value name="DURATION"><block type="math_number"><field name="NUM">0.125</field></block></value>
                                                         <next>
                                                           <block type="buzzer_note">
                                                             <field name="NOTE">330</field>
-                                                            <value name="DURATION"><block type="math_number"><field name="NUM">3</field></block></value>
+                                                            <value name="DURATION"><block type="math_number"><field name="NUM">1.5</field></block></value>
                                                           </block>
                                                         </next>
                                                       </block>

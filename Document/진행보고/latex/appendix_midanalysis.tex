@@ -1,0 +1,402 @@
+%% ============================================================
+%% appendix_midanalysis.tex — 부록 E: 중간 보고 시점 코드 분석
+%% 부록 A(1일차 「코드 분석 종합 보고서」)의 장 구조를 현재 main 코드에
+%% 다시 적용한 재분석. 각 장에서 현재 구현 + [부록 A 대비] 변화를 실제
+%% 코드로 드러낸다. 부록 D(머지 변경 요약)와 상보적.
+%% ============================================================
+\section{중간 보고 시점 코드 분석 (부록 A 구조 재적용)}
+\label{app:midcode}
+
+본 부록은 \textbf{\ref{app:code}(1일차 「코드 분석 종합 보고서」)의 장 구성을 중간 보고
+시점의 실제 코드에 다시 적용한 재분석}이다. \ref{app:merge}가 통합 머지로 반영된
+변경을 트랙별로 \emph{요약}했다면, 본 부록은 부록 A의 분석 틀 --- \emph{하드웨어$\cdot$핀 $\to$
+피코 펌웨어 $\to$ 웹 서비스 계층 $\to$ 블루투스 $\to$ 블록코딩 $\to$ WebGL 시뮬레이션 $\to$
+연계 구조 $\to$ API} --- 을 그대로 따라가며, 각 장에서 \textbf{현재 구현을 기술하고
+\textnormal{[부록 A 대비]} 무엇이 달라졌는지를 실제 코드로} 드러낸다. 근거는 현재 \code{main}
+형상이며, 인용 코드는 모두 저장소에서 그대로 발췌한 것이다.
+
+\subsection{개요 및 분석 범위}
+세 런타임 도메인(웹 UI$\cdot$피코 펌웨어$\cdot$AI 보조)과 \emph{개행 구분 텍스트 명령 프로토콜}
+이라는 단일 계약은 부록 A와 동일하게 유지된다. 2주간의 구조 변화는 세 축으로 요약된다 ---
+\textbf{① 시뮬레이터의 모놀리스 분해(유형 A)}, \textbf{② 피코 설정 체계의 텍스트화와 비상정지
+협조 취소}, \textbf{③ 웹의 \code{ui.js} 분리와 BLE 응답 동기화}. 본 부록이 다루는 파일과
+중간 시점 현재 규모는 다음과 같다.
+
+\begin{table}[H]\centering\small
+\caption{분석 대상 파일과 중간 시점 현재 규모}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}l >{\ttfamily\footnotesize}X c@{}}
+\toprule
+\sffamily 도메인 & \sffamily 파일 & \sffamily 라인 \\
+\midrule
+피코 펌웨어 & process\_data.py & 777 \\
+            & main.py / system\_config.py / hardware.py / pins.py & 262 / 331 / 213 / 61 \\
+웹 코어 & bluetooth.js / commandexecutor.js & 663 / 656 \\
+        & blocklyconfig.js / constants.js / ui.js & 583 / 75 / (분리) \\
+시뮬레이터 & simulation.js (얇은 오케스트레이터) & 383 \\
+           & Sim\_Parts/ (14모듈, 조립 허브) & 2{,}736 \\
+           & Simulation/ (5래퍼) --- 현재 \textbf{미사용} & 592 \\
+(참고) & simulation\_backup.js (구 모놀리스 보존) & $\sim$2{,}300 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{사용 하드웨어와 연결 핀 (부록 A 3장 재적용)}
+\textbf{[현재]} 모든 GP 핀은 \code{Pico/pins.py}에 모듈 상수로 중앙 집중된다 --- UART GP0/1,
+DC 모터 GP8/9, I2C(OLED) GP4/5, 초음파 GP6/7, 서보 휠 GP12(우)/13(좌), 부저 GP15, LED 6개
+GP21\,--\,16, 발사기 GP22, 자기장 GP26, 예비 GP10/11/14/27/28.
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} \textbf{변동 없음.} 부록 A 3장(하드웨어 표)$\cdot$\S A.1의 핀 값과
+현재 \code{pins.py}가 \emph{완전히 일치}한다. 하드웨어 계층은 안정적이며, 변화는 상위(펌웨어
+로직$\cdot$설정)에서 일어났다.
+
+\begin{lstlisting}[style=py, caption={\code{Pico/pins.py}(발췌) --- 부록 A와 동일한 핀 배치(중앙 집중)}]
+UART_TX_PIN = 0;   UART_RX_PIN = 1        # 블루투스 UART
+DCMOTOR_DIR_PIN = 8; DCMOTOR_PWM_PIN = 9  # DC 메인 구동
+SERVO_RIGHT_PIN = 12; SERVO_LEFT_PIN = 13 # 서보 휠
+LED_PINS = [21, 20, 19, 18, 17, 16]       # LED0(메인)~LED5
+GUN_PIN = 22;      MAGSENSOR_PIN = 26     # 발사기 / 자기장
+RESERVED_PINS = [10, 11, 14, 27, 28]      # 예비(미사용)
+\end{lstlisting}
+
+\subsection{보드 펌웨어 (Pico) --- 명령 처리 · 설정 · 안전 (부록 A 4장 재적용)}
+\textbf{[현재]} \code{main.py}(\code{AresRover})가 부팅 후 UART 라인을 폴링해
+\code{CommandProcessor.process()}로 넘기고, \code{process()}는 접두어 매칭 디스패처로 각
+\code{\_handle\_*}에 분배한다(부록 A ``유형 B 디스패처'' 유지). 시간지정 동작은 \emph{중단
+가능 sleep}으로, 속도 인자는 \emph{0\,--\,100\% 클램프}로 처리한다.
+
+\begin{lstlisting}[style=py, caption={\code{process\_data.py} --- 접두어 매칭 디스패처(유형 B, 부록 A 유지)}]
+def process(self, data):
+    if   data == "PING":         return self._handle_ping()
+    elif data == "STOP_ALL":     return self._handle_stop_all()
+    elif data == "GET_SYS":      return self._handle_get_sys()
+    elif data == "GET_NAMES":    return self._handle_get_names()   # 신규
+    elif data.startswith("SYS_SET"): return self._handle_sys_set(data)
+    elif data.startswith("BATCH;"): return self._handle_batch(data)
+    # ... 이동/센서/LED/디스플레이 접두어별 _handle_*
+\end{lstlisting}
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 디스패처 골격은 같으나, 부록 A에는 없던 \textbf{비상정지 협조
+취소}$\cdot$\textbf{속도 제한}$\cdot$\textbf{설정 텍스트화}가 신규다.
+
+\begin{itemize}
+  \item \textbf{중단 가능 sleep} --- 부록 A는 시간지정 이동을 blocking \code{sleep}으로 처리해
+  \emph{중단 불가}였다. 현재는 50ms 슬라이스마다 비상정지를 확인하고 \code{MAX\_TIMED\_SEC=60}
+  으로 상한을 강제한다.
+  \item \textbf{속도 인자} --- 부록 A에는 속도 개념이 없었다. 현재는 명령 인자를 0\,--\,100\%로
+  받아 설정의 \code{max\_speed}를 상한으로 클램프한다(과속 방지).
+\end{itemize}
+
+\begin{lstlisting}[style=py, caption={\code{process\_data.py} --- 중단 가능 sleep(50ms 슬라이스 + 60초 상한)}]
+MAX_TIMED_SEC = 60   # Web/commandexecutor.js 의 MAX_TIMED_SEC 와 동기화
+
+def _interruptible_sleep(self, sec):
+    """50ms 슬라이스로 대기하며 매 슬라이스 비상정지 도착을 확인한다."""
+    if sec > MAX_TIMED_SEC:
+        sec = MAX_TIMED_SEC
+    end = utime.ticks_add(utime.ticks_ms(), int(sec * 1000))
+    while utime.ticks_diff(end, utime.ticks_ms()) > 0:
+        if self._abort_requested():   # main.py의 _poll_abort가 STOP_ALL 감지
+            return False              # -> 핸들러가 즉시 stop_all()
+        utime.sleep_ms(50)
+    return True
+
+def _get_wheel_speed(self, argv, index):
+    """명령 인자 속도를 읽되 시스템 max_speed 를 상한으로 적용"""
+    max_speed = self._clamp_percent_speed(sys_config.get('max_speed'))
+    requested = self._clamp_percent_speed(argv[index]) \
+                if len(argv) > index and argv[index] != "" else max_speed
+    return min(requested, max_speed)      # 과속 방지 클램프
+\end{lstlisting}
+
+\noindent 비상정지는 \code{main.py}의 \code{\_poll\_abort()}가 담당한다 --- 동작 중에도 UART를
+읽어 \textbf{STOP만 선별 소비}하고 나머지 버퍼는 보존한다. 또한 수신 버퍼를 str에서
+\textbf{bytes}로 바꿔, 한글 장치명 등 멀티바이트 문자가 20바이트 BLE 청크 경계에서 잘려도
+다음 청크와 합쳐 복원되도록 했다(부록 A의 str 누적 방식은 \code{UnicodeError}로 명령이 유실됐다).
+
+\begin{lstlisting}[style=py, caption={\code{main.py} --- \code{\_poll\_abort()}: 동작 중 STOP 선별 소비 + bytes 버퍼(한글 유실 수정)}]
+lines = self.rx_buffer.split(b'\n')
+tail = lines.pop()                      # 미완성 라인은 보존
+for i, line in enumerate(lines):
+    head = self._decode_line(line)      # 완성 라인만 utf-8 디코드(실패 시 폐기)
+    if head is None: continue
+    head = head.split(',', 1)[0]
+    if head in self.ABORT_CMDS:
+        self.rx_buffer = b'\n'.join(lines[i + 1:] + [tail])
+        return True                     # 즉시 중단 신호
+\end{lstlisting}
+
+\noindent 설정 체계는 \textbf{가장 큰 변화}다. 부록 A의 \code{system.json}(JSON) +
+\code{calibration.json} 병합 + \code{save\_all()} 구조를, 교사$\cdot$어린이가 메모장으로 고치는
+\textbf{텍스트 설정 \code{ModelFactorySetting.txt}}로 전면 교체했다. \code{is\_module\_enabled()}는
+잘못된 값에도 부팅이 죽지 않도록 방어된다.
+
+\begin{lstlisting}[style=py, caption={\code{system\_config.py} --- 텍스트(키=값/키:값) 파서와 부팅 안전화}]
+for line in content.split('\n'):
+    line = line.strip()
+    if not line or line.startswith("#"): continue      # 주석·빈 줄 무시
+    if   "=" in line: parts = line.split("=", 1)
+    elif ":" in line: parts = line.split(":", 1)
+    else:             parts = []
+    if len(parts) == 2:
+        key, val = parts[0].strip().lower(), parts[1].strip()
+        self.config[key] = int(val) if val.lstrip('-').isdigit() else val
+
+def is_module_enabled(self, module_name):     # hardware.py가 import 시점에 호출
+    try:
+        return int(self.config.get(f"enable_{module_name}", 0)) == 1
+    except (ValueError, TypeError):
+        return False                          # 오타 값이면 크래시 대신 모듈만 비활성
+\end{lstlisting}
+
+\noindent 하드웨어 접근 골격 --- \textbf{싱글턴 \code{robot}}과 \textbf{모듈 가드} --- 은 부록 A와
+동일하게 유지된다(\code{RobotHardware.\_\_new\_\_}로 인스턴스 1개, \code{is\_module\_enabled}
+가드로 조건부 로딩, 전역 \code{robot = RobotHardware()}). 부저의 논블로킹화(\code{update()}
+기반) 정도가 모듈 수준의 소규모 변화다.
+
+\begin{notebox}[주의 --- 설정 이전 · 계약 문서]
+\small
+부록 A가 기술한 \code{system.json}$\cdot$\code{save\_all}$\cdot$\code{CONFIG\_KEY\_ORDER} 심볼은
+현재 펌웨어에 \emph{존재하지 않는다}(텍스트 설정으로 교체됨). 기존 기기의 \code{system.json}
+값은 새 \code{ModelFactorySetting.txt}로 자동 이전되지 않으며(기본 템플릿 초기화), 바뀐 명령
+프로토콜(속도 인자$\cdot$\code{GET\_NAMES})은 \code{API\_DOCUMENTATION.md}와 웹$\cdot$펌웨어 양측을
+\textbf{짝으로} 갱신해야 한다.
+\end{notebox}
+
+\subsection{서비스 계층 --- 웹 애플리케이션 구조 (부록 A 5장 재적용)}
+\textbf{[현재]} 엔트리 \code{main.js}가 전 모듈을 오케스트레이션하되, 순수 UI 보조 함수는
+\textbf{\code{ui.js}}로 분리됐다. 점검(대시보드)은 별도 라우팅이 아니라 어디서 눌러도 열리는
+\textbf{iframe 전역 오버레이}이고, 화면 하단에는 5-탭 모바일 내비가 있다.
+
+\begin{lstlisting}[style=js, caption={\code{main.js} --- 엔트리가 import하는 모듈(부록 A 의존 그래프에 \code{ui.js} 추가)}]
+import { state } from './state.js';
+import { BluetoothManager } from './bluetooth.js';
+import { BlocklyConfig, ... } from './blocklyconfig.js';
+import { CommandExecutor } from './commandexecutor.js';
+import { setupSimulation } from './simulation.js';
+import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js'; // 분리
+import { parse as aiParse } from './ai_helper.js';
+\end{lstlisting}
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 5장 의존 그래프에는 \code{ui.js}가 \emph{없었다} ---
+UI 보조 로직을 별도 기반 모듈로 떼어낸 것이 이 계층의 최대 구조 변화다. 또한 점검 화면이
+\code{openDashboardFromAnywhere} 방식의 전역 오버레이(\code{position:fixed; inset:0;
+z-index:10000})로 정리되어, 미션$\cdot$코딩$\cdot$시뮬 어느 모드에서 열어도 닫으면 원위치로
+복귀한다.
+
+\begin{lstlisting}[style=js, caption={\code{ui.js} --- \code{main.js}에서 분리한 상태별 버튼 라벨 헬퍼}]
+export function updateBlockCodingButtonUI(btn, helpers = {}) {
+  if (!btn) return;
+  const isDashboardVisible   = helpers.isDashboardVisible   || (() => false);
+  const isInBlockCodingStage = helpers.isInBlockCodingStage || (() => false);
+  if (isDashboardVisible())        btn.textContent = '🧩 코딩';
+  else if (isInBlockCodingStage()) btn.textContent = '🏠 메인';
+  else                             btn.textContent = '🧩 블록코딩';
+}
+\end{lstlisting}
+
+\subsection{블루투스 지원 --- 응답 동기화 (부록 A 6장 재적용)}
+\textbf{[현재]} \code{bluetooth.js}(663줄)는 송신을 \code{\_sendQueue}로 직렬화하고 응답을
+Promise로 대기한다. 부록 A의 20바이트 청크 송신은 그대로 유지되며, 여기에 \textbf{동적
+타임아웃$\cdot$기대 응답 접두어 검증$\cdot$대기 취소} 세 방어가 더해졌다.
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 6장은 \textbf{고정 5초 타임아웃}만 기술했다. 시간지정
+blocking 명령(예: 10초 전진)은 완료 후에야 ack가 와서, 늦은 ack가 다음 명령 응답 슬롯을
+오염시키는 desync가 있었다. 현재는 (a) 예상 소요시간을 타임아웃에 가산하고, (b) 값 반환
+명령의 응답 접두어를 검증해 무관한 늦은 ack를 버리며, (c) 비상정지 시 대기 promise를 즉시
+취소한다.
+
+\begin{lstlisting}[style=js, caption={\code{bluetooth.js} --- 동적 타임아웃(BATCH는 하위 명령 합산)과 기대 응답 접두어 검증}]
+_estimateTimeoutMs(command) {
+  return BLUETOOTH_CONFIG.RESPONSE_TIMEOUT + this._estimateBlockingMs(command);
+},
+_expectedResponsePrefix(command) {
+  switch (command.split(',')[0]) {
+    case 'DISTANCE':    return 'DIST';
+    case 'MAGNET':      return 'MAG';
+    case 'GET_SYS':     return 'SYS_VALUES';
+    case 'GET_NAMES':   return 'NAMES';
+    case 'GET_STATUS':  return 'STATUS';
+    default:            return null;   // 검증 대상 아님
+  }
+},
+\end{lstlisting}
+
+\begin{lstlisting}[style=js, caption={\code{bluetooth.js} --- 비상정지: 대기 중 응답 promise를 즉시 취소해 전송 큐를 비운다}]
+cancelPendingResponse(reason) {
+  if (!state.pendingReject) return;
+  if (state.pendingTimeout) clearTimeout(state.pendingTimeout);
+  const reject = state.pendingReject, command = state.pendingCommand;
+  state.pendingCommand = state.pendingResolve = state.pendingReject = state.pendingTimeout = null;
+  reject(new Error(`${reason || '취소됨'}: ${command || ''}`));
+},
+\end{lstlisting}
+
+\subsection{코드 블록 구현 --- 블록 정의와 실행기 (부록 A 7장 재적용)}
+\textbf{[현재]} \code{blocklyconfig.js}(583줄)가 블록 정의$\cdot$배치 금지 집합$\cdot$모델별 동적
+라벨링을 담고, \code{commandexecutor.js}(656줄)가 블록 트리를 순회해 명령 문자열을 만든다.
+블록은 카테고리별 8색으로 고정되고, 이동 블록은 속도 인자를 갖는다.
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 7장의 명령표는 \code{SERVO\_tFORWARD,\{초\}}처럼
+\textbf{속도 인자가 없었고}, \code{controls\_if}를 단순 조건으로만 기술했으며, 툴박스를
+서보/DC/LED/디스플레이/소리 \textbf{세분 카테고리}로 나열했다. 현재는 (a) 모든 이동 블록에
+\code{SPEED} 인자 추가, (b) else-if(\code{IF0..IFn}) 순회, (c) 반환값 함수의 비동기 사전
+해석$\cdot$캐시와 재귀 16단계 상한, (d) main.html 툴박스의 \emph{동작$\cdot$출력} 병합$\cdot$재색상
+이 반영됐다.
+
+\begin{lstlisting}[style=js, caption={\code{commandexecutor.js} --- else-if(\code{IF0..IFn}) 순회와 속도 인자 명령}]
+} else if (block.type === 'controls_if') {
+  let ran = false;
+  for (let n = 0; block.getInput('IF' + n); n++) {
+    if (this.evaluateValueBlock(block.getInputTargetBlock('IF' + n)) === 'true') {
+      await this.processBlock(block.getInputTargetBlock('DO' + n)); ran = true; break;
+    }
+  }
+  if (!ran && block.getInput('ELSE')) await this.processBlock(block.getInputTargetBlock('ELSE'));
+}
+// 속도 인자: SERVO_tFORWARD,초,속도  (SECONDS는 60초로 클램프)
+case 'timed_forward': {
+  const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
+  const speed   = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+  return `SERVO_tFORWARD,${seconds},${speed}`;
+}
+\end{lstlisting}
+
+\noindent 반환값 함수는 동기 \code{evaluateValueBlock}으로 실행할 수 없어, 값 평가 전에 트리 안의
+함수 호출을 실행하고 결과를 블록 id로 캐시한다(재귀 16단계 상한 \code{MAX\_FUNC\_CALL\_DEPTH}).
+부록 A가 지적한 \emph{블록 type $\leftrightarrow$ \code{commandexecutor} case $\leftrightarrow$
+\code{ai\_helper}}의 3중 결합은 그대로여서(예: \code{timed\_forward}가 세 파일에 동시 존재),
+프로토콜 변경 시 세 곳을 짝으로 고쳐야 한다.
+
+\begin{lstlisting}[style=js, caption={\code{blocklyconfig.js} --- 모델별 동적 라벨 설정(\code{GET\_NAMES} 수신값으로 탭 한글 이름 갱신)}]
+const MODULE_LABEL_CONFIG = {
+  wheel:   { field: 'WHEEL_LABEL',   emoji: '🚗', defaultName: '서보 모터' },
+  dcmotor: { field: 'DCMOTOR_LABEL', emoji: '⚡', defaultName: 'DC 모터' },
+  leds:    { field: 'LEDS_LABEL',    emoji: '💡', defaultName: 'LED' },
+  oled:    { field: 'OLED_LABEL',    emoji: '🖥️', defaultName: '디스플레이' },
+  // ... buzzer / sensors / gun
+};
+\end{lstlisting}
+
+\subsection{WebGL 3D 시뮬레이션 --- 모듈화된 서브시스템 (부록 A 8장 재적용)}
+\textbf{[현재]} 부록 A 시점의 단일 거대 \code{simulation.js}(구조 흔적이
+\code{simulation\_backup.js} 131KB로 보존)는, \textbf{얇은 오케스트레이터 \code{simulation.js}
+(383줄) + \code{Sim\_Parts/} 14모듈}의 OOP 조립 구조로 재편됐다. 공개 API
+\code{setupSimulation()}는 유지되어 \code{main.js}는 거의 그대로다.
+
+\begin{lstlisting}[style=js, caption={\code{Sim\_Parts/context.js} --- \code{SimContext}가 공유 ctx(=this)로 서브시스템을 조립}]
+this.leds     = new LedSubsystem(this);   this.movement = new MovementSubsystem(this);
+this.gun      = new GunSubsystem(this);   this.rocket   = new RocketSubsystem(this);
+this.traffic  = new TrafficSubsystem(this); this.waves  = new WavesSubsystem(this);
+this.oled     = new OledSubsystem(this);   this.audio   = new AudioSynthesizer(this);
+this.assets   = new AssetLoader(this);     this.renderEngine = new RenderEngine(this);
+this.dispatcher = new CommandDispatcher(this); this.editor = new EditorControls(this);
+\end{lstlisting}
+
+\begin{table}[H]\centering\small
+\caption{\code{Web/Sim\_Parts/} 14개 모듈과 책임 (거대 클로저 \code{buildSim()} 분해)}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}L{0.30\linewidth} >{\raggedright\arraybackslash}X@{}}
+\toprule
+\sffamily 묶음 & \sffamily 모듈(책임) \\
+\midrule
+허브 & \code{context}(공유 ctx$\cdot$\code{buildSim} 파사드), \code{topics}(주제 정의) \\
+표현 & \code{render}(dt 프레임), \code{assets}(GLTF), \code{oled}, \code{leds}, \code{gun}, \code{waves}, \code{audio} \\
+동작 & \code{movement}(주행$\cdot$레이더$\cdot$거리센서), \code{rocket}(발사$\cdot$추적), \code{traffic}(신호등$\cdot$RPS) \\
+연동$\cdot$편집 & \code{dispatch}(\code{CommandDispatcher}$\cdot$\code{simSink}), \code{editor\_controls}(Move/Rotate/Scale, 신규) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 8장의 WebGL 초기화(렌더러$\cdot$조명$\cdot$PMREM)가 절차적으로
+나열되던 것을 \code{SimContext} 생성자로 캡슐화하고, 기능별 전역 함수를 \textbf{의존성 주입형
+서브시스템 클래스}로 전환했다. 또 부록 A의 애니메이션은 \textbf{프레임당 고정 증분}이라
+120Hz+ 모니터에서 2배로 빨라졌는데, 현재는 \code{performance.now()} 델타(\code{dt}) 기반으로
+\textbf{주사율 독립}이다(상수를 초당 값으로 정의). 부록 A에 없던 \textbf{객체 배치 편집}
+(\code{editor\_controls.js})도 신규 계층이다.
+
+\begin{lstlisting}[style=js, caption={\code{Sim\_Parts/render.js} --- 프레임 독립 애니메이션(초당 값 $\times$ dt)}]
+// 레이더 회전 속도 (rad/s). 기존 프레임당 0.15rad(60fps)을 초당 값으로 환산 —
+// dt를 곱하지 않으면 120Hz 모니터에서 2배로 빨라진다.
+const RADAR_SPIN = 9.0;
+const nowSec = performance.now() * 0.001;
+const dt = ctx.lastRenderTime > 0 ? Math.min(0.1, nowSec - ctx.lastRenderTime) : 0.016;
+ctx.lastRenderTime = nowSec;
+if (m && m.radarOn && m.antennaPivot) m.antennaPivot.rotation.y += RADAR_SPIN * dt * m.radarDir;
+\end{lstlisting}
+
+\subsection{코드별 연계 구조 (부록 A 9장 재적용)}
+\textbf{[현재]} 종단 간 경로는 부록 A와 같은 형태이되, \textbf{하드웨어 경로와 시뮬 경로가 하나의
+명령 파이프라인(sink)}으로 일반화됐다. \code{CommandExecutor.\_dispatch()}가 \code{simSink}
+존재 여부로 분기해, 있으면 시뮬(\code{dispatch.js}), 없으면 하드웨어(\code{bluetooth.js})로 보낸다.
+
+\begin{lstlisting}[style=js, caption={\code{commandexecutor.js} --- 하드웨어/시뮬 이중 경로를 sink 하나로 추상화}]
+async _dispatch(command, waitForResponse) {
+  if (this.simSink) {                                  // 시뮬 경로
+    const reply = await this.simSink(command, waitForResponse);
+    this._parseSensorReply(reply);                     // DIST:/MAG: 를 변수에 반영
+    return reply;
+  }
+  return BluetoothManager.sendData(command, waitForResponse);  // 하드웨어 경로
+},
+\end{lstlisting}
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 9장은 하드웨어 BLE 송신 경로가 주였다. 현재는 같은 명령
+문자열을 sink 하나로 양쪽에 재사용하며, 시뮬에서도 \code{DIST}/\code{MAG} 센서 응답을 동일하게
+Blockly 변수에 반영한다. 실제 진입 배선은 \code{main.js} $\to$ \code{simulation.js} $\to$
+\code{Sim\_Parts/context.js(buildSim)}로, 아래 사실이 확인된다.
+
+\begin{notebox}[사실 확인 --- \code{Web/Simulation/}는 미사용(죽은 코드)]
+\small
+\code{grep} 결과 \code{Simulation\_Main$\cdot$Launcher$\cdot$Rover$\cdot$Traffic$\cdot$AresRobot}
+이름은 \emph{각 파일 자기 헤더 주석에만} 등장하고, 어떤 \code{.js}/\code{.html}도 이 5개 래퍼를
+import하지 않는다(백업 파일 제외). 의존은 단방향(\code{Simulation/*} $\to$ \code{../Sim\_Parts/*})
+이며 외부 참조가 없다. 즉 \code{Web/Simulation/}(합계 592줄)은 리팩터링 중간 산물로 남은
+\textbf{미사용 코드}이고, 런타임은 \code{Sim\_Parts/}를 직접 사용한다. 문서(CLAUDE.md)의
+``\code{Simulation\_Main.js}로 배선'' 설명은 후속 반영/정리 대상이다.
+\end{notebox}
+
+\subsection{소스 코드별 API Reference --- 델타 (부록 A A.1$\sim$A.3 재적용)}
+부록 A의 소스별 API Reference에 대해, 중간 시점에 \textbf{신규$\cdot$변경된 주요 시그니처}만
+추린다(전체 표는 부록 A, 변경 요약은 부록 D 참조).
+
+\begin{table}[H]\centering\small
+\caption{부록 A API Reference 대비 신규$\cdot$변경 시그니처(발췌)}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}l >{\ttfamily\footnotesize}l L{0.40\linewidth}@{}}
+\toprule
+\sffamily 파일 & \sffamily 심볼 & \sffamily 성격 \\
+\midrule
+process\_data.py & \_interruptible\_sleep(sec) & 신규 --- 중단 가능 대기 \\
+                 & \_get\_wheel\_speed(argv,i) & 신규 --- 속도 클램프 \\
+                 & \_handle\_get\_names() & 신규 --- \code{GET\_NAMES} \\
+main.py & \_poll\_abort() / \_decode\_line() & 신규 --- 비상정지$\cdot$bytes 디코드 \\
+system\_config.py & is\_module\_enabled() & 변경 --- try/except 방어 \\
+                  & (\code{system.json} API) & 삭제 --- 텍스트 설정으로 대체 \\
+bluetooth.js & \_estimateBlockingMs() & 신규 --- 동적 타임아웃 \\
+             & \_expectedResponsePrefix() & 신규 --- 응답 짝 검증 \\
+             & cancelPendingResponse() & 신규 --- 비상정지 취소 \\
+commandexecutor.js & \_clampSeconds() / \_dispatch() & 신규 --- 초 클램프$\cdot$이중 경로 \\
+                   & \_executeFunctionCall() & 신규 --- 반환값 함수 사전 해석 \\
+Sim\_Parts/ & buildSim() / CommandDispatcher & 신규 --- 조립 허브$\cdot$명령 라우팅 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{infobox}[title=중간 시점 코드 분석 결론]
+\small
+부록 A의 분석 틀을 현재 코드에 다시 적용한 결과, 하드웨어$\cdot$핀 계층은 \emph{변동 없이}
+안정적이고, 변화는 상위 세 축에 집중된다 --- \textbf{① 시뮬레이터 모듈화}(단일 파일 $\to$ 공유
+컨텍스트 + 14 서브시스템), \textbf{② 펌웨어 안전$\cdot$설정}(중단 가능 sleep$\cdot$속도 제한$\cdot$%
+텍스트 설정), \textbf{③ 웹 동기화$\cdot$분리}(\code{ui.js} 추출$\cdot$동적 타임아웃$\cdot$응답 검증).
+남은 과제는 부록 A가 짚은 \emph{설정 이중화}(\code{system.json} 폐지 후 \code{localStorage}
+정합) 마무리, \code{Web/Simulation/} \emph{죽은 코드} 정리(팀 브랜치 재배선 반영), 그리고
+바뀐 프로토콜에 맞춘 \code{API\_DOCUMENTATION.md} 갱신이다.
+\end{infobox}
