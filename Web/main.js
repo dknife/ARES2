@@ -104,12 +104,50 @@ let mobileBottomNavBound = false;
 let pendingDashboardOpen = false;
 let mobileDashboardReturnHash = null;
 let mobileAiReturnHash = null;
+let aresBlocklyTheme = null;
 
 // 미션 뷰는 description / coding / simulation 세 모드 중 하나만 표시한다.
 // _preSimMode 는 시뮬을 닫았을 때 복귀할 모드(description 또는 coding)를 기억.
 let _contentMode = 'description';
 let _preSimMode = 'description';
 let setContentMode = null;     // setupContentToggle() 에서 등록
+
+function getAresBlocklyTheme() {
+  if (aresBlocklyTheme) return aresBlocklyTheme;
+
+  aresBlocklyTheme = Blockly.Theme.defineTheme('aresTheme', {
+    base: Blockly.Themes.Classic,
+    blockStyles: {
+      logic_blocks: { colourPrimary: '#cacacb' },
+      math_blocks: { colourPrimary: '#cacacb' },
+      loop_blocks: { colourPrimary: '#2b638f' },
+      variable_blocks: { colourPrimary: '#5483b5' },
+      variable_dynamic_blocks: { colourPrimary: '#5483b5' },
+      procedure_blocks: { colourPrimary: '#727171' }
+    },
+    categoryStyles: {
+      logic_category: { colour: '#cacacb' },
+      math_category: { colour: '#cacacb' },
+      loop_category: { colour: '#2b638f' },
+      variable_category: { colour: '#5483b5' },
+      procedure_category: { colour: '#727171' }
+    }
+  });
+
+  return aresBlocklyTheme;
+}
+
+function applyAresBuiltinBlockColours() {
+  const ifBlock = Blockly.Blocks?.controls_if;
+  if (!ifBlock || ifBlock.__aresColourPatchAttached) return;
+
+  const originalInit = ifBlock.init;
+  ifBlock.init = function() {
+    originalInit.call(this);
+    this.setColour('#2b638f');
+  };
+  ifBlock.__aresColourPatchAttached = true;
+}
 
 // ============================================================
 // 동적 툴박스 필터링
@@ -303,6 +341,7 @@ function initializeBlockly() {
   attachBatchBlockValidator(Blockly);
   attachDynamicNaming(Blockly, state);
   applyKoreanMessages();
+  applyAresBuiltinBlockColours();
 
   // 모바일에서는 카테고리 이름을 emoji 1자로 줄여 글자가 절대 새어 나오지 않도록
   // (Blockly 의 기본 선택 스타일이 텍스트 영역을 펼치는 케이스를 원천 차단)
@@ -317,6 +356,7 @@ function initializeBlockly() {
 
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox'),
+    theme: getAresBlocklyTheme(),
     scrollbars: true,
     trashcan: true,
     zoom: {
