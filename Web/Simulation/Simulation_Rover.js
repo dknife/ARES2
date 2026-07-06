@@ -8,7 +8,6 @@ export class Simulation_Rover extends Simulation_Base {
     super(ctx);
     this.leds = ctx.leds;
     this.movement = ctx.movement;
-    this.oled = ctx.oled;
     this.gun = ctx.gun;
     this.waves = ctx.waves;
     this.roverGroup = null;
@@ -26,16 +25,11 @@ export class Simulation_Rover extends Simulation_Base {
     scene.add(this.roverGroup);
     ctx.roverGroup = this.roverGroup;
 
-    // Initialize LEDs configurations
-    this.leds.init(cfg.eyes, cfg.chest, cfg.launch);
-
-    // Delegate World Helpers & Obstacles setup to Movement Subsystem
     if (cfg.helpers) {
       this.movement.setupWorld(scene, ctx.editor);
     }
 
-    // Delegate Sensor Balls and indicator setups to Leds and Movement Subsystems
-    this.leds.setupRoverLeds(this.roverGroup);
+    this.setupRoverIndicators();
     this.movement.setupSensorIndicators(this.roverGroup);
 
     // Delegate Multi-part GLTF loading and positioning to individual Subsystems
@@ -47,13 +41,16 @@ export class Simulation_Rover extends Simulation_Base {
         } else if (/RoverRadar\.glb$/.test(url)) {
           this.movement.setupRadar(this.roverGroup, root, ctx.editor);
         } else if (/RoverLED\.glb$/.test(url)) {
-          this.leds.setupLedMesh(this.roverGroup, root, ctx.editor);
+          root.position.set(0, 0.35, 0.2);
+          root.rotation.x = Math.PI / 4;
+          this.roverGroup.add(root);
+          ctx.editor?.register(root, 'Rover LED Mesh');
         } else if (/RoverHead\.glb$/.test(url)) {
           this.movement.setupHead(this.roverGroup, root, ctx.editor);
         } else if (/RoverGun\.glb$/.test(url)) {
           this.gun.setupGun(this.roverGroup, root, ctx.editor);
         } else if (/RoverOLED\.glb$/.test(url)) {
-          this.oled.setupOled(this.roverGroup, root, ctx.editor);
+          this.leds.setupOled(this.roverGroup, root, ctx.editor);
         } else {
           // Fallback placement for generic parts
           this.roverGroup.add(root);
@@ -65,6 +62,21 @@ export class Simulation_Rover extends Simulation_Base {
         this.ctx.frame(0.6, 2.8);
       }
     );
+  }
+
+  setupRoverIndicators() {
+    const count = 6;
+    const x0 = -0.4;
+    const x1 = 0.4;
+    const y = 0.4;
+    const z = 0.25;
+    const step = (x1 - x0) / (count - 1);
+
+    for (let i = 0; i < count; i++) {
+      const led = this.leds.register(`rover-${i}`, this.leds.createBallLed());
+      led.mesh.position.set(x0 + step * i, y, z);
+      this.roverGroup.add(led.mesh);
+    }
   }
 
   // Base Controller interface overrides
@@ -80,7 +92,6 @@ export class Simulation_Rover extends Simulation_Base {
 
   // Getters/setters delegating properties to respective subsystems
   get boxes() { return this.movement.boxes; }
-  get roverLeds() { return this.leds.roverLeds; }
   get magSensorBall() { return this.movement.magSensorBall; }
   set magSensorBall(v) { this.movement.magSensorBall = v; }
   get irSensorBalls() { return this.movement.irSensorBalls; }
@@ -93,12 +104,12 @@ export class Simulation_Rover extends Simulation_Base {
   get gunMesh() { return this.gun.gunMesh; }
   set gunMesh(v) { this.gun.gunMesh = v; }
   
-  get oledCanvas() { return this.oled.oledCanvas; }
-  set oledCanvas(v) { this.oled.oledCanvas = v; }
-  get oledCtx() { return this.oled.oledCtx; }
-  set oledCtx(v) { this.oled.oledCtx = v; }
-  get oledTex() { return this.oled.oledTex; }
-  set oledTex(v) { this.oled.oledTex = v; }
+  get oledCanvas() { return this.leds.oledCanvas; }
+  set oledCanvas(v) { this.leds.oledCanvas = v; }
+  get oledCtx() { return this.leds.oledCtx; }
+  set oledCtx(v) { this.leds.oledCtx = v; }
+  get oledTex() { return this.leds.oledTex; }
+  set oledTex(v) { this.leds.oledTex = v; }
 
   get muzzleWorldPos() { return this.gun.muzzleWorldPos; }
   get muzzleForward() { return this.gun.muzzleForward; }
@@ -124,7 +135,7 @@ export class Simulation_Rover extends Simulation_Base {
 
   // Control Methods
   setRoverLed(num, value) {
-    this.leds.setRoverLed(num, value);
+    this.leds.setIndexed('rover', num, value);
   }
 
   setServoMove(on, dir) {
@@ -164,19 +175,19 @@ export class Simulation_Rover extends Simulation_Base {
   }
 
   oledClear() {
-    this.oled.clear();
+    this.leds.clear();
   }
 
   oledClearRect(x, y, w, h) {
-    this.oled.clearRect(x, y, w, h);
+    this.leds.clearRect(x, y, w, h);
   }
 
   oledText(x, y, text) {
-    this.oled.text(x, y, text);
+    this.leds.text(x, y, text);
   }
 
   oledIcon(name, x, y) {
-    this.oled.icon(name, x, y);
+    this.leds.icon(name, x, y);
   }
 
   setGunFire() {
@@ -184,12 +195,12 @@ export class Simulation_Rover extends Simulation_Base {
   }
 
   // Properties checked by outside Simulation_Main wrapper
-  get hasRoverLeds() { return this.leds.roverLeds.length > 0; }
+  get hasRoverLeds() { return !!this.leds.get('rover-0'); }
   get hasDistanceSensor() { return this.movement.irSensorBalls.length > 0; }
   get hasServo() { return !!this.worldGroup; }
   get hasRadar() { return !!this.movement.antennaPivot; }
   get hasGun() { return !!this.gun.gunMesh; }
-  get hasOled() { return !!this.oled.oledCanvas; }
+  get hasOled() { return !!this.leds.oledCanvas; }
   get hasRoverWave() { return !!this.worldGroup; }
   get servoActive() { return this.movement.servoOn || this.movement.servoTurnOn; }
   get hasBoxes() { return this.movement.boxes.length > 0; }

@@ -25,14 +25,14 @@ export class Dispatch {
     const ctx = this.ctx;
     const cfg = ctx.cfg;
     if (cfg.eyes) {
-      if (num === 1) ctx.leds.setEye('R', intensity);
-      else if (num === 2) ctx.leds.setEye('L', intensity);
+      if (num === 1) ctx.leds.set('eye-r', intensity);
+      else if (num === 2) ctx.leds.set('eye-l', intensity);
     } else if (cfg.traffic) {
-      if (num >= 1 && num <= 3) ctx.traffic.setSlotOn(num - 1, intensity);
+      if (num >= 1 && num <= 3) ctx.leds.setIndexed('traffic', num - 1, intensity);
     } else if (cfg.launch) {
-      if (num >= 0 && num <= 5) ctx.leds.setLaunchLed(num, intensity);
+      if (num >= 0 && num <= 5) ctx.leds.setIndexed('launch', num, intensity);
     } else if (cfg.parts) {
-      if (num >= 0 && num <= 5) ctx.leds.setRoverLed(num, intensity);
+      if (num >= 0 && num <= 5) ctx.leds.setIndexed('rover', num, intensity);
     }
   }
 
@@ -40,22 +40,22 @@ export class Dispatch {
     const ctx = this.ctx;
     const cfg = ctx.cfg;
     if (cfg.eyes) {
-      ctx.leds.setEye('R', 0);
-      ctx.leds.setEye('L', 0);
+      ctx.leds.set('eye-r', 0);
+      ctx.leds.set('eye-l', 0);
     }
     if (cfg.chest) {
-      ctx.leds.setChest(0);
+      ctx.leds.set('chest', 0);
     }
     if (cfg.traffic) {
-      ctx.traffic.setSlotOn(0, 0);
-      ctx.traffic.setSlotOn(1, 0);
-      ctx.traffic.setSlotOn(2, 0);
+      ctx.leds.setIndexed('traffic', 0, 0);
+      ctx.leds.setIndexed('traffic', 1, 0);
+      ctx.leds.setIndexed('traffic', 2, 0);
     }
     if (cfg.launch) {
-      for (let i = 0; i <= 5; i++) ctx.leds.setLaunchLed(i, 0);
+      for (let i = 0; i <= 5; i++) ctx.leds.setIndexed('launch', i, 0);
     }
     if (cfg.parts) {
-      for (let i = 0; i <= 5; i++) ctx.leds.setRoverLed(i, 0);
+      for (let i = 0; i <= 5; i++) ctx.leds.setIndexed('rover', i, 0);
     }
   }
 
@@ -96,8 +96,8 @@ export class Dispatch {
     if (cmd.startsWith('BUZZER_ON,')) {
       const cleanups = [];
       if (cfg.chest) {
-        ctx.leds.setChest(1);
-        cleanups.push(() => { ctx.leds.setChest(0); });
+        ctx.leds.set('chest', 1);
+        cleanups.push(() => { ctx.leds.set('chest', 0); });
       }
       if (cfg.launch) {
         ctx.waves.setLaunchWave(true);
@@ -164,7 +164,7 @@ export class Dispatch {
 
     // OLED Emulation
     if (cmd === 'CLEAR_DISPLAY' || cmd.startsWith('CLEAR_DISPLAY')) {
-      if (cfg.parts) ctx.oled.clear();
+      if (cfg.parts) ctx.leds.clear();
       return null;
     }
     
@@ -175,18 +175,18 @@ export class Dispatch {
       const y = parseInt(parts[2], 10) || 0;
       const w = parseInt(parts[3], 10) || 0;
       const h = parseInt(parts[4], 10) || 0;
-      ctx.oled.clearRect(x, y, w, h);
+      ctx.leds.clearRect(x, y, w, h);
       return null;
     }
     
     if (cmd.startsWith('MSG,')) {
       if (!cfg.parts) return null;
-      ctx.oled.clear();
+      ctx.leds.clear();
       let rem = cmd.slice(4) || 'Hello';
       const MAX_CHARS = 16;
       const LINE_H = 8;
       for (let yp = 0; rem && yp < 64; yp += LINE_H) {
-        ctx.oled.text(0, yp, rem.slice(0, MAX_CHARS));
+        ctx.leds.text(0, yp, rem.slice(0, MAX_CHARS));
         rem = rem.slice(MAX_CHARS);
       }
       return null;
@@ -198,7 +198,7 @@ export class Dispatch {
       const x = parseInt(parts[1], 10) || 0;
       const y = parseInt(parts[2], 10) || 0;
       const text = parts.slice(3).join(',') || 'Hello';
-      ctx.oled.text(x, y, text);
+      ctx.leds.text(x, y, text);
       return null;
     }
     
@@ -208,7 +208,7 @@ export class Dispatch {
       const name = (parts[1] || '').trim().toLowerCase();
       const x = parseInt(parts[2], 10) || 0;
       const y = parseInt(parts[3], 10) || 0;
-      ctx.oled.icon(name, x, y);
+      ctx.leds.icon(name, x, y);
       return null;
     }
 

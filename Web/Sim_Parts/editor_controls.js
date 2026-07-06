@@ -1,7 +1,8 @@
 // ARES Simulation Editor Controls
 // Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
 
-import { createAlbiRobotObjects, createPrimitiveObject } from './object_factory.js';
+import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
+import { createPrimitiveObject } from './object_factory.js';
 
 const MODES = ['translate', 'rotate', 'scale'];
 const SPAWN_MENU = [
@@ -233,7 +234,7 @@ export class EditorControls {
 
     this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
     try {
-      const simObjects = await createAlbiRobotObjects(this.ctx);
+      const simObjects = await createSpawnedAlbiObjects(this.ctx);
       const body = simObjects[0];
       this.ctx.objects.add(body, parent);
       body.setWorldPosition(worldPoint, parent);
