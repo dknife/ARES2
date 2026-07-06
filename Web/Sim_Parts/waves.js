@@ -9,7 +9,7 @@ const WAVE_COLOR          = 0x88ddff;
 const WAVE_OPACITY        = 0.16;
 const ROVER_WAVE_BASE_R    = 0.15;
 
-export class WavesSubsystem {
+export class Waves {
   constructor(ctx) {
     this.ctx = ctx;
     this.launchWaveOn = false;
