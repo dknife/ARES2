@@ -5,7 +5,7 @@ const TRAFFIC_LAMP_COLORS = [0xff0000, 0xffcc00, 0x00c030];
 const TRAFFIC_HAND_COLOR  = 0xffcc00;
 const TRAFFIC_LAMP_ROT_X = Math.PI / 2;
 
-export class TrafficSubsystem {
+export class Traffic {
   constructor(ctx) {
     this.ctx = ctx;
     this.trafficRoot = null;

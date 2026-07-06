@@ -8,146 +8,7 @@ const ROCKET_SPEED = 0.16;
 const SMOKE_POOL = 80;
 const SMOKE_RATE = 42;
 
-export function recolorLaunchpadAntenna(root, THREE) {
-  const meshes = [];
-  root.traverse((o) => { if (o.isMesh && o.geometry?.getAttribute('position')) meshes.push(o); });
-  if (!meshes.length) return;
-
-  function splitTris(idxArr, posAttr, isInRegion) {
-    const insideTris = [], outsideTris = [];
-    const triCount = idxArr.length / 3;
-    for (let t = 0; t < triCount; t++) {
-      const a = idxArr[t * 3], b = idxArr[t * 3 + 1], c = idxArr[t * 3 + 2];
-      const allIn =
-        isInRegion(posAttr.getX(a), posAttr.getY(a)) &&
-        isInRegion(posAttr.getX(b), posAttr.getY(b)) &&
-        isInRegion(posAttr.getX(c), posAttr.getY(c));
-      (allIn ? insideTris : outsideTris).push(a, b, c);
-    }
-    if (!insideTris.length) return null;
-    let cx = 0, cy = 0, cz = 0, n = 0;
-    const used = new Set(insideTris);
-    for (const v of used) { cx += posAttr.getX(v); cy += posAttr.getY(v); cz += posAttr.getZ(v); n++; }
-    return { insideTris, outsideTris, centroid: { x: cx / n, y: cy / n, z: cz / n } };
-  }
-
-  for (const mesh of meshes) {
-    const geom = mesh.geometry;
-    const posAttr = geom.getAttribute('position');
-    if (!geom.getIndex() || !posAttr) continue;
-    geom.computeBoundingBox();
-    const bb = geom.boundingBox;
-    const sx = bb.max.x - bb.min.x;
-    const sy = bb.max.y - bb.min.y;
-
-    // ---- 1) Antenna (Grey + y-axis pivot) ----
-    const isAntenna = (x, y) => {
-      const fx = (x - bb.min.x) / sx;
-      const fy = (y - bb.min.y) / sy;
-      return fx > 0.78 && fx < 0.92 && fy > 0.70;
-    };
-    let split = splitTris(geom.getIndex().array, posAttr, isAntenna);
-    if (!split) {
-      console.warn('[LaunchStation] 안테나 정점 감지 실패');
-    } else {
-      const { insideTris, outsideTris, centroid } = split;
-      const pivotOffsetX = -0.01;
-      const pivotX = centroid.x + pivotOffsetX;
-      const antennaGeom = geom.clone();
-      antennaGeom.setIndex(insideTris);
-      const grayMat = new THREE.MeshStandardMaterial({
-        color: 0x9aa0a6, metalness: 0.1, roughness: 0.7,
-        side: THREE.DoubleSide, emissive: 0x404040, emissiveIntensity: 0.6,
-      });
-      const pivot = new THREE.Group();
-      pivot.position.set(pivotX, centroid.y, centroid.z);
-      const antennaMesh = new THREE.Mesh(antennaGeom, grayMat);
-      antennaMesh.position.set(-pivotX, -centroid.y, -centroid.z);
-      antennaMesh.castShadow = true;
-      antennaMesh.receiveShadow = true;
-      antennaMesh.frustumCulled = false;
-      pivot.add(antennaMesh);
-      mesh.add(pivot);
-      root.userData.antennaPivot = pivot;
-      geom.setIndex(outsideTris);
-    }
-
-    // ---- 2) Rocket (Yellow, vertical cylinder) ----
-    const isRocket = (x, y) => {
-      const fx = (x - bb.min.x) / sx;
-      const fy = (y - bb.min.y) / sy;
-      return fx > 0.28 && fx < 0.46 && fy > 0.68;
-    };
-    split = splitTris(geom.getIndex().array, posAttr, isRocket);
-    if (!split) {
-      console.warn('[LaunchStation] 로켓 정점 감지 실패');
-    } else {
-      const { insideTris, outsideTris } = split;
-      const rocketGeom = geom.clone();
-      rocketGeom.setIndex(insideTris);
-      let rxMin = Infinity, rxMax = -Infinity;
-      let ryMin = Infinity, ryMax = -Infinity;
-      let rzMin = Infinity, rzMax = -Infinity;
-      const usedR = new Set(insideTris);
-      for (const v of usedR) {
-        const x = posAttr.getX(v), y = posAttr.getY(v), z = posAttr.getZ(v);
-        if (x < rxMin) rxMin = x; if (x > rxMax) rxMax = x;
-        if (y < ryMin) ryMin = y; if (y > ryMax) ryMax = y;
-        if (z < rzMin) rzMin = z; if (z > rzMax) rzMax = z;
-      }
-      const rcx = (rxMin + rxMax) / 2;
-      const rcz = (rzMin + rzMax) / 2;
-      const rby = ryMin;
-      const yellowMat = new THREE.MeshStandardMaterial({
-        color: 0xf5d23a, metalness: 0.05, roughness: 0.55,
-        side: THREE.DoubleSide, emissive: 0x4a3a08, emissiveIntensity: 0.45,
-      });
-      const rocketGroup = new THREE.Group();
-      const rocketMesh = new THREE.Mesh(rocketGeom, yellowMat);
-      rocketMesh.castShadow = true;
-      rocketMesh.receiveShadow = true;
-      rocketMesh.frustumCulled = false;
-      rocketGroup.add(rocketMesh);
-
-      // Flame sprite
-      const fc = document.createElement('canvas'); fc.width = fc.height = 128;
-      const fcx = fc.getContext('2d');
-      const fg = fcx.createRadialGradient(64, 64, 0, 64, 64, 64);
-      fg.addColorStop(0.0, 'rgba(255,250,200,1)');
-      fg.addColorStop(0.3, 'rgba(255,150,40,0.9)');
-      fg.addColorStop(0.7, 'rgba(255,60,0,0.4)');
-      fg.addColorStop(1.0, 'rgba(255,0,0,0)');
-      fcx.fillStyle = fg; fcx.fillRect(0, 0, 128, 128);
-      const flameTex = new THREE.CanvasTexture(fc);
-      flameTex.colorSpace = THREE.SRGBColorSpace;
-      const flameSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: flameTex, color: 0xffaa33, transparent: true,
-        blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.0,
-      }));
-      flameSprite.position.set(rcx, rby - 0.10, rcz);
-      flameSprite.scale.set(0.22, 0.50, 1);
-      flameSprite.visible = false;
-      rocketGroup.add(flameSprite);
-
-      // Flame PointLight
-      const flameLight = new THREE.PointLight(0xff9020, 0, 1.8, 2);
-      flameLight.position.set(rcx, rby - 0.05, rcz);
-      rocketGroup.add(flameLight);
-
-      mesh.add(rocketGroup);
-      geom.setIndex(outsideTris);
-
-      root.userData.rocketGroup = rocketGroup;
-      root.userData.rocketFlameSprite = flameSprite;
-      root.userData.rocketFlameLight = flameLight;
-      root.userData.rocketCentroidLocal = new THREE.Vector3(rcx, (ryMin + ryMax) / 2, rcz);
-      root.userData.rocketBottomLocal   = new THREE.Vector3(rcx, ryMin, rcz);
-      root.userData.rocketMeshRef = mesh;
-    }
-  }
-}
-
-export class RocketSubsystem {
+export class Rocket {
   constructor(ctx) {
     this.ctx = ctx;
     this.rocketGroup = null;
@@ -166,6 +27,156 @@ export class RocketSubsystem {
     this.smokeTex = null;
     this.smokePool = [];
     this.smokeSpawnAcc = 0;
+  }
+
+  // Static helper to recolor antenna geometry from the loaded Launchpad model
+  static recolorAntenna(root, THREE) {
+    const meshes = [];
+    root.traverse((o) => { if (o.isMesh && o.geometry?.getAttribute('position')) meshes.push(o); });
+    if (!meshes.length) return;
+
+    function splitTris(idxArr, posAttr, isInRegion) {
+      const insideTris = [], outsideTris = [];
+      const triCount = idxArr.length / 3;
+      for (let t = 0; t < triCount; t++) {
+        const a = idxArr[t * 3], b = idxArr[t * 3 + 1], c = idxArr[t * 3 + 2];
+        const allIn =
+          isInRegion(posAttr.getX(a), posAttr.getY(a)) &&
+          isInRegion(posAttr.getX(b), posAttr.getY(b)) &&
+          isInRegion(posAttr.getX(c), posAttr.getY(c));
+        (allIn ? insideTris : outsideTris).push(a, b, c);
+      }
+      if (!insideTris.length) return null;
+      let cx = 0, cy = 0, cz = 0, n = 0;
+      const used = new Set(insideTris);
+      for (const v of used) { cx += posAttr.getX(v); cy += posAttr.getY(v); cz += posAttr.getZ(v); n++; }
+      return { insideTris, outsideTris, centroid: { x: cx / n, y: cy / n, z: cz / n } };
+    }
+
+    for (const mesh of meshes) {
+      const geom = mesh.geometry;
+      const posAttr = geom.getAttribute('position');
+      if (!geom.getIndex() || !posAttr) continue;
+      geom.computeBoundingBox();
+      const bb = geom.boundingBox;
+      const sx = bb.max.x - bb.min.x;
+      const sy = bb.max.y - bb.min.y;
+
+      // ---- 1) Antenna (Grey + y-axis pivot) ----
+      const isAntenna = (x, y) => {
+        const fx = (x - bb.min.x) / sx;
+        const fy = (y - bb.min.y) / sy;
+        return fx > 0.78 && fx < 0.92 && fy > 0.70;
+      };
+      let split = splitTris(geom.getIndex().array, posAttr, isAntenna);
+      if (!split) {
+        console.warn('[LaunchStation] 안테나 정점 감지 실패');
+      } else {
+        const { insideTris, outsideTris, centroid } = split;
+        const pivotOffsetX = -0.01;
+        const pivotX = centroid.x + pivotOffsetX;
+        const antennaGeom = geom.clone();
+        antennaGeom.setIndex(insideTris);
+        const grayMat = new THREE.MeshStandardMaterial({
+          color: 0x9aa0a6, metalness: 0.1, roughness: 0.7,
+          side: THREE.DoubleSide, emissive: 0x404040, emissiveIntensity: 0.6,
+        });
+        const pivot = new THREE.Group();
+        pivot.position.set(pivotX, centroid.y, centroid.z);
+        const antennaMesh = new THREE.Mesh(antennaGeom, grayMat);
+        antennaMesh.position.set(-pivotX, -centroid.y, -centroid.z);
+        antennaMesh.castShadow = true;
+        antennaMesh.receiveShadow = true;
+        antennaMesh.frustumCulled = false;
+        pivot.add(antennaMesh);
+        mesh.add(pivot);
+        root.userData.antennaPivot = pivot;
+        geom.setIndex(outsideTris);
+      }
+
+      // ---- 2) Rocket (Yellow, vertical cylinder) ----
+      const isRocket = (x, y) => {
+        const fx = (x - bb.min.x) / sx;
+        const fy = (y - bb.min.y) / sy;
+        return fx > 0.28 && fx < 0.46 && fy > 0.68;
+      };
+      split = splitTris(geom.getIndex().array, posAttr, isRocket);
+      if (!split) {
+        console.warn('[LaunchStation] 로켓 정점 감지 실패');
+      } else {
+        const { insideTris, outsideTris } = split;
+        const rocketGeom = geom.clone();
+        rocketGeom.setIndex(insideTris);
+        let rxMin = Infinity, rxMax = -Infinity;
+        let ryMin = Infinity, ryMax = -Infinity;
+        let rzMin = Infinity, rzMax = -Infinity;
+        const usedR = new Set(insideTris);
+        for (const v of usedR) {
+          const x = posAttr.getX(v), y = posAttr.getY(v), z = posAttr.getZ(v);
+          if (x < rxMin) rxMin = x; if (x > rxMax) rxMax = x;
+          if (y < ryMin) ryMin = y; if (y > ryMax) ryMax = y;
+          if (z < rzMin) rzMin = z; if (z > rzMax) rzMax = z;
+        }
+        const rcx = (rxMin + rxMax) / 2;
+        const rcz = (rzMin + rzMax) / 2;
+        const rby = ryMin;
+        const yellowMat = new THREE.MeshStandardMaterial({
+          color: 0xf5d23a, metalness: 0.05, roughness: 0.55,
+          side: THREE.DoubleSide, emissive: 0x4a3a08, emissiveIntensity: 0.45,
+        });
+        const rocketGroup = new THREE.Group();
+        const rocketMesh = new THREE.Mesh(rocketGeom, yellowMat);
+        rocketMesh.castShadow = true;
+        rocketMesh.receiveShadow = true;
+        rocketMesh.frustumCulled = false;
+        rocketGroup.add(rocketMesh);
+
+        // Flame sprite
+        const fc = document.createElement('canvas'); fc.width = fc.height = 128;
+        const fcx = fc.getContext('2d');
+        const fg = fcx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        fg.addColorStop(0.0, 'rgba(255,250,200,1)');
+        fg.addColorStop(0.3, 'rgba(255,150,40,0.9)');
+        fg.addColorStop(0.7, 'rgba(255,60,0,0.4)');
+        fg.addColorStop(1.0, 'rgba(255,0,0,0)');
+        fcx.fillStyle = fg; fcx.fillRect(0, 0, 128, 128);
+        const flameTex = new THREE.CanvasTexture(fc);
+        flameTex.colorSpace = THREE.SRGBColorSpace;
+        const flameSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: flameTex, color: 0xffaa33, transparent: true,
+          blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.0,
+        }));
+        flameSprite.position.set(rcx, rby - 0.10, rcz);
+        flameSprite.scale.set(0.22, 0.50, 1);
+        flameSprite.visible = false;
+        rocketGroup.add(flameSprite);
+
+        // Flame PointLight
+        const flameLight = new THREE.PointLight(0xff9020, 0, 1.8, 2);
+        flameLight.position.set(rcx, rby - 0.05, rcz);
+        rocketGroup.add(flameLight);
+
+        mesh.add(rocketGroup);
+        geom.setIndex(outsideTris);
+
+        root.userData.rocketGroup = rocketGroup;
+        root.userData.rocketFlameSprite = flameSprite;
+        root.userData.rocketFlameLight = flameLight;
+        root.userData.rocketCentroidLocal = new THREE.Vector3(rcx, (ryMin + ryMax) / 2, rcz);
+        root.userData.rocketBottomLocal   = new THREE.Vector3(rcx, ryMin, rcz);
+        root.userData.rocketMeshRef = mesh;
+      }
+    }
+  }
+
+  // Setup Rocket by binding to structural parameters decoded in recolorAntenna
+  setupRocket(root) {
+    this.rocketGroup = root.userData.rocketGroup;
+    this.rocketFlameSprite = root.userData.rocketFlameSprite;
+    this.rocketFlameLight = root.userData.rocketFlameLight;
+    this.rocketCentroidLocal = root.userData.rocketCentroidLocal;
+    this.rocketMeshRef = root.userData.rocketMeshRef;
+    this.rocketBottomLocal = root.userData.rocketBottomLocal;
   }
 
   setRocketLaunch(on, followCamera) {
@@ -303,8 +314,8 @@ export class RocketSubsystem {
         const t = p.age / p.life;
         if (t >= 1) { p.active = false; p.sprite.visible = false; continue; }
         p.sprite.position.addScaledVector(p.vel, dt);
-        p.vel.multiplyScalar(Math.max(0, 1 - 2.0 * dt));
-        p.vel.y += 0.3 * dt;
+        p.vel.multiplyScalar(Math.max(0, 1 - 2.5 * dt));
+        p.vel.y += 0.4 * dt;
         const grow = 1 - (1 - t) * (1 - t);
         const s = p.scale0 + (p.scaleMax - p.scale0) * grow;
         p.sprite.scale.set(s, s, 1);
@@ -345,4 +356,3 @@ export class RocketSubsystem {
     } catch {}
   }
 }
-export { recolorLaunchpadAntenna as recolorAntenna };

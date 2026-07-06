@@ -3,7 +3,7 @@
 
 import { LED_PALETTES } from './topics.js';
 
-export class LedSubsystem {
+export class Leds {
   constructor(ctx) {
     this.ctx = ctx;
     this.eyeL = null;
@@ -39,6 +39,79 @@ export class LedSubsystem {
       this.launchGlowTex = this.makeGlowTex(LED_PALETTES.launchTorus.glowStops);
       this.launchStripGlowTex = this.makeGlowTex(LED_PALETTES.launchStrip.glowStops);
     }
+  }
+
+  // Setup sensor indicator LEDs for the Rover topic
+  setupRoverLeds(roverGroup) {
+    const LED_COUNT = 6, LED_X0 = -0.4, LED_X1 = 0.4, LED_Y = 0.4, LED_Z = 0.25, LED_R = 0.05;
+    const step = (LED_X1 - LED_X0) / (LED_COUNT - 1);
+    const ledGeom = new this.ctx.THREE.SphereGeometry(LED_R, 16, 12);
+    for (let i = 0; i < LED_COUNT; i++) {
+      const ball = new this.ctx.THREE.Mesh(
+        ledGeom,
+        new this.ctx.THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, roughness: 0.4, metalness: 0.0 })
+      );
+      ball.position.set(LED_X0 + step * i, LED_Y, LED_Z);
+      roverGroup.add(ball);
+      this.roverLeds.push(ball);
+    }
+  }
+
+  // Add loaded RoverLED gltf mesh to rover group
+  setupLedMesh(roverGroup, root, editor) {
+    root.position.set(0, 0.35, 0.2);
+    root.rotation.x = Math.PI / 4;
+    roverGroup.add(root);
+    editor?.register(root, 'Rover LED Mesh');
+  }
+
+  // Setup Launchpad LED strips on the loaded model
+  setupLaunchLeds(root, launchCfg, waves) {
+    const THREE = this.ctx.THREE;
+    const LAUNCH = launchCfg;
+    if (!LAUNCH) return;
+
+    let sz = new THREE.Vector3();
+    let box = new THREE.Box3();
+    box.setFromObject(root);
+    box.getSize(sz);
+
+    waves.launchFootprintSize = Math.max(sz.x, sz.z);
+    const lx = box.min.x + sz.x * LAUNCH.stripXFrac;
+    const lz = box.min.z + sz.z * LAUNCH.stripZFrac;
+    const yTop = box.min.y + sz.y * LAUNCH.stripYRange[0];
+    const yBot = box.min.y + sz.y * LAUNCH.stripYRange[1];
+    const n = LAUNCH.stripCount;
+    for (let i = 0; i < n; i++) {
+      const t = n === 1 ? 0 : i / (n - 1);
+      const ly = yTop + (yBot - yTop) * t;
+      const led = this.makeLed(LAUNCH.stripRadius, [lx, ly, lz], THREE.simPalettes?.launchStrip || {
+        sphereBase: 0x031a0a, emissive: 0x00ff33, glowTint: 0x00ff44, lightColor: 0x00ff44,
+        intensityScale: 0.12, opacityOn: 0.99, glowScale: 0.55
+      }, this.launchStripGlowTex);
+      root.add(led.group);
+      this.launchLeds[i + 1] = led;
+    }
+    
+    const rb = root.userData.rocketBottomLocal;
+    const rmesh = root.userData.rocketMeshRef;
+    if (rb && rmesh) {
+      const torusGeom = new THREE.TorusGeometry(LAUNCH.torusRadius, LAUNCH.torusTube, 16, 48);
+      torusGeom.rotateX(Math.PI / 2);
+      const led0 = this.makeLed(LAUNCH.torusRadius, [rb.x, rb.y + LAUNCH.torusYOffset, rb.z], {
+        sphereBase: 0x1f0204, emissive: 0xff0a1e, glowTint: 0xff1828, lightColor: 0xff1422,
+        intensityScale: 0.45, opacityOn: 0.99, glowScale: 0.55
+      }, this.launchGlowTex, torusGeom);
+      rmesh.add(led0.group);
+      this.launchLeds[0] = led0;
+    }
+  }
+
+  // Attach eye/chest LEDs to Albi Robot
+  setupAresLeds(root) {
+    if (this.eyeL) root.add(this.eyeL.group);
+    if (this.eyeR) root.add(this.eyeR.group);
+    if (this.chestLed) root.add(this.chestLed.group);
   }
 
   makeGlowTex(stops) {

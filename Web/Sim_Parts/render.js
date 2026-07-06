@@ -9,7 +9,7 @@ const BOX_COLLIDE_R = 1.5;
 // 환산 — dt를 곱지 않으면 120Hz 모니터에서 2배로 빨라진다.
 const RADAR_SPIN = 9.0;
 
-export class RenderEngine {
+export class Render {
   constructor(ctx) {
     this.ctx = ctx;
   }
@@ -86,6 +86,9 @@ export class RenderEngine {
     }
     if (ctx.gun && ctx.gun.gunMesh && typeof ctx.gun.updateGunSmoke === 'function') {
       ctx.gun.updateGunSmoke(dt);
+    }
+    if (ctx.objects && typeof ctx.objects.update === 'function') {
+      ctx.objects.update(dt);
     }
     if (ctx.editor && typeof ctx.editor.update === 'function') {
       ctx.editor.update();

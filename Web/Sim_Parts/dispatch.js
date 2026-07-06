@@ -1,7 +1,7 @@
 // Web/Sim_Parts/dispatch.js
 // Command dispatcher (applyTopicEffect) and execution simulation sink (simSink).
 
-export class CommandDispatcher {
+export class Dispatch {
   constructor(ctx) {
     this.ctx = ctx;
     this.activeWaitCancel = null;
