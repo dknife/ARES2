@@ -636,7 +636,6 @@ function updateRunButtonUI() {
     btn.title = '실행 중인 미션을 즉시 멈춥니다';
     btn.classList.add('btn-stop');
     btn.disabled = false;
-    syncToolboxRunAction(btn);
     updateMobileBottomNav();
     return;
   }
@@ -647,24 +646,11 @@ function updateRunButtonUI() {
   const dashboardFrame = document.getElementById('dashboardFrame');
   const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
   btn.disabled = !inMission || inDashboard || !isBleConnected();
-  syncToolboxRunAction(btn);
   updateMobileBottomNav();
 }
 
-// 툴박스 하단 '미션전송' 버튼을 상단 runButton 상태(활성/비상정지)에 맞춰 동기화
-function syncToolboxRunAction(btn) {
-  const proxy = document.querySelector('#toolboxActions .tbx-action[data-action="run"]');
-  if (!proxy || !btn) return;
-  const isStop = btn.classList.contains('btn-stop');
-  proxy.disabled = btn.disabled;
-  proxy.classList.toggle('is-stop', isStop);
-  const ico = proxy.querySelector('.tbx-ico');
-  const lbl = proxy.querySelector('.tbx-lbl');
-  if (ico) ico.textContent = isStop ? '🛑' : '▶️';
-  if (lbl) lbl.textContent = isStop ? '비상정지' : '미션전송';
-}
 
-// 툴박스 하단 도구 버튼(미션전송·저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
+// 툴박스 하단 도구 버튼(저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
 // 동일 로직(검증·비상정지·저장 프롬프트·파일입력)을 그대로 실행한다.
 function setupToolboxActions() {
   const box = document.getElementById('toolboxActions');
@@ -673,8 +659,7 @@ function setupToolboxActions() {
     const btn = event.target.closest('.tbx-action');
     if (!btn || btn.disabled) return;
     const action = btn.dataset.action;
-    if (action === 'run') elements.runButton?.click();
-    else if (action === 'save') elements.saveButton?.click();
+    if (action === 'save') elements.saveButton?.click();
     else if (action === 'load') elements.loadButton?.click();
   });
 }
@@ -1564,7 +1549,7 @@ let _codingExecuting = false; // 코딩 모드 실행(전송) 진행 여부 — 
 // 항상 켜 있는 이벤트 리스너 (BLE, 비상 정지, 로그 등)
 // ============================================================
 function initializeAlwaysOnListeners() {
-  // 툴박스 하단 도구 버튼(미션전송·저장·읽기) 위임 배선
+  // 툴박스 하단 도구 버튼(저장·읽기) 위임 배선
   setupToolboxActions();
 
   // 상단 ARES 로고 → "만든 사람들"(크레딧) WebGL 오버레이 (필요할 때만 로드)
