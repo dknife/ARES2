@@ -819,13 +819,15 @@ function updateMobileBottomNav() {
   if (connectBtn) {
     const codingMode = document.body.dataset.contentMode === 'coding';
     const connected = isBleConnected();
+    // 연결돼야 실행 가능. 코딩 모드라도 미연결이면 '실행'이 아니라 '신호연결' 버튼으로 표시한다.
+    const runnable = codingMode && connected;
     connectBtn.classList.toggle('connected', connected);
-    connectBtn.classList.toggle('coding-run', codingMode);
+    connectBtn.classList.toggle('coding-run', runnable);
     connectBtn.setAttribute('aria-pressed', String(connected));
-    connectBtn.setAttribute('aria-label', codingMode ? '블록 코딩 실행' : '탐사선 신호 연결');
+    connectBtn.setAttribute('aria-label', runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
     const label = connectBtn.querySelector('.mobile-nav-label');
     if (label) {
-      label.textContent = codingMode
+      label.textContent = runnable
         ? '실행'
         : connected
         ? '연결됨'
@@ -1563,7 +1565,9 @@ function initializeAlwaysOnListeners() {
 
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
-    if (document.body.dataset.contentMode === 'coding') {
+    const codingMode = document.body.dataset.contentMode === 'coding';
+    // 코딩 모드라도 연결돼 있어야 실행. 미연결이면 실행 대신 연결을 시도한다.
+    if (codingMode && isBleConnected()) {
       elements.runButton?.click();
       e.currentTarget?.blur?.();
       return;
