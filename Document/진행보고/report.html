@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~10일차</title>
+    <title>ARES 진행 보고 — 1~11일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,7 +194,7 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 10일차</span></h1>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 11일차</span></h1>
             <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검.</p>
             <div class="stat-row">
                 <div class="stat"><b>9</b><span>DAYS</span></div>
@@ -1929,11 +1929,91 @@ async _executeFunctionCall(callBlock) {
                 </div>
             </div>
         </section>
+
+        <!-- ============ Day 11 ============ -->
+        <section class="day" id="day11">
+            <div class="day-head">
+                <span class="day-badge">DAY 11</span>
+                <h2>교구 시제품 산업체 공동 점검 · 서비스 앱 디자인 점검 · 서비스 앱 동작 품질 테스트</h2>
+                <span class="day-date">2026.07.07 (화) · 산업체 방문 + 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">교구 제작 협력 업체를 다시 방문해 <b>시제품 교구를 산업체와 공동 점검</b>하고, 같은 자리에서 <b>서비스 앱 디자인을 현장 검토</b>했다. 3D 프린팅·레이저 커팅으로 제작한 <b>화성발사대 시제품</b>의 외장·내부 회로·배선·끼움 정밀도를 실물로 맞춰 보고, 스마트폰에서 서비스 앱을 함께 구동하며 미션·차시 UI와 동작을 검토했다. 컴퓨터실에서는 <b>서비스 앱 동작 품질 테스트</b>를 체계화해, <b>V-모델 기반 QA 체계</b>와 <b>통합 테스트 케이스 명세서 v1.0</b>(14개 카테고리·98개 실행형 케이스)를 작성하고 앱을 케이스별로 점검했다.</p>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_공동점검_현장.jpg" alt="산업체 공동 점검 현장"></div>
+                    <figcaption>산업체 미팅룸 — 교구 모델이 진열된 현장에서 시제품·서비스 앱을 함께 점검.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_동작테스트_수행.jpg" alt="컴퓨터실 동작 품질 테스트"></div>
+                    <figcaption>컴퓨터실 — 통합 테스트 케이스 명세서 기반으로 앱 동작 품질 테스트를 수행.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🔧 교구 시제품 — 산업체 공동 점검</h3>
+                <p class="lead">교구 제작 협력 업체를 방문해 <b>화성발사대 시제품</b>을 <b>산업체와 함께 점검</b>했다. 6·9·10일차에서 다듬어 온 <b>크림슨 외장 + 3D 프린팅 발사대 부품</b>과 내부 <b>회로 기판·배선·LED</b>를 실물로 펼쳐 놓고, 부품 끼움 정밀도·조립성·배선 정리·전원/LED 동작을 하나씩 맞춰 보며 양산 관점의 개선점을 논의했다.</p>
+                <div class="chips">
+                    <span class="chip">화성발사대 시제품</span>
+                    <span class="chip">크림슨 외장 + 3D 프린팅 부품</span>
+                    <span class="chip">회로·배선·LED 점검</span>
+                    <span class="chip">끼움 정밀도·조립성·양산성</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_공동점검_검토.jpg" alt="시제품·앱 공동 검토"></div>
+                    <figcaption>시제품 교구와 서비스 앱을 함께 놓고 산업체·개발팀이 공동 검토.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_교구부품.jpg" alt="화성발사대 부품"></div>
+                    <figcaption>화성발사대 부품 — 외장·회로 기판(LED 점등)·배선·3D 프린팅 베이스의 조립성 확인.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 서비스 앱 — 디자인 현장 점검</h3>
+                <p class="lead">같은 자리에서 <b>서비스 앱 디자인을 현장 검토</b>했다. 스마트폰에서 앱을 구동해 <b>학습 관제실(차시·미션)·미션 화면·블록코딩</b>의 화면 구성과 조작 흐름을 산업체·개발팀이 함께 보며, 교구(실물)와 앱(화면)의 연계·일관성 관점에서 개선점을 도출했다.</p>
+                <div class="chips">
+                    <span class="chip">스마트폰 실기 검토</span>
+                    <span class="chip">관제실·미션·블록코딩 화면</span>
+                    <span class="chip">교구↔앱 연계·일관성</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_앱디자인점검.jpg" alt="서비스 앱 디자인 점검"></div>
+                    <figcaption>스마트폰 서비스 앱 화면을 함께 보며 디자인·동작을 현장 검토.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>✅ 서비스 앱 — 동작 품질 테스트 (QA 체계·통합 테스트 명세서)</h3>
+                <p class="lead">컴퓨터실에서 <b>서비스 앱 동작 품질 테스트</b>를 체계화했다. <b>V-모델 기반 QA 체계</b>(요구사항 분석 → 시스템 설계 → 상세 설계 → 구현 → 단위/통합/시스템/인수 테스트)와 역할(R&amp;R)을 정리한 <b>품질 보증 명세서</b>를 작성하고, 이를 근거로 <b>통합 테스트 케이스 명세서 v1.0</b>(<b>14개 카테고리·98개 실행형 케이스</b>)을 도출했다. 케이스는 Pico 펌웨어 10개 모듈·Web 블록코딩 실행엔진·3D 시뮬레이터·XML Presets를 전수 분석해 실제 코드의 명령·블록 흐름에 대응시켜 Pass/Fail 기준과 함께 서술했고, 시뮬레이터로 실물 기기 없이도 케이스를 실행·검증할 수 있게 했다.</p>
+                <div class="chips">
+                    <span class="chip">V-모델 QA 체계·R&amp;R</span>
+                    <span class="chip">품질 보증 명세서 v1.0</span>
+                    <span class="chip">통합 테스트 케이스 98건</span>
+                    <span class="chip">펌웨어·웹·시뮬·프리셋 전수 대응</span>
+                    <span class="chip">Pass/Fail 기준·시뮬 검증</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_동작테스트_명세서.jpg" alt="통합 테스트 케이스 명세서"></div>
+                    <figcaption>통합 테스트 케이스 명세서 v1.0 — 14개 카테고리·98개 실행형 케이스.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_QA체계.png" alt="QA 체계 V-모델"></div>
+                    <figcaption>품질 보증(QA) 체계 — V-모델 기반 테스트 전략과 R&amp;R 시각화.</figcaption>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 93매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 100매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->
