@@ -273,7 +273,6 @@ export class Simulation_Main {
     }
 
     const simLog = document.getElementById('simLog');
-    const simRunBtn = document.getElementById('simRun');
     const simClearBtn = document.getElementById('simLogClear');
     const logLine = (text, cls) => {
       if (!simLog) return;
@@ -306,12 +305,13 @@ export class Simulation_Main {
     let simRunning = false;
     let simAborted = false;
     const SERVO_LINGER_MS = 10000;
-    const SIM_RUN_LABEL = '▶ 시뮬레이션 해보기';
-    const SIM_STOP_LABEL = '⏹ 시뮬레이션 중지';
 
-    if (simRunBtn) simRunBtn.addEventListener('click', async () => {
+    // 시뮬 실행/중지 토글 — 하단 중앙 '모의실행' 버튼(main.js)이 호출한다.
+    // 실행 상태는 'ares:simrun' 이벤트로 중앙 버튼에 전달한다(주황·정지·'실험중단').
+    async function toggleSimRun() {
       ensureAudio();
       if (simRunning) {
+        // 실행 중 재호출 = 시뮬레이션 중지
         simAborted = true;
         state.isExecuting = false;
         if (sim) sim.cancelActiveWait();
@@ -319,8 +319,7 @@ export class Simulation_Main {
       }
       if (!workspace) { logLine('워크스페이스가 준비되지 않았습니다', 'err'); return; }
       simRunning = true; simAborted = false;
-      simRunBtn.textContent = SIM_STOP_LABEL;
-      simRunBtn.classList.add('running');
+      window.dispatchEvent(new CustomEvent('ares:simrun', { detail: { running: true } }));
       logLine('──── 시뮬레이션 시작 ────', 'sys');
       try {
         await CommandExecutor.simulateWorkspace(workspace, (cmd, waitResp) => sim.simSink(cmd, waitResp));
@@ -345,8 +344,7 @@ export class Simulation_Main {
         logLine('오류: ' + (e && e.message ? e.message : e), 'err');
       } finally {
         simRunning = false;
-        simRunBtn.textContent = SIM_RUN_LABEL;
-        simRunBtn.classList.remove('running');
+        window.dispatchEvent(new CustomEvent('ares:simrun', { detail: { running: false } }));
         if (simAborted) {
           if (sim && sim.hasServo) sim.stopServo();
           if (sim) {
@@ -367,7 +365,7 @@ export class Simulation_Main {
           }
         }
       }
-    });
+    }
 
     if (simClearBtn) simClearBtn.addEventListener('click', () => { if (simLog) simLog.textContent = ''; });
 
@@ -413,7 +411,7 @@ export class Simulation_Main {
       });
     }
 
-    return { open, close };
+    return { open, close, toggleSimRun, isSimRunning: () => simRunning };
   }
 }
 
