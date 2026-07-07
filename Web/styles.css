@@ -2309,8 +2309,10 @@ details.mission-section summary {
    ============================================================ */
 :root {
     --mockup-red: #e65448;
-    --mockup-green: #12b76a;      /* 연결됨·실행·모의실행(go) 상태 — 완료 미션 배지와 동일 팔레트 */
-    --mockup-orange: #d9660a;     /* 실행 중 정지(비상정지·실험중단) — 짙은 주황 */
+    --mockup-green: #12b76a;      /* 연결됨(go) 상태 — 완료 미션 배지와 동일 팔레트 */
+    --mockup-gold:  #E6AD00;      /* 코딩 모드 '실행' */
+    --mockup-blue:  #3F78A8;      /* 시뮬레이션 모드 '모의실행' */
+    --mockup-stop:  #B94A45;      /* 실행 중 정지(비상정지·실험중단) */
     --mockup-ink: #272526;
     --mockup-line: #d7d7d9;
     --mockup-panel: #e7e7e9;
@@ -2661,9 +2663,13 @@ details.mission-section summary {
     background: var(--mockup-green) !important;   /* 연결됨: 붉은색 → 팔레트 초록 */
 }
 
-/* go 상태(실행·모의실행): 초록 배경 + 재생(삼각형) 아이콘. 연결 없이도 실행되는 시뮬 포함. */
-.mobile-bottom-nav .mobile-connect-btn.coding-run {
-    background: var(--mockup-green) !important;
+/* go 상태(실행·모의실행): 재생(삼각형) 아이콘 + 모드별 배경색.
+   코딩 '실행'=골드(#E6AD00), 시뮬 '모의실행'=블루(#3F78A8). */
+body[data-content-mode="coding"] .mobile-bottom-nav .mobile-connect-btn.coding-run {
+    background: var(--mockup-gold) !important;
+}
+body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.coding-run {
+    background: var(--mockup-blue) !important;
 }
 .mobile-connect-btn.coding-run .mobile-connect-icon {
     width: 0;
@@ -2676,10 +2682,10 @@ details.mission-section summary {
     border-left: 21px solid #fff;
 }
 
-/* 실행 중 정지 상태(비상정지·실험중단): 짙은 주황 + 정지(사각형) 아이콘. 재클릭 시 중지.
+/* 실행 중 정지 상태(비상정지·실험중단): #B94A45 + 정지(사각형) 아이콘. 재클릭 시 중지.
    .connected/.coding-run 보다 뒤에 와서 우선한다. */
 .mobile-bottom-nav .mobile-connect-btn.run-stop {
-    background: var(--mockup-orange) !important;
+    background: var(--mockup-stop) !important;
 }
 .mobile-connect-btn.run-stop .mobile-connect-icon {
     width: 15px;
