@@ -193,9 +193,9 @@
                                 <button id="simObstacle" class="sim-launch-btn" data-action="obstacle" type="button"><span class="dot"></span>장애물 제거</button>
                             </div>
                         </div>
-                        <!-- 실행/중지 + 로그 지우기: 렌더링 창 안 하단에 띄운다 -->
+                        <!-- 시뮬 실행/중지는 하단 중앙 '모의실행' 버튼으로 통합(중앙 버튼이 toggleSimRun 호출).
+                             로그 지우기만 렌더링 창 안 하단에 남긴다. -->
                         <div class="sim-runbar">
-                            <button id="simRun" type="button" title="블록 명령을 피코로 보내는 과정을 시뮬레이션">▶ 시뮬레이션 해보기</button>
                             <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
                         </div>
                         <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기</p>

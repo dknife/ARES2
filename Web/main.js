@@ -822,13 +822,17 @@ function updateMobileBottomNav() {
     const connected = isBleConnected();
     // 실물 실행은 연결 필요(코딩+연결). 시뮬레이션은 연결 없이 항상 '모의실행'.
     const runnable = codingMode && connected;
+    const simRunning = simMode && _simRunning;   // 시뮬 실행 중 → 주황·정지·'실험중단'
     connectBtn.classList.toggle('connected', connected);
-    connectBtn.classList.toggle('coding-run', runnable || simMode);
+    connectBtn.classList.toggle('coding-run', (runnable || simMode) && !simRunning);
+    connectBtn.classList.toggle('sim-running', simRunning);
     connectBtn.setAttribute('aria-pressed', String(connected));
-    connectBtn.setAttribute('aria-label', simMode ? '시뮬레이션 모의 실행' : runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
+    connectBtn.setAttribute('aria-label', simRunning ? '시뮬레이션 중지' : simMode ? '시뮬레이션 모의 실행' : runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
     const label = connectBtn.querySelector('.mobile-nav-label');
     if (label) {
-      label.textContent = simMode
+      label.textContent = simRunning
+        ? '실험중단'
+        : simMode
         ? '모의실행'
         : runnable
         ? '실행'
@@ -1542,6 +1546,7 @@ function toggleDashboard() {
 //   showView() 에서 미션 뷰를 떠날 때 close() 호출.
 // ============================================================
 let simController = null;
+let _simRunning = false;   // 시뮬레이션(모의실행) 진행 여부 — 중앙 버튼 상태에 반영
 
 // ============================================================
 // 콘텐츠 모드 토글 — 미션 설명 ↔ 블럭코딩 단일 버튼
@@ -1569,9 +1574,9 @@ function initializeAlwaysOnListeners() {
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
     const mode = document.body.dataset.contentMode;
-    // 시뮬레이션 모드: 연결 없이 모의실행 — WebGL 창의 '시뮬레이션 해보기'(#simRun)와 동일 동작.
+    // 시뮬레이션 모드: 연결 없이 모의실행/실험중단 — 시뮬 컨트롤러의 toggleSimRun 호출.
     if (mode === 'simulation') {
-      document.getElementById('simRun')?.click();
+      simController?.toggleSimRun?.();
       e.currentTarget?.blur?.();
       return;
     }
@@ -1612,6 +1617,10 @@ function initializeAlwaysOnListeners() {
   window.addEventListener('ares:connection', updateRunButtonUI);
   window.addEventListener('ares:execution',  updateRunButtonUI);
   window.addEventListener('ares:contentmode', updateMobileBottomNav);
+  window.addEventListener('ares:simrun', (e) => {
+    _simRunning = !!(e.detail && e.detail.running);
+    updateMobileBottomNav();
+  });
 
   // 홈(개요)
   document.getElementById('homeButton')?.addEventListener('click', (e) => {
