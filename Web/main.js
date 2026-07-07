@@ -818,16 +818,19 @@ function updateMobileBottomNav() {
   const connectBtn = nav.querySelector('[data-mobile-action="connect"]');
   if (connectBtn) {
     const codingMode = document.body.dataset.contentMode === 'coding';
+    const simMode = document.body.dataset.contentMode === 'simulation';
     const connected = isBleConnected();
-    // 연결돼야 실행 가능. 코딩 모드라도 미연결이면 '실행'이 아니라 '신호연결' 버튼으로 표시한다.
+    // 실물 실행은 연결 필요(코딩+연결). 시뮬레이션은 연결 없이 항상 '모의실행'.
     const runnable = codingMode && connected;
     connectBtn.classList.toggle('connected', connected);
-    connectBtn.classList.toggle('coding-run', runnable);
+    connectBtn.classList.toggle('coding-run', runnable || simMode);
     connectBtn.setAttribute('aria-pressed', String(connected));
-    connectBtn.setAttribute('aria-label', runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
+    connectBtn.setAttribute('aria-label', simMode ? '시뮬레이션 모의 실행' : runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
     const label = connectBtn.querySelector('.mobile-nav-label');
     if (label) {
-      label.textContent = runnable
+      label.textContent = simMode
+        ? '모의실행'
+        : runnable
         ? '실행'
         : connected
         ? '연결됨'
@@ -1565,9 +1568,15 @@ function initializeAlwaysOnListeners() {
 
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
-    const codingMode = document.body.dataset.contentMode === 'coding';
+    const mode = document.body.dataset.contentMode;
+    // 시뮬레이션 모드: 연결 없이 모의실행 — WebGL 창의 '시뮬레이션 해보기'(#simRun)와 동일 동작.
+    if (mode === 'simulation') {
+      document.getElementById('simRun')?.click();
+      e.currentTarget?.blur?.();
+      return;
+    }
     // 코딩 모드라도 연결돼 있어야 실행. 미연결이면 실행 대신 연결을 시도한다.
-    if (codingMode && isBleConnected()) {
+    if (mode === 'coding' && isBleConnected()) {
       elements.runButton?.click();
       e.currentTarget?.blur?.();
       return;
