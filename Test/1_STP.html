@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARES 소프트웨어 테스트 계획서 (STP) v1.0</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
+    :root {
+        --ink: #222; --accent: #FA5D29; --accent-dark: #d8431b;
+        --muted: #999; --line: #EDEDED; --card: #ffffff; --bg: #F8F8F8; --chip: #F2F2F2;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Inter Tight', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+        line-height: 1.6; color: var(--ink); background-color: var(--bg);
+        margin: 0; padding: 40px 20px; display: flex; justify-content: center;
+    }
+    .document-container {
+        max-width: 1000px; width: 100%; background-color: var(--card);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 40px 56px 56px; border-radius: 14px;
+    }
+    .cover-page { background: #222; color: #fff; text-align: center; padding: 64px 40px; border-radius: 14px; margin-bottom: 44px; }
+    .doc-type { font-size: 0.85rem; color: var(--accent); font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 18px; }
+    h1.title { font-size: 2.6rem; font-weight: 800; color: #fff; letter-spacing: -1px; line-height: 1.15; margin: 0 0 14px; }
+    .subtitle { font-size: 1.1rem; color: rgba(255,255,255,0.72); margin-bottom: 34px; }
+    .meta-table { width: 100%; max-width: 560px; margin: 0 auto; border-collapse: collapse; text-align: left; }
+    .meta-table th { background: rgba(255,255,255,0.06); color: var(--accent); padding: 12px 20px; border: 1px solid rgba(255,255,255,0.14); width: 40%; font-weight: 700; }
+    .meta-table td { padding: 12px 20px; border: 1px solid rgba(255,255,255,0.14); color: #fff; }
+    h2 { font-size: 1.5rem; color: var(--ink); font-weight: 700; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-top: 46px; margin-bottom: 20px; position: relative; }
+    h2::before { content: ''; position: absolute; bottom: -1px; left: 0; width: 60px; height: 3px; background-color: var(--accent); }
+    h3 { font-size: 1.15rem; color: var(--accent-dark); font-weight: 700; margin-top: 28px; margin-bottom: 12px; }
+    p { margin-bottom: 14px; text-align: justify; }
+    ul, ol { margin-bottom: 18px; padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    strong, b { color: var(--ink); }
+    .data-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.93rem; }
+    .data-table th, .data-table td { border: 1px solid var(--line); padding: 11px 13px; vertical-align: top; }
+    .data-table th { background-color: #222; color: #fff; font-weight: 700; text-align: center; }
+    .data-table tr:nth-child(even) td { background: #FAFAFA; }
+    .highlight-box { background: #fff; border-left: 4px solid var(--accent); box-shadow: 0 2px 10px rgba(0,0,0,0.06); padding: 16px 20px; margin: 18px 0; border-radius: 0 10px 10px 0; font-size: 0.94rem; }
+    code { background: #f1f5f9; padding: 1px 6px; border-radius: 3px; font-size: 0.86em; color: #1e293b; font-family: 'Consolas', 'D2Coding', monospace; }
+    .kpi-table th { width: 30%; }
+    .change-summary { background: #FFF3EE; border: 1px solid #FAD5C6; border-left: 4px solid var(--accent); padding: 18px 22px; border-radius: 0 10px 10px 0; margin: 24px 0; font-size: 0.93rem; color: #7c2d12; }
+    .change-summary h3 { color: var(--accent-dark); margin-top: 0; }
+    .page-break { page-break-before: always; }
+    @media print { body { background-color: white; padding: 0; } .document-container { box-shadow: none; padding: 0; max-width: 100%; } .cover-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-before: always; } }
+    @media (max-width: 600px) { .document-container { padding: 24px 20px 40px; } h1.title { font-size: 2rem; } }
+</style>
+</head>
+<body>
+
+<div class="document-container">
+    <div class="cover-page">
+        <div class="doc-type">Software Test Plan (STP) - v1.0</div>
+        <h1 class="title">ARES 소프트웨어 테스트 계획서</h1>
+        <div class="subtitle">블록코딩과 BLE 통신 기반 마이크로컨트롤러 교육 플랫폼<br>
+            <span style="font-size: 0.95rem; color: #888;">Pico 펌웨어 · Web 실행 엔진 · XML 프리셋 실제 소스 분석 반영판</span>
+        </div>
+        <table class="meta-table">
+            <tr><th>문서명</th><td>ARES 소프트웨어 테스트 계획서 (STP)</td></tr>
+            <tr><th>프로젝트명</th><td>ARES (Autonomous Rover Exploration System)</td></tr>
+            <tr><th>버전</th><td>v1.0 (실제 소스 반영)</td></tr>
+            <tr><th>작성일</th><td>2026년 07월 03일</td></tr>
+            <tr><th>작성자</th><td>기획총괄 / 프로젝트 PM</td></tr>
+            <tr><th>검토자</th><td>품질보증(QA) 파트장</td></tr>
+            <tr><th>참조</th><td>ARES_2_TCL v1.0 (98 케이스), 실제 소스코드</td></tr>
+        </table>
+    </div>
+
+    <h2>1. 목적 (Purpose)</h2>
+    <p>본 테스트 계획서(STP)는 "블록코딩과 BLE 통신을 이용한 프로그래밍형 마이크로컨트롤러 기반 교육 플랫폼 (ARES)"의 품질을 검증하기 위한 지침서임</p>
+    <ul>
+        <li>Web 블록코딩 실행 엔진의 블록-명령 변환 정확성 검증</li>
+        <li>Web Bluetooth API를 통한 BLE 통신 안정성 및 파이프라인 정합성 검증</li>
+        <li>Raspberry Pi Pico 펌웨어의 명령 처리·하드웨어 제어 정밀성 검증</li>
+        <li>본 계획은 실제 소스코드(Pico/ 13개 모듈, Web/ 실행 엔진, XML Presets 2종)를 전수 분석하여 실제 명령 프로토콜에 대응되는 테스트 항목만 채택함</li>
+    </ul>
+
+    <div class="change-summary">
+        <h3>본 STP가 근거로 삼는 실제 소스 구조</h3>
+        <ul>
+            <li><strong>Pico/</strong> : main.py(UART 루프), process_data.py(명령 디스패처), hardware.py(모듈 싱글톤), system_config.py(설정), wheel/dcmotor/leds/buzzer/gun/ultrasonic/magsensor/ssd1306/pins</li>
+            <li><strong>Web/</strong> : commandexecutor.js(블록→명령), bluetooth.js(BLE), blocklyconfig.js(블록 정의·BATCH 금지), simulation.js·Sim_Parts/(시뮬레이터 실 구현체), main.js(12차시 셸)</li>
+            <li><strong>XML Presets/</strong> : Test All Hardware.xml(전 모듈 전수 테스트), Launch Rocket.xml(LED 카운트다운 발사 시퀀스)</li>
+            <li><strong>examples/</strong> : countdown, greeting, led_variable, obstacle_avoid, radar_demo, rover_wakeup, albi_song (7종 예제)</li>
+        </ul>
+    </div>
+
+    <h2>2. 테스트 범위 (Test Scope)</h2>
+    <p>범위는 Web UI와 Pico 펌웨어 간의 연동을 포함한 전체 시스템 융합 테스트임</p>
+    <ul>
+        <li><strong>연결·시스템 조회</strong> : PING, READY, GET_STATUS, GET_SYS, GET_MODULES, GET_NAMES, STOP_ALL</li>
+        <li><strong>BLE 통신·파이프라인</strong> : 서비스 UUID 필터, 페어링, 20바이트 청킹, fire-and-forget 무응답 vs 응답 대기, FIRE_AND_FORGET 양쪽 동기화</li>
+        <li><strong>BATCH 블록</strong> : BATCH;a|b|c 직렬화, 순차 실행·단일 응답, 금지 블록 이중 방어(값반환·제어흐름·중첩)</li>
+        <li><strong>블록 코딩 엔진</strong> : generateCommand 블록-명령 매핑, 반복/조건/변수/함수, 예제 XML 로드, 한글 로마자 변환</li>
+        <li><strong>액추에이터</strong> : 서보 휠(연속회전), DC 모터(dual PWM 대칭), LED 6개, 부저(논블로킹), 발사기</li>
+        <li><strong>디스플레이</strong> : OLED 128x64 MSG/MSG_XY/ICON/CLEAR/CLEAR_RECT</li>
+        <li><strong>센서</strong> : 초음파 거리(HC-SR04), 디지털 자기장(홀/리드)</li>
+        <li><strong>설정·안정성</strong> : SYS_SET 영구 저장, 모듈 활성화, 핀 변경, 부팅 None 가드, XML 저장/불러오기</li>
+        <li><strong>3D 시뮬레이터</strong> : 4개 주제(알비·우주 신호등·발사대·로버), simSink 명령 매핑, 눈/가슴 LED·레이더·로켓·서보 이동·OLED 에뮬, 실행/중지, hold 계산, BATCH 시뮬 (총 24 케이스)</li>
+        <li><strong>E2E</strong> : XML 프리셋 실행(Test All Hardware / Launch Rocket), 시뮬레이터 무하드웨어 실행</li>
+    </ul>
+
+    <h2>3. 테스트 대상 (Test Target)</h2>
+    <table class="data-table">
+        <tr><th>구분</th><th>대상 컴포넌트</th><th>주요 검증 항목</th></tr>
+        <tr>
+            <td>Frontend (Web)</td>
+            <td>commandexecutor.js, blocklyconfig.js, main.js</td>
+            <td>블록-명령 매핑, BATCH 금지, 12차시 라우팅, 예제 로드</td>
+        </tr>
+        <tr>
+            <td>Middleware (BLE)</td>
+            <td>bluetooth.js, constants.js</td>
+            <td>UUID 0000ffe0/ffe1, 20바이트 청킹, 응답 매칭, notification 파싱</td>
+        </tr>
+        <tr>
+            <td>Firmware (Pico)</td>
+            <td>main.py, process_data.py, hardware.py</td>
+            <td>UART 라인 파싱, 명령 디스패치, None 가드, 응답 정책</td>
+        </tr>
+        <tr>
+            <td>Hardware Driver</td>
+            <td>wheel, dcmotor, leds, buzzer, gun, ultrasonic, magsensor, ssd1306</td>
+            <td>PWM 듀티, 6 LED, dual PWM, 거리 측정, 디지털 자기 감지</td>
+        </tr>
+        <tr>
+            <td>Simulator / Preset</td>
+            <td>Web/Sim_Parts, XML Presets</td>
+            <td>simulateWorkspace, Test All Hardware, Launch Rocket</td>
+        </tr>
+    </table>
+
+    <h2>4. 테스트 전략 (Test Strategy)</h2>
+    <ul>
+        <li><strong>단위 테스트</strong> : Pico 핸들러 함수별, Web 모듈별 독립 검증 (예 : ai_helper_grammar.test.mjs)</li>
+        <li><strong>통합 테스트</strong> : Web → BLE → Pico 데이터 흐름, 명령-응답 정합성</li>
+        <li><strong>시스템 테스트</strong> : TCL v1.0 98 케이스 전수 종단(E2E) 검증</li>
+        <li><strong>시뮬레이터 선행 테스트</strong> : 하드웨어 없이 Web/Sim_Parts로 블록-명령 경로를 먼저 검증한 뒤 실기 확인</li>
+        <li><strong>프리셋 기반 회귀</strong> : Test All Hardware.xml로 전 모듈을 한 번에 구동해 매 빌드마다 하드웨어 회귀 확인</li>
+    </ul>
+
+    <h2>5. 성능 KPI (측정 대상)</h2>
+    <p>다음 KPI를 실행 시 측정하여 STR에 기록함 (목표치는 코드 설정값 기준)</p>
+    <table class="data-table kpi-table">
+        <tr><th>KPI 항목</th><th>근거 (코드)</th><th>목표</th></tr>
+        <tr><td>fire-and-forget 명령 간격</td><td>cooldown 40ms(F&F)/20ms(응답)</td><td>약 40ms 이하</td></tr>
+        <tr><td>단일 청크 명령 처리량</td><td>UART 9600 baud, 즉시 종료 폴링</td><td>100 cmd/s 이상</td></tr>
+        <tr><td>BLE 청크 페이싱</td><td>CHUNK_DELAY 100ms, 20바이트</td><td>멀티청크 손실 0</td></tr>
+        <tr><td>DC 모터 양방향 대칭</td><td>dual PWM brake-modulated</td><td>전후진 근사 대칭</td></tr>
+        <tr><td>응답 타임아웃</td><td>RESPONSE_TIMEOUT 5000ms</td><td>정상 명령 timeout 0</td></tr>
+        <tr><td>서보 속도 상한</td><td>max_speed(기본 40) clamp</td><td>상한 초과 0</td></tr>
+    </table>
+
+    <h2>6. 테스트 환경 (Test Environment)</h2>
+    <table class="data-table">
+        <tr><th>환경 요소</th><th>상세</th></tr>
+        <tr><td>클라이언트</td><td>Windows 10/11, Android 12+, 크롬북</td></tr>
+        <tr><td>브라우저</td><td>Chrome 최신, Edge 최신 (Web Bluetooth 지원 - Firefox/Safari 제외)</td></tr>
+        <tr><td>하드웨어 키트</td><td>Raspberry Pi Pico, H-브릿지(GP8/9 dual PWM), HC-SR04(GP6/7), 연속회전 서보(GP12/13), LED 6개(GP16~21), 부저(GP15), 발사기(GP22), 디지털 자기센서(GP26), OLED SSD1306(I2C GP4/5), HM-10/BT05 BLE(UART GP0/1 9600)</td></tr>
+        <tr><td>통신</td><td>BLE 4.2+, UART 9600 baud</td></tr>
+        <tr><td>시뮬레이션</td><td>Web/Sim_Parts (하드웨어 없이 블록 실행 검증, Web/Simulation/*.js는 미사용 코드)</td></tr>
+    </table>
+
+    <h2>7. 테스트 도구 (Test Tools)</h2>
+    <ul>
+        <li><strong>실행/기록</strong> : ARES_2_TCL v1.0(실행 결과 콤보 + localStorage 자동 집계)</li>
+        <li><strong>Web 디버깅</strong> : Chrome DevTools (콘솔 명령 로그, BLE 패킷, Performance 명령 간격 측정)</li>
+        <li><strong>BLE 분석</strong> : nRF Connect (Android)로 GATT 서비스/특성 확인</li>
+        <li><strong>펌웨어 콘솔</strong> : Thonny 또는 mpremote로 Pico print 로그(<code>[CMD] ...</code>) 확인</li>
+        <li><strong>하드웨어 신호</strong> : 오실로스코프(PWM 듀티, dual PWM 파형)</li>
+    </ul>
+
+    <h2>8. 테스트 일정 (Test Schedule)</h2>
+    <table class="data-table">
+        <tr><th>단계</th><th>수행 내용</th><th>일정</th></tr>
+        <tr><td>계획·설계</td><td>STP v1.0, TCL v1.0 확정, 환경 구축</td><td>W-2</td></tr>
+        <tr><td>시뮬레이터 선행</td><td>블록-명령 경로 무하드웨어 검증</td><td>W-1</td></tr>
+        <tr><td>단위/통합</td><td>핸들러·모듈 검증, Web-BLE-Pico 연동</td><td>W-1</td></tr>
+        <tr><td>시스템/프리셋</td><td>TCL 98 케이스 전수, Test All Hardware 회귀</td><td>W</td></tr>
+        <tr><td>결과 정리</td><td>STR v1.0 작성, 결함 조치</td><td>W+1</td></tr>
+    </table>
+
+    <h2>9. 역할 및 책임 (Roles &amp; Responsibilities)</h2>
+    <ul>
+        <li><strong>PM</strong> : 품질 목표 설정, 일정 조율, 결함 우선순위 결정</li>
+        <li><strong>QA Lead</strong> : STP/TCL/STR 작성·수행, 결함 등록</li>
+        <li><strong>SW Developer</strong> : Web 블록 엔진·BLE 로직 결함 수정</li>
+        <li><strong>Firmware Engineer</strong> : Pico 핸들러·드라이버 패치, 핀맵 점검</li>
+    </ul>
+
+    <h2>10. 진입/종료 기준 (Entry/Exit Criteria)</h2>
+    <table class="data-table">
+        <tr><th>항목</th><th>기준</th></tr>
+        <tr>
+            <td>진입 (Entry)</td>
+            <td>· Web 앱·펌웨어 빌드 완료<br>· 로버 키트 최소 1대 이상 셋업<br>· TCL v1.0 98 케이스 확정<br>· 시뮬레이터 실행 가능</td>
+        </tr>
+        <tr>
+            <td>종료 (Exit)</td>
+            <td>· TCL 98 케이스 100% 실행<br>· High 이상 결함 0건<br>· 전체 Pass 비율 90% 이상<br>· Test All Hardware / Launch Rocket 프리셋 정상 완주</td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2>11. 리스크 및 대응 (Risks &amp; Mitigation)</h2>
+    <div class="highlight-box">
+        <strong>[리스크 1] 교실 BLE 주파수 간섭</strong><br>
+        · 설명 : 다수 학생이 동시 페어링 시 신호 혼선<br>
+        · 대응 : 기기 이름(device_name) 구분, 분단별 순차 페어링 안내
+    </div>
+    <div class="highlight-box">
+        <strong>[리스크 2] 브라우저 호환성</strong><br>
+        · 설명 : Firefox/Safari에서 Web Bluetooth 미지원<br>
+        · 대응 : 진입 시 브라우저 체크 + Chrome/Edge 유도
+    </div>
+    <div class="highlight-box">
+        <strong>[리스크 3] 부팅 단계 모듈 초기화 실패</strong><br>
+        · 설명 : 특정 모듈 미장착 시 초기화 예외로 BLE 응답 불능 우려<br>
+        · 대응 : hardware.py의 모듈별 try/except + main.py의 <code>if robot.module is not None</code> 가드 (TC-SYS-005, TC-OLED-006, TC-SEN-005로 검증), 단 <code>GUN_FIRE</code>는 예외적으로 가드 없이 gun=None이어도 항상 1을 응답하므로 하드웨어 유무 진단에는 사용 불가
+    </div>
+    <div class="highlight-box">
+        <strong>[리스크 4] BATCH 누적 SLEEP &gt; RESPONSE_TIMEOUT(5초)</strong><br>
+        · 설명 : BATCH 안 SLEEP 합이 5초를 넘으면 Web이 timeout으로 오인<br>
+        · 대응 : BATCH 안 SLEEP 누적 4초 이내 권장, 긴 대기는 BATCH 밖 SLEEP 블록 사용
+    </div>
+    <div class="highlight-box">
+        <strong>[리스크 5] UART 9600 baud 처리량 천장</strong><br>
+        · 설명 : BLE 모듈-Pico UART가 9600 baud로 고정되어 byte당 전송시간이 천장<br>
+        · 대응 : AT+BAUD 상향 + Pico UART_BAUDRATE 동기화를 후속 개선 과제로 관리
+    </div>
+    <div class="highlight-box">
+        <strong>[리스크 6] 하드웨어 배터리 방전 중 오동작</strong><br>
+        · 설명 : 수업 중 배터리 전압 저하 시 서보·DC 모터 토크 저하 및 불안정 동작 우려, 현재 <code>get_battery_voltage()</code>는 항상 100을 반환하는 미구현 상태라 전압 경고 기능이 없음<br>
+        · 대응 : 배터리 전압 ADC 측정·경고 기능 추가를 후속 과제로 등록, 단기적으로 수업 전 완충 점검을 강사 매뉴얼에 명시
+    </div>
+    <div class="highlight-box">
+        <strong>[리스크 7] BLE 연결 끊김 시 구동 지속 위험</strong><br>
+        · 설명 : 모터 구동 중 GATT 끊김이 감지되지 않으면 로버가 계속 움직일 수 있음<br>
+        · 대응 : disconnect 감지 시 <code>state.isExecuting=false</code>로 실행 중단 + 재연결 안내, 물리 STOP_ALL 경로 확보 (TC-BLE-007로 검증)
+    </div>
+
+    <h2>12. 산출물 (Deliverables)</h2>
+    <ul>
+        <li><strong>STP v1.0</strong> : 본 문서</li>
+        <li><strong>TCL v1.0</strong> : 14개 카테고리 98 케이스 실행형 시트</li>
+        <li><strong>STR v1.0</strong> : 실행 결과 기록 보고서(템플릿)</li>
+        <li><strong>QA 체계 명세서 v1.0</strong> : V-모델 산출물 + 실제 명령 프로토콜 매핑</li>
+    </ul>
+
+    <h2>13. 참고 (References)</h2>
+    <ul>
+        <li>ARES 실제 소스코드 (Pico/, Web/, XML Presets/)</li>
+        <li>ARES_2_TCL v1.0 (테스트 케이스 명세서)</li>
+        <li>ARES_3_STR v1.0 (테스트 결과 보고서)</li>
+        <li>IEEE 829 / ISO/IEC 29119 소프트웨어 테스트 표준</li>
+    </ul>
+
+    <br><br>
+    <div style="text-align: center; color: #888; font-size: 0.9em; border-top: 1px solid #ddd; padding-top: 20px;">
+        본 문서는 ARES 프로젝트 산출물로, 실제 소스코드 분석에 기반함<br>
+        &copy; 2026 ARES Project Team. All Rights Reserved.
+    </div>
+</div>
+
+</body>
+</html>
