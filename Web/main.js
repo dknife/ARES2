@@ -821,16 +821,22 @@ function updateMobileBottomNav() {
     const simMode = document.body.dataset.contentMode === 'simulation';
     const connected = isBleConnected();
     // 실물 실행은 연결 필요(코딩+연결). 시뮬레이션은 연결 없이 항상 '모의실행'.
+    // go(초록·▶): 코딩(연결+미실행) 또는 시뮬(미실행). stop(짙은 주황·■): 코딩 실행중=비상정지 / 시뮬 실행중=실험중단.
     const runnable = codingMode && connected;
-    const simRunning = simMode && _simRunning;   // 시뮬 실행 중 → 주황·정지·'실험중단'
+    const simRunning = simMode && _simRunning;
+    const codingExecuting = codingMode && _codingExecuting;
+    const stopping = simRunning || codingExecuting;
+    const goRun = (runnable && !codingExecuting) || (simMode && !simRunning);
     connectBtn.classList.toggle('connected', connected);
-    connectBtn.classList.toggle('coding-run', (runnable || simMode) && !simRunning);
-    connectBtn.classList.toggle('sim-running', simRunning);
+    connectBtn.classList.toggle('coding-run', goRun);
+    connectBtn.classList.toggle('run-stop', stopping);
     connectBtn.setAttribute('aria-pressed', String(connected));
-    connectBtn.setAttribute('aria-label', simRunning ? '시뮬레이션 중지' : simMode ? '시뮬레이션 모의 실행' : runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
+    connectBtn.setAttribute('aria-label', codingExecuting ? '비상 정지' : simRunning ? '시뮬레이션 중지' : simMode ? '시뮬레이션 모의 실행' : runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
     const label = connectBtn.querySelector('.mobile-nav-label');
     if (label) {
-      label.textContent = simRunning
+      label.textContent = codingExecuting
+        ? '비상정지'
+        : simRunning
         ? '실험중단'
         : simMode
         ? '모의실행'
@@ -1546,7 +1552,8 @@ function toggleDashboard() {
 //   showView() 에서 미션 뷰를 떠날 때 close() 호출.
 // ============================================================
 let simController = null;
-let _simRunning = false;   // 시뮬레이션(모의실행) 진행 여부 — 중앙 버튼 상태에 반영
+let _simRunning = false;      // 시뮬레이션(모의실행) 진행 여부 — 중앙 버튼 상태에 반영
+let _codingExecuting = false; // 코딩 모드 실행(전송) 진행 여부 — '비상정지' 표시에 반영
 
 // ============================================================
 // 콘텐츠 모드 토글 — 미션 설명 ↔ 블럭코딩 단일 버튼
@@ -1619,6 +1626,10 @@ function initializeAlwaysOnListeners() {
   window.addEventListener('ares:contentmode', updateMobileBottomNav);
   window.addEventListener('ares:simrun', (e) => {
     _simRunning = !!(e.detail && e.detail.running);
+    updateMobileBottomNav();
+  });
+  window.addEventListener('ares:execution', (e) => {
+    _codingExecuting = !!(e.detail && e.detail.executing);
     updateMobileBottomNav();
   });
 

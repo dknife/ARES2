@@ -2309,7 +2309,8 @@ details.mission-section summary {
    ============================================================ */
 :root {
     --mockup-red: #e65448;
-    --mockup-green: #12b76a;      /* 연결됨(성공) 상태 — 완료 미션 배지와 동일 팔레트 */
+    --mockup-green: #12b76a;      /* 연결됨·실행·모의실행(go) 상태 — 완료 미션 배지와 동일 팔레트 */
+    --mockup-orange: #d9660a;     /* 실행 중 정지(비상정지·실험중단) — 짙은 주황 */
     --mockup-ink: #272526;
     --mockup-line: #d7d7d9;
     --mockup-panel: #e7e7e9;
@@ -2660,10 +2661,9 @@ details.mission-section summary {
     background: var(--mockup-green) !important;   /* 연결됨: 붉은색 → 팔레트 초록 */
 }
 
-/* 블록코딩 화면에서 '연결된' 경우에만 중앙 버튼을 미션 실행 버튼으로 쓴다(coding-run 클래스).
-   미연결이면 실행 불가 → 연결 버튼(신호연결)으로 유지한다. .connected(초록)보다 뒤에 와서 우선. */
+/* go 상태(실행·모의실행): 초록 배경 + 재생(삼각형) 아이콘. 연결 없이도 실행되는 시뮬 포함. */
 .mobile-bottom-nav .mobile-connect-btn.coding-run {
-    background: #e6ad00 !important;
+    background: var(--mockup-green) !important;
 }
 .mobile-connect-btn.coding-run .mobile-connect-icon {
     width: 0;
@@ -2676,11 +2676,12 @@ details.mission-section summary {
     border-left: 21px solid #fff;
 }
 
-/* 시뮬레이션 실행 중: 주황 배경 + 정지(사각형) 아이콘 + '실험중단'. 재클릭 시 시뮬 중지. */
-.mobile-bottom-nav .mobile-connect-btn.sim-running {
-    background: #f5820b !important;
+/* 실행 중 정지 상태(비상정지·실험중단): 짙은 주황 + 정지(사각형) 아이콘. 재클릭 시 중지.
+   .connected/.coding-run 보다 뒤에 와서 우선한다. */
+.mobile-bottom-nav .mobile-connect-btn.run-stop {
+    background: var(--mockup-orange) !important;
 }
-.mobile-connect-btn.sim-running .mobile-connect-icon {
+.mobile-connect-btn.run-stop .mobile-connect-icon {
     width: 15px;
     height: 15px;
     background: #fff;
