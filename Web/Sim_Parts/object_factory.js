@@ -39,6 +39,26 @@ export function createPrimitiveObject(ctx, type) {
     });
   }
 
+  if (type === 'oled') {
+    // 검정 패널(SIMULATOR.md Oled) — Oled 컴포넌트가 앞면(+Z)에 디스플레이 면을 붙인다.
+    // 컴포넌트 부착은 등록(onAdd) 시점 이후여야 하므로 createPrimitiveObject 호출측이
+    // registry.add 후 attachComponent 하도록 metadata 로 표시한다.
+    const root = new THREE.Mesh(
+      new THREE.BoxGeometry(0.68, 0.36, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.35, metalness: 0.2 }),
+    );
+    root.castShadow = true;
+    root.receiveShadow = true;
+    return new SimulationObject({
+      id,
+      type,
+      label: `OLED ${id.split('-').pop()}`,
+      root,
+      spawned: true,
+      metadata: { groundOffset: 0.45, autoComponents: [{ type: 'Oled', fields: {} }] },
+    });
+  }
+
   if (type === 'marker') {
     const root = new THREE.Group();
     const pole = new THREE.Mesh(

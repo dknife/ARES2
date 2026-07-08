@@ -6,6 +6,7 @@
 
 import { createPrimitiveObject } from './object_factory.js';
 import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
+import { attachComponent, serializeComponents } from './components.js';
 
 export const SCENE_FORMAT_VERSION = 1;
 
@@ -28,6 +29,7 @@ export function serializeScene(ctx, { name = 'scene', topic = 'empty' } = {}) {
       position: o.root.position.toArray(),
       quaternion: o.root.quaternion.toArray(),
       scale: o.root.scale.toArray(),
+      components: serializeComponents(o),
     };
   });
   return { version: SCENE_FORMAT_VERSION, name, unitScale: 1, topic, objects };
@@ -75,6 +77,11 @@ export async function applyScene(ctx, json) {
     if (entry.position) sim.root.position.fromArray(entry.position);
     if (entry.quaternion) sim.root.quaternion.fromArray(entry.quaternion);
     if (entry.scale) sim.root.scale.fromArray(entry.scale);
+    // 선언형 컴포넌트 복원 (팩토리 기본 부착분은 동일 타입이면 덮어씀)
+    (entry.components || []).forEach(({ type, fields }) => {
+      try { attachComponent(ctx, sim, type, fields || {}); }
+      catch (err) { console.warn('컴포넌트 복원 실패:', type, err); }
+    });
     if (entry.id) byId.set(entry.id, sim);
   }
 

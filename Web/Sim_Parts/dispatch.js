@@ -215,6 +215,17 @@ export class Dispatch {
     return null;
   }
 
+  // 명령 효과 = 레거시 토픽 효과 + 컴포넌트 라우팅(SIMULATOR.md 2장) 합성.
+  // 둘 다 cleanup 을 반환할 수 있어 합쳐서 돌려준다.
+  applyEffect(cmd) {
+    const topicCleanup = this.applyTopicEffect(cmd);
+    const componentCleanup = this.ctx.objects?.routeCommand?.(cmd) || null;
+    if (topicCleanup && componentCleanup) {
+      return () => { topicCleanup(); componentCleanup(); };
+    }
+    return topicCleanup || componentCleanup;
+  }
+
   cancelActiveWait() {
     if (this.activeWaitCancel) this.activeWaitCancel();
   }
@@ -237,7 +248,7 @@ export class Dispatch {
       for (const sub of subs) {
         if (!ctx.state.isExecuting) break;
         const subHoldMs = Math.round(this.commandHoldSeconds(sub) * 1000);
-        const cleanup = this.applyTopicEffect(sub);
+        const cleanup = this.applyEffect(sub);
         if (subHoldMs > 0) {
           await wait(subHoldMs);
         }
@@ -246,7 +257,7 @@ export class Dispatch {
       }
     } else {
       holdMs = Math.round(this.commandHoldSeconds(command) * 1000);
-      const cleanup = this.applyTopicEffect(command);
+      const cleanup = this.applyEffect(command);
       await wait(ackMs + holdMs);
       if (command.startsWith('DISTANCE') && ctx.movement) {
         distMeasured = ctx.movement.measureDistance();

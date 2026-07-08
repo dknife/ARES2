@@ -15,6 +15,7 @@ import { Simulation_AresRobot } from './Simulation_AresRobot.js';
 import { CommandExecutor } from '../commandexecutor.js';
 import { state } from '../state.js';
 import { serializeScene, applyScene, clearSpawnedObjects } from '../Sim_Parts/scene_store.js';
+import { attachComponent, detachComponent } from '../Sim_Parts/components.js';
 
 export class Simulation_Main {
   // Topic metadata and OLED icons constants
@@ -232,6 +233,15 @@ export class Simulation_Main {
         serialize: (opts) => serializeScene(sim.ctx, { topic: (sel && sel.value) || 'empty', ...opts }),
         apply: (json) => applyScene(sim.ctx, json),
         clear: () => clearSpawnedObjects(sim.ctx),
+        // 컴포넌트 부착/해제: id 로 객체를 찾는다(생략 시 현재 선택 객체)
+        attach: (type, fields, id) => attachComponent(sim.ctx, id
+          ? sim.ctx.objects.items.find((o) => o.id === id)
+          : sim.ctx.editor?.getSelectedSimObject(), type, fields || {}),
+        detach: (type, id) => detachComponent(sim.ctx, id
+          ? sim.ctx.objects.items.find((o) => o.id === id)
+          : sim.ctx.editor?.getSelectedSimObject(), type),
+        objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
+        sink: (cmd) => sim.simSink(cmd, false),
       } : undefined;
     };
 

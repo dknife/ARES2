@@ -1,6 +1,8 @@
 // Simulation object capsule and registry.
 // This is the first step toward Unity-like scene objects in Sim_Parts.
 
+import { attachComponent } from './components.js';
+
 function disposeObject3D(root) {
   const stack = [root];
   while (stack.length > 0) {
@@ -109,6 +111,10 @@ export class SimulationObjectRegistry {
     this.byRoot.set(simObject.root, simObject);
     simObject.root.userData.simObjectId = simObject.id;
     simObject.onAdd(this.ctx);
+    // 팩토리가 지정한 기본 컴포넌트 부착(예: OLED 패널의 Oled)
+    (simObject.metadata?.autoComponents || []).forEach(({ type, fields }) => {
+      attachComponent(this.ctx, simObject, type, fields);
+    });
     this.version += 1;
 
     if (simObject.selectable) {
@@ -148,6 +154,25 @@ export class SimulationObjectRegistry {
 
   update(dt) {
     this.items.forEach((item) => item.update(dt, this.ctx));
+  }
+
+  // 블록 코딩 명령을 모든 객체의 컴포넌트에 브로드캐스트한다(SIMULATOR.md 2장).
+  // 컴포넌트 onCommand 가 cleanup 을 반환하면 모아 합성 cleanup 으로 돌려준다
+  // (dispatch.simSink 가 hold 종료 후 호출).
+  routeCommand(cmd) {
+    const cleanups = [];
+    this.items.forEach((item) => {
+      Object.values(item.components || {}).forEach((component) => {
+        try {
+          const fn = component?.onCommand?.(cmd, this.ctx, item);
+          if (typeof fn === 'function') cleanups.push(fn);
+        } catch (err) {
+          console.warn('component onCommand 오류:', component?.type, err);
+        }
+      });
+    });
+    if (cleanups.length === 0) return null;
+    return () => cleanups.forEach((fn) => { try { fn(); } catch {} });
   }
 
   remove(simObject) {
