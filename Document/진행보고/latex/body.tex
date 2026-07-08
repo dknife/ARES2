@@ -2014,6 +2014,19 @@ UltraSonic$\cdot$Magnet$\cdot$Metal$\cdot$Gun)을 부착하면 블록 명령이 
   \caption{12일차 --- 블록코딩 연계 씬 생성 도구: 개발자 모드 $\to$ 컴포넌트 편집 $\to$ 데모 씬}
 \end{figure}
 
+\subsection{시뮬레이터 사용법 (요약)}
+씬 생성 도구의 사용법을 문서화해 \textbf{\ref{app:simguide}}에 수록했다. 사용 흐름 요지:
+\begin{itemize}
+  \item \textbf{사용자} --- 시뮬 드롭다운에서 씬 선택 $\to$ 블록 조립 $\to$ \textbf{모의실행}
+  (실행 중 \textbf{실험중단}으로 즉시 정지). 씬 편집은 불가(읽기 전용).
+  \item \textbf{개발자} --- \textbf{Ctrl+E} 진입 $\to$ `새 씬' $\to$ \textbf{우클릭}으로 객체 생성
+  (Box$\cdot$Sphere$\cdot$Marker$\cdot$OLED$\cdot$\textbf{GLB 16종 목록}) $\to$ 기즈모(W/E/R)$\cdot$%
+  Hierarchy(길게 클릭=이름 변경)$\cdot$인스펙터(트랜스폼+컴포넌트 필드)로 편집 $\to$
+  컴포넌트 부착(9종 레퍼런스 표 수록) $\to$ \textbf{씬 저장}(JSON).
+  \item \textbf{배포} --- 저장한 JSON 을 \code{Web/scenes/}에 두고 \code{manifest.json}에
+  등록하면 사용자 드롭다운에 자동 노출. GLB 는 상대경로로 기록된다.
+\end{itemize}
+
 \subsection{소프트웨어 테스트 --- 1차 수행 결과(STR v1.1) 요약}
 11일차에 수립한 QA 체계와 TCL v1.0(14 카테고리$\cdot$98 케이스)에 따라 \textbf{1차
 테스트를 본격 수행}했다. 하드웨어 의존 항목은 실기(BLE)로, 그 외는 시뮬레이터로 병행

@@ -1,0 +1,100 @@
+%% ============================================================
+%% appendix_simguide.tex — 부록 G: 시뮬레이터 사용법 (씬 생성 도구)
+%% 근거: SIMULATOR.md 설계·구현 규약(2026-07-08 확정) 및 실제 구현(Web/Sim_Parts, Web/Simulation)
+%% ============================================================
+\section{시뮬레이터 사용법 --- 씬 생성 도구}
+\label{app:simguide}
+
+본 부록은 12일차에 구축한 \textbf{블록코딩 연계 씬 생성 도구}의 사용법이다. 시뮬레이터는
+\textbf{사용자 모드}(씬을 골라 블록 코드를 모의실행)와 \textbf{개발자 모드}(씬을 만들어
+저장)로 나뉜다. 설계$\cdot$규약 원문은 저장소의 \code{SIMULATOR.md}.
+
+\subsection{사용자 모드 --- 씬 로드와 모의실행}
+\begin{enumerate}
+  \item 미션 화면에서 \textbf{시뮬레이션}을 열면 좌상단 드롭다운에 기본 주제 4종(알비$\cdot$%
+  우주 신호등$\cdot$발사대$\cdot$로버)과 \textbf{저장된 씬}(예: `로버 훈련장 (컴포넌트)')이 나열된다.
+  씬을 고르면 자동으로 로드되고 카메라가 씬 전체를 프레이밍한다.
+  \item 블록을 조립한 뒤 하단 중앙 \textbf{`모의실행'} 버튼(시뮬 모드에서 파랑)을 누르면
+  장치 연결 없이 블록 명령이 씬으로 흘러 실행된다. 실행 중에는 버튼이 \textbf{`실험중단'}으로
+  바뀌고, 누르면 즉시 정지(운동 정지$\cdot$LED 소등)한다.
+  \item 사용자는 씬을 편집할 수 없다(읽기 전용) --- 편집 UI는 개발자 모드에서만 나타난다.
+\end{enumerate}
+
+\subsection{개발자 모드 --- 진입과 화면 구성}
+시뮬레이션 화면이 열린 상태에서 \textbf{Ctrl+E}를 누르면 개발자 모드가 토글된다.
+다음 도구가 나타난다.
+\begin{itemize}
+  \item \textbf{씬 도구 바}(드롭다운 옆) --- \code{새 씬}(빈 씬 시작) $\cdot$ \code{씬 저장}
+  (JSON 파일 내보내기) $\cdot$ \code{씬 열기}(JSON 파일 불러오기)
+  \item \textbf{편집 툴바}(우상단) --- Move$\cdot$Rotate$\cdot$Scale 기즈모 모드(단축키 W/E/R)
+  \item \textbf{Hierarchy}(우측) --- 씬 객체 트리. 클릭=선택, \textbf{길게 클릭(0.6초)=이름 변경}
+  \item \textbf{인스펙터}(드롭다운 아래, 객체 선택 시) --- 위치$\cdot$회전\textdegree$\cdot$크기와
+  부착된 \textbf{컴포넌트 필드값}을 직접 입력$\cdot$[적용]. 섹션의 $-$ 버튼으로 컴포넌트 해제
+  \item \textbf{시각 보조} --- 원점 좌표축(x빨강$\cdot$y초록$\cdot$z파랑)과 3직교 평면 그리드
+  (10m$\cdot$0.5m 격자)
+\end{itemize}
+
+\subsection{객체 만들기 --- 우클릭 스폰}
+3D 화면을 \textbf{우클릭}하면 그 지점에 객체를 만드는 메뉴가 뜬다.
+\begin{itemize}
+  \item \textbf{Create object} --- Box $\cdot$ Sphere $\cdot$ Marker $\cdot$ OLED Panel $\cdot$
+  \textbf{GLB 모델…}. GLB 를 고르면 \code{Web/Mesh}의 자산 목록(\code{Mesh/manifest.json},
+  16종)이 파일명으로 나열되고, 선택하면 그 자리에 배치된다. 객체 라벨은 파일명을 그대로
+  쓰며, \textbf{씬 파일에는 상대경로(\code{Mesh/….glb})가 기록}된다.
+  새 GLB 자산은 \code{Web/Mesh}에 넣고 \code{Mesh/manifest.json}에 한 줄 등록하면 메뉴에 나타난다.
+  \item \textbf{Create child} --- 선택한 객체의 \emph{하위}로 생성(부모를 움직이면 함께 이동).
+  \item \textbf{Component} --- 선택 객체에 컴포넌트 부착($+$)/해제($-$).
+  \item \textbf{Delete runtime object} --- 선택 객체(+하위) 삭제. Delete 키도 동일.
+\end{itemize}
+
+\subsection{컴포넌트 레퍼런스 (9종)}
+객체에 컴포넌트를 부착하면 블록 명령이 해당 객체에서 동작한다 --- 씬 구성만으로
+새 로봇$\cdot$장치를 만들 수 있다.
+
+\begin{table}[H]\centering\small
+\caption{컴포넌트 9종 --- 필드와 반응 명령}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}l l X@{}}
+\toprule
+\sffamily 컴포넌트 & \sffamily 반응 명령 & \sffamily 필드 · 동작 \\
+\midrule
+LED & LED\_ON/OFF/ALL, 배치 & \code{led\_no}(0$\sim$5). 해당 번호 신호에 메시 발광/소등.
+  GLB(텍스처) 메시는 자기 텍스처 색으로 \textbf{전체 발광} \\
+Buzzer & BUZZER\_ON & 객체 중심에서 음파 링 발산 + 비프음 \\
+Oled & MSG/MSG\_XY/ICON/CLEAR & 검정 패널에 128$\times$64 텍스트$\cdot$아이콘 표시 \\
+DC & DC\_FORWARD/BACKWARD/STOP & \code{axis\_rotation}(회전축)$\cdot$\code{rotation\_offset}
+  (기준점)$\cdot$\code{axis\_translate}(이동축). 강도 인자로 속도 \\
+Servo & SERVO\_* (전진/후진/좌/우/정지) & \code{wheel}(left/right)$\cdot$\code{axis\_rotation}
+  (스핀축)$\cdot$\code{axis\_direction}(이동)$\cdot$\code{axis\_turn}(선회)$\cdot$각 기준점 오프셋 \\
+UltraSonic & DISTANCE & \code{detect\_direction}. ray 최근접 거리(cm, 소수 둘째 자리) 회신 \\
+Magnet & MAGNET & \code{detection\_point}. 반경 5cm 내 Metal 존재 시 1 회신 \\
+Metal & --- & 자기장 센서가 감지하는 대상 표시 \\
+Gun & GUN\_FIRE & \code{propel\_direction}(발사)$\cdot$\code{explosion}(연기점). 발사체+연기,
+  폭발음은 Gun 유무와 무관 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent\textbf{좌표계 규약(요지)} --- 회전축$\cdot$선회축과 그 기준점 오프셋은 \textbf{부모
+좌표계}, 이동축은 \textbf{객체 로컬}(선회 후 전진은 틀어진 방향), 오프셋 거리는 \textbf{m
+그대로}(스케일 미적용), \textbf{스케일은 하위로 전파되지 않음}. 1 unit = 1 m.
+
+\smallskip
+\noindent\textbf{구성 예 --- 바퀴가 돌며 나아가는 로버}: 몸체에 Servo\{이동 방향, 선회축\},
+좌$\cdot$우 바퀴(몸체의 child)에 각각 Servo\{wheel: left/right, 스핀축\}. `로버 훈련장' 씬
+(\code{Web/scenes/rover\_yard.json})이 이 구성의 표준 예제다.
+
+\subsection{씬 저장·배포}
+\begin{enumerate}
+  \item \code{씬 저장} --- 스폰한 객체들의 계층$\cdot$트랜스폼$\cdot$컴포넌트(필드 포함)가
+  JSON 으로 내려받아진다(\code{ares\_scene.json}).
+  \item 파일을 \code{Web/scenes/}에 두고 \code{scenes/manifest.json}에
+  \code{\{id, file, label\}} 한 줄을 등록하면, \textbf{사용자 드롭다운에 자동 노출}된다.
+  \item \code{씬 열기}로 저장한 JSON 을 다시 불러 이어서 편집할 수 있다.
+\end{enumerate}
+
+\subsection{콘솔 도구 (고급)}
+개발자 모드에서는 브라우저 콘솔에 \code{window.\_\_aresSimDev}가 노출된다 ---
+\code{serialize/apply/clear}(씬), \code{attach/detach}(컴포넌트), \code{objects/state/setPos}
+(객체 조회$\cdot$이동), \code{sink('LED\_ON,0,1')}(명령 주입), \code{tick(dt)}(수동 프레임).
+자동화 테스트$\cdot$디버깅에 사용한다.
