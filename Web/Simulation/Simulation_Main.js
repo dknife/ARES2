@@ -246,7 +246,15 @@ export class Simulation_Main {
         objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
         state: (id) => {
           const o = sim.ctx.objects.items.find((x) => x.id === id);
-          return o ? { pos: o.root.position.toArray(), quat: o.root.quaternion.toArray() } : null;
+          if (!o) return null;
+          const T = sim.ctx.THREE;
+          o.root.updateWorldMatrix(true, false);
+          const wp = o.root.getWorldPosition(new T.Vector3());
+          const ws = o.root.getWorldScale(new T.Vector3());
+          return {
+            pos: o.root.position.toArray(), quat: o.root.quaternion.toArray(),
+            scale: o.root.scale.toArray(), worldPos: wp.toArray(), worldScale: ws.toArray(),
+          };
         },
         setPos: (id, x, y, z) => {
           const o = sim.ctx.objects.items.find((it) => it.id === id);
