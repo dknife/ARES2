@@ -46,6 +46,12 @@ export class EditorControls {
     this.hierarchy = this.createHierarchyPanel();
     this.ctx.stage.appendChild(this.hierarchy);
 
+    // 씬 편집은 개발자 모드 전용(SIMULATOR.md 1장) — 기본은 사용자 모드(편집 UI 숨김).
+    // Simulation_Main 이 Ctrl+E 토글로 setDevMode() 를 호출한다.
+    this.devMode = false;
+    this.toolbar.hidden = true;
+    this.hierarchy.hidden = true;
+
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onContextMenu = this.onContextMenu.bind(this);
     this.onDocumentPointerDown = this.onDocumentPointerDown.bind(this);
@@ -148,6 +154,15 @@ export class EditorControls {
     });
 
     return panel;
+  }
+
+  setDevMode(on) {
+    this.devMode = !!on;
+    this.toolbar.hidden = !this.devMode;
+    this.hierarchy.hidden = !this.devMode;
+    this.hideContextMenu();
+    if (!this.devMode) this.select(null);
+    else this.updateHierarchy(true);
   }
 
   register(object, label = 'Object') {
@@ -270,6 +285,9 @@ export class EditorControls {
   }
 
   onKeyDown(event) {
+    if (!this.devMode) return;
+    // Ctrl+E(개발자 모드 토글) 등 조합키는 편집 단축키(W/E/R)와 충돌하지 않게 무시
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/i.test(event.target.tagName)) return;
 
     const key = event.key.toLowerCase();
@@ -347,6 +365,7 @@ export class EditorControls {
   }
 
   onPointerDown(event) {
+    if (!this.devMode) return;
     if (event.button !== 0) return;
     this.hideContextMenu();
 
@@ -362,6 +381,7 @@ export class EditorControls {
   }
 
   onContextMenu(event) {
+    if (!this.devMode) return;
     event.preventDefault();
     this.lastSpawnPoint.copy(this.getGroundPoint(event));
 
