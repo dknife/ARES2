@@ -1,7 +1,6 @@
 // ARES Simulation Editor Controls
 // Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
 
-import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
 import { createPrimitiveObject, createGlbObject } from './object_factory.js';
 import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents } from './components.js';
 
@@ -33,8 +32,8 @@ const FIELD_SPECS = {
 };
 
 const MODES = ['translate', 'rotate', 'scale'];
+// (Albi Robot 항목은 제거 — GLB 메뉴의 AlbiStaticLow.glb 로 대체)
 const SPAWN_MENU = [
-  { type: 'albi', label: 'Albi Robot' },
   { type: 'box', label: 'Box' },
   { type: 'sphere', label: 'Sphere' },
   { type: 'marker', label: 'Marker' },
@@ -553,9 +552,6 @@ export class EditorControls {
   }
 
   async spawn(type, options = {}) {
-    if (type === 'albi') {
-      return this.spawnAlbi(options);
-    }
     if (type === 'glb') {
       return this.spawnGlb(options);
     }
@@ -644,33 +640,6 @@ export class EditorControls {
     }
   }
 
-  async spawnAlbi(options = {}) {
-    const parent = this.getSpawnParentFor(options);
-    const worldPoint = this.lastSpawnPoint.clone();
-
-    this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
-    try {
-      const simObjects = await createSpawnedAlbiObjects(this.ctx);
-      const body = simObjects[0];
-      this.ctx.objects.add(body, parent);
-      body.setWorldPosition(worldPoint, parent);
-
-      simObjects.slice(1).forEach((child) => {
-        this.ctx.objects.add(child, body.root);
-      });
-
-      this.select(body.root);
-      this.hideContextMenu();
-      this.updateHierarchy(true);
-      return body.root;
-    } catch (err) {
-      console.error('Failed to spawn Albi robot:', err);
-      return null;
-    } finally {
-      this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = false; });
-      this.updateContextMenuState();
-    }
-  }
 
   deleteSelected() {
     const object = this.selected;
