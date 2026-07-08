@@ -279,14 +279,20 @@ function fieldVec(THREE, arr, { normalize = true } = {}) {
 
 // 로컬 좌표의 점(pivotLocal)을 지나는 로컬 축(axisLocal) 둘레로 회전 —
 // 회전 기준축을 객체 원점에서 옮겨 놓는 offset 지원. pivot 이 없으면 원점 기준.
-// (피벗은 객체 스케일을 반영해 계산: 부모 공간 피벗 = pos + R·S·p)
+// 오프셋 의미: 원점에서 로컬 축 방향으로 "그 거리(m)만큼" 떨어진 점을 축이 지난다.
+// (객체 스케일은 적용하지 않는다 — (0,1,0) 이면 스케일과 무관하게 정확히 1 m 위)
 function rotateAboutLocalPivot(THREE, obj, axisLocal, angle, pivotLocal) {
   if (!pivotLocal) { obj.rotateOnAxis(axisLocal, angle); return; }
   const q = new THREE.Quaternion().setFromAxisAngle(axisLocal, angle);
-  const scaled = pivotLocal.clone().multiply(obj.scale);
-  const delta = scaled.clone().sub(scaled.clone().applyQuaternion(q)).applyQuaternion(obj.quaternion);
+  const delta = pivotLocal.clone().sub(pivotLocal.clone().applyQuaternion(q)).applyQuaternion(obj.quaternion);
   obj.position.add(delta);
   obj.quaternion.multiply(q);
+}
+
+// 로컬 점 오프셋 → 월드 좌표 (방향은 객체 회전을 따르고, 거리는 미터 그대로 — 스케일 미적용)
+function localOffsetToWorld(THREE, obj, offsetLocal) {
+  return obj.getWorldPosition(new THREE.Vector3())
+    .add(offsetLocal.clone().applyQuaternion(obj.getWorldQuaternion(new THREE.Quaternion())));
 }
 
 // ============================================================
@@ -447,7 +453,7 @@ function createMagnetComponent(ctx, fields = {}) {
     fields: { detection_point: [point.x, point.y, point.z] },
     measure(cctx, simObject) {
       cctx.scene.updateMatrixWorld(true);
-      const sensor = simObject.root.localToWorld(point.clone());
+      const sensor = localOffsetToWorld(THREE, simObject.root, point);
       for (const item of cctx.objects?.items || []) {
         if (item === simObject || !item.components?.Metal) continue;
         box.setFromObject(item.root);
@@ -529,7 +535,7 @@ function createGunComponent(ctx, fields = {}) {
       mesh.position.copy(origin).addScaledVector(dirWorld, 0.25);
       ctx.scene.add(mesh);
       projectiles.push({ mesh, vel: dirWorld.multiplyScalar(PROJ_SPEED), age: 0 });
-      if (expl) spawnSmoke(simObject.root.localToWorld(expl.clone()));
+      if (expl) spawnSmoke(localOffsetToWorld(THREE, simObject.root, expl));
       return null;
     },
     update(dt) {
