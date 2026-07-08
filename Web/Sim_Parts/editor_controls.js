@@ -161,13 +161,16 @@ export class EditorControls {
       LED: [{ key: 'led_no', label: 'LED 번호 (0~5)', def: '0', kind: 'int' }],
       DC: [
         { key: 'axis_rotation', label: 'DC 회전축 x,y,z (빈칸=미사용)', def: '0,1,0', kind: 'vec', optional: true },
+        { key: 'rotation_offset', label: '회전 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', def: '', kind: 'vec', optional: true },
         { key: 'axis_translate', label: 'DC 이동축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
       ],
       Servo: [
         { key: 'wheel', label: '바퀴연결 (left/right)', def: 'left', kind: 'side' },
         { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (빈칸=미사용)', def: '1,0,0', kind: 'vec', optional: true },
+        { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', def: '', kind: 'vec', optional: true },
         { key: 'axis_direction', label: '이동 방향 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
         { key: 'axis_turn', label: '선회축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
+        { key: 'turn_offset', label: '선회축 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', def: '', kind: 'vec', optional: true },
       ],
       UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', def: '0,0,1', kind: 'vec' }],
       Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', def: '0,0,0', kind: 'vec' }],
@@ -289,13 +292,35 @@ export class EditorControls {
         <span class="sim-editor-inspector-title">컴포넌트</span>
         <button type="button" data-action="apply">적용</button>
       </div>
+      <div class="sim-editor-inspector-tf">
+        <span>위치</span><input data-tf="p0"><input data-tf="p1"><input data-tf="p2">
+        <span>회전°</span><input data-tf="r0"><input data-tf="r1"><input data-tf="r2">
+        <span>크기</span><input data-tf="s0"><input data-tf="s1"><input data-tf="s2">
+      </div>
       <textarea spellcheck="false" rows="8"></textarea>
       <div class="sim-editor-inspector-status" hidden></div>
     `;
     panel.querySelector('[data-action="apply"]').addEventListener('click', () => this.applyInspector());
     // 편집 중 키 입력이 편집 단축키(W/E/R·Delete)로 새지 않게 차단
-    panel.querySelector('textarea').addEventListener('keydown', (e) => e.stopPropagation());
+    panel.addEventListener('keydown', (e) => e.stopPropagation());
     return panel;
+  }
+
+  // 트랜스폼 입력칸만 현재 값으로 갱신(포커스 중인 칸은 건드리지 않음)
+  refreshInspectorTransform() {
+    const simObject = this.getSelectedSimObject();
+    if (!this.inspector || this.inspector.hidden || !simObject) return;
+    const r = simObject.root;
+    const deg = 180 / Math.PI;
+    const vals = {
+      p0: r.position.x, p1: r.position.y, p2: r.position.z,
+      r0: r.rotation.x * deg, r1: r.rotation.y * deg, r2: r.rotation.z * deg,
+      s0: r.scale.x, s1: r.scale.y, s2: r.scale.z,
+    };
+    Object.entries(vals).forEach(([key, v]) => {
+      const el = this.inspector.querySelector(`[data-tf="${key}"]`);
+      if (el && document.activeElement !== el) el.value = Math.round(v * 1000) / 1000;
+    });
   }
 
   updateInspector() {
@@ -313,6 +338,7 @@ export class EditorControls {
       this.inspector.style.top = `${Math.round(headRect.bottom - stageRect.top + 8)}px`;
     }
     this.inspector.querySelector('.sim-editor-inspector-title').textContent = simObject.label;
+    this.refreshInspectorTransform();
     this.inspector.querySelector('textarea').value =
       JSON.stringify(serializeComponents(simObject), null, 1);
     this.setInspectorStatus('');
@@ -329,6 +355,20 @@ export class EditorControls {
   applyInspector() {
     const simObject = this.getSelectedSimObject();
     if (!simObject) return;
+
+    // (1) 트랜스폼(위치·회전°·크기) 적용 — 비어 있거나 숫자가 아니면 현재 값 유지
+    const root = simObject.root;
+    const num = (key, fallback) => {
+      const el = this.inspector.querySelector(`[data-tf="${key}"]`);
+      const v = parseFloat(el?.value);
+      return Number.isFinite(v) ? v : fallback;
+    };
+    const rad = Math.PI / 180;
+    root.position.set(num('p0', root.position.x), num('p1', root.position.y), num('p2', root.position.z));
+    root.rotation.set(num('r0', root.rotation.x / rad) * rad, num('r1', root.rotation.y / rad) * rad, num('r2', root.rotation.z / rad) * rad);
+    root.scale.set(num('s0', root.scale.x), num('s1', root.scale.y), num('s2', root.scale.z));
+
+    // (2) 컴포넌트(직렬화 필드) 적용
     const textarea = this.inspector.querySelector('textarea');
     let list;
     try {
@@ -711,6 +751,7 @@ export class EditorControls {
 
   onDraggingChanged(event) {
     this.orbit.enabled = !event.value;
+    if (!event.value) this.refreshInspectorTransform();   // 기즈모 조작 종료 시 입력칸 동기화
   }
 
   update() {
