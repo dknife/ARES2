@@ -21,6 +21,7 @@ export class Render {
     const dt = ctx.lastRenderTime > 0 ? Math.min(0.1, nowSec - ctx.lastRenderTime) : 0.016;
     ctx.lastRenderTime = nowSec;
 
+    ctx.updateSmoothZoom?.(dt);
     ctx.controls.update();
 
     const m = ctx.movement;
