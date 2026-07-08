@@ -2,7 +2,7 @@
 // Subsystem wrapper for the Ares Albi Robot (albi) topic, reusing the modular LedsSubsystem.
 
 import { Simulation_Base } from './Simulation_Base.js';
-import { createAlbiLedObject, createAlbiModelObject } from '../Sim_Parts/object_factory.js';
+import { SimulationObject } from '../Sim_Parts/sim_object.js';
 
 export const DEFAULT_ALBI_EYES = {
   radius: 0.11,
@@ -31,29 +31,46 @@ export const CHEST_PALETTE = {
   lightColor: 0xff3344,
 };
 
+function centerModelOnGround(THREE, root) {
+  const box = new THREE.Box3().setFromObject(root);
+  const center = box.getCenter(new THREE.Vector3());
+  root.position.x -= center.x;
+  root.position.z -= center.z;
+  root.position.y -= box.min.y;
+}
+
+function createAlbiModelObject(ctx, root, label = 'Albi Body', options = {}) {
+  return new SimulationObject({
+    id: ctx.objects?.makeId('albi-body') || `albi-body-${Date.now()}`,
+    type: 'albi-body',
+    label,
+    root,
+    spawned: !!options.spawned,
+    metadata: { modelRole: 'body' },
+  });
+}
+
+function createAlbiLedObject(ctx, led, label, role, options = {}) {
+  return new SimulationObject({
+    id: ctx.objects?.makeId(`albi-${role}`) || `albi-${role}-${Date.now()}`,
+    type: 'albi-led',
+    label,
+    root: led.group,
+    spawned: !!options.spawned,
+    metadata: {
+      led,
+      role,
+      modelRole: 'led',
+    },
+  });
+}
+
 export async function createSpawnedAlbiObjects(ctx) {
   const THREE = ctx.THREE;
-  const gltf = await new Promise((resolve, reject) => {
-    const loader = new ctx.A.GLTFLoader();
-    const md = window.MeshoptDecoder;
-    if (md) loader.setMeshoptDecoder(md);
-    loader.load('Mesh/AlbiStaticLow.glb', resolve, undefined, reject);
+  const model = await new Promise((resolve, reject) => {
+    ctx.assets.loadModel('Mesh/AlbiStaticLow.glb', resolve, reject);
   });
-  const model = gltf.scene;
-
-  model.traverse((node) => {
-    if (!node.isMesh) return;
-    node.castShadow = true;
-    node.receiveShadow = true;
-    node.frustumCulled = false;
-  });
-
-  const box = new THREE.Box3().setFromObject(model);
-  const center = box.getCenter(new THREE.Vector3());
-  model.position.x -= center.x;
-  model.position.z -= center.z;
-  model.position.y -= box.min.y;
-
+  centerModelOnGround(ctx.THREE, model);
   const holder = new THREE.Group();
   holder.add(model);
 
@@ -78,14 +95,25 @@ export class Simulation_AresRobot extends Simulation_Base {
   constructor(ctx) {
     super(ctx);
     this.leds = ctx.leds;
+    this.albiGroup = null;
     this.eyeL = null;
     this.eyeR = null;
     this.chestLed = null;
   }
 
   init() {
-    this.loadAndSetupModel(this.ctx.cfg, (root) => {
-      const cfg = this.ctx.cfg;
+    const ctx = this.ctx;
+    const THREE = ctx.THREE;
+    const cfg = ctx.cfg;
+
+    if (!cfg.model) return;
+
+    this.albiGroup = new THREE.Group();
+
+    ctx.assets.loadModel(cfg.model, (root) => {
+      centerModelOnGround(THREE, root);
+      this.albiGroup.add(root);
+
       const eyes = cfg.eyes;
       const chest = cfg.chest;
 
@@ -103,7 +131,7 @@ export class Simulation_AresRobot extends Simulation_Base {
           palette: EYE_PALETTE,
           glowTex: eyeGlow,
         }));
-        root.add(this.eyeL.group, this.eyeR.group);
+        this.albiGroup.add(this.eyeL.group, this.eyeR.group);
       }
 
       if (chest) {
@@ -114,18 +142,29 @@ export class Simulation_AresRobot extends Simulation_Base {
           palette: CHEST_PALETTE,
           glowTex: chestGlow,
         }));
-        root.add(this.chestLed.group);
+        this.albiGroup.add(this.chestLed.group);
       }
 
-      this.ctx.objects.add(createAlbiModelObject(this.ctx, root, cfg.label || 'Albi Body'), this.ctx.scene);
+      ctx.objects.add(createAlbiModelObject(ctx, this.albiGroup, cfg.label || 'Albi Body'), ctx.scene);
       if (this.eyeL) {
-        this.ctx.objects.add(createAlbiLedObject(this.ctx, this.eyeL, 'Albi Eye L LED', 'eye-l'), root);
+        ctx.objects.add(createAlbiLedObject(ctx, this.eyeL, 'Albi Eye L LED', 'eye-l'), this.albiGroup);
       }
       if (this.eyeR) {
-        this.ctx.objects.add(createAlbiLedObject(this.ctx, this.eyeR, 'Albi Eye R LED', 'eye-r'), root);
+        ctx.objects.add(createAlbiLedObject(ctx, this.eyeR, 'Albi Eye R LED', 'eye-r'), this.albiGroup);
       }
       if (this.chestLed) {
-        this.ctx.objects.add(createAlbiLedObject(this.ctx, this.chestLed, 'Albi Chest LED', 'chest'), root);
+        ctx.objects.add(createAlbiLedObject(ctx, this.chestLed, 'Albi Chest LED', 'chest'), this.albiGroup);
+      }
+
+      const box = new THREE.Box3().setFromObject(this.albiGroup);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = ctx.camera.fov * Math.PI / 180;
+      ctx.frame(size.y * 0.55, (maxDim / 2) / Math.tan(fov / 2) * 1.9);
+      if (ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
+    }, () => {
+      if (ctx.loadingEl && !ctx.disposed) {
+        ctx.loadingEl.textContent = '紐⑤뜽??遺덈윭?ㅼ? 紐삵뻽?댁슂';
       }
     });
   }
