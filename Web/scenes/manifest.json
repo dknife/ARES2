@@ -1,5 +1,13 @@
 {
+  "hiddenTopics": [
+    "albi",
+    "rover"
+  ],
   "scenes": [
-    { "id": "rover_yard", "file": "scenes/rover_yard.json", "label": "로버 훈련장 (컴포넌트)" }
+    {
+      "id": "albi_base",
+      "file": "scenes/albi_base.json",
+      "label": "알비와함께"
+    }
   ]
 }

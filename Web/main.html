@@ -169,29 +169,10 @@
                     <div id="simStage" class="sim-stage">
                         <!-- 통신 로그: 캔버스 위에 흐릿하게 겹친 레이어 (불투명한 바닥에도 명령 글자가 늘 보인다) -->
                         <div id="simLog" class="sim-log" aria-live="polite"></div>
-                        <!-- 주제 선택 + 주제별 버튼: 렌더링 창 안 좌상단에 세로로 겹쳐 띄워
-                             시뮬레이션 공간을 더 넓게 확보한다 -->
+                        <!-- 주제 선택: 렌더링 창 안 좌상단 오버레이. 주제별 버튼 그룹은 제거됨
+                             (2026-07-09) — Simulation_Main 은 요소 부재를 안전하게 처리한다. -->
                         <div class="sim-card-head">
                             <select id="simTopic" class="sim-topic" title="시뮬레이션 주제 선택"></select>
-                            <div class="sim-led-buttons">
-                                <button class="sim-led-btn" data-part="eye"   data-side="R" type="button"><span class="dot"></span>LED 1<small>오른쪽 눈</small></button>
-                                <button class="sim-led-btn" data-part="eye"   data-side="L" type="button"><span class="dot"></span>LED 2<small>왼쪽 눈</small></button>
-                                <button class="sim-led-btn" data-part="chest" type="button"><span class="dot"></span>LED 3<small>가슴</small></button>
-                            </div>
-                            <div class="sim-traffic-buttons" style="display:none">
-                                <button class="sim-traffic-btn" data-action="lamps" type="button"><span class="dot"></span>신호등<small>램프 배치</small></button>
-                                <button class="sim-traffic-btn" data-action="hand"  type="button"><span class="dot"></span>가위바위보<small>손 바꾸기</small></button>
-                            </div>
-                            <div class="sim-launch-buttons" style="display:none">
-                                <button id="simRadar"  class="sim-launch-btn" data-action="radar"  type="button"><span class="dot"></span>레이더</button>
-                                <button id="simRocket" class="sim-launch-btn" data-action="rocket" type="button"><span class="dot"></span>로켓</button>
-                            </div>
-                            <div class="sim-launch-led-buttons" style="display:none">
-                                <button id="simLaunchLeds" class="sim-launch-led-btn" type="button"><span class="dot"></span>LED</button>
-                            </div>
-                            <div class="sim-rover-buttons" style="display:none">
-                                <button id="simObstacle" class="sim-launch-btn" data-action="obstacle" type="button"><span class="dot"></span>장애물 제거</button>
-                            </div>
                         </div>
                         <!-- 시뮬 실행/중지는 하단 중앙 '모의실행' 버튼으로 통합(중앙 버튼이 toggleSimRun 호출).
                              로그 지우기만 렌더링 창 안 하단에 남긴다. -->

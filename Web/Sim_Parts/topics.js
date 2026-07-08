@@ -26,7 +26,7 @@ export const TOPICS = {
     'Mesh/RoverParts/RoverWheel.glb',
   ] },
   // 개발자 모드 전용 '빈 씬'(SIMULATOR.md 2장) — 모델 없이 시작해 객체를 배치·저장한다.
-  // TOPIC_ORDER 에 넣지 않아 사용자용 드롭다운에는 노출되지 않는다(Ctrl+E 시에만 추가).
+  // 드롭다운에는 노출하지 않는다(DEV 바 '새 씬' 버튼으로만 진입, 선택 표시는 '선택 없음').
   empty: { label: '빈 씬', eyes: null },
 };
 
