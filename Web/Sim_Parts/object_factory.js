@@ -135,29 +135,4 @@ export function createGlbObject(ctx, url, label) {
     }, reject);
   });
 }
-
-export function createAlbiModelObject(ctx, root, label = 'Albi Body', options = {}) {
-  return new SimulationObject({
-    id: ctx.objects?.makeId('albi-body') || `albi-body-${Date.now()}`,
-    type: 'albi-body',
-    label,
-    root,
-    spawned: !!options.spawned,
-    metadata: { modelRole: 'body' },
-  });
-}
-
-export function createAlbiLedObject(ctx, led, label, role, options = {}) {
-  return new SimulationObject({
-    id: ctx.objects?.makeId(`albi-${role}`) || `albi-${role}-${Date.now()}`,
-    type: 'albi-led',
-    label,
-    root: led.group,
-    spawned: !!options.spawned,
-    metadata: {
-      led,
-      role,
-      modelRole: 'led',
-    },
-  });
-}
+// (알비 팩토리 함수들은 Simulation_AresRobot.js 내부로 이동 — Simulation_LeeMinhyuck 병합)
