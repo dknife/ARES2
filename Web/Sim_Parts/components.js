@@ -35,18 +35,30 @@ function createLedComponent(ctx, fields = {}) {
       mats.forEach((m) => {
         if (!m || m.emissive === undefined) return;   // Basic 계열 등 emissive 없는 재질은 무시
         if (!saved.has(m)) {
-          saved.set(m, { emissive: m.emissive.clone(), intensity: m.emissiveIntensity ?? 1 });
+          saved.set(m, {
+            emissive: m.emissive.clone(),
+            intensity: m.emissiveIntensity ?? 1,
+            emissiveMap: m.emissiveMap ?? null,
+          });
         }
         if (intensity > 0) {
-          // 재질 고유색 계열로 발광(순검정이면 LED 느낌의 앰버로)
-          const base = m.color && (m.color.r + m.color.g + m.color.b) > 0.05 ? m.color : null;
-          if (base) m.emissive.copy(base); else m.emissive.set(0xffbb33);
+          if (m.map) {
+            // GLB 등 텍스처 재질: 자기 텍스처 색 그대로 발광시켜 메시 전체가 밝게 빛나게 한다
+            m.emissiveMap = m.map;
+            m.emissive.set(0xffffff);
+          } else {
+            // 단색 재질: 고유색 계열로 발광(순검정이면 LED 느낌의 앰버로)
+            const base = m.color && (m.color.r + m.color.g + m.color.b) > 0.05 ? m.color : null;
+            if (base) m.emissive.copy(base); else m.emissive.set(0xffbb33);
+          }
           m.emissiveIntensity = 0.4 + intensity * 1.6;
         } else {
           const orig = saved.get(m);
           m.emissive.copy(orig.emissive);
           m.emissiveIntensity = orig.intensity;
+          m.emissiveMap = orig.emissiveMap;
         }
+        m.needsUpdate = true;   // emissiveMap 변경은 셰이더 재컴파일 필요
       });
     });
   };
