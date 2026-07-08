@@ -3574,6 +3574,8 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     transition: background 0.15s ease, opacity 0.15s ease;
 }
 .tbx-action .tbx-ico { font-size: 1rem; line-height: 1; }
+/* 저장·읽기 아이콘 — assets/design 의 Save/Load 이미지 사용 */
+.tbx-action .tbx-ico img { width: 20px; height: 20px; object-fit: contain; display: block; }
 .tbx-action .tbx-lbl { display: block !important; white-space: nowrap; }
 /* 이전 접힘 상태가 남아 있어도 도구 이름은 계속 표시한다. */
 body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
