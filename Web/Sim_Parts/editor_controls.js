@@ -278,6 +278,7 @@ export class EditorControls {
     this.toolbar.hidden = !this.devMode;
     this.hierarchy.hidden = !this.devMode;
     this.hideContextMenu();
+    if (this.glbMenu) this.glbMenu.hidden = true;
     if (this.devMode) this.ensureDevGrids();
     if (this.devGrids) this.devGrids.visible = this.devMode;
     if (!this.devMode) this.select(null);
@@ -572,28 +573,73 @@ export class EditorControls {
     return simObject.root;
   }
 
-  // GLB 파일 경로를 물어 씬에 배치(SIMULATOR.md 1장 — glb 로딩)
+  // GLB 스폰(SIMULATOR.md 1장 — glb 로딩) — Web/Mesh 의 자산 목록(Mesh/manifest.json)에서
+  // 골라 배치한다. 씬 파일에는 선택한 상대경로(url)가 그대로 기록된다.
   async spawnGlb(options = {}) {
-    const url = prompt('GLB 경로 (Web/ 기준):', 'Mesh/LaunchStation.glb');
-    if (!url || !url.trim()) { this.hideContextMenu(); return null; }
+    this.hideContextMenu();
+    let models = this.glbModels;
+    if (!models) {
+      try {
+        const res = await fetch('Mesh/manifest.json', { cache: 'no-store' });
+        const json = res.ok ? await res.json() : null;
+        models = Array.isArray(json?.models) ? json.models : null;
+      } catch { models = null; }
+      this.glbModels = models;
+    }
+    if (!models || models.length === 0) {
+      // 매니페스트가 없으면 경로 직접 입력으로 폴백
+      const url = prompt('GLB 경로 (Web/ 기준):', 'Mesh/LaunchStation.glb');
+      if (url && url.trim()) return this.spawnGlbFile(url.trim(), null, options);
+      return null;
+    }
+    this.showGlbMenu(models, options);
+    return null;
+  }
 
+  // Mesh/ GLB 선택 메뉴 — 컨텍스트 메뉴와 동일한 스타일로 파일 목록을 띄운다
+  showGlbMenu(models, options) {
+    if (!this.glbMenu) {
+      this.glbMenu = document.createElement('div');
+      this.glbMenu.className = 'sim-editor-context-menu sim-editor-glb-menu';
+      this.glbMenu.hidden = true;
+      this.ctx.stage.appendChild(this.glbMenu);
+    }
+    const menu = this.glbMenu;
+    menu.textContent = '';
+    const title = document.createElement('div');
+    title.className = 'sim-editor-context-title';
+    title.textContent = 'GLB 모델 (Web/Mesh)';
+    menu.appendChild(title);
+    models.forEach((m) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = m.label || m.url.split('/').pop();
+      btn.title = m.url;
+      btn.addEventListener('click', () => {
+        menu.hidden = true;
+        this.spawnGlbFile(m.url, m.label, options);
+      });
+      menu.appendChild(btn);
+    });
+    // 직전 컨텍스트 메뉴 위치 근처에 표시
+    menu.style.left = this.menu.style.left || '12px';
+    menu.style.top = this.menu.style.top || '12px';
+    menu.hidden = false;
+  }
+
+  async spawnGlbFile(url, label, options = {}) {
     const parent = this.getSpawnParentFor(options);
     const worldPoint = this.lastSpawnPoint.clone();
-    this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
     try {
-      const simObject = await createGlbObject(this.ctx, url.trim());
+      const simObject = await createGlbObject(this.ctx, url, label || undefined);
       this.ctx.objects.add(simObject, parent);
       simObject.setWorldPosition(worldPoint, parent);
       this.select(simObject.root);
-      this.hideContextMenu();
       this.updateHierarchy(true);
       return simObject.root;
     } catch (err) {
       console.error('GLB 로드 실패:', url, err);
       return null;
-    } finally {
-      this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = false; });
-      this.updateContextMenuState();
     }
   }
 
@@ -829,6 +875,9 @@ export class EditorControls {
   }
 
   onDocumentPointerDown(event) {
+    if (this.glbMenu && !this.glbMenu.hidden && !this.glbMenu.contains(event.target)) {
+      this.glbMenu.hidden = true;
+    }
     if (this.menu.hidden || this.menu.contains(event.target) || event.target === this.dom) return;
     this.hideContextMenu();
   }
@@ -850,6 +899,7 @@ export class EditorControls {
     window.removeEventListener('keydown', this.onKeyDown);
     this.toolbar?.remove();
     this.menu?.remove();
+    this.glbMenu?.remove();
     this.hierarchy?.remove();
     this.inspector?.remove();
 
