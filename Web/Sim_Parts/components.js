@@ -277,16 +277,17 @@ function fieldVec(THREE, arr, { normalize = true } = {}) {
   return v;
 }
 
-// 로컬 좌표의 점(pivotLocal)을 지나는 로컬 축(axisLocal) 둘레로 회전 —
-// 회전 기준축을 객체 원점에서 옮겨 놓는 offset 지원. pivot 이 없으면 원점 기준.
-// 오프셋 의미: 원점에서 로컬 축 방향으로 "그 거리(m)만큼" 떨어진 점을 축이 지난다.
-// (객체 스케일은 적용하지 않는다 — (0,1,0) 이면 스케일과 무관하게 정확히 1 m 위)
-function rotateAboutLocalPivot(THREE, obj, axisLocal, angle, pivotLocal) {
-  if (!pivotLocal) { obj.rotateOnAxis(axisLocal, angle); return; }
-  const q = new THREE.Quaternion().setFromAxisAngle(axisLocal, angle);
-  const delta = pivotLocal.clone().sub(pivotLocal.clone().applyQuaternion(q)).applyQuaternion(obj.quaternion);
-  obj.position.add(delta);
-  obj.quaternion.multiply(q);
+// 회전축 규약(2026-07-08 재확정): 회전축·선회축과 그 기준점 오프셋은 **부모 객체
+// 좌표계** 기준이다. 기준점 = 객체 원점에서 부모 좌표축 방향으로 오프셋만큼 떨어진
+// 점(부모 공간: pos + offset). 오프셋이 없으면 객체 원점을 지나는 축 둘레로 회전한다.
+// (거리는 m 그대로 — 스케일 미적용. 객체가 어떤 자세여도 축은 부모 기준으로 고정)
+function rotateAboutParentAxis(THREE, obj, axisParent, angle, offsetParent) {
+  const q = new THREE.Quaternion().setFromAxisAngle(axisParent, angle);
+  if (offsetParent) {
+    const delta = offsetParent.clone().sub(offsetParent.clone().applyQuaternion(q));
+    obj.position.add(delta);
+  }
+  obj.quaternion.premultiply(q);
 }
 
 // 로컬 점 오프셋 → 월드 좌표 (방향은 객체 회전을 따르고, 거리는 미터 그대로 — 스케일 미적용)
@@ -303,7 +304,7 @@ function createDcComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   const axisRot = fieldVec(THREE, fields.axis_rotation);
   const axisMove = fieldVec(THREE, fields.axis_translate);
-  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 회전 기준점(로컬)
+  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 회전 기준점(부모 좌표계)
   const ROT_SPEED = 6.0;    // rad/s (강도 1 기준)
   const MOVE_SPEED = 0.5;   // m/s  (강도 1 기준)
   let dir = 0, speed = 1;
@@ -336,8 +337,8 @@ function createDcComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       if (!dir) return;
-      // 로컬 축 기준(규약 개정) — rotation_offset 이 있으면 그 점을 지나는 축 둘레로 회전
-      if (axisRot) rotateAboutLocalPivot(THREE, simObject.root, axisRot, dir * speed * ROT_SPEED * dt, rotOffset);
+      // 회전축(+기준점)은 부모 좌표계, 이동축은 객체 로컬 좌표계(규약 재확정)
+      if (axisRot) rotateAboutParentAxis(THREE, simObject.root, axisRot, dir * speed * ROT_SPEED * dt, rotOffset);
       if (axisMove) simObject.root.translateOnAxis(axisMove, dir * speed * MOVE_SPEED * dt);
     },
     dispose() { stop(); },
@@ -355,8 +356,8 @@ function createServoComponent(ctx, fields = {}) {
   const axisRot = fieldVec(THREE, fields.axis_rotation);
   const axisDir = fieldVec(THREE, fields.axis_direction);
   const axisTurn = fieldVec(THREE, fields.axis_turn);
-  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 스핀축 기준점(로컬)
-  const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });      // 선회축 기준점(로컬)
+  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 스핀축 기준점(부모 좌표계)
+  const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });      // 선회축 기준점(부모 좌표계)
   const SPIN = 8.0;   // 바퀴 스핀 rad/s
   const MOVE = 0.4;   // 이동 m/s
   const TURN = 1.5;   // 선회 rad/s
@@ -389,14 +390,14 @@ function createServoComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       const root = simObject.root;
-      // 로컬 축 기준(규약 개정) — *_offset 이 있으면 그 점을 지나는 축 둘레로 회전
+      // 스핀축·선회축(+기준점)은 부모 좌표계, 이동 방향은 객체 로컬 좌표계(규약 재확정)
       if (move !== 0) {
-        if (axisRot) rotateAboutLocalPivot(THREE, root, axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt, rotOffset);
+        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt, rotOffset);
         if (axisDir) root.translateOnAxis(axisDir, move * MOVE * dt);
       }
       if (turn !== 0) {
-        if (axisRot) rotateAboutLocalPivot(THREE, root, axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt, rotOffset);
-        if (axisTurn) rotateAboutLocalPivot(THREE, root, axisTurn, turn * TURN * dt, turnOffset);
+        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt, rotOffset);
+        if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * TURN * dt, turnOffset);
       }
     },
     dispose() { stop(); },
