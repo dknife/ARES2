@@ -84,6 +84,12 @@ export class Simulation_AresRobot extends Simulation_Base {
   }
 
   init() {
+    // 빈 씬(개발자 모드): 모델 없이 기본 카메라 프레이밍만 하고 로딩 표시를 닫는다.
+    if (!this.ctx.cfg.model) {
+      this.ctx.frame(0.6, 4.2);
+      if (this.ctx.loadingEl) this.ctx.loadingEl.style.display = 'none';
+      return;
+    }
     this.loadAndSetupModel(this.ctx.cfg, (root) => {
       const cfg = this.ctx.cfg;
       const eyes = cfg.eyes;

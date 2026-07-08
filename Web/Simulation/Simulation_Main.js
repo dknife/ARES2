@@ -14,6 +14,7 @@ import { Simulation_AresRobot } from './Simulation_AresRobot.js';
 // Imports for setupSimulation (init)
 import { CommandExecutor } from '../commandexecutor.js';
 import { state } from '../state.js';
+import { serializeScene, applyScene, clearSpawnedObjects } from '../Sim_Parts/scene_store.js';
 
 export class Simulation_Main {
   // Topic metadata and OLED icons constants
@@ -188,8 +189,125 @@ export class Simulation_Main {
       finalizeClose();
     };
 
+    // ==== 개발자 모드 (Ctrl+E) — 씬 생성·저장·로드 (SIMULATOR.md 구현 규약 2026-07-08) ====
+    // 사용자는 씬 구성을 못 하고(편집 UI 숨김), 개발자 모드에서만 생성·편집·저장이 가능하다.
+    let devMode = false;
+
+    const devBar = document.createElement('div');
+    devBar.className = 'sim-devbar';
+    devBar.hidden = true;
+    devBar.innerHTML = `
+      <span class="sim-devbar-tag">DEV</span>
+      <button type="button" data-dev="new">새 씬</button>
+      <button type="button" data-dev="save">씬 저장</button>
+      <button type="button" data-dev="load">씬 열기</button>`;
+    card.appendChild(devBar);
+
+    const devFileInput = document.createElement('input');
+    devFileInput.type = 'file';
+    devFileInput.accept = 'application/json,.json';
+    devFileInput.hidden = true;
+    card.appendChild(devFileInput);
+
+    // '빈 씬' 토픽 옵션은 개발자 모드에서만 드롭다운에 노출한다.
+    const ensureEmptyOption = () => {
+      if (!sel || sel.querySelector('option[value="empty"]')) return;
+      const o = document.createElement('option');
+      o.value = 'empty';
+      o.textContent = `${TOPICS.empty.label} (개발자)`;
+      sel.appendChild(o);
+    };
+    const removeEmptyOption = () => {
+      const o = sel?.querySelector('option[value="empty"]');
+      if (o && sel.value !== 'empty') o.remove();
+    };
+
+    // build() 마다 Context/editor 가 새로 만들어지므로, 빌드 후에도 다시 적용해야 한다.
+    const applyDevMode = () => {
+      sim?.ctx?.editor?.setDevMode?.(devMode);
+      devBar.hidden = !devMode;
+      if (devMode) ensureEmptyOption(); else removeEmptyOption();
+      // 콘솔 디버그 핸들 — 개발자 모드에서만 노출
+      window.__aresSimDev = devMode && sim?.ctx ? {
+        serialize: (opts) => serializeScene(sim.ctx, { topic: (sel && sel.value) || 'empty', ...opts }),
+        apply: (json) => applyScene(sim.ctx, json),
+        clear: () => clearSpawnedObjects(sim.ctx),
+      } : undefined;
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey) || (e.key || '').toLowerCase() !== 'e') return;
+      if (card.hidden) return;                 // 시뮬 화면이 열려 있을 때만 동작
+      e.preventDefault();
+      devMode = !devMode;
+      applyDevMode();
+      logLine(devMode ? '── 개발자 모드 ON (Ctrl+E 로 해제) ──' : '── 개발자 모드 OFF ──', 'sys');
+    });
+
+    const rebuildTo = (topicKey) => {
+      if (sel) sel.value = topicKey;
+      build(topicKey);
+      applyDevMode();
+      sim.resize();
+      cancelAnimationFrame(raf); loop();
+    };
+
+    const devSaveScene = async () => {
+      if (!sim?.ctx) return;
+      const json = serializeScene(sim.ctx, { name: 'ares_scene', topic: (sel && sel.value) || 'empty' });
+      const text = JSON.stringify(json, null, 2);
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: 'ares_scene.json',
+            types: [{ description: 'ARES 씬 파일', accept: { 'application/json': ['.json'] } }],
+          });
+          const w = await handle.createWritable();
+          await w.write(text);
+          await w.close();
+          logLine(`씬 저장 완료 — ${handle.name} (객체 ${json.objects.length}개)`, 'sys');
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;   // 저장창 취소
+        }
+      }
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'ares_scene.json'; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      logLine(`씬 저장(다운로드) — 객체 ${json.objects.length}개`, 'sys');
+    };
+
+    const devLoadScene = async (file) => {
+      try {
+        const json = JSON.parse(await file.text());
+        const topic = TOPICS[json.topic] ? json.topic : 'empty';
+        if (topic === 'empty') ensureEmptyOption();
+        if (!sim || builtTopic !== topic) rebuildTo(topic);
+        await applyScene(sim.ctx, json);
+        logLine(`씬 로드 완료 — ${json.name || file.name} (객체 ${json.objects.length}개)`, 'sys');
+      } catch (err) {
+        logLine('씬 로드 실패: ' + (err && err.message ? err.message : err), 'err');
+      }
+    };
+
+    devBar.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-dev]');
+      if (!b) return;
+      if (b.dataset.dev === 'new') { ensureEmptyOption(); rebuildTo('empty'); }
+      else if (b.dataset.dev === 'save') devSaveScene();
+      else if (b.dataset.dev === 'load') devFileInput.click();
+    });
+    devFileInput.addEventListener('change', () => {
+      const f = devFileInput.files && devFileInput.files[0];
+      devFileInput.value = '';
+      if (f) devLoadScene(f);
+    });
+
     if (sel) sel.addEventListener('change', () => {
       build(sel.value);
+      applyDevMode();   // 새 Context 의 editor 에 개발자 모드 상태 재적용
       sim.resize();
       cancelAnimationFrame(raf); loop();
     });

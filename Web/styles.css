@@ -1917,6 +1917,23 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
 #simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
+/* 개발자 모드(Ctrl+E) 씬 도구 바 — 씬 생성·저장·로드 (SIMULATOR.md) */
+.sim-devbar {
+    position: absolute; right: 10px; bottom: 44px; z-index: 6;
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 8px; border-radius: 8px;
+    background: rgba(16, 22, 34, 0.82); border: 1px solid rgba(255, 210, 74, 0.55);
+}
+.sim-devbar-tag {
+    font: 700 10px/1 'Inter Tight', sans-serif; letter-spacing: .08em;
+    color: #ffd24a; padding-right: 2px;
+}
+.sim-devbar button {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.78em; font-weight: 600;
+    background: #202a3d; color: #dfe8f8; border: 1px solid #3a4a68; border-radius: 6px;
+    padding: 4px 9px; cursor: pointer;
+}
+.sim-devbar button:hover { background: #2b3a55; }
 /* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
    명령 글자가 늘 바닥을 이기고 보이도록 캔버스 위 레이어로 올렸다(컨트롤 z:4~5 아래).
    반투명(opacity)·포인터 이벤트 통과라 로봇 드래그/버튼 클릭은 방해하지 않는다. 최신 줄이 아래. */
