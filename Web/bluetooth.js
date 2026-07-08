@@ -536,7 +536,7 @@ export const BluetoothManager = {
 
     // 비상정지는 일반 명령 큐를 기다리면 안 된다. 현재 응답 대기와 멀티 청크
     // 전송을 끊도록 표시한 뒤 STOP_ALL을 우선 전송한다.
-    async emergencyStop() {
+    async emergencyStop(command = 'STOP_ALL') {
         this._abortCurrentWrite = true;
         this._sendEpoch++;
         this.cancelPendingResponse('비상정지');
@@ -544,13 +544,13 @@ export const BluetoothManager = {
 
         try {
             let lastError = null;
-            for (let attempt = 0; attempt < 3; attempt++) {
+            for (let attempt = 0; attempt < 10; attempt++) {
                 try {
-                    await this._sendDataNow('STOP_ALL', false, null, { priority: true });
+                    await this._sendDataNow(command, false, null, { priority: true });
                     return;
                 } catch (error) {
                     lastError = error;
-                    await this.delay(30);
+                    await this.delay(50);
                 }
             }
             throw lastError;
@@ -602,7 +602,7 @@ export const BluetoothManager = {
             if (epoch !== this._sendEpoch) {
                 throw new Error('비상정지로 대기 중인 전송을 취소했습니다.');
             }
-            return this._sendDataNow(data, waitForResponse, timeoutMs);
+            return this._sendDataNow(data, waitForResponse, timeoutMs, { epoch });
         };
         const queuedSend = this._sendQueue.then(sendTask, sendTask);
         this._sendQueue = queuedSend.catch(() => {});
@@ -610,6 +610,9 @@ export const BluetoothManager = {
     },
 
     async _sendDataNow(data, waitForResponse = false, timeoutMs = null, options = {}) {
+        if (options.epoch !== undefined && options.epoch !== this._sendEpoch) {
+            throw new Error('비상정지로 현재 전송을 중단했습니다.');
+        }
         if (this._abortCurrentWrite && !options.priority) {
             throw new Error('비상정지로 현재 전송을 중단했습니다.');
         }
@@ -659,6 +662,9 @@ export const BluetoothManager = {
           state.characteristic.properties.writeWithoutResponse;
         try {
             for (let i = 0; i < encodedData.length; i += BLUETOOTH_CONFIG.MAX_CHUNK_SIZE) {
+                if (options.epoch !== undefined && options.epoch !== this._sendEpoch) {
+                    throw new Error('비상정지로 현재 전송을 중단했습니다.');
+                }
                 if (this._abortCurrentWrite && !options.priority) {
                     throw new Error('비상정지로 현재 전송을 중단했습니다.');
                 }

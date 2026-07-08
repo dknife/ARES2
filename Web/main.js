@@ -1916,6 +1916,17 @@ function initializeMissionListeners(ws) {
     if (data.type === 'command') {
       const cmd = data.data;
       Logger.add(`[대시보드] ${cmd}`, 'info');
+      if (cmd === 'STOP' || cmd === 'STOP_ALL') {
+        try {
+          state.isExecuting = false;
+          updateRunButtonUI();
+          await BluetoothManager.emergencyStop(cmd);
+          Logger.add('[비상정지] 모든 하드웨어 정지 완료', 'info');
+        } catch (error) {
+          Logger.add(`[오류] 비상 정지 전송 실패: ${error.message}`, 'error');
+        }
+        return;
+      }
       const needsResponse = cmd === 'GET_SYS' || cmd === 'GET_STATUS' || cmd === 'GET_MODULES' || cmd === 'GET_NAMES';
       for (let attempt = 1; attempt <= 2; attempt++) {
         try {
