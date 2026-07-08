@@ -204,7 +204,9 @@ export class Simulation_Main {
       <button type="button" data-dev="new">새 씬</button>
       <button type="button" data-dev="save">씬 저장</button>
       <button type="button" data-dev="load">씬 열기</button>`;
-    card.appendChild(devBar);
+    // 씬 이름 드롭다운(#simTopic) 바로 옆(아래 줄)에 나열 — 좌상단 패널 안
+    if (sel && sel.parentElement) sel.insertAdjacentElement('afterend', devBar);
+    else card.appendChild(devBar);
 
     const devFileInput = document.createElement('input');
     devFileInput.type = 'file';

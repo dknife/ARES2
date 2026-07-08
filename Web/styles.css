@@ -1778,8 +1778,9 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     top: 58px;
     right: 10px;
     z-index: 5;
-    width: 236px;
-    max-height: min(46vh, 340px);
+    width: 210px;
+    /* 폰트·행높이 축소와 함께 최대 높이를 늘려 많은 항목이 보이게 한다 */
+    max-height: min(62vh, 460px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1795,44 +1796,47 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 8px 8px 7px 10px;
+    gap: 6px;
+    padding: 4px 5px 4px 7px;
     color: rgba(238, 243, 251, 0.86);
-    font-size: 0.74em;
+    font-size: 0.6em;
     font-weight: 800;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .sim-editor-hierarchy-head button {
-    width: 22px;
-    height: 22px;
+    width: 15px;
+    height: 15px;
     padding: 0;
+    font-size: 10px;
+    line-height: 1;
     color: #eef3fb;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
 }
 .sim-editor-hierarchy-list {
     overflow: auto;
-    padding: 5px;
+    padding: 3px;
 }
 .sim-editor-hierarchy.collapsed .sim-editor-hierarchy-list {
     display: none;
 }
+/* 많은 항목이 보이도록 행 높이·폰트를 최소화한 밀집 목록 */
 .sim-editor-hierarchy-item {
     width: 100%;
-    min-height: 28px;
+    min-height: 16px;
     display: grid;
-    grid-template-columns: 74px minmax(0, 1fr);
-    gap: 6px;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 4px;
     align-items: center;
-    margin: 2px 0;
-    padding: 5px 7px 5px calc(7px + (var(--depth, 0) * 14px));
+    margin: 1px 0;
+    padding: 1px 5px 1px calc(5px + (var(--depth, 0) * 9px));
     color: #eef3fb;
     text-align: left;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
 }
 .sim-editor-hierarchy-item:hover,
@@ -1847,20 +1851,20 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     text-overflow: ellipsis;
     color: inherit;
     opacity: 0.72;
-    font-size: 0.66em;
+    font-size: 0.52em;
     font-weight: 800;
 }
 .sim-editor-hierarchy-label {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: 0.72em;
+    font-size: 0.58em;
     font-weight: 700;
 }
 .sim-editor-hierarchy-empty {
-    padding: 10px 8px;
+    padding: 7px 6px;
     color: rgba(238, 243, 251, 0.48);
-    font-size: 0.72em;
+    font-size: 0.58em;
     text-align: center;
 }
 @media (max-width: 760px) {
@@ -1917,21 +1921,20 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
 #simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
-/* 개발자 모드(Ctrl+E) 씬 도구 바 — 씬 생성·저장·로드 (SIMULATOR.md) */
+/* 개발자 모드(Ctrl+E) 씬 도구 — 씬 드롭다운 바로 옆(아래 줄)에 작은 글자로 나열 */
 .sim-devbar {
-    position: absolute; right: 10px; bottom: 44px; z-index: 6;
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 8px; border-radius: 8px;
-    background: rgba(16, 22, 34, 0.82); border: 1px solid rgba(255, 210, 74, 0.55);
+    display: flex; align-items: center; gap: 3px;
+    padding: 2px 0 0;
 }
 .sim-devbar-tag {
-    font: 700 10px/1 'Inter Tight', sans-serif; letter-spacing: .08em;
-    color: #ffd24a; padding-right: 2px;
+    font: 700 8px/1 'Inter Tight', sans-serif; letter-spacing: .06em;
+    color: #ffd24a; padding-right: 1px;
 }
 .sim-devbar button {
-    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.78em; font-weight: 600;
-    background: #202a3d; color: #dfe8f8; border: 1px solid #3a4a68; border-radius: 6px;
-    padding: 4px 9px; cursor: pointer;
+    flex: 1 1 auto; min-width: 0;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.6em; font-weight: 600;
+    background: #202a3d; color: #dfe8f8; border: 1px solid #3a4a68; border-radius: 5px;
+    padding: 3px 4px; cursor: pointer; white-space: nowrap;
 }
 .sim-devbar button:hover { background: #2b3a55; }
 /* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
