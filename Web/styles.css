@@ -1685,9 +1685,47 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
    (UA 의 [hidden]{display:none} 은 author display:flex 에 덮여 시각적으로 노출되는 버그 방지) */
 .sim-editor-toolbar[hidden],
 .sim-editor-hierarchy[hidden],
+.sim-editor-inspector[hidden],
 .sim-devbar[hidden] {
     display: none !important;
 }
+
+/* 컴포넌트 인스펙터 — 선택 객체의 직렬화 필드값(JSON)을 씬 드롭박스 아래에서 편집(개발자 모드) */
+.sim-editor-inspector {
+    position: absolute; left: 10px; top: 220px; z-index: 5;
+    width: 158px; max-width: calc(100% - 20px);
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 6px;
+    background: rgba(12, 13, 42, 0.62);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.sim-editor-inspector-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+}
+.sim-editor-inspector-title {
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    color: #ffd24a; font-size: 0.6em; font-weight: 800;
+}
+.sim-editor-inspector-head button {
+    flex: 0 0 auto;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.58em; font-weight: 700;
+    color: #1f2430; background: #FFC400; border: 1px solid #FFB300; border-radius: 5px;
+    padding: 2px 7px; cursor: pointer;
+}
+.sim-editor-inspector textarea {
+    width: 100%; box-sizing: border-box; resize: vertical;
+    min-height: 90px; max-height: 40vh;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 5px;
+    padding: 4px; font: 9px/1.35 'D2Coding', Menlo, monospace;
+}
+.sim-editor-inspector-status {
+    color: #9fe3b4; font-size: 0.55em; white-space: pre-wrap;
+}
+.sim-editor-inspector-status.error { color: #ff9d94; }
 
 /* 편집 툴바(Move·Rotate·Scale) — 씬 도구·Hierarchy 와 동일한 작은 폰트로 통일(개발자 모드 전용) */
 .sim-editor-toolbar {

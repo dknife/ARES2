@@ -5,6 +5,8 @@ import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js'
 import { createPrimitiveObject, createGlbObject } from './object_factory.js';
 import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents } from './components.js';
 
+const RENAME_HOLD_MS = 600;   // Hierarchy 항목 길게 클릭 → 이름 변경
+
 const MODES = ['translate', 'rotate', 'scale'];
 const SPAWN_MENU = [
   { type: 'albi', label: 'Albi Robot' },
@@ -48,6 +50,8 @@ export class EditorControls {
     this.ctx.stage.appendChild(this.menu);
     this.hierarchy = this.createHierarchyPanel();
     this.ctx.stage.appendChild(this.hierarchy);
+    this.inspector = this.createInspector();
+    this.ctx.stage.appendChild(this.inspector);
 
     // 씬 편집은 개발자 모드 전용(SIMULATOR.md 1장) — 기본은 사용자 모드(편집 UI 숨김).
     // Simulation_Main 이 Ctrl+E 토글로 setDevMode() 를 호출한다.
@@ -272,6 +276,92 @@ export class EditorControls {
     if (this.devGrids) this.devGrids.visible = this.devMode;
     if (!this.devMode) this.select(null);
     else this.updateHierarchy(true);
+    this.updateInspector();
+  }
+
+  // ==== 컴포넌트 인스펙터 — 선택 객체의 직렬화 필드값(JSON)을 씬 드롭박스 아래에서 편집 ====
+  createInspector() {
+    const panel = document.createElement('div');
+    panel.className = 'sim-editor-inspector';
+    panel.hidden = true;
+    panel.innerHTML = `
+      <div class="sim-editor-inspector-head">
+        <span class="sim-editor-inspector-title">컴포넌트</span>
+        <button type="button" data-action="apply">적용</button>
+      </div>
+      <textarea spellcheck="false" rows="8"></textarea>
+      <div class="sim-editor-inspector-status" hidden></div>
+    `;
+    panel.querySelector('[data-action="apply"]').addEventListener('click', () => this.applyInspector());
+    // 편집 중 키 입력이 편집 단축키(W/E/R·Delete)로 새지 않게 차단
+    panel.querySelector('textarea').addEventListener('keydown', (e) => e.stopPropagation());
+    return panel;
+  }
+
+  updateInspector() {
+    if (!this.inspector) return;
+    const simObject = this.getSelectedSimObject();
+    const show = this.devMode && !!simObject?.spawned;
+    this.inspector.hidden = !show;
+    if (!show) return;
+
+    // 씬 선택 패널(.sim-card-head) 바로 아래에 위치
+    const head = this.ctx.stage.querySelector('.sim-card-head');
+    if (head) {
+      const stageRect = this.ctx.stage.getBoundingClientRect();
+      const headRect = head.getBoundingClientRect();
+      this.inspector.style.top = `${Math.round(headRect.bottom - stageRect.top + 8)}px`;
+    }
+    this.inspector.querySelector('.sim-editor-inspector-title').textContent = simObject.label;
+    this.inspector.querySelector('textarea').value =
+      JSON.stringify(serializeComponents(simObject), null, 1);
+    this.setInspectorStatus('');
+  }
+
+  setInspectorStatus(msg, isError = false) {
+    const el = this.inspector?.querySelector('.sim-editor-inspector-status');
+    if (!el) return;
+    el.hidden = !msg;
+    el.textContent = msg;
+    el.classList.toggle('error', isError);
+  }
+
+  applyInspector() {
+    const simObject = this.getSelectedSimObject();
+    if (!simObject) return;
+    const textarea = this.inspector.querySelector('textarea');
+    let list;
+    try {
+      list = JSON.parse(textarea.value || '[]');
+      if (!Array.isArray(list)) throw new Error('배열이어야 합니다');
+    } catch (err) {
+      this.setInspectorStatus('JSON 오류: ' + err.message, true);
+      return;
+    }
+    try {
+      // 기존 선언형 컴포넌트를 모두 해제하고 편집된 목록대로 재부착
+      serializeComponents(simObject).forEach(({ type }) => detachComponent(this.ctx, simObject, type));
+      list.forEach((entry) => {
+        if (!entry || !entry.type) throw new Error('type 이 없는 항목');
+        attachComponent(this.ctx, simObject, entry.type, entry.fields || {});
+      });
+      this.select(simObject.root);   // 라벨·인스펙터 갱신
+      this.setInspectorStatus(`적용 완료 (${list.length}개 컴포넌트)`);
+    } catch (err) {
+      this.setInspectorStatus('적용 실패: ' + err.message, true);
+    }
+  }
+
+  // Hierarchy 항목 길게 클릭 → 이름 변경
+  renameObject(simObject) {
+    if (!simObject) return;
+    const name = prompt('객체 이름:', simObject.label);
+    if (name === null || !name.trim()) return;
+    simObject.label = name.trim();
+    simObject.root.userData.simEditorLabel = simObject.label;
+    if (this.ctx.objects) this.ctx.objects.version += 1;
+    this.updateHierarchy(true);
+    if (this.selected === simObject.root) this.select(simObject.root);   // 툴바·인스펙터 라벨 갱신
   }
 
   register(object, label = 'Object') {
@@ -318,6 +408,7 @@ export class EditorControls {
     const text = this.toolbar.querySelector('.sim-editor-selection');
     if (text) text.textContent = label;
     this.updateHierarchy(true);
+    this.updateInspector();
   }
 
   getSpawnParent() {
@@ -567,7 +658,23 @@ export class EditorControls {
     label.textContent = simObject.label;
 
     row.append(type, label);
-    row.addEventListener('click', () => this.select(simObject.root));
+    // 짧은 클릭 = 선택, 길게 클릭(600ms) = 이름 변경
+    let holdTimer = 0, renamed = false;
+    row.addEventListener('pointerdown', () => {
+      renamed = false;
+      holdTimer = setTimeout(() => {
+        renamed = true;
+        this.select(simObject.root);
+        this.renameObject(simObject);
+      }, RENAME_HOLD_MS);
+    });
+    const cancelHold = () => { clearTimeout(holdTimer); };
+    row.addEventListener('pointerup', cancelHold);
+    row.addEventListener('pointerleave', cancelHold);
+    row.addEventListener('click', () => {
+      if (renamed) { renamed = false; return; }   // 길게 클릭 직후의 click 은 무시
+      this.select(simObject.root);
+    });
     list.appendChild(row);
 
     this.ctx.objects.getChildrenOf(simObject).forEach((child) => {
@@ -619,6 +726,7 @@ export class EditorControls {
     this.toolbar?.remove();
     this.menu?.remove();
     this.hierarchy?.remove();
+    this.inspector?.remove();
 
     if (this.transform) {
       this.transform.removeEventListener('dragging-changed', this.onDraggingChanged);
