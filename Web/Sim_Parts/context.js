@@ -14,6 +14,15 @@ import { Dispatch } from './dispatch.js';
 import { EditorControls } from './editor_controls.js';
 import { SimulationObjectRegistry } from './sim_object.js';
 
+const CAMERA_CONTROL = {
+  zoomSpeed: 0.4,
+  wheelScale: 0.0025,
+  smoothRate: 10,
+  minDistanceRatio: 0.35,
+  maxDistanceRatio: 3.0,
+  minDistanceFloor: 0.2,
+};
+
 export class Context {
   constructor(THREE, A, stage, loadingEl, cfg, options = {}) {
     this.THREE = THREE;
@@ -47,6 +56,10 @@ export class Context {
     this.controls = new A.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
+    this.controls.enableZoom = false;
+    this.smoothZoomTarget = null;
+    this.onSmoothZoomWheel = (event) => this.handleSmoothZoomWheel(event);
+    this.renderer.domElement.addEventListener('wheel', this.onSmoothZoomWheel, { passive: false });
 
     // Lighting
     this.scene.add(new THREE.HemisphereLight(0xdfeaff, 0x32402f, 0.55));
@@ -96,6 +109,47 @@ export class Context {
     this.editor = new EditorControls(this);
   }
 
+  clampCameraDistance(distance) {
+    return Math.min(this.controls.maxDistance, Math.max(this.controls.minDistance, distance));
+  }
+
+  handleSmoothZoomWheel(event) {
+    event.preventDefault();
+    const lineHeight = 16;
+    const pageHeight = this.stage.clientHeight || 300;
+    const unit =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE ? lineHeight :
+      event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? pageHeight : 1;
+    const delta = event.deltaY * unit;
+    const currentDistance = this.camera.position.distanceTo(this.controls.target);
+    const baseDistance = this.smoothZoomTarget ?? currentDistance;
+    const scale = Math.exp(delta * CAMERA_CONTROL.wheelScale * CAMERA_CONTROL.zoomSpeed);
+    this.smoothZoomTarget = this.clampCameraDistance(baseDistance * scale);
+  }
+
+  updateSmoothZoom(dt) {
+    if (this.smoothZoomTarget == null) return;
+
+    const target = this.controls.target;
+    const offset = this.camera.position.clone().sub(target);
+    const currentDistance = offset.length();
+    if (currentDistance <= 0.0001) {
+      offset.set(0, 0, 1);
+    } else {
+      offset.normalize();
+    }
+
+    const desiredDistance = this.clampCameraDistance(this.smoothZoomTarget);
+    const alpha = 1 - Math.exp(-CAMERA_CONTROL.smoothRate * Math.max(0, dt));
+    const nextDistance = currentDistance + (desiredDistance - currentDistance) * alpha;
+    this.camera.position.copy(target).add(offset.multiplyScalar(nextDistance));
+
+    if (Math.abs(desiredDistance - nextDistance) < 0.001) {
+      this.camera.position.copy(target).add(offset.normalize().multiplyScalar(desiredDistance));
+      this.smoothZoomTarget = null;
+    }
+  }
+
   getAudioCtx() {
     if (!this.audioCtx && this.ensureAudio) {
       this.audioCtx = this.ensureAudio();
@@ -118,12 +172,18 @@ export class Context {
     this.camera.near = dist / 100;
     this.camera.far = dist * 100;
     this.camera.updateProjectionMatrix();
+    this.controls.minDistance = Math.max(CAMERA_CONTROL.minDistanceFloor, dist * CAMERA_CONTROL.minDistanceRatio);
+    this.controls.maxDistance = Math.max(this.controls.minDistance + CAMERA_CONTROL.minDistanceFloor, dist * CAMERA_CONTROL.maxDistanceRatio);
+    this.smoothZoomTarget = null;
     this.controls.target.set(0, cy, 0);
     this.controls.update();
   }
 
   dispose() {
     this.disposed = true;
+    if (this.onSmoothZoomWheel) {
+      this.renderer.domElement.removeEventListener('wheel', this.onSmoothZoomWheel);
+    }
     try { this.controls.dispose(); } catch {}
     this.objects?.dispose?.();
     
