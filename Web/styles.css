@@ -1715,6 +1715,22 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     color: #1f2430; background: #FFC400; border: 1px solid #FFB300; border-radius: 5px;
     padding: 2px 7px; cursor: pointer;
 }
+.sim-editor-inspector-tf {
+    display: grid;
+    grid-template-columns: 27px repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    align-items: center;
+}
+.sim-editor-inspector-tf span {
+    color: rgba(238, 243, 251, 0.7);
+    font-size: 0.55em; font-weight: 700;
+}
+.sim-editor-inspector-tf input {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
 .sim-editor-inspector textarea {
     width: 100%; box-sizing: border-box; resize: vertical;
     min-height: 90px; max-height: 40vh;
