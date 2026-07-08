@@ -146,16 +146,50 @@ export class EditorControls {
     return menu;
   }
 
-  // 선택 객체에 컴포넌트 부착. LED 는 led_no(0~5)를 물어본다.
+  // 선택 객체에 컴포넌트 부착 — 타입별 필드를 prompt 로 입력받는다(개발자 모드 전용).
+  // 벡터는 "x,y,z" 형식(월드 좌표계, SIMULATOR.md 규약), 빈칸 = 선택 필드 미사용.
   attachToSelected(type) {
     const simObject = this.getSelectedSimObject();
     if (!simObject?.spawned) return;
-    let fields = {};
-    if (type === 'LED') {
-      const answer = prompt('LED 번호 (0~5):', '0');
-      if (answer === null) return;                       // 취소
-      fields = { led_no: Math.max(0, Math.min(5, parseInt(answer, 10) || 0)) };
+
+    const FIELD_SPECS = {
+      LED: [{ key: 'led_no', label: 'LED 번호 (0~5)', def: '0', kind: 'int' }],
+      DC: [
+        { key: 'axis_rotation', label: 'DC 회전축 x,y,z (빈칸=미사용)', def: '0,1,0', kind: 'vec', optional: true },
+        { key: 'axis_translate', label: 'DC 이동축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
+      ],
+      Servo: [
+        { key: 'wheel', label: '바퀴연결 (left/right)', def: 'left', kind: 'side' },
+        { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (빈칸=미사용)', def: '1,0,0', kind: 'vec', optional: true },
+        { key: 'axis_direction', label: '이동 방향 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
+        { key: 'axis_turn', label: '선회축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
+      ],
+      UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z', def: '0,0,1', kind: 'vec' }],
+      Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (월드축, 반경 5cm)', def: '0,0,0', kind: 'vec' }],
+    };
+    const parseVecStr = (s) => {
+      const parts = String(s).split(',').map((x) => parseFloat(x));
+      return parts.length === 3 && parts.every((n) => isFinite(n)) ? parts : null;
+    };
+
+    const fields = {};
+    for (const spec of FIELD_SPECS[type] || []) {
+      const answer = prompt(`${type} — ${spec.label}:`, spec.def);
+      if (answer === null) return;                       // 취소 → 부착 중단
+      const raw = answer.trim();
+      if (!raw) {
+        if (spec.optional) continue;
+        return;
+      }
+      if (spec.kind === 'int') fields[spec.key] = Math.max(0, Math.min(5, parseInt(raw, 10) || 0));
+      else if (spec.kind === 'side') fields[spec.key] = raw.toLowerCase() === 'right' ? 'right' : 'left';
+      else {
+        const v = parseVecStr(raw);
+        if (!v) return;                                  // 형식 오류 → 중단
+        fields[spec.key] = v;
+      }
     }
+
     attachComponent(this.ctx, simObject, type, fields);
     this.select(simObject.root);                          // 라벨·메뉴 갱신
     this.hideContextMenu();
@@ -169,11 +203,14 @@ export class EditorControls {
     this.hideContextMenu();
   }
 
-  // 'Box 1 · LED0+Buzzer' 형태의 표시용 라벨
+  // 'Box 1 · LED0+Servo(L)' 형태의 표시용 라벨
   describeObject(simObject) {
     if (!simObject) return null;
-    const comps = serializeComponents(simObject)
-      .map((c) => c.type === 'LED' ? `LED${c.fields.led_no}` : c.type);
+    const comps = serializeComponents(simObject).map((c) => {
+      if (c.type === 'LED') return `LED${c.fields.led_no}`;
+      if (c.type === 'Servo') return `Servo(${c.fields.wheel === 'right' ? 'R' : 'L'})`;
+      return c.type;
+    });
     return comps.length ? `${simObject.label} · ${comps.join('+')}` : simObject.label;
   }
 
