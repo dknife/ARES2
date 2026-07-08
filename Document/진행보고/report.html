@@ -2095,6 +2095,16 @@ async _executeFunctionCall(callBlock) {
             </div>
 
             <div class="tasks">
+                <h3>📖 시뮬레이터 사용법 (요약 — 전문은 진행보고 PDF 부록 G)</h3>
+                <p class="lead">씬 생성 도구의 사용법을 문서화해 진행보고 <b>부록 G</b>에 수록했다. 사용 흐름 요지:</p>
+                <ul>
+                    <li><b>사용자</b> — 시뮬 드롭다운에서 씬 선택 → 블록 조립 → <b>모의실행</b>(실행 중 <b>실험중단</b>으로 즉시 정지). 씬 편집은 불가(읽기 전용).</li>
+                    <li><b>개발자</b> — <b>Ctrl+E</b> 진입 → '새 씬' → <b>우클릭</b>으로 객체 생성(Box·Sphere·Marker·OLED·<b>GLB 16종 목록</b>) → 기즈모(W/E/R)·Hierarchy(길게 클릭=이름 변경)·인스펙터(트랜스폼+컴포넌트 필드)로 편집 → 컴포넌트 부착(9종) → <b>씬 저장</b>(JSON).</li>
+                    <li><b>배포</b> — 저장한 JSON을 <code>Web/scenes/</code>에 두고 <code>manifest.json</code>에 등록하면 사용자 드롭다운에 자동 노출. GLB는 상대경로로 기록.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
                 <h3>✅ 소프트웨어 테스트 — 1차 수행 결과(STR v1.1) 요약</h3>
                 <p class="lead">11일차 QA 체계·TCL v1.0(14 카테고리·98 케이스)에 따라 <b>1차 테스트를 본격 수행</b>했다. 하드웨어 의존 항목은 실기(BLE)로, 그 외는 시뮬레이터로 병행 검증하고 테스터 실측 기록(r.txt)을 취합해 STR v1.1로 정리했다.</p>
                 <div class="chips">
