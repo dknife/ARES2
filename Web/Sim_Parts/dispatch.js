@@ -159,6 +159,10 @@ export class Dispatch {
         ctx.gun.setGunFire();
         ctx.audio.playGunFire();
       }
+      // 커스텀/빈 씬: Gun 객체 유무와 관계없이 발사 명령 접수 시 폭발음(SIMULATOR.md)
+      if (!cfg.launch && !cfg.parts) {
+        ctx.audio.playGunFire();
+      }
       return null;
     }
 
