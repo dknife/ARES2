@@ -1731,13 +1731,47 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
     padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
 }
-.sim-editor-inspector textarea {
-    width: 100%; box-sizing: border-box; resize: vertical;
-    min-height: 90px; max-height: 40vh;
-    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 5px;
-    padding: 4px; font: 9px/1.35 'D2Coding', Menlo, monospace;
+/* 컴포넌트 필드 섹션 — 트랜스폼과 동일한 행 그리드로 필드값을 직접 편집 */
+.sim-editor-inspector-comps {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 38vh; overflow: auto;
 }
+.sim-insp-comp {
+    padding: 3px 4px;
+    background: rgba(4, 6, 18, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px;
+}
+.sim-insp-comp-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    margin-bottom: 2px;
+}
+.sim-insp-comp-head b {
+    color: #9fd0ff; font-size: 0.56em; font-weight: 800; letter-spacing: .03em;
+}
+.sim-insp-comp-head button {
+    width: 14px; height: 14px; padding: 0; line-height: 1;
+    color: #ffb0a8; background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    font-size: 10px; cursor: pointer;
+}
+.sim-insp-comp-none { color: rgba(238, 243, 251, 0.4); font-size: 0.52em; }
+.sim-insp-row {
+    display: grid;
+    grid-template-columns: 44px repeat(3, minmax(0, 1fr));
+    gap: 2px; align-items: center; margin: 1px 0;
+}
+.sim-insp-row span {
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    color: rgba(238, 243, 251, 0.66); font-size: 0.52em; font-weight: 700;
+}
+.sim-insp-row input, .sim-insp-row select {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
+.sim-insp-row select { grid-column: 2 / span 3; }
+.sim-insp-row input:only-of-type { grid-column: 2 / span 1; }
 .sim-editor-inspector-status {
     color: #9fe3b4; font-size: 0.55em; white-space: pre-wrap;
 }

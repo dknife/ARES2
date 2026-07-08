@@ -7,6 +7,31 @@ import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents 
 
 const RENAME_HOLD_MS = 600;   // Hierarchy 항목 길게 클릭 → 이름 변경
 
+// 컴포넌트 필드 정의 — 부착 프롬프트와 인스펙터 편집 UI 가 공유한다.
+// kind: int(0~5) | side(left/right) | vec(x,y,z, optional 이면 빈칸=미사용)
+const FIELD_SPECS = {
+  LED: [{ key: 'led_no', label: 'LED 번호 (0~5)', short: 'LED 번호', def: '0', kind: 'int' }],
+  DC: [
+    { key: 'axis_rotation', label: 'DC 회전축 x,y,z (빈칸=미사용)', short: '회전축', def: '0,1,0', kind: 'vec', optional: true },
+    { key: 'rotation_offset', label: '회전 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', short: '회전 기준', def: '', kind: 'vec', optional: true },
+    { key: 'axis_translate', label: 'DC 이동축 x,y,z (빈칸=미사용)', short: '이동축', def: '', kind: 'vec', optional: true },
+  ],
+  Servo: [
+    { key: 'wheel', label: '바퀴연결 (left/right)', short: '바퀴', def: 'left', kind: 'side' },
+    { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (빈칸=미사용)', short: '스핀축', def: '1,0,0', kind: 'vec', optional: true },
+    { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', short: '스핀 기준', def: '', kind: 'vec', optional: true },
+    { key: 'axis_direction', label: '이동 방향 x,y,z (빈칸=미사용)', short: '이동 방향', def: '', kind: 'vec', optional: true },
+    { key: 'axis_turn', label: '선회축 x,y,z (빈칸=미사용)', short: '선회축', def: '', kind: 'vec', optional: true },
+    { key: 'turn_offset', label: '선회축 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', short: '선회 기준', def: '', kind: 'vec', optional: true },
+  ],
+  UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', short: 'ray 방향', def: '0,0,1', kind: 'vec' }],
+  Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', short: '감지점', def: '0,0,0', kind: 'vec' }],
+  Gun: [
+    { key: 'propel_direction', label: '발사 방향 x,y,z', short: '발사 방향', def: '0,0,1', kind: 'vec' },
+    { key: 'explosion', label: '연기 발생점 오프셋 x,y,z (빈칸=미사용)', short: '연기점', def: '', kind: 'vec', optional: true },
+  ],
+};
+
 const MODES = ['translate', 'rotate', 'scale'];
 const SPAWN_MENU = [
   { type: 'albi', label: 'Albi Robot' },
@@ -157,28 +182,6 @@ export class EditorControls {
     const simObject = this.getSelectedSimObject();
     if (!simObject?.spawned) return;
 
-    const FIELD_SPECS = {
-      LED: [{ key: 'led_no', label: 'LED 번호 (0~5)', def: '0', kind: 'int' }],
-      DC: [
-        { key: 'axis_rotation', label: 'DC 회전축 x,y,z (빈칸=미사용)', def: '0,1,0', kind: 'vec', optional: true },
-        { key: 'rotation_offset', label: '회전 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', def: '', kind: 'vec', optional: true },
-        { key: 'axis_translate', label: 'DC 이동축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
-      ],
-      Servo: [
-        { key: 'wheel', label: '바퀴연결 (left/right)', def: 'left', kind: 'side' },
-        { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (빈칸=미사용)', def: '1,0,0', kind: 'vec', optional: true },
-        { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', def: '', kind: 'vec', optional: true },
-        { key: 'axis_direction', label: '이동 방향 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
-        { key: 'axis_turn', label: '선회축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
-        { key: 'turn_offset', label: '선회축 기준점 오프셋 x,y,z (로컬, 빈칸=원점)', def: '', kind: 'vec', optional: true },
-      ],
-      UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', def: '0,0,1', kind: 'vec' }],
-      Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', def: '0,0,0', kind: 'vec' }],
-      Gun: [
-        { key: 'propel_direction', label: '발사 방향 x,y,z', def: '0,0,1', kind: 'vec' },
-        { key: 'explosion', label: '연기 발생점 오프셋 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
-      ],
-    };
     const parseVecStr = (s) => {
       const parts = String(s).split(',').map((x) => parseFloat(x));
       return parts.length === 3 && parts.every((n) => isFinite(n)) ? parts : null;
@@ -297,7 +300,7 @@ export class EditorControls {
         <span>회전°</span><input data-tf="r0"><input data-tf="r1"><input data-tf="r2">
         <span>크기</span><input data-tf="s0"><input data-tf="s1"><input data-tf="s2">
       </div>
-      <textarea spellcheck="false" rows="8"></textarea>
+      <div class="sim-editor-inspector-comps"></div>
       <div class="sim-editor-inspector-status" hidden></div>
     `;
     panel.querySelector('[data-action="apply"]').addEventListener('click', () => this.applyInspector());
@@ -339,9 +342,102 @@ export class EditorControls {
     }
     this.inspector.querySelector('.sim-editor-inspector-title').textContent = simObject.label;
     this.refreshInspectorTransform();
-    this.inspector.querySelector('textarea').value =
-      JSON.stringify(serializeComponents(simObject), null, 1);
+    this.renderInspectorComponents(simObject);
     this.setInspectorStatus('');
+  }
+
+  // 부착된 컴포넌트들을 필드별 입력칸(트랜스폼과 동일한 방식)으로 렌더
+  renderInspectorComponents(simObject) {
+    const wrap = this.inspector.querySelector('.sim-editor-inspector-comps');
+    wrap.textContent = '';
+    serializeComponents(simObject).forEach(({ type, fields }) => {
+      const sec = document.createElement('div');
+      sec.className = 'sim-insp-comp';
+      sec.dataset.compType = type;
+
+      const head = document.createElement('div');
+      head.className = 'sim-insp-comp-head';
+      const title = document.createElement('b');
+      title.textContent = type;
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.title = `${type} 컴포넌트 제거`;
+      removeBtn.textContent = '−';
+      removeBtn.addEventListener('click', () => this.detachFromSelected(type));
+      head.append(title, removeBtn);
+      sec.appendChild(head);
+
+      const specs = FIELD_SPECS[type] || [];
+      if (specs.length === 0) {
+        const none = document.createElement('div');
+        none.className = 'sim-insp-comp-none';
+        none.textContent = '필드 없음';
+        sec.appendChild(none);
+      }
+      specs.forEach((spec) => {
+        const row = document.createElement('div');
+        row.className = 'sim-insp-row';
+        const label = document.createElement('span');
+        label.textContent = spec.short || spec.key;
+        label.title = spec.label;
+        row.appendChild(label);
+        const value = fields?.[spec.key];
+        if (spec.kind === 'vec') {
+          for (let i = 0; i < 3; i++) {
+            const input = document.createElement('input');
+            input.dataset.field = spec.key;
+            input.dataset.axis = i;
+            input.value = Array.isArray(value) ? value[i] : '';
+            if (spec.optional) input.placeholder = '—';
+            row.appendChild(input);
+          }
+        } else if (spec.kind === 'side') {
+          const select = document.createElement('select');
+          select.dataset.field = spec.key;
+          ['left', 'right'].forEach((side) => {
+            const o = document.createElement('option');
+            o.value = side; o.textContent = side;
+            select.appendChild(o);
+          });
+          select.value = value === 'right' ? 'right' : 'left';
+          row.appendChild(select);
+        } else {   // int
+          const input = document.createElement('input');
+          input.dataset.field = spec.key;
+          input.value = value ?? spec.def;
+          row.appendChild(input);
+        }
+        sec.appendChild(row);
+      });
+      wrap.appendChild(sec);
+    });
+  }
+
+  // 인스펙터의 필드 입력칸들에서 컴포넌트 목록을 수집(빈 vec = 미사용으로 생략)
+  collectInspectorComponents() {
+    const list = [];
+    this.inspector.querySelectorAll('.sim-insp-comp').forEach((sec) => {
+      const type = sec.dataset.compType;
+      const fields = {};
+      (FIELD_SPECS[type] || []).forEach((spec) => {
+        if (spec.kind === 'vec') {
+          const inputs = sec.querySelectorAll(`[data-field="${spec.key}"]`);
+          const raw = Array.from(inputs).map((el) => el.value.trim());
+          if (raw.every((v) => v === '')) {
+            if (!spec.optional) throw new Error(`${type}.${spec.key} 값이 필요합니다`);
+            return;   // 선택 필드 미사용
+          }
+          fields[spec.key] = raw.map((v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; });
+        } else if (spec.kind === 'side') {
+          fields[spec.key] = sec.querySelector(`[data-field="${spec.key}"]`)?.value === 'right' ? 'right' : 'left';
+        } else {
+          const v = parseInt(sec.querySelector(`[data-field="${spec.key}"]`)?.value, 10);
+          fields[spec.key] = Math.max(0, Math.min(5, Number.isFinite(v) ? v : 0));
+        }
+      });
+      list.push({ type, fields });
+    });
+    return list;
   }
 
   setInspectorStatus(msg, isError = false) {
@@ -368,23 +464,11 @@ export class EditorControls {
     root.rotation.set(num('r0', root.rotation.x / rad) * rad, num('r1', root.rotation.y / rad) * rad, num('r2', root.rotation.z / rad) * rad);
     root.scale.set(num('s0', root.scale.x), num('s1', root.scale.y), num('s2', root.scale.z));
 
-    // (2) 컴포넌트(직렬화 필드) 적용
-    const textarea = this.inspector.querySelector('textarea');
-    let list;
+    // (2) 컴포넌트 필드 적용 — 입력칸에서 수집해 재부착
     try {
-      list = JSON.parse(textarea.value || '[]');
-      if (!Array.isArray(list)) throw new Error('배열이어야 합니다');
-    } catch (err) {
-      this.setInspectorStatus('JSON 오류: ' + err.message, true);
-      return;
-    }
-    try {
-      // 기존 선언형 컴포넌트를 모두 해제하고 편집된 목록대로 재부착
+      const list = this.collectInspectorComponents();
       serializeComponents(simObject).forEach(({ type }) => detachComponent(this.ctx, simObject, type));
-      list.forEach((entry) => {
-        if (!entry || !entry.type) throw new Error('type 이 없는 항목');
-        attachComponent(this.ctx, simObject, entry.type, entry.fields || {});
-      });
+      list.forEach((entry) => attachComponent(this.ctx, simObject, entry.type, entry.fields || {}));
       this.select(simObject.root);   // 라벨·인스펙터 갱신
       this.setInspectorStatus(`적용 완료 (${list.length}개 컴포넌트)`);
     } catch (err) {
