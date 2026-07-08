@@ -8,13 +8,13 @@
     <script src="mobile-preview.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="fonts/fonts.css">
-    <link rel="stylesheet" href="styles.css?v=20260705f">
+    <link rel="stylesheet" href="styles.css?v=20260708a">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
     <script src="vendor/three-bundle.min.js"></script>
     <script src="vendor/meshopt_decoder.js"></script>
-    <script type="module" src="main.js?v=20260705s"></script>
+    <script type="module" src="main.js?v=20260708a"></script>
     <style>
         /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
            버튼으로 닫으면 아래 원래 화면이 그대로 드러난다(원위치 복귀). */
@@ -105,6 +105,9 @@
                 <!-- 차시·미션 표시 + 예제 선택 — 코딩·시뮬레이션 모드 공유 상단 배너 -->
                 <div id="codingMissionBanner">
                     <span id="codingMissionLabel" aria-live="polite"></span>
+                    <select id="codingMissionSelect" title="차시·미션 선택" aria-label="차시·미션 선택">
+                        <option value="">미션 선택</option>
+                    </select>
                     <select id="codingExampleSelect" title="예제 불러오기" aria-label="예제 불러오기">
                         <option value="">예제 선택</option>
                         <option value="greeting">&nbsp;👋&nbsp; 인사하기</option>
@@ -372,7 +375,7 @@
         </category>
 
         <!-- ========== 제어 ========== -->
-        <category id="category_control" name="제어" colour="#2b638f">
+        <category id="category_control" name="제어" colour="#7954B5">
             <block type="time_sleep">
                 <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
             </block>
