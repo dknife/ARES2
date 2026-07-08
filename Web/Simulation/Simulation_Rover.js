@@ -2,6 +2,22 @@
 // Subsystem wrapper for the Rover (rover) topic, reusing modular subsystems.
 
 import { Simulation_Base } from './Simulation_Base.js';
+import { SimulationObject } from '../Sim_Parts/sim_object.js';
+
+function createRoverObject(ctx, root, type, label, metadata = {}) {
+  return new SimulationObject({
+    id: ctx.objects?.makeId(type) || `${type}-${Date.now()}`,
+    type,
+    label,
+    root,
+    metadata,
+  });
+}
+
+function addRoverObject(ctx, root, type, label, parent, metadata = {}) {
+  if (!root || !ctx.objects) return null;
+  return ctx.objects.add(createRoverObject(ctx, root, type, label, metadata), parent);
+}
 
 export class Simulation_Rover extends Simulation_Base {
   constructor(ctx) {
@@ -24,6 +40,7 @@ export class Simulation_Rover extends Simulation_Base {
     this.roverGroup.position.y = 0.4;
     scene.add(this.roverGroup);
     ctx.roverGroup = this.roverGroup;
+    addRoverObject(ctx, this.roverGroup, 'rover-body', cfg.label || 'Rover', scene, { modelRole: 'body' });
 
     if (cfg.helpers) {
       this.movement.setupWorld(scene, ctx.editor);
@@ -31,6 +48,7 @@ export class Simulation_Rover extends Simulation_Base {
 
     this.setupRoverIndicators();
     this.movement.setupSensorIndicators(this.roverGroup);
+    this.registerSensorIndicators();
 
     // Delegate Multi-part GLTF loading and positioning to individual Subsystems
     ctx.assets.loadModels(
@@ -38,27 +56,36 @@ export class Simulation_Rover extends Simulation_Base {
       (url, root) => {
         if (/RoverWheel\.glb$/.test(url)) {
           this.movement.setupWheels(this.roverGroup, root, ctx.editor);
+          addRoverObject(ctx, this.movement.wheelR, 'rover-part', 'Rover Wheel R', this.roverGroup, { modelRole: 'wheel-r' });
+          addRoverObject(ctx, this.movement.wheelL, 'rover-part', 'Rover Wheel L', this.roverGroup, { modelRole: 'wheel-l' });
         } else if (/RoverRadar\.glb$/.test(url)) {
           this.movement.setupRadar(this.roverGroup, root, ctx.editor);
+          addRoverObject(ctx, root, 'rover-part', 'Rover Radar', this.roverGroup, { modelRole: 'radar' });
         } else if (/RoverLED\.glb$/.test(url)) {
           root.position.set(0, 0.35, 0.2);
           root.rotation.x = Math.PI / 4;
           this.roverGroup.add(root);
           ctx.editor?.register(root, 'Rover LED Mesh');
+          addRoverObject(ctx, root, 'rover-part', 'Rover LED Mesh', this.roverGroup, { modelRole: 'led-mesh' });
         } else if (/RoverHead\.glb$/.test(url)) {
           this.movement.setupHead(this.roverGroup, root, ctx.editor);
+          addRoverObject(ctx, root, 'rover-part', 'Rover Head', this.roverGroup, { modelRole: 'head' });
         } else if (/RoverGun\.glb$/.test(url)) {
           this.gun.setupGun(this.roverGroup, root, ctx.editor);
+          addRoverObject(ctx, root, 'rover-part', 'Rover Gun', this.roverGroup, { modelRole: 'gun' });
         } else if (/RoverOLED\.glb$/.test(url)) {
           this.leds.setupOled(this.roverGroup, root, ctx.editor);
+          addRoverObject(ctx, root, 'rover-part', 'Rover OLED', this.roverGroup, { modelRole: 'oled' });
         } else {
           // Fallback placement for generic parts
           this.roverGroup.add(root);
           ctx.editor?.register(root, 'Rover Component');
+          addRoverObject(ctx, root, 'rover-part', 'Rover Component', this.roverGroup, { modelRole: 'component' });
         }
       },
       () => {
         if (ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
+        ctx.editor?.updateHierarchy?.(true);
         this.ctx.frame(0.6, 2.8);
       }
     );
@@ -76,7 +103,25 @@ export class Simulation_Rover extends Simulation_Base {
       const led = this.leds.register(`rover-${i}`, this.leds.createBallLed());
       led.mesh.position.set(x0 + step * i, y, z);
       this.roverGroup.add(led.mesh);
+      addRoverObject(this.ctx, led.mesh, 'rover-led', `Rover LED ${i + 1}`, this.roverGroup, {
+        led,
+        index: i,
+        modelRole: 'led',
+      });
     }
+  }
+
+  registerSensorIndicators() {
+    addRoverObject(this.ctx, this.movement.magSensorBall, 'rover-sensor', 'Rover Magnet Sensor', this.roverGroup, {
+      modelRole: 'magnet-sensor',
+    });
+
+    this.movement.irSensorBalls.forEach((sensor, index) => {
+      addRoverObject(this.ctx, sensor, 'rover-sensor', `Rover Distance Sensor ${index + 1}`, this.roverGroup, {
+        index,
+        modelRole: 'distance-sensor',
+      });
+    });
   }
 
   // Base Controller interface overrides
@@ -174,6 +219,12 @@ export class Simulation_Rover extends Simulation_Base {
     this.waves.setRoverWave(on);
   }
 
+  toggleGrids() {
+    const grids = this.ctx.planeGrids;
+    if (!grids) return;
+    grids.visible = !grids.visible;
+  }
+
   oledClear() {
     this.leds.clear();
   }
@@ -202,6 +253,7 @@ export class Simulation_Rover extends Simulation_Base {
   get hasGun() { return !!this.gun.gunMesh; }
   get hasOled() { return !!this.leds.oledCanvas; }
   get hasRoverWave() { return !!this.worldGroup; }
+  get hasGrids() { return !!this.ctx.planeGrids; }
   get servoActive() { return this.movement.servoOn || this.movement.servoTurnOn; }
   get hasBoxes() { return this.movement.boxes.length > 0; }
 }
