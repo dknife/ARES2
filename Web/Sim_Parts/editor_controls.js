@@ -148,7 +148,7 @@ export class EditorControls {
   }
 
   // 선택 객체에 컴포넌트 부착 — 타입별 필드를 prompt 로 입력받는다(개발자 모드 전용).
-  // 벡터는 "x,y,z" 형식(월드 좌표계, SIMULATOR.md 규약), 빈칸 = 선택 필드 미사용.
+  // 벡터는 "x,y,z" 형식(객체 로컬 좌표계, SIMULATOR.md 규약 개정), 빈칸 = 선택 필드 미사용.
   attachToSelected(type) {
     const simObject = this.getSelectedSimObject();
     if (!simObject?.spawned) return;
@@ -165,8 +165,8 @@ export class EditorControls {
         { key: 'axis_direction', label: '이동 방향 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
         { key: 'axis_turn', label: '선회축 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
       ],
-      UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z', def: '0,0,1', kind: 'vec' }],
-      Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (월드축, 반경 5cm)', def: '0,0,0', kind: 'vec' }],
+      UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', def: '0,0,1', kind: 'vec' }],
+      Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', def: '0,0,0', kind: 'vec' }],
       Gun: [
         { key: 'propel_direction', label: '발사 방향 x,y,z', def: '0,0,1', kind: 'vec' },
         { key: 'explosion', label: '연기 발생점 오프셋 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
