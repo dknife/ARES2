@@ -83,29 +83,3 @@ export function createPrimitiveObject(ctx, type) {
     metadata: { groundOffset: 0.35 },
   });
 }
-
-export function createAlbiModelObject(ctx, root, label = 'Albi Body', options = {}) {
-  return new SimulationObject({
-    id: ctx.objects?.makeId('albi-body') || `albi-body-${Date.now()}`,
-    type: 'albi-body',
-    label,
-    root,
-    spawned: !!options.spawned,
-    metadata: { modelRole: 'body' },
-  });
-}
-
-export function createAlbiLedObject(ctx, led, label, role, options = {}) {
-  return new SimulationObject({
-    id: ctx.objects?.makeId(`albi-${role}`) || `albi-${role}-${Date.now()}`,
-    type: 'albi-led',
-    label,
-    root: led.group,
-    spawned: !!options.spawned,
-    metadata: {
-      led,
-      role,
-      modelRole: 'led',
-    },
-  });
-}
