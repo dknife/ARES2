@@ -3,6 +3,7 @@
 
 import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
 import { createPrimitiveObject } from './object_factory.js';
+import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents } from './components.js';
 
 const MODES = ['translate', 'rotate', 'scale'];
 const SPAWN_MENU = [
@@ -10,6 +11,7 @@ const SPAWN_MENU = [
   { type: 'box', label: 'Box' },
   { type: 'sphere', label: 'Sphere' },
   { type: 'marker', label: 'Marker' },
+  { type: 'oled', label: 'OLED Panel' },
 ];
 
 export class EditorControls {
@@ -126,6 +128,14 @@ export class EditorControls {
       menu.appendChild(btn);
     });
 
+    // 선택 객체의 컴포넌트 부착/해제 (SIMULATOR.md 2장) — 내용은 updateContextMenuState 가 채운다
+    const compTitle = document.createElement('div');
+    compTitle.className = 'sim-editor-context-title';
+    compTitle.textContent = 'Component';
+    menu.appendChild(compTitle);
+    this.compSection = document.createElement('div');
+    menu.appendChild(this.compSection);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.dataset.action = 'delete-selected';
@@ -134,6 +144,37 @@ export class EditorControls {
     menu.appendChild(deleteBtn);
 
     return menu;
+  }
+
+  // 선택 객체에 컴포넌트 부착. LED 는 led_no(0~5)를 물어본다.
+  attachToSelected(type) {
+    const simObject = this.getSelectedSimObject();
+    if (!simObject?.spawned) return;
+    let fields = {};
+    if (type === 'LED') {
+      const answer = prompt('LED 번호 (0~5):', '0');
+      if (answer === null) return;                       // 취소
+      fields = { led_no: Math.max(0, Math.min(5, parseInt(answer, 10) || 0)) };
+    }
+    attachComponent(this.ctx, simObject, type, fields);
+    this.select(simObject.root);                          // 라벨·메뉴 갱신
+    this.hideContextMenu();
+  }
+
+  detachFromSelected(type) {
+    const simObject = this.getSelectedSimObject();
+    if (!simObject) return;
+    detachComponent(this.ctx, simObject, type);
+    this.select(simObject.root);
+    this.hideContextMenu();
+  }
+
+  // 'Box 1 · LED0+Buzzer' 형태의 표시용 라벨
+  describeObject(simObject) {
+    if (!simObject) return null;
+    const comps = serializeComponents(simObject)
+      .map((c) => c.type === 'LED' ? `LED${c.fields.led_no}` : c.type);
+    return comps.length ? `${simObject.label} · ${comps.join('+')}` : simObject.label;
   }
 
   createHierarchyPanel() {
@@ -203,7 +244,9 @@ export class EditorControls {
     this.boxHelper.visible = !!this.selected;
     if (this.selected) this.boxHelper.setFromObject(this.selected);
 
-    const label = this.selected?.userData?.simEditorLabel || 'No selection';
+    const simObject = this.getSelectedSimObject();
+    const label = (simObject && this.describeObject(simObject))
+      || this.selected?.userData?.simEditorLabel || 'No selection';
     const text = this.toolbar.querySelector('.sim-editor-selection');
     if (text) text.textContent = label;
     this.updateHierarchy(true);
@@ -358,6 +401,26 @@ export class EditorControls {
     const deleteBtn = this.menu.querySelector('[data-action="delete-selected"]');
     const selectedObject = this.getSelectedSimObject();
     if (deleteBtn) deleteBtn.disabled = !selectedObject?.spawned;
+
+    // 컴포넌트 섹션: 선택 객체 기준으로 부착(+)/해제(−) 버튼을 다시 그린다
+    if (this.compSection) {
+      this.compSection.textContent = '';
+      const attached = selectedObject ? Object.keys(selectedObject.components || {})
+        .filter((k) => selectedObject.components[k]?.declarative) : [];
+      COMPONENT_TYPES.forEach((type) => {
+        const has = attached.includes(type);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.component = type;
+        btn.textContent = `${has ? '−' : '+'} ${type}`;
+        btn.disabled = !selectedObject?.spawned;
+        btn.addEventListener('click', () => {
+          if (has) this.detachFromSelected(type);
+          else this.attachToSelected(type);
+        });
+        this.compSection.appendChild(btn);
+      });
+    }
   }
 
   hideContextMenu() {
