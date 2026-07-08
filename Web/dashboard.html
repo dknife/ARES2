@@ -351,6 +351,63 @@
             background: #228a58;
         }
 
+        .log-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .log-entry {
+            display: grid;
+            grid-template-columns: 92px 76px 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 14px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+
+        .log-entry-time {
+            color: var(--text-muted);
+            font-size: 0.86em;
+        }
+
+        .log-entry-type {
+            width: fit-content;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.78em;
+        }
+
+        .log-entry.success .log-entry-type { background: rgba(42, 157, 106, 0.12); color: var(--success-color); }
+        .log-entry.warning .log-entry-type { background: rgba(255, 106, 0, 0.12); color: var(--warning-color); }
+        .log-entry.error .log-entry-type { background: rgba(231, 76, 60, 0.12); color: var(--error-color); }
+
+        .log-empty {
+            padding: 28px;
+            text-align: center;
+            color: var(--text-muted);
+            background: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -359,6 +416,10 @@
             }
             .actions-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            .log-entry {
+                grid-template-columns: 1fr;
+                gap: 6px;
             }
         }
 
@@ -386,7 +447,8 @@
             <div class="nav-tab active" data-tab="dashboard">개요</div>
             <div class="nav-tab" data-tab="settings">시스템</div>
             <div class="nav-tab" data-tab="hardware">하드웨어</div>
-            <div class="nav-tab" data-tab="logs">진단</div>
+            <div class="nav-tab" data-tab="diagnostics">진단</div>
+            <div class="nav-tab" data-tab="logs">로그</div>
         </div>
     </header>
 
@@ -547,7 +609,7 @@
         </div>
 
         <!-- 진단 탭 -->
-        <div id="logs" class="tab-content">
+        <div id="diagnostics" class="tab-content">
             <div class="card">
                 <div class="card-title">📠 시스템 진단</div>
                 <div class="actions-grid" style="grid-template-columns: repeat(4, 1fr);">
@@ -555,6 +617,19 @@
                     <button class="action-btn" data-diag="sensors">센서 점검</button>
                     <button class="action-btn" data-diag="motors">모터 점검</button>
                     <button class="action-btn" data-diag="full">전체 진단</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그 탭 -->
+        <div id="logs" class="tab-content">
+            <div class="card">
+                <div class="log-toolbar">
+                    <div class="card-title" style="margin-bottom:0;">📋 이벤트 로그</div>
+                    <button class="btn btn-primary" id="btn-clear-dashboard-log" type="button">로그 지우기</button>
+                </div>
+                <div id="dashboard-log-list" class="log-list" aria-live="polite">
+                    <div class="log-empty">아직 기록된 로그가 없습니다.</div>
                 </div>
             </div>
         </div>
@@ -582,6 +657,8 @@
     let isConnected = false;
 
     const DOM = {};
+    const logEntries = [];
+    const MAX_LOG_ENTRIES = 200;
 
     function initDOMReferences() {
         DOM.connectionStatus = document.getElementById('connection-status');
@@ -607,6 +684,34 @@
         DOM.hwMaxSpeed = document.getElementById('hw-max-speed');
         DOM.hwCollisionDist = document.getElementById('hw-collision-dist');
         DOM.hwAutoStop = document.getElementById('hw-auto-stop');
+        DOM.logList = document.getElementById('dashboard-log-list');
+        DOM.clearLogButton = document.getElementById('btn-clear-dashboard-log');
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function renderLogs() {
+        if (!DOM.logList) return;
+        if (!logEntries.length) {
+            DOM.logList.innerHTML = '<div class="log-empty">아직 기록된 로그가 없습니다.</div>';
+            return;
+        }
+
+        DOM.logList.innerHTML = logEntries.map((entry) => `
+            <div class="log-entry ${entry.type}">
+                <span class="log-entry-time">${escapeHtml(entry.time)}</span>
+                <span class="log-entry-type">${escapeHtml(entry.typeLabel)}</span>
+                <span class="log-entry-message">${escapeHtml(entry.message)}</span>
+            </div>
+        `).join('');
+        DOM.logList.scrollTop = DOM.logList.scrollHeight;
     }
 
     function setDashboardInteractive(enabled) {
@@ -703,6 +808,10 @@
         document.getElementById('btn-save-local').addEventListener('click', saveLocalSettings);
         document.getElementById('btn-calib-start').addEventListener('click', startCalibration);
         document.getElementById('btn-calib-apply').addEventListener('click', applyCalibration);
+        DOM.clearLogButton?.addEventListener('click', () => {
+            logEntries.length = 0;
+            renderLogs();
+        });
 
         DOM.maxSpeed.addEventListener('input', function() {
             DOM.maxSpeedValue.textContent = this.value + '%';
@@ -925,6 +1034,18 @@
 
     function addLog(message, type = 'info') {
         const timestamp = new Date().toLocaleTimeString('ko-KR');
+        const typeLabel = {
+            info: '정보',
+            success: '성공',
+            warning: '주의',
+            error: '오류'
+        }[type] || type;
+
+        logEntries.push({ time: timestamp, message, type, typeLabel });
+        if (logEntries.length > MAX_LOG_ENTRIES) {
+            logEntries.shift();
+        }
+        renderLogs();
         console.log(`[${timestamp}] [${type}] ${message}`);
     }
 
