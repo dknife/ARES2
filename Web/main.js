@@ -374,7 +374,8 @@ function initializeBlockly() {
   setupBlockContextMenu(workspace);
   setupFlyoutBehavior(workspace);
   setupFlyoutFixedScale(workspace);
-  setupToolboxDrawer(workspace);
+  // 카테고리 툴박스는 항상 펼친 상태로 유지한다.
+  document.body.classList.remove('toolbox-collapsed');
 
   // Register dynamic toolbox / workspace block updates on state change
   window.updateToolboxForActiveState = function() {
@@ -384,6 +385,15 @@ function initializeBlockly() {
 
   // Apply initial dynamic toolbox / names
   window.updateToolboxForActiveState();
+
+  // 빈 작업공간에서만 PDF 5페이지의 안내 카드를 표시한다.
+  const emptyHint = document.getElementById('workspaceEmptyHint');
+  const refreshEmptyHint = () => {
+    if (!emptyHint) return;
+    emptyHint.hidden = workspace.getAllBlocks(false).length > 0;
+  };
+  workspace.addChangeListener(refreshEmptyHint);
+  refreshEmptyHint();
 
   return workspace;
 }
@@ -626,7 +636,6 @@ function updateRunButtonUI() {
     btn.title = '실행 중인 미션을 즉시 멈춥니다';
     btn.classList.add('btn-stop');
     btn.disabled = false;
-    syncToolboxRunAction(btn);
     updateMobileBottomNav();
     return;
   }
@@ -637,24 +646,11 @@ function updateRunButtonUI() {
   const dashboardFrame = document.getElementById('dashboardFrame');
   const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
   btn.disabled = !inMission || inDashboard || !isBleConnected();
-  syncToolboxRunAction(btn);
   updateMobileBottomNav();
 }
 
-// 툴박스 하단 '미션전송' 버튼을 상단 runButton 상태(활성/비상정지)에 맞춰 동기화
-function syncToolboxRunAction(btn) {
-  const proxy = document.querySelector('#toolboxActions .tbx-action[data-action="run"]');
-  if (!proxy || !btn) return;
-  const isStop = btn.classList.contains('btn-stop');
-  proxy.disabled = btn.disabled;
-  proxy.classList.toggle('is-stop', isStop);
-  const ico = proxy.querySelector('.tbx-ico');
-  const lbl = proxy.querySelector('.tbx-lbl');
-  if (ico) ico.textContent = isStop ? '🛑' : '▶️';
-  if (lbl) lbl.innerHTML = isStop ? '비상<br>정지' : '미션<br>전송';
-}
 
-// 툴박스 하단 도구 버튼(미션전송·저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
+// 툴박스 하단 도구 버튼(저장·읽기) → 기존(숨김) 상단 버튼으로 위임해
 // 동일 로직(검증·비상정지·저장 프롬프트·파일입력)을 그대로 실행한다.
 function setupToolboxActions() {
   const box = document.getElementById('toolboxActions');
@@ -663,8 +659,7 @@ function setupToolboxActions() {
     const btn = event.target.closest('.tbx-action');
     if (!btn || btn.disabled) return;
     const action = btn.dataset.action;
-    if (action === 'run') elements.runButton?.click();
-    else if (action === 'save') elements.saveButton?.click();
+    if (action === 'save') elements.saveButton?.click();
     else if (action === 'load') elements.loadButton?.click();
   });
 }
@@ -781,8 +776,8 @@ function getMobileActiveAction() {
   if (isAiPanelOpen()) return 'ai';
   if (_contentMode === 'simulation' && currentView === 'mission') return 'simulation';
   if (isDashboardVisible()) return 'dashboard';
-  // 미션(코딩 영역) 뷰 → "코딩" 탭, 개요·차시 메뉴 → "미션" 탭
-  if (currentView === 'mission') return 'coding';
+  // 미션 설명 화면은 "미션", 실제 블록 코딩 화면만 "코딩" 탭을 활성화한다.
+  if (currentView === 'mission') return _contentMode === 'coding' ? 'coding' : 'mission';
   return 'mission';
 }
 
@@ -807,12 +802,32 @@ function updateMobileBottomNav() {
 
   const connectBtn = nav.querySelector('[data-mobile-action="connect"]');
   if (connectBtn) {
+    const codingMode = document.body.dataset.contentMode === 'coding';
+    const simMode = document.body.dataset.contentMode === 'simulation';
     const connected = isBleConnected();
+    // 실물 실행은 연결 필요(코딩+연결). 시뮬레이션은 연결 없이 항상 '모의실행'.
+    // go(초록·▶): 코딩(연결+미실행) 또는 시뮬(미실행). stop(짙은 주황·■): 코딩 실행중=비상정지 / 시뮬 실행중=실험중단.
+    const runnable = codingMode && connected;
+    const simRunning = simMode && _simRunning;
+    const codingExecuting = codingMode && _codingExecuting;
+    const stopping = simRunning || codingExecuting;
+    const goRun = (runnable && !codingExecuting) || (simMode && !simRunning);
     connectBtn.classList.toggle('connected', connected);
+    connectBtn.classList.toggle('coding-run', goRun);
+    connectBtn.classList.toggle('run-stop', stopping);
     connectBtn.setAttribute('aria-pressed', String(connected));
+    connectBtn.setAttribute('aria-label', codingExecuting ? '비상 정지' : simRunning ? '시뮬레이션 중지' : simMode ? '시뮬레이션 모의 실행' : runnable ? '블록 코딩 실행' : '탐사선 신호 연결');
     const label = connectBtn.querySelector('.mobile-nav-label');
     if (label) {
-      label.textContent = connected
+      label.textContent = codingExecuting
+        ? '비상정지'
+        : simRunning
+        ? '실험중단'
+        : simMode
+        ? '모의실행'
+        : runnable
+        ? '실행'
+        : connected
         ? '연결됨'
         : state.isConnecting
           ? '연결 중…'
@@ -1097,7 +1112,7 @@ async function enterOverview() {
                  <strong>${escapeHtml(lesson.title)}</strong>
                  <small>${escapeHtml(lesson.hardware)}</small>
                </span>
-               <span class="flow-arrow" aria-hidden="true">▶</span>
+               <span class="flow-arrow" aria-hidden="true">◀</span>
              </button>
              <div id="inlineMissionsBonus" class="lesson-panel" hidden></div>
            </section>
@@ -1110,7 +1125,7 @@ async function enterOverview() {
                  <small>${escapeHtml(lesson.hardware)}</small>
                </span>
                <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
-               <span class="flow-arrow" aria-hidden="true">▼</span>
+               <span class="flow-arrow" aria-hidden="true">◀</span>
              </button>
              <div id="inlineMissions${lesson.n}" class="lesson-panel" hidden></div>
            </section>
@@ -1522,6 +1537,8 @@ function toggleDashboard() {
 //   showView() 에서 미션 뷰를 떠날 때 close() 호출.
 // ============================================================
 let simController = null;
+let _simRunning = false;      // 시뮬레이션(모의실행) 진행 여부 — 중앙 버튼 상태에 반영
+let _codingExecuting = false; // 코딩 모드 실행(전송) 진행 여부 — '비상정지' 표시에 반영
 
 // ============================================================
 // 콘텐츠 모드 토글 — 미션 설명 ↔ 블럭코딩 단일 버튼
@@ -1532,7 +1549,7 @@ let simController = null;
 // 항상 켜 있는 이벤트 리스너 (BLE, 비상 정지, 로그 등)
 // ============================================================
 function initializeAlwaysOnListeners() {
-  // 툴박스 하단 도구 버튼(미션전송·저장·읽기) 위임 배선
+  // 툴박스 하단 도구 버튼(저장·읽기) 위임 배선
   setupToolboxActions();
 
   // 상단 ARES 로고 → "만든 사람들"(크레딧) WebGL 오버레이 (필요할 때만 로드)
@@ -1548,6 +1565,19 @@ function initializeAlwaysOnListeners() {
 
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
   elements.connectButton?.addEventListener('click', (e) => {
+    const mode = document.body.dataset.contentMode;
+    // 시뮬레이션 모드: 연결 없이 모의실행/실험중단 — 시뮬 컨트롤러의 toggleSimRun 호출.
+    if (mode === 'simulation') {
+      simController?.toggleSimRun?.();
+      e.currentTarget?.blur?.();
+      return;
+    }
+    // 코딩 모드라도 연결돼 있어야 실행. 미연결이면 실행 대신 연결을 시도한다.
+    if (mode === 'coding' && isBleConnected()) {
+      elements.runButton?.click();
+      e.currentTarget?.blur?.();
+      return;
+    }
     if (isBleConnected()) {
       BluetoothManager.disconnect();
     } else {
@@ -1578,6 +1608,15 @@ function initializeAlwaysOnListeners() {
   // 연결 상태 변화 / 실행 시작·종료 → runButton 라벨/활성 갱신
   window.addEventListener('ares:connection', updateRunButtonUI);
   window.addEventListener('ares:execution',  updateRunButtonUI);
+  window.addEventListener('ares:contentmode', updateMobileBottomNav);
+  window.addEventListener('ares:simrun', (e) => {
+    _simRunning = !!(e.detail && e.detail.running);
+    updateMobileBottomNav();
+  });
+  window.addEventListener('ares:execution', (e) => {
+    _codingExecuting = !!(e.detail && e.detail.executing);
+    updateMobileBottomNav();
+  });
 
   // 홈(개요)
   document.getElementById('homeButton')?.addEventListener('click', (e) => {

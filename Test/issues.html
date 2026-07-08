@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Issues 기반 버그 트래킹 구축 가이드</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #24292f; max-width: 900px; margin: 0 auto; padding: 30px; background-color: #ffffff; }
+        h1 { font-size: 2em; border-bottom: 2px solid #d0d7de; padding-bottom: 0.3em; color: #0969da; }
+        h2 { font-size: 1.5em; margin-top: 30px; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; color: #24292f; }
+        h3 { font-size: 1.2em; margin-top: 20px; color: #57606a; }
+        code { background-color: rgba(175,184,193,0.2); padding: 0.2em 0.4em; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; font-size: 85%; }
+        pre { background-color: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; font-size: 85%; border: 1px solid #d0d7de; line-height: 1.4; }
+        ul, ol { padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
+        .badge { display: inline-block; padding: 2px 8px; font-size: 12px; font-weight: 600; color: #fff; border-radius: 2em; }
+        .bg-bug { background-color: #cf222e; }
+        .bg-priority { background-color: #bc4c00; }
+        .box-info { background-color: #ddf4ff; border: 1px solid #54aeff; border-radius: 6px; padding: 15px; margin: 15px 0; }
+        .box-example { background-color: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: 20px; margin: 20px 0; }
+        .step-title { font-weight: bold; color: #0969da; }
+    </style>
+</head>
+<body>
+
+    <h1>GitHub Issues 버그 트래킹 구축 가이드</h1>
+    <p>본 가이드는 GitHub Issues와 Pull Request(PR)의 유기적 연동을 통해 버그의 발생부터 수정, 배포까지의 생명주기(Lifecycle)를 추적 관리하는 프로세스를 정의합니다.</p>
+
+    <h2>1. 버그 리포트 템플릿 자동화 (Issue Template)</h2>
+    <p>일관된 데이터 수집을 위해 저장소 내에 마크다운 기반의 이슈 템플릿을 사전 배치합니다.</p>
+    <p><span class="step-title">경로:</span> <code>.github/ISSUE_TEMPLATE/bug_report.md</code> 파일을 생성하고 아래 내용을 커밋합니다.</p>
+    
+    <pre>---
+name: 🐛 Bug Report
+about: 오류 보고 및 재현 경로 정의
+title: '[모듈명] 오류 현상 요약'
+labels: ['bug', 'triage']
+assignees: ''
+---
+
+### 1. Environment
+* Runtime / OS: (e.g., Node.js v20.11 / Ubuntu 22.04 LTS)
+* Dependency Version: (e.g., Prisma v5.8.0, Next.js v14.1)
+
+### 2. Steps to Reproduce
+1. Go to '...'
+2. Click on '...'
+3. See error
+
+### 3. Expected Behavior
+* 정상 동작 정의
+
+### 4. Actual Behavior / Error Logs
+* Stack Trace 또는 실제 발생한 예외 상황 기술
+
+### 5. Context & Speculation
+* 의심되는 원인 분석 혹은 아키텍처적 제약 사항 (선택 항목)</pre>
+
+    <h2>2. 실무 시나리오 기반 작성 예시</h2>
+    <p><strong>시나리오:</strong> ARES 제어 시스템에서 'N번 반복' 명령을 처리할 때, 내부 루프의 경계 조건 오류(Off-by-One)로 인해 명령어가 정확히 N회가 아닌 N-1회만 실행되고 종료되는 버그 발생.</p>
+
+    <div class="box-example">
+        <h3>[ARES] 'N번 반복' 처리 시 내부 명령어가 N-1회만 루프를 도는 현상 (Off-by-One) #104</h3>
+        <p><strong>Labels:</strong> <span class="badge bg-bug">bug</span> <span class="badge bg-priority">P1-High</span> | <strong>Milestone:</strong> <code>v1.2.0-rc1</code></p>
+
+        <h3>1. Environment</h3>
+        <ul>
+            <li>Runtime / OS: MicroPython v1.22 / Raspberry Pi Pico (ARES Core)</li>
+            <li>Dependency Version: ares-firmware v1.1.5, servo-controller v0.8.2</li>
+        </ul>
+
+        <h3>2. Steps to Reproduce</h3>
+        <ol>
+            <li>ARES 제어 대시보드 또는 JSON 메시지를 통해 <code>{'command': 'repeat_loop', 'count': 5, 'action': 'SERVO_tFORWARD'}</code> 명령을 전송.</li>
+            <li>로봇의 펌웨어 디버그 콘솔 출력 또는 OLED 화면의 카운터 값을 확인.</li>
+            <li>지정한 5회가 아닌 4회만 전진 명령이 실행되고 루프가 종료됨 (<code>count: 1</code> 지정 시 루프가 아예 실행되지 않음).</li>
+        </ol>
+
+        <h3>3. Expected Behavior</h3>
+        <ul>
+            <li><code>N번 반복</code> 설정 시 내부 제어 명령어가 <strong>정확히 N회</strong> 루프를 돌며 실행되어야 함.</li>
+            <li>시스템 디버그 로그의 iteration 카운터가 <code>1/N</code>부터 <code>N/N</code>까지 누락 없이 기록되고, <code>total_executed=N</code>으로 완료되어야 함.</li>
+        </ul>
+
+        <h3>4. Actual Behavior / Error Logs</h3>
+        <pre>[ARES-System] Received loop command: count=5
+[ARES-Loop] iteration 1/5 ... task success
+[ARES-Loop] iteration 2/5 ... task success
+[ARES-Loop] iteration 3/5 ... task success
+[ARES-Loop] iteration 4/5 ... task success
+[ARES-Loop] loop completed: total_executed=4 (expected: 5)</pre>
+
+        <h3>5. Context & Speculation</h3>
+        <p>펌웨어 내부의 반복문 조건식이 <code>for i in range(1, count):</code>와 같이 종료 인덱스가 미만으로 처리되었거나, <code>while</code> 문 진입 직후 카운터를 먼저 감소시켜 1회가 유실되는 것으로 추정됨. 경계 조건(N=1, N=5)에 대한 단위 테스트 케이스를 추가하여 실제 실행 횟수가 설정값 N과 일치하는지 검증 필요.</p>
+    </div>
+
+    <h2>3. 메타데이터 매핑 및 칸반(Projects) 연동</h2>
+    <p>이슈 우측 사이드바를 통해 프로젝트 관리 상태를 갱신합니다.</p>
+    <ul>
+        <li><strong>Assignees:</strong> 담당 개발자(들)를 지정하여 R&R을 명확히 함.</li>
+        <li><strong>Labels:</strong> <code>bug</code>(유형), <code>P1-High</code>(우선순위) 조합으로 필터링 효율화.</li>
+        <li><strong>Milestone:</strong> 해당 버그가 릴리스되어야 할 스프린트 혹은 배포 버전에 매핑.</li>
+        <li><strong>Projects:</strong> GitHub Projects(Kanban)에 연동하여 <code>Todo</code> -> <code>In Progress</code> -> <code>Done</code> 상태 추적.</li>
+    </ul>
+
+    <h2>4. 개발 수명 주기(Lifecycle)와 자동화 연동</h2>
+    <p>GitHub의 특정 키워드를 활용하면 브랜치 머지 시 이슈를 자동으로 Close 처리할 수 있어, 수동 관리 오버헤드를 줄입니다.</p>
+
+    <h3>4.1 Branch Naming 규칙 권장</h3>
+    <pre>git checkout -b fix/104-repeat-loop-off-by-one</pre>
+
+    <h3>4.2 PR(Pull Request) 또는 Commit Message 연동</h3>
+    <p>코드를 수정하고 <code>main</code> 또는 <code>develop</code> 브랜치로 Pull Request를 보낼 때, 본문에 아래의 **원자적 키워드**를 포함합니다.</p>
+    <pre>## Description
+'N번 반복' 명령 처리 루프의 경계 조건(Off-by-One) 수정 및 지정 횟수(N)와
+실제 루프 실행 횟수 일치 여부를 검증하는 테스트 추가.
+
+Closes #104</pre>
+
+    <div class="box-info">
+        <strong>💡 핵심 연동 키워드 (Case-Insensitive)</strong><br>
+        <code>close #이슈번호</code>, <code>closes #이슈번호</code>, <code>fix #이슈번호</code>, <code>fixes #이슈번호</code>, <code>resolve #이슈번호</code><br>
+        해당 PR이 타겟 브랜치에 <strong>Merge되는 순간 관련 이슈가 자동으로 Close</strong> 처리되며 Traceability 링크가 보존됩니다.
+    </div>
+
+</body>
+</html>

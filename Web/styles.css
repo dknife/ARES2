@@ -1201,28 +1201,9 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
         min-height: 60px;
         padding: 9px 10px;
     }
-    .flow-num {
-        width: 34px;
-        height: 34px;
-        flex-basis: 34px;
-        font-size: .9em;
-    }
     .flow-count { display: none; }
     .flow-step-btn strong { font-size: .88em; }
     .inline-mission-btn { padding-left: 12px; }
-}
-.flow-num {
-    flex: 0 0 44px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--accent-color);
-    color: #fff;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1em;
 }
 
 /* 보너스(+) 항목 — "+" 배지는 점선 테두리 + 흰 바탕으로 정규 차시와 구분 */
@@ -1936,6 +1917,23 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
 #simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
+/* 개발자 모드(Ctrl+E) 씬 도구 바 — 씬 생성·저장·로드 (SIMULATOR.md) */
+.sim-devbar {
+    position: absolute; right: 10px; bottom: 44px; z-index: 6;
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 8px; border-radius: 8px;
+    background: rgba(16, 22, 34, 0.82); border: 1px solid rgba(255, 210, 74, 0.55);
+}
+.sim-devbar-tag {
+    font: 700 10px/1 'Inter Tight', sans-serif; letter-spacing: .08em;
+    color: #ffd24a; padding-right: 2px;
+}
+.sim-devbar button {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.78em; font-weight: 600;
+    background: #202a3d; color: #dfe8f8; border: 1px solid #3a4a68; border-radius: 6px;
+    padding: 4px 9px; cursor: pointer;
+}
+.sim-devbar button:hover { background: #2b3a55; }
 /* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
    명령 글자가 늘 바닥을 이기고 보이도록 캔버스 위 레이어로 올렸다(컨트롤 z:4~5 아래).
    반투명(opacity)·포인터 이벤트 통과라 로봇 드래그/버튼 클릭은 방해하지 않는다. 최신 줄이 아래. */
@@ -2328,10 +2326,14 @@ details.mission-section summary {
    ============================================================ */
 :root {
     --mockup-red: #e65448;
+    --mockup-green: #12b76a;      /* 연결됨(go) 상태 — 완료 미션 배지와 동일 팔레트 */
+    --mockup-gold:  #E6AD00;      /* 코딩 모드 '실행' */
+    --mockup-blue:  #3F78A8;      /* 시뮬레이션 모드 '모의실행' */
+    --mockup-stop:  #B94A45;      /* 실행 중 정지(비상정지·실험중단) */
     --mockup-ink: #272526;
     --mockup-line: #d7d7d9;
     --mockup-panel: #e7e7e9;
-    --mobile-bottom-nav-height: 88px;
+    --mobile-bottom-nav-height: 108px;
 }
 
 .sr-only {
@@ -2347,11 +2349,12 @@ details.mission-section summary {
 }
 
 .header-main {
+    display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
     min-height: 74px;
-    padding: 9px 24px 8px;
+    padding: 9px clamp(18px, 6.25vw, 45px) 8px;
     background: #fff;
     border-bottom: 1px solid var(--mockup-line);
 }
@@ -2437,7 +2440,13 @@ details.mission-section summary {
     background: #fff;
     color: #5c5c60;
     font-size: .92rem;
-    padding: 0 36px 0 16px;
+    padding: 0 48px 0 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M2 2l5 5 5-5' fill='none' stroke='%235c5c60' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    background-size: 14px 9px;
 }
 
 #missionNav > :not(#lessonSelect):not(#missionSelect) {
@@ -2493,9 +2502,14 @@ details.mission-section summary {
     border-radius: 50%;
     background: #8a8b8f;
     color: #fff;
-    font-family: 'Inter Tight', sans-serif;
+    font-family: 'VITRO Inspire', 'Noto Sans KR', sans-serif;
     font-size: .74rem;
     font-weight: 700;
+}
+
+/* 정규 차시의 원형 숫자에만 VITRO INSPIRE를 사용한다. */
+.lesson-accordion-item:not(.bonus) .flow-num {
+    font-family: 'VITRO Inspire', 'Noto Sans KR', sans-serif !important;
 }
 
 .flow-step-btn strong {
@@ -2511,8 +2525,19 @@ details.mission-section summary {
 }
 
 .flow-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    position: relative;
+    left: -14px;
     color: #65666a;
     font-size: .72rem;
+    line-height: 1;
+    transform: rotate(0deg);
+    transform-origin: 50% 50%;
+    transition: transform .18s ease;
 }
 
 .lesson-panel,
@@ -2522,7 +2547,14 @@ details.mission-section summary {
 }
 
 .mobile-bottom-nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    --connect-size: clamp(88px, 18vw, 104px);
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 1fr)
+        var(--connect-size)
+        minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    justify-items: stretch;
+    column-gap: 0;
     height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
     padding: 8px 4px calc(5px + env(safe-area-inset-bottom));
     overflow: visible;
@@ -2533,13 +2565,48 @@ details.mission-section summary {
     -webkit-backdrop-filter: none;
 }
 
+/* 중앙 연결 버튼 자리의 흰 원형 홈. 회색 바의 양 끝이 둥글게 버튼을 감싼다. */
+.mobile-bottom-nav::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: calc(var(--connect-size) + 10px);
+    height: calc(var(--connect-size) + 10px);
+    border-radius: 50%;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.mobile-bottom-nav [data-mobile-action="mission"] { grid-column: 1; }
+.mobile-bottom-nav [data-mobile-action="coding"] {
+    grid-column: 2;
+    border-top-right-radius: 30px !important;
+}
+.mobile-bottom-nav [data-mobile-action="simulation"] {
+    grid-column: 4;
+    border-top-left-radius: 30px !important;
+}
+.mobile-bottom-nav [data-mobile-action="ai"] { grid-column: 5; }
+
 .mobile-bottom-nav .mobile-nav-btn {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
     min-height: 66px;
-    padding: clamp(5px, 1.2vw, 9px) 2px 3px;
+    padding: 5px 2px 3px;
     border-radius: 0;
     color: #444448;
     font-size: .78rem;
-    gap: clamp(3px, .8vw, 6px);
+    display: grid;
+    grid-template-rows: 42px 18px;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
 }
 
 .mobile-bottom-nav .mobile-nav-btn.active {
@@ -2548,8 +2615,9 @@ details.mission-section summary {
 }
 
 .mobile-bottom-nav .mobile-nav-icon {
-    width: clamp(36px, 6.5vw, 44px);
-    height: clamp(36px, 6.5vw, 44px);
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
 }
 
 .mobile-nav-icon-mission {
@@ -2573,18 +2641,25 @@ details.mission-section summary {
 }
 
 .mobile-bottom-nav .mobile-nav-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1em;
+    width: 100%;
     font-size: clamp(.78rem, 2.2vw, .92rem);
     font-weight: 800;
+    line-height: 1;
+    text-align: center;
 }
 
 .mobile-bottom-nav .mobile-connect-btn {
     position: absolute;
     left: 50%;
-    bottom: 24px;
-    width: clamp(108px, 22vw, 120px);
-    min-width: clamp(108px, 22vw, 120px);
-    height: clamp(108px, 22vw, 120px);
-    min-height: clamp(108px, 22vw, 120px);
+    bottom: calc(var(--mobile-bottom-nav-height) - clamp(44px, 9vw, 52px));
+    width: var(--connect-size);
+    min-width: var(--connect-size);
+    height: var(--connect-size);
+    min-height: var(--connect-size);
     margin: 0;
     padding: 14px 6px 10px;
     border-radius: 50%;
@@ -2602,20 +2677,64 @@ details.mission-section summary {
 }
 
 .mobile-bottom-nav .mobile-connect-btn.connected {
-    background: #65a35b !important;
+    background: var(--mockup-green) !important;   /* 연결됨: 붉은색 → 팔레트 초록 */
+}
+
+/* go 상태(실행·모의실행): 재생(삼각형) 아이콘 + 모드별 배경색.
+   코딩 '실행'=골드(#E6AD00), 시뮬 '모의실행'=블루(#3F78A8). */
+body[data-content-mode="coding"] .mobile-bottom-nav .mobile-connect-btn.coding-run {
+    background: var(--mockup-gold) !important;
+}
+body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.coding-run {
+    background: var(--mockup-blue) !important;
+}
+.mobile-connect-btn.coding-run .mobile-connect-icon {
+    width: 0;
+    height: 0;
+    background: transparent;
+    mask-image: none;
+    -webkit-mask-image: none;
+    border-top: 13px solid transparent;
+    border-bottom: 13px solid transparent;
+    border-left: 21px solid #fff;
+}
+
+/* 실행 중 정지 상태(비상정지·실험중단): #B94A45 + 정지(사각형) 아이콘. 재클릭 시 중지.
+   .connected/.coding-run 보다 뒤에 와서 우선한다. */
+.mobile-bottom-nav .mobile-connect-btn.run-stop {
+    background: var(--mockup-stop) !important;
+}
+.mobile-connect-btn.run-stop .mobile-connect-icon {
+    width: 15px;
+    height: 15px;
+    background: #fff;
+    border: 0;
+    border-radius: 2px;
+    mask-image: none;
+    -webkit-mask-image: none;
 }
 
 .mobile-connect-icon {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     mask-image: url('assets/design/nav-connect.png');
     -webkit-mask-image: url('assets/design/nav-connect.png');
+}
+
+/* AI·로그 팝업은 연결 원보다 앞에 표시한다(PDF 6·7페이지). */
+.mobile-bottom-nav { z-index: 900; }
+.ai-panel,
+#logContainer.expanded {
+    z-index: 1000;
+}
+#logContainer.expanded {
+    position: relative;
 }
 
 @media (max-width: 768px) {
     .header-main {
         min-height: 72px;
-        padding: 8px 18px;
+        padding: 8px clamp(18px, 6.25vw, 45px);
     }
 
     #missionNav {
@@ -2626,7 +2745,7 @@ details.mission-section summary {
 
     #missionNav select {
         height: 36px;
-        padding: 0 30px 0 14px;
+        padding: 0 44px 0 14px;
         font-size: .82rem;
     }
 
@@ -2658,7 +2777,7 @@ details.mission-section summary {
     background: var(--background-white);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -2777,11 +2896,12 @@ details.mission-section summary {
 
 @media (max-width: 768px) {
     .ai-panel {
-        right: 8px;
-        left: 8px;
-        bottom: calc(8px + var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+        right: 16px;
+        left: 16px;
+        bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
         width: auto;
         max-height: calc(75vh - var(--mobile-bottom-nav-height));
+        box-shadow: none;
     }
 }
 
@@ -2799,7 +2919,30 @@ details.mission-section summary {
 }
 
 .flow-step-btn[aria-expanded="true"] .flow-arrow {
-    transform: rotate(180deg);
+    transform: rotate(-90deg);
+}
+
+/* 보너스 착륙 안내 박스는 제목·설명·실행 버튼을 모두 중앙 정렬한다. */
+.lesson-panel .bonus-teaser {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.lesson-panel .bonus-teaser .inline-lesson-info-title,
+.lesson-panel .bonus-teaser p {
+    width: 100%;
+    text-align: center;
+}
+.lesson-panel .bonus-teaser .landing-start-btn {
+    margin: 12px auto 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1;
 }
 
 .lesson-panel {
@@ -2861,7 +3004,8 @@ details.mission-section summary {
 .inline-mission-main strong {
     margin: 0;
     color: inherit;
-    font-size: clamp(.84rem, 2.25vw, 1rem);
+    /* 차시 제목(.flow-step-btn strong, .92rem)보다 항상 작게 — vw 로 키우면 차시를 추월해 위계가 뒤집힌다 */
+    font-size: .8rem;
     font-weight: 500;
 }
 
@@ -2969,8 +3113,8 @@ details.mission-section summary {
 .story-albi .story-text {
     grid-column: 1;
     justify-self: end;
-    background: #bfc1c4;
-    border-color: #bfc1c4;
+    background: #e6e6e6;
+    border-color: #e6e6e6;
 }
 
 .story-goal-question {
@@ -2992,7 +3136,7 @@ details.mission-section summary {
     width: min(100%, 390px);
     padding: 14px 18px;
     border-radius: 7px;
-    background: #bfc1c4;
+    background: #e6e6e6;
     color: #343539;
 }
 
@@ -3023,12 +3167,34 @@ details.mission-section summary {
 }
 
 details.mission-sample summary {
+    position: relative;
+    display: flex;
+    align-items: center;
     padding: 16px 0 12px;
+    padding-right: 32px;
     border-bottom: 1px solid #c9cbce;
     color: #292a2d;
     font-size: clamp(.92rem, 2.5vw, 1.08rem);
     font-weight: 800;
-    list-style-position: outside;
+    list-style: none;
+    cursor: pointer;
+}
+
+details.mission-sample summary::-webkit-details-marker { display: none; }
+details.mission-sample summary::after {
+    content: '◀';
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    color: #65666a;
+    font-size: .82rem;
+    line-height: 1;
+    transform: translateY(-50%) rotate(0deg);
+    transform-origin: center;
+    transition: transform .18s ease;
+}
+details.mission-sample[open] summary::after {
+    transform: translateY(-50%) rotate(-90deg);
 }
 
 .mission-sample .sample-code {
@@ -3230,6 +3396,46 @@ body.toolbox-collapsed {
     height: auto;
 }
 
+/* PDF 5페이지: 블록이 하나도 없을 때만 보이는 작업공간 안내 카드 */
+.workspace-empty-hint {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 20;
+    width: min(240px, 52vw);
+    min-height: 220px;
+    padding: 26px 18px;
+    border: 2px solid #d1d1d3;
+    border-radius: 20px;
+    background: rgba(250, 250, 251, .96);
+    color: #858589;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    font-size: clamp(.9rem, 2.5vw, 1.08rem);
+    font-weight: 500;
+    line-height: 1.45;
+    text-align: center;
+    transform: translate(-50%, -50%);
+    transition: top .25s ease;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+.workspace-empty-hint[hidden] { display: none !important; }
+.workspace-empty-icon {
+    font-size: 5.2rem;
+    line-height: 1;
+    filter: grayscale(1);
+    opacity: .28;
+}
+
+/* AI 패널이 열리면 안내 카드를 위로 옮겨 패널 뒤에 가리지 않게 한다. */
+body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
+    top: 30%;
+}
+
 #toolboxActions {
     position: absolute;
     left: 0;
@@ -3266,8 +3472,9 @@ body.toolbox-collapsed {
     transition: background 0.15s ease, opacity 0.15s ease;
 }
 .tbx-action .tbx-ico { font-size: 1rem; line-height: 1; }
-/* 접힘 상태에서는 도구 버튼도 좁아지므로 글자 라벨은 숨기고 아이콘만 */
-body.toolbox-collapsed .tbx-action .tbx-lbl { display: none; }
+.tbx-action .tbx-lbl { display: block !important; white-space: nowrap; }
+/* 이전 접힘 상태가 남아 있어도 도구 이름은 계속 표시한다. */
+body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 /* 호버/클릭은 색이 아닌 은은한 중립 음영으로만 표시 */
 .tbx-action:hover { background: rgba(0, 0, 0, 0.06); }
 .tbx-action:active { background: rgba(0, 0, 0, 0.12); }
