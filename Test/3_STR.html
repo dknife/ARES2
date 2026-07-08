@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 소프트웨어 테스트 결과 보고서 (STR) v1.0</title>
+    <title>ARES 소프트웨어 테스트 결과 보고서 (STR) v1.1</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter Tight', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; margin: 40px auto; max-width: 1200px; background-color: #F8F8F8; color: #222; line-height: 1.6; }
@@ -12,35 +12,53 @@
         .subtitle { text-align: center; color: #666; font-size: 14px; margin: 0 0 36px; }
         h2 { color: #222; font-size: 19px; font-weight: 700; border-left: 5px solid #FA5D29; padding-left: 10px; margin-top: 36px; margin-bottom: 14px; }
         h3 { color: #d8431b; font-size: 15px; font-weight: 700; margin-top: 22px; margin-bottom: 10px; }
+        h4 { color: #333; font-size: 14px; font-weight: 700; margin-top: 18px; margin-bottom: 8px; }
         .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13.5px; }
         .meta-table th, .meta-table td, .data-table th, .data-table td { border: 1px solid #EDEDED; padding: 10px 12px; vertical-align: top; }
         .data-table th { background-color: #222; color: #fff; text-align: center; font-weight: 700; }
         .meta-table th { background-color: rgba(250,93,41,0.1); text-align: center; font-weight: 700; color: #d8431b; width: 15%; }
         .meta-table td { width: 35%; }
-        .summary-boxes { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 26px; }
-        .summary-box { flex: 1; padding: 18px 12px; border-radius: 12px; text-align: center; color: white; font-weight: bold; font-size: 13.5px; }
-        .box-total { background-color: #222; } .box-pass { background-color: #28a745; } .box-fail { background-color: #dc3545; } .box-pending { background-color: #fd7e14; } .box-rate { background-color: #FA5D29; }
-        .summary-box .num { font-size: 28px; margin-top: 8px; display: block; }
-        .status-resolved { color: #28a745; font-weight: bold; } .status-open { color: #dc3545; font-weight: bold; } .status-deferred { color: #fd7e14; font-weight: bold; }
+        .summary-boxes { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 26px; flex-wrap: wrap; }
+        .summary-box { flex: 1; min-width: 110px; padding: 16px 8px; border-radius: 12px; text-align: center; color: white; font-weight: bold; font-size: 12.5px; }
+        .box-total { background-color: #222; } .box-pass { background-color: #28a745; } .box-fail { background-color: #dc3545; }
+        .box-hold { background-color: #d97706; } .box-other { background-color: #4f46e5; } .box-notrun { background-color: #64748b; } .box-rate { background-color: #FA5D29; }
+        .summary-box .num { font-size: 26px; margin-top: 8px; display: block; }
+        .status-pass { color: #28a745; font-weight: bold; } .status-fail { color: #dc3545; font-weight: bold; }
+        .status-hold { color: #d97706; font-weight: bold; } .status-other { color: #4f46e5; font-weight: bold; } .status-notrun { color: #64748b; font-weight: bold; }
+        .status-deferred { color: #fd7e14; font-weight: bold; }
         .highlight-box { background-color: #fff; padding: 18px 22px; border-left: 5px solid #FA5D29; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 28px; border-radius: 0 10px 10px 0; }
         .highlight-box h3 { margin-top: 0; color: #d8431b; font-size: 16px; }
         .highlight-box p { margin-bottom: 0; font-size: 14px; color: #333; }
         code { background: #f1f5f9; padding: 1px 6px; border-radius: 3px; font-size: 0.86em; color: #1e293b; font-family: 'Consolas', 'D2Coding', monospace; }
         .kpi-table td.metric { text-align: center; font-weight: 700; color: #28a745; }
+        .kpi-table td.metric-hold { text-align: center; font-weight: 700; color: #d97706; }
         .progress-bar { width: 100%; background-color: #EDEDED; border-radius: 100px; overflow: hidden; margin-top: 5px; }
         .progress-fill { height: 18px; background-color: #28a745; text-align: right; padding-right: 5px; color: white; font-size: 11.5px; line-height: 18px; }
         .progress-fill-warn { background-color: #fd7e14; }
+        .progress-fill-bad { background-color: #64748b; }
+        .case-box { background: #FCFCFC; border: 1px solid #EDEDED; border-left: 4px solid #d97706; border-radius: 0 10px 10px 0; padding: 16px 20px; margin-bottom: 14px; font-size: 13.5px; }
+        .case-box.cb-other { border-left-color: #4f46e5; }
+        .case-box.cb-notrun { border-left-color: #64748b; }
+        .case-box h4 { margin: 0 0 8px; font-size: 14px; color: #222; }
+        .case-box .tag { display: inline-block; border-radius: 100px; padding: 1px 10px; font-size: 11.5px; font-weight: 700; color: #fff; margin-left: 6px; vertical-align: middle; }
+        .tag-hold { background: #d97706; } .tag-other { background: #4f46e5; } .tag-notrun { background: #64748b; }
+        .tag-high { background: #e53e3e; } .tag-mid { background: #dd6b20; } .tag-low { background: #38a169; }
+        .case-box .quote { background: #fff; border: 1px dashed #E0E0E0; border-radius: 8px; padding: 8px 12px; margin: 8px 0; color: #555; font-size: 13px; }
+        .case-box .quote::before { content: "테스터 코멘트 원문"; display: block; font-size: 11px; font-weight: 700; color: #999; letter-spacing: 1px; margin-bottom: 3px; }
+        .case-box ul { margin: 6px 0 0; padding-left: 20px; }
+        .case-box li { margin-bottom: 3px; }
+        ul.tight li { margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>ARES 소프트웨어 테스트 결과 보고서 (STR) v1.0</h1>
-    <div class="subtitle">TCL v1.0 (14 카테고리 · 98 케이스) 실행 결과 및 성능 KPI 종합<br>실제 소스코드 분석 기반 - 실기(BLE) 및 시뮬레이터 병행 수행</div>
+    <h1>ARES 소프트웨어 테스트 결과 보고서 (STR) v1.1</h1>
+    <div class="subtitle">TCL v1.0 (14 카테고리 · 98 케이스) 1차 실측 결과 취합 반영판<br>실기(BLE) 및 Web/Sim_Parts 시뮬레이터 병행 수행 - 테스터 결과 파일(r.txt) 기반 집계</div>
 
     <div class="highlight-box">
         <h3>핵심 요약</h3>
-        <p>TCL v1.0 98 케이스를 실기(BLE)와 Web/Simulation 시뮬레이터로 병행 수행하여 <strong>92건 Pass, 1건 차기 이관, 5건 보류(장비·일정 의존)</strong>를 기록함. 실행 케이스(93건) 기준 통과율 <strong>98.9%</strong>, 전체 기준 <strong>93.9%</strong>. High 이상 결함 <strong>0건</strong>, 성능 KPI 5개 항목 모두 목표 달성. 잔여 2개 이관 항목(UART baud 천장, 배터리 전압 감시 미구현)은 핵심 교육 기능에 영향이 없어 <strong>배포 가능(Go)</strong>으로 판정함</p>
+        <p>TCL v1.0 98 케이스에 대한 1차 실측 결과를 취합하여 <strong>85건 Pass · 0건 Fail · 7건 보류 · 3건 기타 · 3건 미수행</strong>을 기록함. 전체 Pass 비율 <strong>86.7%</strong>, 실행 완료 케이스 기준 Fail은 <strong>0건</strong>으로 기능 결함은 발견되지 않음. 다만 미결 13건의 원인이 제품 결함이 아니라 <strong>테스트 인프라(Web 수신 로그 미표시) 5건 · 장비 부족(총 모듈, 다수 BLE 기기) 4건 · 명세/절차 문제 2건 · 레거시/미노출 코드 2건</strong>으로 분석됨. High 우선순위 케이스 5건이 보류 상태이므로 판정은 <strong>조건부 Go</strong> - Web 수신(rx) 로그 표시 기능 반영 및 보류 재시험 완료를 조건으로 최종 확정함</p>
     </div>
 
     <table class="meta-table">
@@ -49,73 +67,258 @@
             <th>프로젝트명</th><td>블록코딩과 BLE 통신 기반 마이크로컨트롤러 교육 플랫폼 (ARES)</td>
         </tr>
         <tr>
-            <th>버전</th><td>v1.0</td>
-            <th>작성일</th><td>2026. 07. 03</td>
+            <th>버전</th><td>v1.1 (1차 실측 반영)</td>
+            <th>작성일</th><td>2026. 07. 08</td>
         </tr>
         <tr>
             <th>대상 TCL</th><td>TCL v1.0 (14 카테고리 · 98 케이스)</td>
-            <th>테스트 경로</th><td>실기(BLE) / 시뮬레이터 병행</td>
+            <th>테스트 경로</th><td>실기(BLE) / Web·Sim_Parts 시뮬레이터 병행</td>
         </tr>
         <tr>
-            <th>작성자</th><td>기획총괄 / 프로젝트 PM</td>
+            <th>결과 근거</th><td>테스터 취합 결과 (r.txt, 미결 13건 코멘트 포함)</td>
             <th>검토/승인</th><td>품질관리(QA) 책임자</td>
         </tr>
     </table>
 
-    <h2>1. 개요</h2>
-    <p>본 문서는 ARES 교육 플랫폼의 연결·통신·블록엔진·액추에이터·센서·설정·안정성·시뮬레이터·E2E 전 영역에 대한 테스트 수행 결과를 정리함. 테스트는 실제 UART 명령 프로토콜과 블록-명령 매핑에 대응되는 TCL v1.0 98 케이스를 기준으로 하였으며, 하드웨어 의존 항목은 실기(BLE)로, 그 외는 Web/Sim_Parts 시뮬레이터로 병행 검증함</p>
+    <h3>문서 개정 이력</h3>
+    <table class="data-table">
+        <tr><th width="10%">버전</th><th width="14%">일자</th><th>주요 변경 내용</th></tr>
+        <tr><td style="text-align:center;">v1.0</td><td style="text-align:center;">2026. 07. 03</td><td>소스코드 정적 분석 기반 초안 - 예상 결과 중심 작성</td></tr>
+        <tr><td style="text-align:center;">v1.1</td><td style="text-align:center;">2026. 07. 08</td><td>1차 실측 결과(r.txt) 취합 반영 - 집계 재산정, 미결 13건 상세 분석 추가, 원인 유형 분류, KPI 실측 이월 처리, 개선 항목(IMP) 신설, 판정을 조건부 Go로 조정</td></tr>
+    </table>
 
-    <h2>2. 테스트 환경</h2>
+    <h2>1. 개요</h2>
+    <ul class="tight">
+        <li>본 문서는 ARES 교육 플랫폼의 연결·통신·블록엔진·액추에이터·센서·설정·안정성·시뮬레이터·E2E 전 영역에 대한 1차 테스트 수행 결과를 정리함</li>
+        <li>테스트는 실제 UART 명령 프로토콜과 블록-명령 매핑에 대응되는 TCL v1.0 98 케이스를 기준으로 하였으며, 하드웨어 의존 항목은 실기(BLE)로, 그 외는 Web/Sim_Parts 시뮬레이터로 병행 검증함</li>
+        <li>v1.0 문서는 소스코드 분석 기반의 예상치였으나, 본 v1.1은 테스터가 TCL 실행형 시트에 기록·내보내기한 실측 결과와 미결 13건의 코멘트(r.txt)를 취합하여 실제 수치로 전면 갱신함</li>
+        <li>미결 13건은 모두 Fail(기능 결함)이 아닌 검증 불가·환경 부족·명세 문제로 확인되어, 결함 관리와 별도로 테스트 가능성(Testability) 개선 항목으로 관리함</li>
+    </ul>
+
+    <h2>2. 테스트 환경 및 제약사항</h2>
     <table class="data-table">
         <tr><th>구분</th><th>상세</th></tr>
         <tr><td style="text-align:center; font-weight:bold;">OS / 브라우저</td><td>Windows 10/11 / Chrome 최신, Edge 최신 (Web Bluetooth 지원)</td></tr>
-        <tr><td style="text-align:center; font-weight:bold;">하드웨어</td><td>Raspberry Pi Pico, H-브릿지 dual PWM, HC-SR04, 연속회전 서보 x2, LED 6개, 부저, 발사기, 디지털 자기센서, OLED SSD1306, HM-10/BT05</td></tr>
+        <tr><td style="text-align:center; font-weight:bold;">하드웨어</td><td>Raspberry Pi Pico, H-브릿지 dual PWM, HC-SR04, 연속회전 서보 x2, LED 6개, 부저, 디지털 자기센서, OLED SSD1306, HM-10/BT05</td></tr>
         <tr><td style="text-align:center; font-weight:bold;">통신</td><td>BLE 4.2+ / UART 9600 baud</td></tr>
         <tr><td style="text-align:center; font-weight:bold;">시뮬레이션</td><td>Web/Sim_Parts (simulateWorkspace, 4개 주제)</td></tr>
     </table>
+    <h3>이번 회차에서 확인된 환경 제약 (미결 발생 원인)</h3>
+    <ul class="tight">
+        <li><strong>Web 수신(rx) 로그 미표시</strong> : 현재 Web UI 로그가 송신 명령 위주로 표시되어, Pico가 회신하는 응답 문자열(<code>1</code>, <code>READY</code> 등)을 화면에서 직접 확인할 수 없음 - "응답 수신 확인"이 합격 기준인 케이스의 판정이 불가하여 보류 5건 발생</li>
+        <li><strong>총(발사) 모듈 미확보</strong> : 전투 카테고리 3건 전체 미수행</li>
+        <li><strong>BLE 테스트 베드 부족</strong> : 주변 다수 BLE 기기·이종 모듈 이름 등 필터 검증 환경을 구성하지 못해 기기 검색·필터 케이스 보류</li>
+        <li><strong>오실로스코프 등 계측 장비 미투입</strong> : 성능 KPI 정밀 실측을 이번 회차에서 수행하지 못함 (5장 참조)</li>
+    </ul>
 
     <h2>3. 테스트 수행 결과 요약</h2>
     <div class="summary-boxes">
         <div class="summary-box box-total">총 케이스<span class="num">98</span></div>
-        <div class="summary-box box-pass">Pass<span class="num">92</span></div>
-        <div class="summary-box box-fail">Fail/이관<span class="num">1</span></div>
-        <div class="summary-box box-pending">미수행/보류<span class="num">5</span></div>
-        <div class="summary-box box-rate">실행 통과율<span class="num">98.9%</span></div>
+        <div class="summary-box box-pass">Pass<span class="num">85</span></div>
+        <div class="summary-box box-fail">Fail<span class="num">0</span></div>
+        <div class="summary-box box-hold">보류<span class="num">7</span></div>
+        <div class="summary-box box-other">기타<span class="num">3</span></div>
+        <div class="summary-box box-notrun">미수행<span class="num">3</span></div>
+        <div class="summary-box box-rate">Pass 비율<span class="num">86.7%</span></div>
     </div>
-    <p><strong>통과율 산정</strong> : 보류 5건을 제외한 실행 93건 중 92건 Pass = 98.9%, 전체 98건 기준 93.9%</p>
-    <p><strong>보류 5건</strong> : 서보 보정 실측(TC-SRV-006), DC 모터 양방향 대칭 오실로스코프 실측(TC-DCM-002), 시뮬레이터 세부 2건(발사대/로버 미세 애니), 실기 프리셋 E2E 1건 - 모두 장비·일정 의존 항목</p>
+    <ul class="tight">
+        <li><strong>산정 기준</strong> : 전체 98건 중 Pass 85건 = 86.7%, 실행 완료(Pass+Fail) 85건 중 Fail 0건 - 실행된 케이스에서 기능 결함 미발견</li>
+        <li><strong>보류 7건</strong> : Web 수신 로그 확인 불가 5건(TC-CONN-001·002, TC-BLE-002, TC-BAT-002, TC-SND-003) + 테스트 환경 부족 1건(TC-BLE-001) + 절차 이해 불가 1건(TC-BLE-006)</li>
+        <li><strong>기타 3건</strong> : 전제 프리셋 특정 불가(TC-BLK-005, 기능 자체는 동작 확인) + 레거시 코드로 블록 미존재(TC-LED-005) + Web 실행 경로 없음(TC-SYS-004)</li>
+        <li><strong>미수행 3건</strong> : 총 모듈 미확보(TC-GUN-001·002·003)</li>
+        <li><strong>우선순위 관점</strong> : 미결 13건 중 High 5건(모두 보류) · Mid 4건 · Low 4건 - High 5건은 재시험 완료 전까지 잔여 리스크로 관리</li>
+        <li>보류 5건(로그 확인 불가형)은 테스터가 공통적으로 "작동으로 보임"을 병기하였으므로, 기능 이상 징후가 아닌 판정 수단 부재로 해석함</li>
+    </ul>
 
     <h2>4. 카테고리별 결과</h2>
     <table class="data-table" style="text-align: center;">
-        <tr><th>카테고리</th><th>전체 TC</th><th>Pass</th><th>Fail/이관</th><th>미수행/보류</th><th>실행 통과율</th><th>진행 척도</th></tr>
-        <tr><td>연결·시스템</td><td>7</td><td>7</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>BLE·파이프라인</td><td>8</td><td>7</td><td>1</td><td>0</td><td>87.5%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill progress-fill-warn" style="width:87.5%;">88%</div></div></td></tr>
-        <tr><td>BATCH 블록</td><td>6</td><td>6</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>블록 코딩 엔진</td><td>7</td><td>7</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>서보 모터 휠</td><td>6</td><td>5</td><td>0</td><td>1</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>DC 모터</td><td>5</td><td>4</td><td>0</td><td>1</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>LED 6개</td><td>6</td><td>6</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>디스플레이 OLED</td><td>6</td><td>6</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>소리·부저</td><td>5</td><td>5</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>전투</td><td>3</td><td>3</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>센서 입력</td><td>5</td><td>5</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>설정·안정성</td><td>6</td><td>6</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>시뮬레이터 3D</td><td>24</td><td>22</td><td>0</td><td>2</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
-        <tr><td>시뮬레이터·프리셋 E2E</td><td>4</td><td>3</td><td>0</td><td>1</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr><th>카테고리</th><th>전체 TC</th><th>Pass</th><th>Fail</th><th>보류</th><th>기타</th><th>미수행</th><th>Pass 비율</th><th>진행 척도</th></tr>
+        <tr><td>연결·시스템</td><td>7</td><td>5</td><td>0</td><td>2</td><td>0</td><td>0</td><td>71.4%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill progress-fill-warn" style="width:71.4%;">71%</div></div></td></tr>
+        <tr><td>BLE·파이프라인</td><td>8</td><td>5</td><td>0</td><td>3</td><td>0</td><td>0</td><td>62.5%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill progress-fill-warn" style="width:62.5%;">63%</div></div></td></tr>
+        <tr><td>BATCH 블록</td><td>6</td><td>5</td><td>0</td><td>1</td><td>0</td><td>0</td><td>83.3%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill progress-fill-warn" style="width:83.3%;">83%</div></div></td></tr>
+        <tr><td>블록 코딩 엔진</td><td>7</td><td>6</td><td>0</td><td>0</td><td>1</td><td>0</td><td>85.7%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:85.7%;">86%</div></div></td></tr>
+        <tr><td>서보 모터 휠</td><td>6</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr><td>DC 모터</td><td>5</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr><td>LED 6개</td><td>6</td><td>5</td><td>0</td><td>0</td><td>1</td><td>0</td><td>83.3%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:83.3%;">83%</div></div></td></tr>
+        <tr><td>디스플레이 OLED</td><td>6</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr><td>소리·부저</td><td>5</td><td>4</td><td>0</td><td>1</td><td>0</td><td>0</td><td>80.0%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill progress-fill-warn" style="width:80%;">80%</div></div></td></tr>
+        <tr><td>전투</td><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>3</td><td>0%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill progress-fill-bad" style="width:100%;">미수행</div></div></td></tr>
+        <tr><td>센서 입력</td><td>5</td><td>5</td><td>0</td><td>0</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr><td>설정·안정성</td><td>6</td><td>5</td><td>0</td><td>0</td><td>1</td><td>0</td><td>83.3%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:83.3%;">83%</div></div></td></tr>
+        <tr><td>시뮬레이터 3D</td><td>24</td><td>24</td><td>0</td><td>0</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr><td>시뮬레이터·프리셋 E2E</td><td>4</td><td>4</td><td>0</td><td>0</td><td>0</td><td>0</td><td>100%</td><td style="text-align:left;"><div class="progress-bar"><div class="progress-fill" style="width:100%;">100%</div></div></td></tr>
+        <tr style="font-weight:bold; background:#f8fafc;"><td>합계</td><td>98</td><td>85</td><td>0</td><td>7</td><td>3</td><td>3</td><td>86.7%</td><td></td></tr>
+    </table>
+    <ul class="tight">
+        <li>서보 모터 휠·DC 모터·OLED·센서 입력·시뮬레이터 3D(24건 전체)·E2E 등 하드웨어 동작과 시뮬레이터 경로는 전건 Pass - 핵심 교육 시나리오(주행·표시·측정·시뮬레이션)의 완성도가 실측으로 확인됨</li>
+        <li>보류가 집중된 연결·시스템 및 BLE·파이프라인 카테고리는 기능 이상이 아니라 응답 문자열 확인 수단 부재와 테스트 베드 부족이 원인 - 5.1 및 5.2절 상세 분석 참조</li>
+        <li>전투 카테고리는 총 모듈 수급 후 일괄 재시험 예정 - gun=None 상태의 부팅 안정성(TC-SYS-005)은 이번 회차에 Pass로 확인되어 모듈 부재가 다른 기능에 주는 영향은 없음</li>
+    </ul>
+
+    <h2>5. 미결 케이스 상세 분석 (13건)</h2>
+    <p>미결 13건을 원인 유형 4가지(A 테스트 인프라, B 장비·환경, C 명세·절차, D 레거시·미노출 코드)로 분류하고, 케이스별로 테스터 코멘트 원문·분석·후속 조치를 기록함</p>
+
+    <table class="data-table" style="text-align:center;">
+        <tr><th width="12%">원인 유형</th><th width="34%">정의</th><th width="10%">건수</th><th width="44%">해당 케이스</th></tr>
+        <tr><td>A. 테스트 인프라</td><td style="text-align:left;">Web UI가 수신 응답을 표시하지 않아 합격 기준 검증 불가</td><td>5</td><td style="text-align:left;">TC-CONN-001, TC-CONN-002, TC-BLE-002, TC-BAT-002, TC-SND-003</td></tr>
+        <tr><td>B. 장비·환경</td><td style="text-align:left;">테스트에 필요한 하드웨어·기기 구성을 확보하지 못함</td><td>4</td><td style="text-align:left;">TC-BLE-001, TC-GUN-001, TC-GUN-002, TC-GUN-003</td></tr>
+        <tr><td>C. 명세·절차</td><td style="text-align:left;">TCL의 절차 안내·전제조건 기술이 불충분하여 수행 곤란</td><td>2</td><td style="text-align:left;">TC-BLE-006, TC-BLK-005</td></tr>
+        <tr><td>D. 레거시·미노출</td><td style="text-align:left;">명령이 펌웨어에 존재하나 Web 실행 경로(블록·UI)가 없음</td><td>2</td><td style="text-align:left;">TC-LED-005, TC-SYS-004</td></tr>
     </table>
 
-    <h2>5. 성능 KPI 측정 결과</h2>
-    <p>STP v1.0에 정의된 KPI 5개 항목을 실행 시 측정한 결과 모두 목표를 달성함 (측정 : DevTools Performance 명령 간격, Pico print 로그, 오실로스코프)</p>
+    <h3>5.1 유형 A : Web 수신 로그 확인 불가 (보류 5건)</h3>
+    <ul class="tight">
+        <li><strong>공통 현상</strong> : 5건 모두 테스터가 "작동으로 보이지만, 현재 Web 로그 출력 방식상 출력을 확인할 수 없습니다"로 동일하게 기록 - 물리 동작(OLED 표시, 순차 실행, 멜로디 재생)은 관찰되나 합격 기준의 응답 문자열(<code>1</code>, <code>READY</code>) 대조가 불가</li>
+        <li><strong>원인 분석</strong> : Web 로그가 송신(tx) 명령 중심으로 출력되고 <code>bluetooth.js</code> notification 수신부의 수신(rx) 문자열을 사용자 로그에 노출하지 않음 - 시뮬레이터 경로는 → 송신 / ↩ 응답을 모두 표기(TC-SIM-004 Pass)하는 것과 대조적으로 실기 BLE 경로에만 수신 표시가 없음</li>
+        <li><strong>간접 증거</strong> : 응답 대기형 명령(<code>SLEEP</code>·<code>SERVO_t*</code>·<code>BATCH</code>·<code>SING</code>)이 <code>RESPONSE_TIMEOUT</code>(5000ms) 오류 없이 다음 블록으로 진행된 점은 응답이 정상 수신되고 있음을 간접적으로 뒷받침 - 단 문자열 일치·응답 횟수(1회) 검증은 rx 로그 없이는 불가하므로 Pass 판정을 유보함</li>
+        <li><strong>공통 조치</strong> : 실기 BLE 경로에도 수신 문자열을 로그에 표시하는 기능 추가(IMP-001, High) 후 5건 일괄 재시험 - 재시험 시 Pass 전환 유력</li>
+    </ul>
+
+    <div class="case-box">
+        <h4>순번 1 · TC-CONN-001 연결 확인 PING <span class="tag tag-high">High</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">작동으로 보이지만, 현재 Web 로그 출력 방식상 출력을 확인할 수 없습니다</div>
+        <ul>
+            <li>합격 기준 : <code>PING</code> 전송 시 OLED에 CONNECTED! + 기기이름 표시, 응답 <code>1</code> 수신</li>
+            <li>분석 : OLED 표시(물리 관찰)는 확인 가능한 반면 응답 <code>1</code>의 수신 여부를 Web 화면에서 확인할 수 없음 - 합격 기준이 두 요소(표시 + 응답)의 AND 조건이므로 보류 처리가 타당</li>
+            <li>조치 : IMP-001 반영 후 재시험 - OLED 표시가 이미 관찰되었다면 <code>_handle_ping</code> 경로 자체는 실행된 것이므로 실질 위험은 낮음</li>
+        </ul>
+    </div>
+    <div class="case-box">
+        <h4>순번 2 · TC-CONN-002 READY 응답 <span class="tag tag-low">Low</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">작동으로 보이지만, 현재 Web 로그 출력 방식상 출력을 확인할 수 없습니다</div>
+        <ul>
+            <li>합격 기준 : <code>READY</code> 전송 시 <code>READY</code> 문자열 그대로 회신</li>
+            <li>분석 : 물리적 부수 효과가 전혀 없는 순수 에코 케이스로, rx 로그 없이는 검증 수단이 원천적으로 부재한 대표 사례 - 유형 A 중 재시험 의존도가 가장 높음</li>
+            <li>조치 : IMP-001 반영 후 재시험 - 우선순위 Low로 배포 판단에 미치는 영향은 제한적</li>
+        </ul>
+    </div>
+    <div class="case-box">
+        <h4>순번 9 · TC-BLE-002 페어링·특성 확보 <span class="tag tag-high">High</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">작동으로 보이지만, 현재 Web 로그 출력 방식상 출력을 확인할 수 없습니다</div>
+        <ul>
+            <li>합격 기준 : 기기 선택 후 특성(<code>0000ffe1</code>) 확보, notification 구독, 상태 아이콘 초록 전환</li>
+            <li>분석 : 상태 아이콘 초록 전환은 UI로 관찰 가능하며 이후 명령 송수신이 성립했으므로 GATT 특성 확보·구독 자체는 성공한 것으로 판단됨 - 다만 특성 UUID·구독 성공 로그를 화면에서 확인할 수 없어 명세 문구 기준으로는 보류 기록</li>
+            <li>조치 : IMP-001에 연결 수립 단계 로그(특성 확보·구독 성공) 표시를 포함하여 재시험 - 재시험 전이라도 후속 케이스 전반의 Pass가 본 케이스의 실질 성공을 강하게 뒷받침</li>
+        </ul>
+    </div>
+    <div class="case-box">
+        <h4>순번 17 · TC-BAT-002 순차 실행·단일 응답 <span class="tag tag-high">High</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">작동으로 보이지만, 현재 Web 로그 출력 방식상 출력을 확인할 수 없습니다</div>
+        <ul>
+            <li>합격 기준 : <code>BATCH;LED_ON,0,1|LED_OFF,0</code>의 두 명령 순차 실행 후 응답 <code>1</code>을 한 번만 수신</li>
+            <li>분석 : LED 점등·소등의 순차 실행은 육안으로 확인 가능하나, "응답 1회"라는 횟수 검증은 rx 로그가 없으면 불가 - BATCH 응답이 중복되면 응답 슬롯 오염으로 후속 blocking 명령이 오동작할 수 있어 High 유지가 타당</li>
+            <li>조치 : IMP-001 반영 후 재시험 - 재시험 시 응답 횟수까지 로그로 계수 확인. 참고로 BATCH 직렬화(TC-BAT-001)·금지 블록 차단(TC-BAT-003~005)·부저 드레인(TC-BAT-006)은 모두 Pass로 BATCH 계열의 잔여 위험은 본 건 하나로 수렴</li>
+        </ul>
+    </div>
+    <div class="case-box">
+        <h4>순번 54 · TC-SND-003 멜로디 SING <span class="tag tag-low">Low</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">작동으로 보이지만, 현재 Web 로그 출력 방식상 출력을 확인할 수 없습니다</div>
+        <ul>
+            <li>합격 기준 : <code>SING</code> 시 Hala Madrid 멜로디 재생, OLED Singing... 표시, 응답 <code>1</code></li>
+            <li>분석 : 멜로디 재생과 OLED 표시는 관찰되었으나 blocking 응답 <code>1</code>의 수신 확인 불가 - 멜로디 종료 후 다음 블록 진행이 timeout 없이 이루어졌다면 응답은 정상 수신된 것으로 추정</li>
+            <li>조치 : IMP-001 반영 후 재시험</li>
+        </ul>
+    </div>
+
+    <h3>5.2 유형 B : 장비·환경 부족 (보류 1건 + 미수행 3건)</h3>
+    <div class="case-box">
+        <h4>순번 8 · TC-BLE-001 기기 검색·필터 <span class="tag tag-high">High</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">이름은 분류 여부도 확실치 않고, 기기가 여러개 있는 상황등, 테스트 할 제품이 부족합니다</div>
+        <ul>
+            <li>합격 기준 : requestDevice 필터(이름 PicoBLE/HMSoft/BT05 또는 서비스 UUID <code>0000ffe0</code> 보유) 매칭 기기만 목록 노출</li>
+            <li>분석 1 (환경) : 필터의 배제 동작을 검증하려면 매칭/비매칭 BLE 기기가 동시에 다수 존재해야 하나 테스트 베드를 구성하지 못함</li>
+            <li>분석 2 (명세) : 테스터가 지적한 "이름 분류 여부 불확실"은 TCL 유의사항에도 기재된 구조적 혼동 지점 - 부팅 시 <code>_sync_bt_name()</code>이 모듈 광고 이름을 device_name(기본 "ARES")으로 재설정하므로, "ARES"는 이름 필터 목록(PicoBLE/HMSoft/BT05)에 없고 두 번째 연결부터는 서비스 UUID 매칭으로만 노출됨 - 이름 기준 판정이 기기 상태(최초/재부팅 후)에 따라 달라져 단독 테스터가 판정하기 어려움</li>
+            <li>조치 : BLE 기기 3종 이상(매칭 1+, 비매칭 2+)으로 테스트 베드 구성 후 재시험 - TCL 재시험 절차에 "최초 페어링(모듈 원래 이름)과 재부팅 후(ARES 이름, UUID 매칭) 두 시점을 구분 판정" 명시(IMP-004 연계)</li>
+        </ul>
+    </div>
+    <div class="case-box cb-notrun">
+        <h4>순번 57 · TC-GUN-001 단발 발사 <span class="tag tag-mid">Mid</span><span class="tag tag-notrun">미수행</span></h4>
+        <div class="quote">총 모듈이 없어서 확인하지 못했습니다</div>
+        <ul>
+            <li>합격 기준 : <code>GUN_FIRE</code> 시 soft_start 램프업 후 0.22초 회전, 자동 정지(fire_once)</li>
+            <li>분석 : 총 모듈(GP22 PWM) 미장착으로 물리 검증 불가 - 시뮬레이터 경로의 발사 애니메이션(TC-SIM-016 발사대, TC-SIM-023 로버)은 Pass로 Web→명령 생성 경로는 검증 완료</li>
+            <li>조치 : 총 모듈 수급 후 TC-GUN-001~003 일괄 재시험</li>
+        </ul>
+    </div>
+    <div class="case-box cb-notrun">
+        <h4>순번 58 · TC-GUN-002 연속 발사 <span class="tag tag-low">Low</span><span class="tag tag-notrun">미수행</span></h4>
+        <div class="quote">총 모듈이 없어서 확인하지 못했습니다</div>
+        <ul>
+            <li>합격 기준 : <code>GUN_FIRE</code> 3회 연속 시 fire-and-forget으로 각 발사 처리</li>
+            <li>분석 : 물리 모듈 부재로 미수행 - fire-and-forget 무응답 처리 일반 규칙 자체는 TC-BLE-004 Pass로 검증됨</li>
+            <li>조치 : 총 모듈 수급 후 재시험</li>
+        </ul>
+    </div>
+    <div class="case-box cb-notrun">
+        <h4>순번 59 · TC-GUN-003 비상 정지 시 정지 <span class="tag tag-mid">Mid</span><span class="tag tag-notrun">미수행</span></h4>
+        <div class="quote">총 모듈이 없어서 확인하지 못했습니다</div>
+        <ul>
+            <li>합격 기준 : 발사 중 <code>STOP_ALL</code> 시 gun.stop()으로 즉시 정지</li>
+            <li>분석 : 물리 모듈 부재로 미수행 - STOP_ALL의 전 하드웨어 정지·타임드 동작 중단(TC-CONN-007)은 Pass로, 비상 정지 경로의 골격은 검증 완료. 잔여 확인 대상은 gun duty 0 전환의 물리 동작뿐</li>
+            <li>조치 : 총 모듈 수급 후 재시험 - 안전 관련 항목이므로 모듈 확보 시 최우선 수행</li>
+        </ul>
+    </div>
+
+    <h3>5.3 유형 C : 명세·절차 문제 (보류 1건 + 기타 1건)</h3>
+    <div class="case-box">
+        <h4>순번 13 · TC-BLE-006 FIRE_AND_FORGET 양쪽 동기화 <span class="tag tag-high">High</span><span class="tag tag-hold">보류</span></h4>
+        <div class="quote">이해를 못했습니다</div>
+        <ul>
+            <li>합격 기준 : Web <code>FIRE_AND_FORGET_HEADS</code>와 Pico <code>NO_RESPONSE_CMDS</code> 집합의 원소 완전 일치, 불일치 0</li>
+            <li>분석 : 본 케이스는 기기 조작이 아닌 소스코드 정적 대조 케이스인데, TCL에 대조 대상 파일 경로·상수명·대조 방법이 구체적으로 안내되지 않아 일반 테스터가 수행 방법 자체를 파악하지 못함 - 테스트 설계와 테스터 역량 매칭 실패 사례</li>
+            <li>참고 : v1.0 문서 작성 시점의 코드 분석에서는 두 집합이 28개 head로 일치함을 확인한 바 있으나(TCL 각주), 독립 검증이 완료되지 않았으므로 본 회차 집계에서는 보류로 유지함</li>
+            <li>조치 : 대조 절차를 TCL에 명시(파일 경로 <code>Web/commandexecutor.js</code> · <code>Pico/process_data.py</code>, 상수명, 원소 나열 비교 방법) 하고 자동 대조 스크립트 제공을 권고(IMP-004) - 개발 담당 배석 하에 재시험</li>
+        </ul>
+    </div>
+    <div class="case-box cb-other">
+        <h4>순번 26 · TC-BLK-005 함수 호출 <span class="tag tag-mid">Mid</span><span class="tag tag-other">기타</span></h4>
+        <div class="quote">Test All Hardware? 구 XML을 칭하는건지 모르겠습니다. 리턴 값이 없는 함수 실행 명령어는 작동합니다</div>
+        <ul>
+            <li>합격 기준 : <code>procedures_callnoreturn</code> 호출 시 정의 STACK 순차 실행</li>
+            <li>분석 : 핵심 검증 대상인 "리턴 값 없는 함수 호출 동작"은 테스터가 명시적으로 <strong>작동 확인</strong>함 - 다만 TCL 비고의 참조 프리셋(Test All Hardware)이 구버전 XML과 혼동되어 명세 그대로의 전제조건 재현 여부가 불확실해 기타로 기록됨</li>
+            <li>판단 : 기능 관점에서는 사실상 Pass에 준함 - 별도로 Test All Hardware 프리셋 E2E(TC-E2E-001)가 Pass이므로 프리셋 경유 함수 호출 경로도 이미 검증됨</li>
+            <li>조치 : TCL 전제조건에 프리셋 파일 경로(<code>XML Presets/Test All Hardware.xml</code>)를 명시(IMP-004)하고 차기 회차에서 Pass 확정 처리</li>
+        </ul>
+    </div>
+
+    <h3>5.4 유형 D : 레거시·미노출 코드 (기타 2건)</h3>
+    <div class="case-box cb-other">
+        <h4>순번 44 · TC-LED-005 스와이프 효과 <span class="tag tag-low">Low</span><span class="tag tag-other">기타</span></h4>
+        <div class="quote">LED_PATTERN은 레거시 코드인것 같습니다. 블럭코딩에 존재하지 않는 블럭입니다</div>
+        <ul>
+            <li>합격 기준 : <code>LED_PATTERN</code> 시 앞→뒤→앞 순차 점등(swipe_effect)</li>
+            <li>분석 : <code>LED_PATTERN</code> 명령은 펌웨어(<code>leds.swipe_effect</code>)에 존재하나 블록코딩 툴박스에 대응 블록이 없어 Web 경로로는 실행 자체가 불가 - 명령 프로토콜과 블록 매핑 간 불일치(데드 코드)로, 테스트 불가가 아니라 테스트 대상 정의 오류에 해당</li>
+            <li>영향 : 사용자(학습자)가 접근할 수 없는 기능이므로 교육 시나리오 영향 없음 - 다만 프로토콜 문서와 실제 노출 기능의 괴리는 유지보수 혼선 요인</li>
+            <li>조치 : 스와이프 블록 신설 또는 펌웨어 명령 제거 중 택일 결정(IMP-002) - 결정 전까지 TCL에서 본 케이스를 "펌웨어 직접(시리얼 콘솔) 테스트"로 재분류</li>
+        </ul>
+    </div>
+    <div class="case-box cb-other">
+        <h4>순번 68 · TC-SYS-004 핀 변경 SET_PIN <span class="tag tag-low">Low</span><span class="tag tag-other">기타</span></h4>
+        <div class="quote">SET_PIN은 현재 WEB에서 실행 할 수 없는 코드입니다</div>
+        <ul>
+            <li>합격 기준 : <code>SET_PIN,buzzer,15</code> 시 0~28 범위 검증 후 <code>PIN_SET,buzzer,15</code> 응답, 범위 밖은 ERROR</li>
+            <li>분석 : TC-LED-005와 동일 구조 - <code>SET_PIN</code>은 펌웨어에 구현되어 있으나 Web UI·블록에 전송 수단이 노출되지 않아 명세된 입력("SET_PIN 전송")을 수행할 경로가 없음</li>
+            <li>영향 : 핀 변경은 관리자성 기능으로 학습자 시나리오 영향 없음 - 향후 설정 화면 노출 여부에 대한 제품 결정 필요</li>
+            <li>조치 : Web 노출(설정 UI 또는 개발자 콘솔 절차) 여부 결정(IMP-003) - 결정 전까지 TCL에서 "펌웨어 직접 테스트"로 재분류</li>
+        </ul>
+    </div>
+
+    <h2>6. 성능 KPI 측정 결과</h2>
+    <p>STP v1.0에 정의된 KPI 5개 항목은 이번 회차의 계측 수단 제약(수신 로그 부재, 오실로스코프 미투입)으로 정밀 실측을 완료하지 못하여 차기 회차로 이월함 - 코드 설정 기반 기준치와 이번 회차의 관찰 소견만 기록함</p>
     <table class="data-table kpi-table">
-        <tr><th width="30%">KPI 항목</th><th width="24%">근거 (코드 설정)</th><th width="16%">목표</th><th width="16%">측정 결과</th><th width="14%">달성</th></tr>
-        <tr><td>fire-and-forget 명령 간격</td><td>cooldown 40ms</td><td>약 40ms 이하</td><td class="metric">약 40 ms</td><td class="metric">달성</td></tr>
-        <tr><td>단일 청크 처리량</td><td>9600 baud, 즉시 종료 폴링</td><td>100 cmd/s 이상</td><td class="metric">약 110 cmd/s</td><td class="metric">달성</td></tr>
-        <tr><td>DC 모터 양방향 대칭</td><td>dual PWM brake-modulated</td><td>근사 대칭</td><td class="metric">±4 % 이내</td><td class="metric">달성</td></tr>
-        <tr><td>BLE 페어링 시간</td><td>기기 선택 → 특성 확보</td><td>3초 이내</td><td class="metric">약 2.5 초</td><td class="metric">달성</td></tr>
-        <tr><td>정상 명령 응답 timeout</td><td>RESPONSE_TIMEOUT 5000ms</td><td>0건</td><td class="metric">0 건</td><td class="metric">달성</td></tr>
+        <tr><th width="26%">KPI 항목</th><th width="22%">근거 (코드 설정)</th><th width="14%">목표</th><th width="20%">이번 회차 상태</th><th width="18%">관찰 소견</th></tr>
+        <tr><td>fire-and-forget 명령 간격</td><td>cooldown 40ms</td><td>약 40ms 이하</td><td class="metric-hold">실측 이월</td><td>연속 명령 실행 지연 체감 없음</td></tr>
+        <tr><td>단일 청크 처리량</td><td>9600 baud, 즉시 종료 폴링</td><td>100 cmd/s 이상</td><td class="metric-hold">실측 이월</td><td>-</td></tr>
+        <tr><td>DC 모터 양방향 대칭</td><td>dual PWM brake-modulated</td><td>근사 대칭</td><td class="metric-hold">실측 이월 (계측 장비)</td><td>육안상 뚜렷한 비대칭 없음 (TC-DCM-002 Pass)</td></tr>
+        <tr><td>BLE 페어링 시간</td><td>기기 선택 → 특성 확보</td><td>3초 이내</td><td class="metric-hold">실측 이월</td><td>체감상 즉시 연결 수준</td></tr>
+        <tr><td>정상 명령 응답 timeout</td><td>RESPONSE_TIMEOUT 5000ms</td><td>0건</td><td class="metric">관찰 기준 0건</td><td>실행 케이스 전 회차에서 timeout 미발생</td></tr>
     </table>
+    <ul class="tight">
+        <li>timeout 0건은 실행된 전 케이스에서 blocking 명령의 5초 초과 대기가 관찰되지 않았다는 의미로, KPI 5는 사실상 목표 충족 - 나머지 4개 항목은 IMP-001(rx 로그) 반영 및 계측 장비 투입 후 DevTools Performance·Pico print 로그·오실로스코프로 정식 측정 예정</li>
+    </ul>
 
-    <h2>6. 결함 목록 (Defect List)</h2>
+    <h2>7. 결함 및 개선 항목 목록</h2>
+    <h3>7.1 결함 (Defect) - 실행 결과 기준 Fail 0건, 코드 분석 기반 기존 등록 2건 유지</h3>
     <table class="data-table">
         <tr>
             <th width="10%">결함 ID</th><th width="12%">관련 TC</th><th width="30%">결함 내용</th>
@@ -124,10 +327,10 @@
         <tr>
             <td style="text-align:center;">BUG-001</td>
             <td style="text-align:center;">TC-BLE-008</td>
-            <td>BLE 모듈-Pico UART가 9600 baud로 고정되어 byte당 전송시간이 처리량의 본질적 천장으로 남음 (단일 청크 약 110 cmd/s에서 상한)</td>
+            <td>BLE 모듈-Pico UART가 9600 baud로 고정되어 byte당 전송시간이 처리량의 본질적 천장으로 남음</td>
             <td style="text-align:center; color:#fd7e14; font-weight:bold;">Mid</td>
             <td style="text-align:center;" class="status-deferred">차기 버전 이관</td>
-            <td>AT+BAUD8(38400) 또는 115200 상향 + Pico <code>UART_BAUDRATE</code> 동기화. 현재 처리량으로도 교육 시나리오에는 충분하여 잔여 위험으로 관리</td>
+            <td>AT+BAUD8(38400) 또는 115200 상향 + Pico <code>UART_BAUDRATE</code> 동기화 - 현재 처리량으로도 교육 시나리오에는 충분하여 잔여 위험으로 관리 (STP 리스크 5)</td>
         </tr>
         <tr>
             <td style="text-align:center;">BUG-002</td>
@@ -135,51 +338,130 @@
             <td>배터리 전압 감시 미구현 : <code>hardware.py</code>의 <code>get_battery_voltage()</code>가 항상 100을 반환하여 방전 시 경고 기능이 없음</td>
             <td style="text-align:center; color:#28a745; font-weight:bold;">Low</td>
             <td style="text-align:center;" class="status-deferred">차기 버전 이관</td>
-            <td>전압 ADC 측정·경고 기능 추가를 후속 과제로 등록. 단기적으로 수업 전 완충 점검을 강사 매뉴얼에 명시 (STP 리스크 6)</td>
+            <td>전압 ADC 측정·경고 기능 추가를 후속 과제로 등록 - 단기적으로 수업 전 완충 점검을 강사 매뉴얼에 명시 (STP 리스크 6)</td>
         </tr>
     </table>
 
-    <h3>결함 통계 (심각도별)</h3>
-    <table class="data-table" style="text-align:center;">
-        <tr><th>심각도</th><th>총 건수</th><th>조치 완료</th><th>차기 이관</th><th>조치율</th></tr>
-        <tr><td>Critical</td><td>0</td><td>0</td><td>0</td><td class="metric">-</td></tr>
-        <tr><td>High</td><td>0</td><td>0</td><td>0</td><td class="metric">-</td></tr>
-        <tr><td>Mid</td><td>1</td><td>0</td><td>1</td><td class="metric">100% (이관)</td></tr>
-        <tr><td>Low</td><td>1</td><td>0</td><td>1</td><td class="metric">100% (이관)</td></tr>
+    <h3>7.2 개선 항목 (Improvement) - 이번 회차 실측에서 신규 도출 4건</h3>
+    <table class="data-table">
+        <tr>
+            <th width="10%">개선 ID</th><th width="20%">관련 TC</th><th width="33%">내용</th>
+            <th width="9%">우선순위</th><th width="28%">기대 효과</th>
+        </tr>
+        <tr>
+            <td style="text-align:center;">IMP-001</td>
+            <td style="text-align:center;">TC-CONN-001·002, TC-BLE-002, TC-BAT-002, TC-SND-003</td>
+            <td>실기 BLE 경로의 수신(rx) 응답 문자열을 Web 로그에 표시하는 기능 추가 - 연결 수립 단계(특성 확보·구독 성공) 로그 포함</td>
+            <td style="text-align:center; color:#e53e3e; font-weight:bold;">High</td>
+            <td>보류 5건 일괄 재시험 가능화, KPI 실측(응답 왕복·timeout) 기반 확보 - 시뮬레이터의 → / ↩ 로그와 동일한 형식 권장</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">IMP-002</td>
+            <td style="text-align:center;">TC-LED-005</td>
+            <td><code>LED_PATTERN</code>(swipe_effect) 레거시 정리 - 스와이프 블록 신설 또는 펌웨어 명령 제거 중 택일</td>
+            <td style="text-align:center; color:#28a745; font-weight:bold;">Low</td>
+            <td>프로토콜-블록 매핑 일치화로 데드 코드 제거, TCL 케이스 재정의</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">IMP-003</td>
+            <td style="text-align:center;">TC-SYS-004</td>
+            <td><code>SET_PIN</code>의 Web 노출 여부 결정 - 설정 UI 추가 또는 관리자(펌웨어 직접) 기능으로 확정</td>
+            <td style="text-align:center; color:#28a745; font-weight:bold;">Low</td>
+            <td>테스트 경로 명확화, 기능 명세와 UI 노출 범위 일치</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">IMP-004</td>
+            <td style="text-align:center;">TC-BLE-001, TC-BLE-006, TC-BLK-005</td>
+            <td>TCL 절차 보강 - 소스 대조 케이스의 수행 방법(파일 경로·상수명·대조 스크립트), BLE 이름/UUID 필터의 시점별 판정 기준, 참조 프리셋 파일 경로를 명세에 명시</td>
+            <td style="text-align:center; color:#fd7e14; font-weight:bold;">Mid</td>
+            <td>테스터 단독 수행 가능성 향상, "이해 불가"형 보류 재발 방지</td>
+        </tr>
     </table>
-    <p>Critical/High 등급 결함 <strong>0건</strong>으로, 핵심 교육 기능에 치명적 영향을 주는 결함은 발견되지 않음. 잔여 Mid/Low 2건은 모두 사전 식별된 구조적 한계로 차기 버전 이관 처리함</p>
 
-    <h2>7. 중점 점검 결과 (실제 소스 기준)</h2>
-    <p>실제 코드 특성상 결함이 잘 드러나는 지점을 우선 점검한 결과는 다음과 같음</p>
-    <ul>
-        <li><strong>부팅 None 가드</strong> : 모듈 미장착 시에도 boot 완료·응답 정상 확인 (hardware.py try/except, main.py None 체크) - Pass</li>
-        <li><strong>응답 정책 동기화</strong> : Web FIRE_AND_FORGET_HEADS 와 Pico NO_RESPONSE_CMDS 집합 일치 확인(28개 head 완전 일치, bracket 패턴 별도 규칙 포함) - Pass</li>
-        <li><strong>비상 정지 ABORT_CMDS</strong> : STOP_ALL/STOP이 SERVO_tFORWARD·DC_tFORWARD·SLEEP 등 진행 중인 타임드 동작도 즉시 중단시키는지 확인(TC-CONN-007) - Pass</li>
-        <li><strong>GUN_FIRE 특이사항</strong> : gun=None이어도 다른 핸들러의 None 가드 패턴과 달리 항상 1을 응답하는 것을 확인 - fire-and-forget이라 Web 동작에는 영향 없어 기능 결함 아님, 참고사항으로 기록</li>
-        <li><strong>BATCH 금지 블록</strong> : 값반환/제어흐름/중첩 차단 이중 방어 정상 - Pass</li>
+    <h3>7.3 결함 통계 (심각도별)</h3>
+    <table class="data-table" style="text-align:center;">
+        <tr><th>심각도</th><th>실측 Fail</th><th>코드 분석 기반 등록</th><th>차기 이관</th><th>비고</th></tr>
+        <tr><td>Critical</td><td>0</td><td>0</td><td>0</td><td>-</td></tr>
+        <tr><td>High</td><td>0</td><td>0</td><td>0</td><td>-</td></tr>
+        <tr><td>Mid</td><td>0</td><td>1 (BUG-001)</td><td>1</td><td>사전 식별된 구조적 한계</td></tr>
+        <tr><td>Low</td><td>0</td><td>1 (BUG-002)</td><td>1</td><td>사전 식별된 미구현 기능</td></tr>
+    </table>
+    <p>이번 실측에서 신규 발견된 기능 결함(Fail)은 <strong>0건</strong> - 실행된 85건 전건 Pass로, 핵심 교육 기능에 치명적 영향을 주는 결함은 확인되지 않음. 잔여 Mid/Low 2건은 모두 사전 식별된 구조적 한계로 차기 버전 이관을 유지함</p>
+
+    <h2>8. 중점 점검 결과 (실제 소스 기준 - 실측 반영)</h2>
+    <ul class="tight">
+        <li><strong>부팅 None 가드</strong> : 모듈 미장착(gun=None 포함) 시에도 boot 완료·명령 응답 정상 (TC-SYS-005) - Pass</li>
+        <li><strong>비상 정지 ABORT_CMDS</strong> : STOP_ALL/STOP이 SERVO_tFORWARD 등 진행 중인 타임드 동작을 즉시 중단 (TC-CONN-007) - Pass</li>
+        <li><strong>BATCH 금지 블록</strong> : 값반환/제어흐름/중첩 차단 이중 방어 정상 (TC-BAT-003~005) - Pass</li>
         <li><strong>LED 6개·자기 디지털·연속 서보</strong> : 하드웨어 사양이 코드와 일치(6개, active-low, 연속회전) - Pass</li>
-        <li><strong>DC 모터 대칭</strong> : dual PWM brake-modulated 전후진 출력 ±4% 근사 대칭 - Pass (정밀 실측 TC-DCM-002 보류)</li>
-        <li><strong>설정 영구 저장</strong> : SYS_SET 후 재부팅해도 ModelFactorySetting.txt 값 유지 확인 - Pass</li>
+        <li><strong>설정 영구 저장</strong> : SYS_SET 후 재부팅에도 ModelFactorySetting.txt 값 유지 (TC-SYS-001·002) - Pass</li>
         <li><strong>BLE 끊김 시 안전 중지</strong> : 구동 중 GATT 끊김 시 실행 중단·재연결 안내 정상 (TC-BLE-007) - Pass</li>
+        <li><strong>시뮬레이터 전 경로</strong> : 4개 주제 3D 시뮬레이터 24건 + 프리셋 E2E 4건 전건 Pass - 무하드웨어 교육 시나리오 성립 확인</li>
+        <li><strong>응답 정책 동기화</strong> : Web FIRE_AND_FORGET_HEADS와 Pico NO_RESPONSE_CMDS의 일치는 코드 분석상 확인(28개 head)되었으나 독립 검증 절차 미완으로 이번 회차 보류 (TC-BLE-006) - 절차 보강 후 재시험</li>
+        <li><strong>응답 문자열 검증</strong> : 물리 동작은 정상 관찰되나 rx 로그 부재로 문자열 대조 5건 보류 - IMP-001 반영 후 일괄 재확인</li>
+        <li><strong>GUN_FIRE 특이사항</strong> : gun=None이어도 항상 1을 응답하는 코드 특성은 유지 - 총 모듈 미확보로 물리 발사 검증은 미수행, 모듈 수급 후 확인</li>
         <li><strong>배터리 전압 감시</strong> : get_battery_voltage() 미구현 확인 - 개선 항목으로 이관 (BUG-002)</li>
     </ul>
 
-    <h2>8. 미해결 이슈 및 우회</h2>
-    <ul>
+    <h2>9. 미해결 이슈 및 우회</h2>
+    <ul class="tight">
+        <li><strong>Web 수신 로그 미표시 (IMP-001, High)</strong> : 응답 검증형 케이스의 판정 수단 부재 - rx 로그 기능 추가가 보류 5건 해소와 KPI 실측의 선결 조건이므로 최우선 처리</li>
         <li><strong>UART 9600 baud 처리량 천장 (BUG-001)</strong> : AT+BAUD 상향 + Pico UART_BAUDRATE 동기화 후속 과제 (STP 리스크 5)</li>
         <li><strong>배터리 전압 감시 미구현 (BUG-002)</strong> : 전압 ADC 측정·경고 추가 후속 과제, 단기 완충 점검 매뉴얼화 (STP 리스크 6)</li>
         <li><strong>BATCH 누적 SLEEP &gt; 5초 timeout 오인</strong> : BATCH 안 SLEEP 누적 4초 이내 권장으로 운영 우회 (STP 리스크 4)</li>
-        <li><strong>보류 5건</strong> : 오실로스코프·장시간·다수 기기 등 장비/일정 의존 항목으로, 현장 실증 단계에서 순차 수행 예정</li>
-        <li><strong>시뮬레이터 자기 센서 미구현</strong> : Web/Sim_Parts의 MAGNET 응답은 항상 MAG:0으로 고정되어 자기 감지 시나리오는 시뮬레이터로 검증 불가 - TC-SEN-003 실기 테스트로만 커버, 시뮬레이터 자기 감지 구현은 후속 과제로 등록</li>
+        <li><strong>총 모듈 미확보</strong> : 전투 3건 미수행 - 모듈 수급 일정 확정 필요, 수급 시 TC-GUN-003(비상 정지)부터 우선 수행</li>
+        <li><strong>BLE 테스트 베드 부족</strong> : 다수·이종 BLE 기기 확보 후 TC-BLE-001 재시험 - 이름/UUID 필터의 시점별 거동을 절차에 명시</li>
+        <li><strong>시뮬레이터 자기 센서 미구현</strong> : Web/Sim_Parts의 MAGNET 응답은 항상 MAG:0으로 고정되어 자기 감지 시나리오는 시뮬레이터로 검증 불가 - TC-SEN-003 실기 테스트로 커버(이번 회차 Pass), 시뮬레이터 자기 감지 구현은 후속 과제 유지</li>
     </ul>
 
-    <h2>9. 최종 평가 및 결론</h2>
-    <p>실행 통과율 98.9%(전체 93.9%), High 이상 결함 0건, 성능 KPI 5개 전 항목 달성, Test All Hardware / Launch Rocket 프리셋 정상 완주를 근거로 종료 기준을 충족함. 잔여 이관 2건은 핵심 교육 기능에 영향이 없으므로 <strong>배포 가능(Go)</strong>으로 판정함</p>
-    <p style="margin-top:14px;">판정 : <strong style="color:#28a745;">Go (배포 가능)</strong> &nbsp; 승인 : 품질관리(QA) 책임자</p>
+    <h2>10. 재시험 계획</h2>
+    <table class="data-table">
+        <tr><th width="8%">차수</th><th width="30%">대상</th><th width="34%">선결 조건</th><th width="28%">예상 결과</th></tr>
+        <tr>
+            <td style="text-align:center;">R1</td>
+            <td>보류 5건 (TC-CONN-001·002, TC-BLE-002, TC-BAT-002, TC-SND-003) + KPI 1·2·4 실측</td>
+            <td>IMP-001 (rx 로그 표시) 반영 빌드</td>
+            <td>물리 동작 기확인 상태로 Pass 전환 유력</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">R2</td>
+            <td>TC-BLE-006, TC-BLK-005</td>
+            <td>IMP-004 (TCL 절차 보강) 반영, 개발 담당 배석</td>
+            <td>코드 분석상 일치 기확인·기능 기확인으로 Pass 전환 유력</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">R3</td>
+            <td>TC-GUN-001~003</td>
+            <td>총 모듈 수급</td>
+            <td>신규 물리 검증 - TC-GUN-003(안전) 우선</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">R4</td>
+            <td>TC-BLE-001 + KPI 3 (DC 대칭 정밀)</td>
+            <td>BLE 기기 3종 이상 테스트 베드, 오실로스코프 등 계측 장비</td>
+            <td>필터 배제 동작·정밀 대칭 실측</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">-</td>
+            <td>TC-LED-005, TC-SYS-004</td>
+            <td>IMP-002·003 제품 결정 (블록 신설/제거, UI 노출 여부)</td>
+            <td>결정에 따라 케이스 재정의 후 수행 또는 TCL 제외</td>
+        </tr>
+    </table>
 
-    <h2>10. 첨부</h2>
-    <ul>
-        <li>ARES_2_TCL v1.0 (98 케이스 상세 기록)</li>
+    <h2>11. 최종 평가 및 결론</h2>
+    <ul class="tight">
+        <li><strong>긍정 근거</strong> : 실행 85건 전건 Pass·Fail 0건, High 이상 신규 결함 0건, 하드웨어 구동(서보·DC·LED·OLED·센서)과 시뮬레이터 전 경로(28건) 및 프리셋 E2E 정상 완주, 비상 정지·None 가드·설정 영구화 등 안전·안정성 항목 전건 통과</li>
+        <li><strong>유보 근거</strong> : High 우선순위 케이스 5건(TC-CONN-001, TC-BLE-001·002·006, TC-BAT-002)이 보류 상태이며, 보류 원인인 rx 로그 기능(IMP-001)이 미반영 - 응답 프로토콜의 문자열 수준 검증과 KPI 정밀 실측이 미완</li>
+        <li><strong>판정</strong> : 미결 13건이 모두 제품 결함이 아닌 검증 수단·환경·명세 문제로 분석되므로 기능 품질 자체는 배포 수준으로 평가하되, High 보류의 독립 검증이 남아 있어 <strong>조건부 Go</strong>로 판정함</li>
+        <li><strong>확정 조건</strong> : ① IMP-001 반영 후 재시험 R1 완료 ② R2(절차 보강 재시험) 완료 ③ 총 모듈 의존 R3와 테스트 베드 의존 R4는 현장 실증 단계 병행 허용 - ①·② 완료 시 Go 확정</li>
+    </ul>
+    <p style="margin-top:14px;">판정 : <strong style="color:#d97706;">조건부 Go (재시험 R1·R2 완료 후 확정)</strong> &nbsp; 승인 : 품질관리(QA) 책임자</p>
+
+    <h2>12. 첨부</h2>
+    <ul class="tight">
+        <li>ARES_2_TCL v1.0 (98 케이스 상세 기록·실행형 시트)</li>
+        <li>테스터 취합 결과 원문 (r.txt - 미결 13건 코멘트)</li>
         <li>ARES_1_STP v1.0 (테스트 계획서)</li>
         <li>ARES_QA_Documentation v1.0 (QA 체계 명세서)</li>
         <li>실제 소스코드 (Pico/, Web/, XML Presets/)</li>
