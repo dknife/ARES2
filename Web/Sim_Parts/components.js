@@ -1,6 +1,6 @@
 // Web/Sim_Parts/components.js
 // 선언형 컴포넌트 (SIMULATOR.md 2장) — 객체에 부착되어 블록 코딩 명령에 반응한다.
-// 2단계: LED · Buzzer · Oled. (3단계 예정: DC · Servo · UltraSonic · Magnet · Gun · Metal)
+// 2단계: LED · Buzzer · Oled / 3단계: DC · Servo · UltraSonic · Magnet · Metal (Gun 은 4단계)
 //
 // 컴포넌트 인터페이스:
 //   { declarative: true, type, fields,
@@ -263,12 +263,201 @@ function createOledComponent(ctx) {
 }
 
 // ============================================================
+// 3단계 공통 헬퍼 — 규약(2026-07-08): 벡터 필드는 월드 좌표계, 1 unit = 1 m,
+// 컴포넌트는 자신이 부착된 객체(+하위)만 이동·회전시키고 설정된 필드만 동작.
+// ============================================================
+function fieldVec(THREE, arr, { normalize = true } = {}) {
+  if (!Array.isArray(arr) || arr.length !== 3) return null;
+  const v = new THREE.Vector3(+arr[0] || 0, +arr[1] || 0, +arr[2] || 0);
+  if (normalize) {
+    if (v.lengthSq() < 1e-12) return null;
+    v.normalize();
+  }
+  return v;
+}
+
+// 월드 축 방향으로 dist 만큼 이동(부모 회전 보정) — 하위 객체는 함께 딸려간다.
+function moveAlongWorldAxis(THREE, obj, dirWorld, dist) {
+  const v = dirWorld.clone().multiplyScalar(dist);
+  if (obj.parent) {
+    v.applyQuaternion(obj.parent.getWorldQuaternion(new THREE.Quaternion()).invert());
+  }
+  obj.position.add(v);
+}
+
+// ============================================================
+// DC — { axis_rotation?, axis_translate? } : DC_FORWARD/BACKWARD/STOP (+tFORWARD/tBACKWARD)
+//   전진=반시계(+), 후진=시계(−). 출력 강도(명령 2번째 인자)로 속도 변경.
+// ============================================================
+function createDcComponent(ctx, fields = {}) {
+  const THREE = ctx.THREE;
+  const axisRot = fieldVec(THREE, fields.axis_rotation);
+  const axisMove = fieldVec(THREE, fields.axis_translate);
+  const ROT_SPEED = 6.0;    // rad/s (강도 1 기준)
+  const MOVE_SPEED = 0.5;   // m/s  (강도 1 기준)
+  let dir = 0, speed = 1;
+  const stop = () => { dir = 0; };
+  const normSpeed = (v) => {
+    const n = parseFloat(v);
+    if (!isFinite(n) || n <= 0) return 1;
+    return Math.max(0.05, Math.min(1, n > 1 ? n / 100 : n));   // 0~100 도, 0~1 도 허용
+  };
+
+  const outFields = {};
+  if (axisRot) outFields.axis_rotation = [...fields.axis_rotation];
+  if (axisMove) outFields.axis_translate = [...fields.axis_translate];
+
+  return {
+    declarative: true,
+    type: 'DC',
+    fields: outFields,
+    onCommand(cmd) {
+      if (cmd === 'STOP_ALL' || cmd === 'DC_STOP' || cmd.startsWith('DC_STOP,')) { stop(); return null; }
+      if (cmd.startsWith('DC_tFORWARD,') || cmd.startsWith('DC_tBACKWARD,')) {
+        dir = cmd.startsWith('DC_tFORWARD,') ? 1 : -1;
+        speed = 1;
+        return stop;                                   // 시간지정: hold 종료 시 정지
+      }
+      if (cmd === 'DC_FORWARD' || cmd.startsWith('DC_FORWARD,')) { dir = 1; speed = normSpeed(cmd.split(',')[1]); return null; }
+      if (cmd === 'DC_BACKWARD' || cmd.startsWith('DC_BACKWARD,')) { dir = -1; speed = normSpeed(cmd.split(',')[1]); return null; }
+      return null;
+    },
+    update(dt, _c, simObject) {
+      if (!dir) return;
+      // rotateOnWorldAxis 는 회전된 조상 아래에서는 근사(월드 좌표 규약의 한계)
+      if (axisRot) simObject.root.rotateOnWorldAxis(axisRot, dir * speed * ROT_SPEED * dt);
+      if (axisMove) moveAlongWorldAxis(THREE, simObject.root, axisMove, dir * speed * MOVE_SPEED * dt);
+    },
+    dispose() { stop(); },
+  };
+}
+
+// ============================================================
+// Servo — { wheel: left|right, axis_rotation?, axis_direction?, axis_turn? }
+//   전진: left=반시계/right=시계 스핀. 좌회전: left=시계/right=반시계 스핀 + 몸체 반시계.
+//   우회전: 반대. (SIMULATOR.md 2장)
+// ============================================================
+function createServoComponent(ctx, fields = {}) {
+  const THREE = ctx.THREE;
+  const wheel = fields.wheel === 'right' ? 'right' : 'left';
+  const axisRot = fieldVec(THREE, fields.axis_rotation);
+  const axisDir = fieldVec(THREE, fields.axis_direction);
+  const axisTurn = fieldVec(THREE, fields.axis_turn);
+  const SPIN = 8.0;   // 바퀴 스핀 rad/s
+  const MOVE = 0.4;   // 이동 m/s
+  const TURN = 1.5;   // 선회 rad/s
+  let move = 0, turn = 0;
+  const stop = () => { move = 0; turn = 0; };
+
+  const outFields = { wheel };
+  if (axisRot) outFields.axis_rotation = [...fields.axis_rotation];
+  if (axisDir) outFields.axis_direction = [...fields.axis_direction];
+  if (axisTurn) outFields.axis_turn = [...fields.axis_turn];
+
+  return {
+    declarative: true,
+    type: 'Servo',
+    fields: outFields,
+    onCommand(cmd) {
+      if (cmd === 'STOP_ALL' || cmd === 'SERVO_STOP' || cmd.startsWith('SERVO_STOP,')) { stop(); return null; }
+      const is = (p) => cmd.startsWith(p);
+      if (is('SERVO_tFORWARD,'))  { move = 1;  turn = 0; return stop; }
+      if (is('SERVO_tBACKWARD,')) { move = -1; turn = 0; return stop; }
+      if (is('SERVO_tLEFT,'))     { turn = 1;  move = 0; return stop; }
+      if (is('SERVO_tRIGHT,'))    { turn = -1; move = 0; return stop; }
+      if (cmd === 'SERVO_FORWARD'  || is('SERVO_FORWARD,'))  { move = 1;  turn = 0; return null; }
+      if (cmd === 'SERVO_BACKWARD' || is('SERVO_BACKWARD,')) { move = -1; turn = 0; return null; }
+      if (cmd === 'SERVO_LEFT'     || is('SERVO_LEFT,'))     { turn = 1;  move = 0; return null; }
+      if (cmd === 'SERVO_RIGHT'    || is('SERVO_RIGHT,'))    { turn = -1; move = 0; return null; }
+      return null;
+    },
+    update(dt, _c, simObject) {
+      const root = simObject.root;
+      if (move !== 0) {
+        if (axisRot) root.rotateOnWorldAxis(axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt);
+        if (axisDir) moveAlongWorldAxis(THREE, root, axisDir, move * MOVE * dt);
+      }
+      if (turn !== 0) {
+        if (axisRot) root.rotateOnWorldAxis(axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt);
+        if (axisTurn) root.rotateOnWorldAxis(axisTurn, turn * TURN * dt);
+      }
+    },
+    dispose() { stop(); },
+  };
+}
+
+// ============================================================
+// UltraSonic — { detect_direction } : DISTANCE 명령에 ray 를 쏘아 거리(cm, 소수 둘째 자리) 회신
+// ============================================================
+function createUltraSonicComponent(ctx, fields = {}) {
+  const THREE = ctx.THREE;
+  const dir = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
+  const ray = new THREE.Raycaster();
+  const under = (node, root) => { let n = node; while (n) { if (n === root) return true; n = n.parent; } return false; };
+  return {
+    declarative: true,
+    type: 'UltraSonic',
+    fields: { detect_direction: [dir.x, dir.y, dir.z] },
+    measure(cctx, simObject) {
+      cctx.scene.updateMatrixWorld(true);   // 프로그램적 이동 직후에도 정확하도록 강제 갱신
+      const origin = simObject.root.getWorldPosition(new THREE.Vector3());
+      ray.set(origin, dir);
+      ray.far = 50;
+      const hits = ray.intersectObjects(cctx.scene.children, true);
+      for (const h of hits) {
+        if (!h.object.isMesh || h.object.isSprite) continue;
+        if (under(h.object, simObject.root)) continue;                       // 자기 자신 제외
+        if (cctx.editor?.transform && under(h.object, cctx.editor.transform)) continue;   // 기즈모 제외
+        if (cctx.editor?.boxHelper && under(h.object, cctx.editor.boxHelper)) continue;
+        return Math.round(h.distance * 100 * 100) / 100;   // 1 unit = 1 m → cm, 소수 둘째 자리
+      }
+      return null;
+    },
+  };
+}
+
+// ============================================================
+// Magnet — { detection_point } / Metal — 무필드
+//   감지점(객체 월드 위치 + 월드축 오프셋) 반경 5cm 내 Metal 객체 존재 → 1
+// ============================================================
+const MAGNET_RADIUS = 0.05;   // 5 cm (규약 2026-07-08)
+
+function createMagnetComponent(ctx, fields = {}) {
+  const THREE = ctx.THREE;
+  const point = fieldVec(THREE, fields.detection_point, { normalize: false }) || new THREE.Vector3();
+  const box = new THREE.Box3();
+  return {
+    declarative: true,
+    type: 'Magnet',
+    fields: { detection_point: [point.x, point.y, point.z] },
+    measure(cctx, simObject) {
+      const sensor = simObject.root.getWorldPosition(new THREE.Vector3()).add(point);
+      for (const item of cctx.objects?.items || []) {
+        if (item === simObject || !item.components?.Metal) continue;
+        box.setFromObject(item.root);
+        if (box.distanceToPoint(sensor) <= MAGNET_RADIUS) return 1;
+      }
+      return 0;
+    },
+  };
+}
+
+function createMetalComponent() {
+  return { declarative: true, type: 'Metal', fields: {} };
+}
+
+// ============================================================
 // 팩토리 · 부착/해제 · 직렬화
 // ============================================================
 const FACTORIES = {
   LED: createLedComponent,
   Buzzer: createBuzzerComponent,
   Oled: createOledComponent,
+  DC: createDcComponent,
+  Servo: createServoComponent,
+  UltraSonic: createUltraSonicComponent,
+  Magnet: createMagnetComponent,
+  Metal: createMetalComponent,
 };
 
 export const COMPONENT_TYPES = Object.keys(FACTORIES);

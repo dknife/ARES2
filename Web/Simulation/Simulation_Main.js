@@ -241,7 +241,17 @@ export class Simulation_Main {
           ? sim.ctx.objects.items.find((o) => o.id === id)
           : sim.ctx.editor?.getSelectedSimObject(), type),
         objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
+        state: (id) => {
+          const o = sim.ctx.objects.items.find((x) => x.id === id);
+          return o ? { pos: o.root.position.toArray(), quat: o.root.quaternion.toArray() } : null;
+        },
+        setPos: (id, x, y, z) => {
+          const o = sim.ctx.objects.items.find((it) => it.id === id);
+          if (o) o.root.position.set(x, y, z);
+          return !!o;
+        },
         sink: (cmd) => sim.simSink(cmd, false),
+        tick: (dt) => sim.ctx.objects.update(dt || 0.016),   // 수동 프레임 진행(테스트·콘솔용)
       } : undefined;
     };
 
