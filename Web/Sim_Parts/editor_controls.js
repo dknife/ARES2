@@ -2,7 +2,7 @@
 // Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
 
 import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
-import { createPrimitiveObject } from './object_factory.js';
+import { createPrimitiveObject, createGlbObject } from './object_factory.js';
 import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents } from './components.js';
 
 const MODES = ['translate', 'rotate', 'scale'];
@@ -12,6 +12,7 @@ const SPAWN_MENU = [
   { type: 'sphere', label: 'Sphere' },
   { type: 'marker', label: 'Marker' },
   { type: 'oled', label: 'OLED Panel' },
+  { type: 'glb', label: 'GLB 모델…' },
 ];
 
 export class EditorControls {
@@ -166,6 +167,10 @@ export class EditorControls {
       ],
       UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z', def: '0,0,1', kind: 'vec' }],
       Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (월드축, 반경 5cm)', def: '0,0,0', kind: 'vec' }],
+      Gun: [
+        { key: 'propel_direction', label: '발사 방향 x,y,z', def: '0,0,1', kind: 'vec' },
+        { key: 'explosion', label: '연기 발생점 오프셋 x,y,z (빈칸=미사용)', def: '', kind: 'vec', optional: true },
+      ],
     };
     const parseVecStr = (s) => {
       const parts = String(s).split(',').map((x) => parseFloat(x));
@@ -309,6 +314,9 @@ export class EditorControls {
     if (type === 'albi') {
       return this.spawnAlbi(options);
     }
+    if (type === 'glb') {
+      return this.spawnGlb(options);
+    }
 
     const simObject = createPrimitiveObject(this.ctx, type);
     const parent = this.getSpawnParentFor(options);
@@ -321,6 +329,31 @@ export class EditorControls {
     this.hideContextMenu();
     this.updateHierarchy(true);
     return simObject.root;
+  }
+
+  // GLB 파일 경로를 물어 씬에 배치(SIMULATOR.md 1장 — glb 로딩)
+  async spawnGlb(options = {}) {
+    const url = prompt('GLB 경로 (Web/ 기준):', 'Mesh/LaunchStation.glb');
+    if (!url || !url.trim()) { this.hideContextMenu(); return null; }
+
+    const parent = this.getSpawnParentFor(options);
+    const worldPoint = this.lastSpawnPoint.clone();
+    this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
+    try {
+      const simObject = await createGlbObject(this.ctx, url.trim());
+      this.ctx.objects.add(simObject, parent);
+      simObject.setWorldPosition(worldPoint, parent);
+      this.select(simObject.root);
+      this.hideContextMenu();
+      this.updateHierarchy(true);
+      return simObject.root;
+    } catch (err) {
+      console.error('GLB 로드 실패:', url, err);
+      return null;
+    } finally {
+      this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = false; });
+      this.updateContextMenuState();
+    }
   }
 
   async spawnAlbi(options = {}) {

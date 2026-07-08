@@ -104,6 +104,38 @@ export function createPrimitiveObject(ctx, type) {
   });
 }
 
+// GLB 모델을 씬 객체로 로드(SIMULATOR.md 1장 — glb 파일 로딩). url 은 Web/ 기준 상대경로.
+export function createGlbObject(ctx, url, label) {
+  const THREE = ctx.THREE;
+  return new Promise((resolve, reject) => {
+    ctx.assets.loadModel(url, (model) => {
+      model.traverse((node) => {
+        if (!node.isMesh) return;
+        node.castShadow = true;
+        node.receiveShadow = true;
+      });
+      // 바닥 기준 정렬(다른 모델 로딩과 동일 관례)
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.x -= center.x;
+      model.position.z -= center.z;
+      model.position.y -= box.min.y;
+
+      const holder = new THREE.Group();
+      holder.add(model);
+      const id = ctx.objects?.makeId('glb') || `glb-${Date.now()}`;
+      resolve(new SimulationObject({
+        id,
+        type: 'glb',
+        label: label || url.split('/').pop().replace(/\.glb$/i, ''),
+        root: holder,
+        spawned: true,
+        metadata: { glbUrl: url },
+      }));
+    }, reject);
+  });
+}
+
 export function createAlbiModelObject(ctx, root, label = 'Albi Body', options = {}) {
   return new SimulationObject({
     id: ctx.objects?.makeId('albi-body') || `albi-body-${Date.now()}`,

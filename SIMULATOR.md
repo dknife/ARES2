@@ -109,3 +109,16 @@ Gun 객체의 유무와 관계 없이 발사 명령이 접수되면 폭발음을
   사용자 모드에서는 저장된 씬 로드만 가능하다.
 
 ---
+
+## 4. 구현 현황 (2026-07-08 — 로드맵 4단계 완료)
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 1 | 씬 그래프·직렬화(`scene_store.js`), 개발자 모드(Ctrl+E) 게이트, 빈 씬, DEV 바(새 씬·저장·열기) | ✅ |
+| 2 | 컴포넌트 시스템 + 범용 디스패치(`components.js`, `routeCommand`/`applyEffect`) — LED·Buzzer·Oled | ✅ |
+| 3 | 운동·센서 — DC·Servo·UltraSonic·Magnet·Metal (+ 센서 회신 컴포넌트 우선·레거시 폴백) | ✅ |
+| 4 | Gun(발사체·연기·전역 폭발음), GLB 노드(씬 저장/로드·스폰 메뉴), 사용자 씬 로딩(`scenes/manifest.json`), 컴포넌트 데모 씬(`scenes/rover_yard.json` 로버 훈련장) | ✅ |
+
+- 레거시 토픽 4종(알비·신호등·발사대·로버)은 그대로 유지(호환). 신규 씬은 개발자 모드에서
+  구성해 `Web/scenes/` 에 JSON 으로 저장하고 `manifest.json` 에 등록하면 사용자 드롭다운에 노출된다.
+- 개발자 콘솔 도구: 개발자 모드에서 `window.__aresSimDev` (serialize/apply/clear/attach/detach/objects/state/setPos/tick/sink).

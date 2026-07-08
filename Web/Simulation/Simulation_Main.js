@@ -114,7 +114,9 @@ export class Simulation_Main {
         window.updateToolboxForActiveState();
       }
 
-      const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
+      // 'scene:<id>'(저장된 씬)는 빈 씬을 기반으로 빌드하고, 로더가 객체를 채운다
+      const cfg = topicKey.startsWith('scene:') ? TOPICS.empty
+        : (TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC]);
       if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
       card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
       card.querySelectorAll('.sim-launch-led-btn').forEach((b) => b.classList.remove('on'));
@@ -325,8 +327,56 @@ export class Simulation_Main {
       if (f) devLoadScene(f);
     });
 
+    // ==== 저장된 씬 — 사용자도 읽을 수 있다(SIMULATOR.md 1장). scenes/manifest.json ====
+    let sceneManifest = [];
+    if (sel) {
+      fetch('scenes/manifest.json', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((m) => {
+          if (!m || !Array.isArray(m.scenes)) return;
+          sceneManifest = m.scenes;
+          m.scenes.forEach((s) => {
+            const o = document.createElement('option');
+            o.value = `scene:${s.id}`;
+            o.textContent = s.label || s.id;
+            sel.appendChild(o);
+          });
+        })
+        .catch(() => {});
+    }
+
+    const loadSavedScene = async (id) => {
+      const entry = sceneManifest.find((s) => s.id === id);
+      if (!entry) { logLine(`씬을 찾을 수 없습니다: ${id}`, 'err'); return; }
+      build(`scene:${id}`);
+      applyDevMode();
+      sim.resize();
+      cancelAnimationFrame(raf); loop();
+      try {
+        const res = await fetch(entry.file, { cache: 'no-store' });
+        const json = await res.json();
+        await applyScene(sim.ctx, json);
+        // 씬 전체가 보이도록 카메라 프레이밍
+        const T = sim.ctx.THREE;
+        const bb = new T.Box3();
+        sim.ctx.scene.updateMatrixWorld(true);
+        sim.ctx.objects.items.forEach((o) => bb.expandByObject(o.root));
+        if (!bb.isEmpty()) {
+          const size = bb.getSize(new T.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z, 1);
+          const fov = sim.ctx.camera.fov * Math.PI / 180;
+          sim.ctx.frame(Math.max(0.5, size.y * 0.55), (maxDim / 2) / Math.tan(fov / 2) * 1.9);
+        }
+        logLine(`씬 '${entry.label || id}' 로드 완료 (객체 ${json.objects.length}개)`, 'sys');
+      } catch (err) {
+        logLine('씬 로드 실패: ' + (err && err.message ? err.message : err), 'err');
+      }
+    };
+
     if (sel) sel.addEventListener('change', () => {
-      build(sel.value);
+      const v = sel.value;
+      if (v.startsWith('scene:')) { loadSavedScene(v.slice(6)); return; }
+      build(v);
       applyDevMode();   // 새 Context 의 editor 에 개발자 모드 상태 재적용
       sim.resize();
       cancelAnimationFrame(raf); loop();

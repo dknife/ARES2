@@ -447,6 +447,108 @@ function createMetalComponent() {
 }
 
 // ============================================================
+// Gun — { propel_direction, explosion? } : GUN_FIRE 에 발사체가 빠르게 이동,
+//   explosion 지점(월드축 오프셋)에서 연기 발생. 폭발음은 dispatch 가
+//   Gun 객체 유무와 관계없이 재생한다(SIMULATOR.md).
+// ============================================================
+function makeSmokeTexture(THREE) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(64, 64, 8, 64, 64, 60);
+  grad.addColorStop(0, 'rgba(210,210,215,0.9)');
+  grad.addColorStop(0.6, 'rgba(160,160,168,0.45)');
+  grad.addColorStop(1, 'rgba(140,140,148,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function createGunComponent(ctx, fields = {}) {
+  const THREE = ctx.THREE;
+  const propel = fieldVec(THREE, fields.propel_direction) || new THREE.Vector3(0, 0, 1);
+  const expl = fieldVec(THREE, fields.explosion, { normalize: false });
+  const PROJ_SPEED = 6.0;   // m/s ("빠르게 이동")
+  const PROJ_LIFE = 1.2;    // s
+  const SMOKE_LIFE = 1.0;   // s
+  let smokeTex = null;
+  const projectiles = [];   // { mesh, vel, age }
+  const smokes = [];        // { sprite, age, rise }
+
+  const outFields = { propel_direction: [propel.x, propel.y, propel.z] };
+  if (expl) outFields.explosion = [expl.x, expl.y, expl.z];
+
+  const spawnSmoke = (at) => {
+    if (!smokeTex) smokeTex = makeSmokeTexture(THREE);
+    for (let i = 0; i < 3; i++) {
+      const mat = new THREE.SpriteMaterial({ map: smokeTex, transparent: true, opacity: 0.8, depthWrite: false });
+      const sprite = new THREE.Sprite(mat);
+      sprite.position.copy(at).add(new THREE.Vector3((Math.random() - 0.5) * 0.15, i * 0.06, (Math.random() - 0.5) * 0.15));
+      sprite.scale.setScalar(0.18 + i * 0.06);
+      ctx.scene.add(sprite);
+      smokes.push({ sprite, age: -i * 0.12, rise: 0.35 + Math.random() * 0.2 });
+    }
+  };
+
+  return {
+    declarative: true,
+    type: 'Gun',
+    fields: outFields,
+    get activeProjectileCount() { return projectiles.length; },
+    onCommand(cmd, _c, simObject) {
+      if (cmd !== 'GUN_FIRE' && !cmd.startsWith('GUN_FIRE,')) return null;
+      const origin = simObject.root.getWorldPosition(new THREE.Vector3());
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06, 12, 8),
+        new THREE.MeshStandardMaterial({ color: 0x30343c, roughness: 0.4, metalness: 0.5 }),
+      );
+      mesh.position.copy(origin).addScaledVector(propel, 0.25);
+      ctx.scene.add(mesh);
+      projectiles.push({ mesh, vel: propel.clone().multiplyScalar(PROJ_SPEED), age: 0 });
+      if (expl) spawnSmoke(origin.clone().add(expl));
+      return null;
+    },
+    update(dt) {
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        p.age += dt;
+        p.mesh.position.addScaledVector(p.vel, dt);
+        if (p.age >= PROJ_LIFE) {
+          ctx.scene.remove(p.mesh);
+          p.mesh.geometry.dispose();
+          p.mesh.material.dispose();
+          projectiles.splice(i, 1);
+        }
+      }
+      for (let i = smokes.length - 1; i >= 0; i--) {
+        const s = smokes[i];
+        s.age += dt;
+        if (s.age < 0) continue;
+        const t = Math.min(1, s.age / SMOKE_LIFE);
+        s.sprite.position.y += s.rise * dt;
+        s.sprite.scale.setScalar(0.2 + t * 0.65);
+        s.sprite.material.opacity = 0.8 * (1 - t);
+        if (t >= 1) {
+          ctx.scene.remove(s.sprite);
+          s.sprite.material.dispose();
+          smokes.splice(i, 1);
+        }
+      }
+    },
+    dispose() {
+      projectiles.forEach((p) => { ctx.scene.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.material.dispose(); });
+      smokes.forEach((s) => { ctx.scene.remove(s.sprite); s.sprite.material.dispose(); });
+      projectiles.length = 0;
+      smokes.length = 0;
+      smokeTex?.dispose?.();
+      smokeTex = null;
+    },
+  };
+}
+
+// ============================================================
 // 팩토리 · 부착/해제 · 직렬화
 // ============================================================
 const FACTORIES = {
@@ -458,6 +560,7 @@ const FACTORIES = {
   UltraSonic: createUltraSonicComponent,
   Magnet: createMagnetComponent,
   Metal: createMetalComponent,
+  Gun: createGunComponent,
 };
 
 export const COMPONENT_TYPES = Object.keys(FACTORIES);
