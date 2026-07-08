@@ -263,8 +263,9 @@ function createOledComponent(ctx) {
 }
 
 // ============================================================
-// 3단계 공통 헬퍼 — 규약(2026-07-08): 벡터 필드는 월드 좌표계, 1 unit = 1 m,
-// 컴포넌트는 자신이 부착된 객체(+하위)만 이동·회전시키고 설정된 필드만 동작.
+// 3단계 공통 헬퍼 — 규약(2026-07-08 개정): 벡터 필드는 **로컬 좌표계**(객체 자신의
+// 좌표계) 기준. 객체가 회전하면 축도 함께 따라간다(선회 후 전진은 틀어진 방향으로).
+// 1 unit = 1 m. 컴포넌트는 부착된 객체(+하위)만 이동·회전시키고 설정된 필드만 동작.
 // ============================================================
 function fieldVec(THREE, arr, { normalize = true } = {}) {
   if (!Array.isArray(arr) || arr.length !== 3) return null;
@@ -274,15 +275,6 @@ function fieldVec(THREE, arr, { normalize = true } = {}) {
     v.normalize();
   }
   return v;
-}
-
-// 월드 축 방향으로 dist 만큼 이동(부모 회전 보정) — 하위 객체는 함께 딸려간다.
-function moveAlongWorldAxis(THREE, obj, dirWorld, dist) {
-  const v = dirWorld.clone().multiplyScalar(dist);
-  if (obj.parent) {
-    v.applyQuaternion(obj.parent.getWorldQuaternion(new THREE.Quaternion()).invert());
-  }
-  obj.position.add(v);
 }
 
 // ============================================================
@@ -324,9 +316,9 @@ function createDcComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       if (!dir) return;
-      // rotateOnWorldAxis 는 회전된 조상 아래에서는 근사(월드 좌표 규약의 한계)
-      if (axisRot) simObject.root.rotateOnWorldAxis(axisRot, dir * speed * ROT_SPEED * dt);
-      if (axisMove) moveAlongWorldAxis(THREE, simObject.root, axisMove, dir * speed * MOVE_SPEED * dt);
+      // 로컬 축 기준(규약 개정) — 객체가 회전하면 축도 함께 돈다
+      if (axisRot) simObject.root.rotateOnAxis(axisRot, dir * speed * ROT_SPEED * dt);
+      if (axisMove) simObject.root.translateOnAxis(axisMove, dir * speed * MOVE_SPEED * dt);
     },
     dispose() { stop(); },
   };
@@ -373,13 +365,14 @@ function createServoComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       const root = simObject.root;
+      // 로컬 축 기준(규약 개정) — 선회 후 전진하면 틀어진 몸체 방향으로 이동한다
       if (move !== 0) {
-        if (axisRot) root.rotateOnWorldAxis(axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt);
-        if (axisDir) moveAlongWorldAxis(THREE, root, axisDir, move * MOVE * dt);
+        if (axisRot) root.rotateOnAxis(axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt);
+        if (axisDir) root.translateOnAxis(axisDir, move * MOVE * dt);
       }
       if (turn !== 0) {
-        if (axisRot) root.rotateOnWorldAxis(axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt);
-        if (axisTurn) root.rotateOnWorldAxis(axisTurn, turn * TURN * dt);
+        if (axisRot) root.rotateOnAxis(axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt);
+        if (axisTurn) root.rotateOnAxis(axisTurn, turn * TURN * dt);
       }
     },
     dispose() { stop(); },
@@ -387,20 +380,24 @@ function createServoComponent(ctx, fields = {}) {
 }
 
 // ============================================================
-// UltraSonic — { detect_direction } : DISTANCE 명령에 ray 를 쏘아 거리(cm, 소수 둘째 자리) 회신
+// UltraSonic — { detect_direction(로컬축) } : DISTANCE 명령에 ray 를 쏘아
+//   거리(cm, 소수 둘째 자리) 회신. 객체가 회전하면 ray 방향도 함께 돈다.
 // ============================================================
 function createUltraSonicComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
-  const dir = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
+  const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
   const ray = new THREE.Raycaster();
   const under = (node, root) => { let n = node; while (n) { if (n === root) return true; n = n.parent; } return false; };
   return {
     declarative: true,
     type: 'UltraSonic',
-    fields: { detect_direction: [dir.x, dir.y, dir.z] },
+    fields: { detect_direction: [dirLocal.x, dirLocal.y, dirLocal.z] },
     measure(cctx, simObject) {
       cctx.scene.updateMatrixWorld(true);   // 프로그램적 이동 직후에도 정확하도록 강제 갱신
       const origin = simObject.root.getWorldPosition(new THREE.Vector3());
+      const dir = dirLocal.clone()
+        .applyQuaternion(simObject.root.getWorldQuaternion(new THREE.Quaternion()))
+        .normalize();
       ray.set(origin, dir);
       ray.far = 50;
       const hits = ray.intersectObjects(cctx.scene.children, true);
@@ -417,8 +414,8 @@ function createUltraSonicComponent(ctx, fields = {}) {
 }
 
 // ============================================================
-// Magnet — { detection_point } / Metal — 무필드
-//   감지점(객체 월드 위치 + 월드축 오프셋) 반경 5cm 내 Metal 객체 존재 → 1
+// Magnet — { detection_point(로컬 점) } / Metal — 무필드
+//   감지점(객체 로컬 좌표의 점을 월드로 변환) 반경 5cm 내 Metal 객체 존재 → 1
 // ============================================================
 const MAGNET_RADIUS = 0.05;   // 5 cm (규약 2026-07-08)
 
@@ -431,7 +428,8 @@ function createMagnetComponent(ctx, fields = {}) {
     type: 'Magnet',
     fields: { detection_point: [point.x, point.y, point.z] },
     measure(cctx, simObject) {
-      const sensor = simObject.root.getWorldPosition(new THREE.Vector3()).add(point);
+      cctx.scene.updateMatrixWorld(true);
+      const sensor = simObject.root.localToWorld(point.clone());
       for (const item of cctx.objects?.items || []) {
         if (item === simObject || !item.components?.Metal) continue;
         box.setFromObject(item.root);
@@ -468,6 +466,7 @@ function makeSmokeTexture(THREE) {
 
 function createGunComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
+  // propel/explosion 은 로컬 좌표계(규약 개정) — 발사 시점의 객체 방향을 따른다
   const propel = fieldVec(THREE, fields.propel_direction) || new THREE.Vector3(0, 0, 1);
   const expl = fieldVec(THREE, fields.explosion, { normalize: false });
   const PROJ_SPEED = 6.0;   // m/s ("빠르게 이동")
@@ -499,15 +498,20 @@ function createGunComponent(ctx, fields = {}) {
     get activeProjectileCount() { return projectiles.length; },
     onCommand(cmd, _c, simObject) {
       if (cmd !== 'GUN_FIRE' && !cmd.startsWith('GUN_FIRE,')) return null;
+      ctx.scene.updateMatrixWorld(true);
       const origin = simObject.root.getWorldPosition(new THREE.Vector3());
+      // 로컬 발사 방향을 발사 시점의 월드 방향으로 변환
+      const dirWorld = propel.clone()
+        .applyQuaternion(simObject.root.getWorldQuaternion(new THREE.Quaternion()))
+        .normalize();
       const mesh = new THREE.Mesh(
         new THREE.SphereGeometry(0.06, 12, 8),
         new THREE.MeshStandardMaterial({ color: 0x30343c, roughness: 0.4, metalness: 0.5 }),
       );
-      mesh.position.copy(origin).addScaledVector(propel, 0.25);
+      mesh.position.copy(origin).addScaledVector(dirWorld, 0.25);
       ctx.scene.add(mesh);
-      projectiles.push({ mesh, vel: propel.clone().multiplyScalar(PROJ_SPEED), age: 0 });
-      if (expl) spawnSmoke(origin.clone().add(expl));
+      projectiles.push({ mesh, vel: dirWorld.multiplyScalar(PROJ_SPEED), age: 0 });
+      if (expl) spawnSmoke(simObject.root.localToWorld(expl.clone()));
       return null;
     },
     update(dt) {
