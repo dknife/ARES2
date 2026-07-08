@@ -105,6 +105,8 @@ let pendingDashboardOpen = false;
 let mobileDashboardReturnHash = null;
 let mobileAiReturnHash = null;
 let aresBlocklyTheme = null;
+let missionToolboxCategories = null;
+let isFreeCodingMode = false;
 
 // 미션 뷰는 description / coding / simulation 세 모드 중 하나만 표시한다.
 // _preSimMode 는 시뮬을 닫았을 때 복귀할 모드(description 또는 coding)를 기억.
@@ -120,7 +122,7 @@ function getAresBlocklyTheme() {
     blockStyles: {
       logic_blocks: { colourPrimary: '#cacacb' },
       math_blocks: { colourPrimary: '#cacacb' },
-      loop_blocks: { colourPrimary: '#2b638f' },
+      loop_blocks: { colourPrimary: '#7954B5' },
       variable_blocks: { colourPrimary: '#5483b5' },
       variable_dynamic_blocks: { colourPrimary: '#5483b5' },
       procedure_blocks: { colourPrimary: '#727171' }
@@ -128,7 +130,7 @@ function getAresBlocklyTheme() {
     categoryStyles: {
       logic_category: { colour: '#cacacb' },
       math_category: { colour: '#cacacb' },
-      loop_category: { colour: '#2b638f' },
+      loop_category: { colour: '#7954B5' },
       variable_category: { colour: '#5483b5' },
       procedure_category: { colour: '#727171' }
     }
@@ -144,7 +146,7 @@ function applyAresBuiltinBlockColours() {
   const originalInit = ifBlock.init;
   ifBlock.init = function() {
     originalInit.call(this);
-    this.setColour('#2b638f');
+    this.setColour('#7954B5');
   };
   ifBlock.__aresColourPatchAttached = true;
 }
@@ -152,12 +154,91 @@ function applyAresBuiltinBlockColours() {
 // ============================================================
 // 동적 툴박스 필터링
 // ============================================================
+const TOOLBOX_CATEGORY_COLOURS = {
+  category_motion: '#cf3d37',
+  category_output: '#d68fa5',
+  category_gun: '#dcc342',
+  category_sensors: '#7daa4d',
+  category_control: '#7954B5',
+  category_variables: '#5483b5',
+  category_math: '#cacacb',
+  category_functions: '#727171',
+};
+const TOOLBOX_MUTED_COLOUR = '#E6E6E6';
+
+function inferMissionToolboxCategories(mission) {
+  if (!mission) return null;
+  const text = [
+    mission.tag,
+    mission.hardware,
+    mission.title,
+    mission.sampleCode,
+    ...(mission.goals || []),
+  ].join('\n').toLowerCase();
+
+  const selected = new Set();
+  const add = (...ids) => ids.forEach((id) => selected.add(id));
+
+  if (/(forward|backward|left|right|motor|servo|dc_|dc motor|dcmotor|전진|후진|좌회전|우회전|모터|주행|이동|레이더)/i.test(text)) {
+    add('category_motion');
+  }
+  if (/(led|lamp|buzzer|sound|note|oled|display|message|icon|print|화면|표시|출력|소리|부저|멜로디|계명|노래|led|램프|불|신호등)/i.test(text)) {
+    add('category_output');
+  }
+  if (/(gun|fire|launch|rocket|발사|로켓|bb탄)/i.test(text)) {
+    add('category_gun');
+  }
+  if (/(distance|magnet|sensor|ultrasonic|거리|자기|자석|센서|감지|측정)/i.test(text)) {
+    add('category_sensors');
+  }
+  if (/(while|for |if |else|repeat|sleep|time\.sleep|반복|조건|만약|기다|대기|초\b|회 반복|무한)/i.test(text)) {
+    add('category_control');
+  }
+  if (/(=|variable|변수|값|저장|range\(|\bi\b|\bj\b)/i.test(text)) {
+    add('category_variables');
+  }
+  if (/(\+|-|\*|\/|>|<|==|!=|random|randint|계산|비교|랜덤|보다|이상|이하|초과|미만)/i.test(text)) {
+    add('category_math');
+  }
+  if (/(def |function|함수)/i.test(text)) {
+    add('category_functions');
+  }
+
+  return selected;
+}
+
+function applyMissionToolboxColours(toolboxEl) {
+  if (!toolboxEl) return;
+  toolboxEl.querySelectorAll('category[id]').forEach((category) => {
+    const id = category.getAttribute('id');
+    const defaultColour = TOOLBOX_CATEGORY_COLOURS[id];
+    if (!defaultColour) return;
+    // 카테고리 XML 색은 원래대로 유지한다. 비활성 표시는 실제 툴박스 DOM에
+    // CSS 오버레이로만 적용해야, 플라이아웃 안 블록 색이 원래 색을 유지한다.
+    category.setAttribute('colour', defaultColour);
+  });
+}
+
+function applyMissionToolboxDomState() {
+  const selected = isFreeCodingMode ? null : missionToolboxCategories;
+  document.querySelectorAll('.blocklyToolboxCategory').forEach((categoryEl, index) => {
+    const id = CATEGORY_IDS[index];
+    const muted = !!(selected && id && !selected.has(id));
+    CATEGORY_IDS.forEach((categoryId) => {
+      categoryEl.classList.remove(`ares-cat-${categoryId}`);
+    });
+    if (id) categoryEl.classList.add(`ares-cat-${id}`);
+    categoryEl.classList.toggle('ares-muted-category', muted);
+  });
+}
+
 function updateDynamicToolbox() {
   if (!workspace) return;
   const originalToolbox = document.getElementById('toolbox');
   if (!originalToolbox) return;
 
   const clonedToolbox = originalToolbox.cloneNode(true);
+  applyMissionToolboxColours(clonedToolbox);
 
   if (state.enabledModules) {
     const modules = state.enabledModules;
@@ -199,6 +280,7 @@ function updateDynamicToolbox() {
   }
 
   workspace.updateToolbox(clonedToolbox);
+  requestAnimationFrame(applyMissionToolboxDomState);
 }
 
 // ============================================================
@@ -208,7 +290,26 @@ function updateDynamicToolbox() {
 // 연다. Blockly 는 기본적으로 클릭(pointerdown)에서 열리므로, 호버로도 열리게
 // setSelectedItem 을 호출한다. 이벤트 위임이라 카테고리 DOM 이 재생성돼도 유지된다.
 // 카테고리 색(툴박스 XML 순서와 동일) — 플라이아웃 배경 색조에 사용
-const CATEGORY_COLORS = ['#cf3d37', '#d68fa5', '#dcc342', '#7daa4d', '#2b638f', '#5483b5', '#cacacb', '#727171'];
+const CATEGORY_COLORS = ['#cf3d37', '#d68fa5', '#dcc342', '#7daa4d', '#7954B5', '#5483b5', '#cacacb', '#727171'];
+const CATEGORY_IDS = [
+  'category_motion',
+  'category_output',
+  'category_gun',
+  'category_sensors',
+  'category_control',
+  'category_variables',
+  'category_math',
+  'category_functions',
+];
+
+function getActiveCategoryColour(index) {
+  const id = CATEGORY_IDS[index];
+  if (!id) return CATEGORY_COLORS[index];
+  if (!isFreeCodingMode && missionToolboxCategories && !missionToolboxCategories.has(id)) {
+    return TOOLBOX_MUTED_COLOUR;
+  }
+  return TOOLBOX_CATEGORY_COLOURS[id] || CATEGORY_COLORS[index];
+}
 
 // #RRGGBB 를 흰색 쪽으로 amt(0~1) 만큼 밝게 → 배경용 밝은 톤
 function lightenColor(hex, amt) {
@@ -244,7 +345,7 @@ function setupFlyoutBehavior(ws) {
     origSetSelected(item);
     applyFlyoutCfg();
     const idx = toolbox.getToolboxItems().indexOf(item);
-    const color = CATEGORY_COLORS[idx];
+    const color = getActiveCategoryColour(idx);
     const bg = document.querySelector('.blocklyFlyoutBackground');
     if (bg && color) bg.style.fill = lightenColor(color, 0.82);
   };
@@ -1065,6 +1166,11 @@ async function enterOverview() {
   showView('overview');
   currentLesson = null;
   currentMission = null;
+  isFreeCodingMode = false;
+  missionToolboxCategories = null;
+  if (window.updateToolboxForActiveState) {
+    window.updateToolboxForActiveState();
+  }
   document.getElementById('lessonSelect').value = '';
   populateMissionSelect(null);
   updateBreadcrumb(null, null);
@@ -1286,7 +1392,7 @@ function openMissionCoding(lesson, mission) {
   // 미션 뷰 진입은 해시 변경 후 비동기로 이뤄지므로, 진입을 확인한 뒤 코딩 모드로 전환
   let attempts = 0;
   const poll = () => {
-    if (currentView === 'mission') {
+    if (currentView === 'mission' && currentLesson === lesson && currentMission === mission) {
       // 점검(대시보드) iframe이 열려 있으면 닫아야 blocklyDiv가 드러난다
       // (openBlockCodingWorkspace와 동일한 처리 — 안 닫으면 화면에 갇힘)
       const dashboardFrame = document.getElementById('dashboardFrame');
@@ -1314,6 +1420,11 @@ async function enterLesson(n) {
   showView('lesson');
   currentLesson = n;
   currentMission = null;
+  isFreeCodingMode = false;
+  missionToolboxCategories = null;
+  if (window.updateToolboxForActiveState) {
+    window.updateToolboxForActiveState();
+  }
   document.getElementById('lessonSelect').value = String(n);
   populateMissionSelect(n, data);
   updateBreadcrumb(n, null);
@@ -1352,6 +1463,62 @@ async function enterLesson(n) {
 // ============================================================
 // 미션 코딩 뷰
 // ============================================================
+async function updateCodingMissionSelect(n, m) {
+  const select = document.getElementById('codingMissionSelect');
+  if (!select) return;
+
+  const selectedValue = `${n}-${m}`;
+  select.innerHTML = '';
+
+  const freeOption = document.createElement('option');
+  freeOption.value = 'free';
+  freeOption.textContent = '자유 모드 - 전체 블록';
+  select.appendChild(freeOption);
+
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = '미션 선택';
+  select.appendChild(placeholder);
+
+  for (let lesson = 1; lesson <= 12; lesson += 1) {
+    const data = await loadLesson(lesson);
+    if (!data || !Array.isArray(data.missions)) continue;
+
+    const group = document.createElement('optgroup');
+    group.label = `${lesson}차시 · ${data.title || ''}`.trim();
+    data.missions.forEach((mission) => {
+      const option = document.createElement('option');
+      option.value = `${lesson}-${mission.id}`;
+      option.textContent = `${lesson}-${mission.id}. ${mission.title}`;
+      group.appendChild(option);
+    });
+    select.appendChild(group);
+  }
+
+  select.value = isFreeCodingMode ? 'free' : selectedValue;
+  select.onchange = () => {
+    const value = select.value;
+    if (value === 'free') {
+      isFreeCodingMode = true;
+      missionToolboxCategories = null;
+      const codingLabel = document.getElementById('codingMissionLabel');
+      if (codingLabel) codingLabel.textContent = '자유 모드 - 전체 블록 사용';
+      if (window.updateToolboxForActiveState) {
+        window.updateToolboxForActiveState();
+      } else {
+        updateDynamicToolbox();
+      }
+      requestAnimationFrame(applyMissionToolboxDomState);
+      return;
+    }
+    if (!value) return;
+    const [lesson, mission] = value.split('-').map((part) => parseInt(part, 10));
+    if (Number.isFinite(lesson) && Number.isFinite(mission)) {
+      openMissionCoding(lesson, mission);
+    }
+  };
+}
+
 async function enterMission(n, m) {
   const data = await loadLesson(n);
   if (!data) { enterOverview(); return; }
@@ -1361,6 +1528,8 @@ async function enterMission(n, m) {
   showView('mission');
   currentLesson = n;
   currentMission = m;
+  isFreeCodingMode = false;
+  missionToolboxCategories = inferMissionToolboxCategories(mission);
   rememberCodingMission(n, m);   // 하단 "코딩" 탭이 돌아올 미션으로 기록
   document.getElementById('lessonSelect').value = String(n);
   populateMissionSelect(n, data);
@@ -1381,6 +1550,7 @@ async function enterMission(n, m) {
   // 코딩 영역 상단 배너: 기록된(현재) 차시·미션 표시
   const codingLabel = document.getElementById('codingMissionLabel');
   if (codingLabel) codingLabel.textContent = `${n}차시 · 미션 ${m} — ${mission.title}`;
+  updateCodingMissionSelect(n, m);
   document.getElementById('missionTagBadge').textContent = mission.tag;
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
   document.getElementById('missionHardware').textContent = mission.hardware;
@@ -1412,13 +1582,17 @@ async function enterMission(n, m) {
   const prev = document.getElementById('prevMissionBtn');
   const next = document.getElementById('nextMissionBtn');
   prev.disabled = (m <= 1 && n <= 1);
-  next.disabled = (m >= 4 && n >= 12);
-  prev.onclick = () => {
+  next.disabled = (m >= data.missions.length && n >= 12);
+  prev.onclick = async () => {
     if (m > 1) navigate({ lesson: n, mission: m - 1 });
-    else if (n > 1) navigate({ lesson: n - 1, mission: 4 });
+    else if (n > 1) {
+      const prevData = await loadLesson(n - 1);
+      const prevCount = Array.isArray(prevData?.missions) ? prevData.missions.length : 4;
+      navigate({ lesson: n - 1, mission: Math.max(1, prevCount) });
+    }
   };
-  next.onclick = () => {
-    if (m < 4) navigate({ lesson: n, mission: m + 1 });
+  next.onclick = async () => {
+    if (m < data.missions.length) navigate({ lesson: n, mission: m + 1 });
     else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
   };
 
