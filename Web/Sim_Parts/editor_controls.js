@@ -613,11 +613,12 @@ export class EditorControls {
     models.forEach((m) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = m.label || m.url.split('/').pop();
-      btn.title = m.url;
+      // 파일명을 그대로 표시·사용한다(객체 라벨 = 파일명). 한글 설명은 툴팁으로.
+      btn.textContent = m.url.split('/').pop();
+      btn.title = m.label ? `${m.label} — ${m.url}` : m.url;
       btn.addEventListener('click', () => {
         menu.hidden = true;
-        this.spawnGlbFile(m.url, m.label, options);
+        this.spawnGlbFile(m.url, null, options);
       });
       menu.appendChild(btn);
     });
