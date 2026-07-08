@@ -239,11 +239,37 @@ export class EditorControls {
     return panel;
   }
 
+  // 개발자 모드 시각 보조 — 원점 좌표축(x=빨강·y=초록·z=파랑) + 3직교 평면(xz·xy·yz) 그리드.
+  // 1 unit = 1 m 규약에 맞춰 10m 범위·0.5m 격자. 라인이라 UltraSonic ray(isMesh 필터)에 안 걸린다.
+  ensureDevGrids() {
+    if (this.devGrids) return;
+    const THREE = this.THREE;
+    const group = new THREE.Group();
+    group.name = 'dev-grids';
+    const makeGrid = (opacity) => {
+      const grid = new THREE.GridHelper(10, 20, 0x8fb7ff, 0x44506e);
+      grid.material.transparent = true;
+      grid.material.opacity = opacity;
+      grid.material.depthWrite = false;
+      return grid;
+    };
+    const xz = makeGrid(0.35);                          // 바닥(xz) — 기준 평면이라 가장 진하게
+    const xy = makeGrid(0.15); xy.rotation.x = Math.PI / 2;   // 정면(xy)
+    const yz = makeGrid(0.15); yz.rotation.z = Math.PI / 2;   // 측면(yz)
+    const axes = new THREE.AxesHelper(1.6);             // 원점 기준 x·y·z 축
+    if (axes.material) axes.material.depthWrite = false;
+    group.add(xz, xy, yz, axes);
+    this.devGrids = group;
+    this.ctx.scene.add(group);
+  }
+
   setDevMode(on) {
     this.devMode = !!on;
     this.toolbar.hidden = !this.devMode;
     this.hierarchy.hidden = !this.devMode;
     this.hideContextMenu();
+    if (this.devMode) this.ensureDevGrids();
+    if (this.devGrids) this.devGrids.visible = this.devMode;
     if (!this.devMode) this.select(null);
     else this.updateHierarchy(true);
   }
@@ -604,5 +630,14 @@ export class EditorControls {
     this.boxHelper.geometry?.dispose?.();
     this.boxHelper.material?.dispose?.();
     this.boxHelper.parent?.remove(this.boxHelper);
+
+    if (this.devGrids) {
+      this.devGrids.traverse((node) => {
+        node.geometry?.dispose?.();
+        node.material?.dispose?.();
+      });
+      this.devGrids.parent?.remove(this.devGrids);
+      this.devGrids = null;
+    }
   }
 }
