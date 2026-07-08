@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[ARES 프로젝트] 품질 보증(QA) 체계 및 산출물 명세서 v1.0</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
+        :root { --primary-color: #222; --secondary-color: #d8431b; --accent-color: #FA5D29; --new-color: #FA5D29; --bg-light: #F8F8F8; --text-dark: #222; --border-color: #EDEDED; }
+        body { font-family: 'Inter Tight', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; line-height: 1.6; color: var(--text-dark); background-color: var(--bg-light); margin: 0; padding: 30px 15px; }
+        .container { max-width: 1200px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .header { text-align: center; background: #222; color: #fff; border-bottom: 4px solid var(--accent-color); padding: 40px 24px; border-radius: 14px; margin-bottom: 36px; }
+        .header h1 { color: #fff; font-size: 2.2em; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+        .header p { color: rgba(255,255,255,0.72); font-size: 1.1em; font-weight: 500; }
+        h2 { color: var(--primary-color); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top: 44px; position: relative; }
+        h2::before { content: ''; position: absolute; bottom: -1px; left: 0; width: 60px; height: 3px; background-color: var(--accent-color); }
+        h3 { color: var(--secondary-color); font-size: 1.3em; font-weight: 700; margin-top: 24px; }
+        .doc-section { border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 32px; overflow: hidden; }
+        .doc-header { background-color: var(--primary-color); color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .doc-header h3 { margin: 0; color: white; font-size: 1.25em; }
+        .doc-badge { background-color: var(--accent-color); color: #fff; padding: 4px 13px; border-radius: 100px; font-weight: bold; font-size: 0.85em; }
+        .doc-body { padding: 22px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        .info-box { background: #f8f9fa; padding: 16px 18px; border-radius: 10px; border-left: 4px solid var(--accent-color); }
+        .info-box h4 { margin-top: 0; color: var(--primary-color); margin-bottom: 8px; font-size: 1.02em; }
+        ul { margin: 0; padding-left: 20px; }
+        li { margin-bottom: 4px; font-size: 0.95em; }
+        .example-box { background-color: #f8f9fa; padding: 18px; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--border-color); border-left: 4px solid #999; }
+        .example-box h4 { color: #222; margin-top: 0; margin-bottom: 10px; }
+        .new-example-box { background-color: #FFF3EE; padding: 18px; border-radius: 10px; margin-bottom: 16px; border: 1px solid #FAD5C6; border-left: 4px solid var(--accent-color); }
+        .new-example-box h4 { color: var(--secondary-color); margin-top: 0; margin-bottom: 10px; }
+        .new-tag { display: inline-block; background: var(--new-color); color: #fff; font-size: 0.65em; font-weight: 700; padding: 2px 9px; border-radius: 100px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.5px; }
+        .template-box { margin-top: 18px; }
+        .template-box h4 { color: #495057; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border: 1px solid var(--border-color); padding: 10px 12px; text-align: left; vertical-align: top; }
+        th { background-color: rgba(250,93,41,0.1); color: var(--secondary-color); font-weight: bold; width: 22%; }
+        .diagram-container { text-align: center; margin: 32px 0; padding: 20px; background: white; border: 1px solid var(--border-color); border-radius: 14px; }
+        code { background: #f1f5f9; padding: 1px 6px; border-radius: 3px; font-size: 0.86em; color: #1e293b; font-family: 'Consolas', 'D2Coding', monospace; }
+        .change-summary { background-color: #FFF3EE; border: 1px solid #FAD5C6; padding: 18px 22px; border-left: 5px solid var(--accent-color); border-radius: 0 10px 10px 0; margin: 24px 0; font-size: 0.94em; color: #7c2d12; }
+        .change-summary h3 { color: var(--secondary-color); margin-top: 0; font-size: 1.05em; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>[ARES 프로젝트] 품질 보증(QA) 체계 및 산출물 명세서 v1.0</h1>
+        <p>V-모델 기반 테스트 전략 · 실제 소스코드 매핑 · 명령 프로토콜 추적성<br>
+            <span style="font-size:0.85em; color:#888;">Pico 펌웨어 · Web 실행 엔진 · XML 프리셋 전수 분석 반영판</span>
+        </p>
+    </div>
+
+    <div class="change-summary">
+        <h3>본 명세서의 근거 - 실제 소스 구조</h3>
+        <ul>
+            <li><strong>Pico/</strong> : main.py(UART 루프·응답 정책 NO_RESPONSE_CMDS), process_data.py(명령 디스패처), hardware.py(모듈 싱글톤·None 가드), system_config.py, 드라이버 8종</li>
+            <li><strong>Web/</strong> : commandexecutor.js(generateCommand·FIRE_AND_FORGET_HEADS), bluetooth.js, blocklyconfig.js(BATCH_FORBIDDEN_TYPES), main.js(12차시 셸), Sim_Parts/(시뮬레이터 실 구현체 - Simulation/*.js는 미사용)</li>
+            <li><strong>XML Presets/</strong> : Test All Hardware.xml, Launch Rocket.xml / <strong>examples/</strong> : 7종 예제</li>
+        </ul>
+    </div>
+
+    <h2>1. ARES V-모델 및 R&amp;R 시각화</h2>
+    <div class="diagram-container">
+        <div class="mermaid">
+            graph TD
+                Req["요구사항 분석<br/>(PM / 교육기획자)"] --> SysDesign["시스템 설계<br/>(System Architect)"]
+                SysDesign --> ArchDesign["상세 설계<br/>(Tech Lead)"]
+                ArchDesign --> Impl["구현 / 코딩<br/>(개발팀)"]
+                Impl --> Unit["단위 테스트<br/>(개발팀)"]
+                Unit --> SimTest["시뮬레이터 선행<br/>(QA)"]
+                SimTest --> Integration["통합 테스트<br/>(QA 엔지니어)"]
+                Integration --> SystemTest["시스템 테스트<br/>(QA / PM)"]
+                SystemTest --> Acceptance["인수 테스트<br/>(발주처 / 교사 자문)"]
+                Req -.->|"STP 기획"| Acceptance
+                SysDesign -.->|"TDS 설계"| SystemTest
+                ArchDesign -.->|"TCL 도출"| Integration
+                Impl -.->|"STD 작성"| Unit
+                Unit -.->|"STR 산출"| Integration
+                SystemTest -.->|"STR 최종 승인"| Acceptance
+                classDef default fill:#f8f9fa,stroke:#dee2e6,stroke-width:1px;
+                classDef dev fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px;
+                classDef test fill:#fce4ec,stroke:#e53935,stroke-width:2px;
+                classDef newn fill:#ecfdf5,stroke:#10b981,stroke-width:2px;
+                class Req,SysDesign,ArchDesign,Impl dev;
+                class Unit,Integration,SystemTest,Acceptance test;
+                class SimTest newn;
+        </div>
+    </div>
+
+    <h2>2. 테스트 산출물 상세 가이드 및 ARES 실 매핑</h2>
+
+    <!-- STP -->
+    <div class="doc-section">
+        <div class="doc-header"><h3>1. STP (Software Test Plan) - 테스트 계획서</h3><span class="doc-badge">요구사항 분석 단계</span></div>
+        <div class="doc-body">
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4>역할과 책임 (R&amp;R)</h4>
+                    <ul>
+                        <li>작성자 : PM 또는 QA Lead</li>
+                        <li>검토/승인 : 발주처, 이해관계자</li>
+                        <li>역할 : 예산·일정·범위 정의 및 테스트 전략 확립</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <h4>작성 핵심 포인트</h4>
+                    <ul>
+                        <li>교육 현장 통신 안정성(BLE) 중점</li>
+                        <li>시뮬레이터 선행 테스트 전략 포함</li>
+                        <li>실제 명령 프로토콜 기반 KPI 정의</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="new-example-box">
+                <h4>ARES 적용 사례</h4>
+                <ul>
+                    <li>범위(In-Scope) : Web 블록엔진, BLE 파이프라인, Pico 명령 처리, 액추에이터(서보/DC/LED 6개/부저/발사), 센서(초음파/디지털 자기), OLED, 설정 영구 저장</li>
+                    <li>KPI 정의 : cooldown 40ms, 처리량 100 cmd/s, RESPONSE_TIMEOUT 5초 내 응답, DC 양방향 대칭 (모두 실제 코드 설정값 기준)</li>
+                </ul>
+            </div>
+            <div class="template-box">
+                <h4>문서 템플릿 요약</h4>
+                <table>
+                    <tr><th>개요</th><td>목적, 대상 (ARES 웹 IDE 및 Pico 펌웨어)</td></tr>
+                    <tr><th>테스트 범위</th><td>블록-명령 변환, BLE 통신, 모터/센서/LED/OLED 제어, BATCH 블록, 설정 저장</td></tr>
+                    <tr><th>테스트 환경</th><td>Chrome/Edge, Windows/Android, ARES 하드웨어, Web/Sim_Parts 시뮬레이터</td></tr>
+                    <tr><th>KPI</th><td>명령 간격, 처리량, 모터 대칭, 페어링 시간</td></tr>
+                    <tr><th>리스크</th><td>BLE 혼선, 브라우저 호환, 부팅 모듈 초기화, BATCH SLEEP timeout, UART baud 천장</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TDS -->
+    <div class="doc-section">
+        <div class="doc-header"><h3>2. TDS (Test Design Specification) - 테스트 설계서</h3><span class="doc-badge">시스템 설계 단계</span></div>
+        <div class="doc-body">
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4>역할과 책임 (R&amp;R)</h4>
+                    <ul>
+                        <li>작성자 : QA Architect 또는 Tech Lead</li>
+                        <li>검토/승인 : PM, 개발 팀장</li>
+                        <li>역할 : 테스트 대상을 논리 그룹으로 묶고 합격 기준 수립</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <h4>작성 핵심 포인트</h4>
+                    <ul>
+                        <li>정상 동작 외 오류 복구·경계값 설계</li>
+                        <li>통신 단절 재연결 설계</li>
+                        <li>응답 정책(무응답 vs 응답 대기) 분류 검증 설계</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="new-example-box">
+                <h4>ARES 적용 사례 - 응답 정책 동기화 설계</h4>
+                <ul>
+                    <li>가설 : Web <code>FIRE_AND_FORGET_HEADS</code> 와 Pico <code>NO_RESPONSE_CMDS</code> 가 불일치하면, 무응답 명령의 ack가 다음 명령 응답 슬롯을 오염시킴</li>
+                    <li>설계 기법 : 두 집합의 원소를 대조하는 정합성 검사 + LED_ON 직후 DISTANCE 시퀀스로 오염 여부 관찰</li>
+                    <li>Pass 기준 : 두 집합 동일, DISTANCE 값이 LED ack로 오염되지 않음 (TC-BLE-004~006)</li>
+                </ul>
+            </div>
+            <div class="example-box">
+                <h4>경계값 분석 사례 - 모터 속도</h4>
+                <ul>
+                    <li>DC 속도 입력 -1, 0, 100, 150 대비 : 0~100 clamp 후 PWM 매핑 확인 (TC-DCM-005)</li>
+                    <li>서보 속도가 max_speed 상한을 넘지 않는지 (TC-SRV-005)</li>
+                </ul>
+            </div>
+            <div class="template-box">
+                <h4>문서 템플릿 요약</h4>
+                <table>
+                    <tr><th>기능 모듈명</th><td>블록 변환 및 전송 엔진 (Block → 명령 문자열 → BLE)</td></tr>
+                    <tr><th>테스트 목적</th><td>generateCommand의 정확한 명령 생성 및 보드 실행 확인</td></tr>
+                    <tr><th>적용 기법</th><td>구조 기반(블록 조합), 명세 기반(응답 문자열), 응답 정책 분류, 부하(연속 100 cmd)</td></tr>
+                    <tr><th>Pass/Fail 기준</th><td>(Pass) 명령 문자열 정확 생성 + 보드 실행 / (Fail) 누락·지연·응답 오염</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TCL -->
+    <div class="doc-section">
+        <div class="doc-header"><h3>3. TCL (Test Case List) - 테스트 케이스 명세서</h3><span class="doc-badge">상세 설계 / 구현 단계</span></div>
+        <div class="doc-body">
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4>역할과 책임 (R&amp;R)</h4>
+                    <ul>
+                        <li>작성자 : QA Engineer, 개발자</li>
+                        <li>검토/승인 : QA Lead</li>
+                        <li>역할 : 실행 가능한 시나리오 단위 리스트 도출</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <h4>작성 핵심 포인트</h4>
+                    <ul>
+                        <li>입력/예상 결과를 실제 명령·응답 문자열로 기재</li>
+                        <li>Positive 외 예외(미장착·범위초과) 케이스 도출</li>
+                        <li>비고 칸에 실제 소스 함수/파일 인용</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="new-example-box">
+                <h4>ARES 적용 사례 - TCL v1.0 (14 카테고리 98 케이스)</h4>
+                <ul>
+                    <li><strong>TC-LED-001</strong> : 6개 LED(GP21,20,19,18,17,16) 인덱스 0~5 점등 - 입력 <code>LED_ON,0,1</code>~<code>LED_ON,5,1</code>, 비고 leds.py</li>
+                    <li><strong>TC-SEN-003</strong> : 디지털 자기장 - 입력 <code>MAGNET</code>, 예상 <code>MAG:1</code>/<code>MAG:0</code> (active-low, ADC 아님), 비고 magsensor.py</li>
+                    <li><strong>TC-DCM-002</strong> : dual PWM 양방향 대칭 - DC_FORWARD/BACKWARD 80% 이동거리 근사 대칭, 비고 dcmotor.py</li>
+                    <li><strong>TC-E2E-001</strong> : Test All Hardware.xml로 9개 함수 전 모듈 순차 구동</li>
+                </ul>
+            </div>
+            <div class="template-box">
+                <h4>문서 템플릿 (TCL v1.0 표준 컬럼)</h4>
+                <table>
+                    <tr><th>TC ID</th><td>카테고리-순번 (예 : TC-LED-001, TC-BLE-006)</td></tr>
+                    <tr><th>기능명 / 시나리오</th><td>한 줄 요약 + 상세 시나리오</td></tr>
+                    <tr><th>우선순위</th><td>High / Mid / Low</td></tr>
+                    <tr><th>전제 조건</th><td>하드웨어/소프트웨어 사전 조건 (모듈 장착 등)</td></tr>
+                    <tr><th>입력 데이터·명령</th><td>실제 UART 명령 문자열 또는 블록 이름</td></tr>
+                    <tr><th>예상 결과</th><td>실제 응답 문자열 또는 관찰 가능한 하드웨어 동작</td></tr>
+                    <tr><th>실행 결과</th><td>Pass / Fail / 미수행 / 보류 / 기타 (콤보 + localStorage)</td></tr>
+                    <tr><th>비고</th><td>관련 소스 함수/파일</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- STD -->
+    <div class="doc-section">
+        <div class="doc-header"><h3>4. STD (Software Test Description) - 테스트 절차서</h3><span class="doc-badge">테스트 실행 전</span></div>
+        <div class="doc-body">
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4>역할과 책임 (R&amp;R)</h4>
+                    <ul>
+                        <li>작성자 : QA Engineer</li>
+                        <li>사용자 : 실제 테스터, 교사</li>
+                        <li>역할 : TC를 비전문가도 따라 할 수 있게 매뉴얼화</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <h4>작성 핵심 포인트</h4>
+                    <ul>
+                        <li>재현 가능성 확보</li>
+                        <li>클릭 위치·입력값·확인 화면 상세 기술</li>
+                        <li>실기와 시뮬레이터 경로를 모두 안내</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="new-example-box">
+                <h4>ARES 적용 사례 - Test All Hardware.xml 실행 절차</h4>
+                <ol style="font-size:0.93em;">
+                    <li>로버 키트 전원 ON (부팅음 G5→C4, OLED "ARES READY" 확인)</li>
+                    <li>Chrome에서 Web/index.html 접속 후 관제실 진입, "블루투스 연결"로 ARES 페어링</li>
+                    <li>예제/불러오기로 XML Presets/Test All Hardware.xml 로드</li>
+                    <li>"테스트 실행" 함수 호출 - 서보→DC→LED→디스플레이→소리→전투→센서→시간→제어 순차 구동</li>
+                    <li>각 모듈의 물리 동작을 육안 확인하고 TCL의 TC-E2E-001 결과 기입</li>
+                </ol>
+                <p style="font-size:0.88em; margin-bottom:0; color:#047857;">하드웨어가 없으면 Web/Sim_Parts 시뮬레이터로 동일 블록을 실행해 명령 로그를 확인 (TC-E2E-003), 단 MAGNET 응답은 시뮬레이터에서 항상 MAG:0으로 고정됨</p>
+            </div>
+            <div class="example-box">
+                <h4>단일 블록 절차 예 - LED 점등</h4>
+                <ol>
+                    <li>미션 뷰에서 LED 탭의 "LED 켜기" 블록 드래그</li>
+                    <li>번호 1, 밝기 1 입력</li>
+                    <li>"명령 실행" 클릭 - <code>LED_ON,1,1</code> 전송 확인</li>
+                    <li>2번 LED(GP20) 점등 육안 확인</li>
+                </ol>
+            </div>
+            <div class="template-box">
+                <h4>문서 템플릿 요약</h4>
+                <table>
+                    <tr><th>연관 TC ID</th><td>TC-E2E-001 (하드웨어 전수)</td></tr>
+                    <tr><th>사전 조건</th><td>로버 키트 전원, Chrome/Edge, BLE 페어링 (또는 시뮬레이터)</td></tr>
+                    <tr><th>수행 단계</th><td>전원 → 접속 → 페어링 → 프리셋 로드 → 함수 실행 → 육안 확인</td></tr>
+                    <tr><th>테스트 데이터</th><td>Test All Hardware.xml, Launch Rocket.xml</td></tr>
+                    <tr><th>예상 결과</th><td>9개 함수 오류 없이 완주, 각 모듈 동작</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- STR -->
+    <div class="doc-section">
+        <div class="doc-header"><h3>5. STR (Software Test Report) - 테스트 결과 보고서</h3><span class="doc-badge">테스트 완료 / 납품 전</span></div>
+        <div class="doc-body">
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4>역할과 책임 (R&amp;R)</h4>
+                    <ul>
+                        <li>작성자 : QA Lead, PM</li>
+                        <li>검토/승인 : 발주처 (인수 승인)</li>
+                        <li>역할 : 결과 정량 보고 + 요구사항 충족 증명</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <h4>작성 핵심 포인트</h4>
+                    <ul>
+                        <li>단순 나열 지양, 결함 조치·잔여 리스크 포함</li>
+                        <li>KPI 측정값과 카테고리별 통과율 제시</li>
+                        <li>배포 Go/No-Go 판정 근거 명시</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="new-example-box">
+                <h4>ARES 적용 사례 - STR v1.0 템플릿</h4>
+                <ul>
+                    <li>TCL v1.0 98 케이스 실행 후 Pass/Fail/미수행을 카테고리별로 집계</li>
+                    <li>KPI 5개 항목(명령 간격·처리량·대칭·페어링·timeout)을 측정 기입</li>
+                    <li>High 이상 결함 0건 + Pass 90% 이상 + 프리셋 완주 시 배포 Go 판정</li>
+                </ul>
+            </div>
+            <div class="template-box">
+                <h4>문서 템플릿 요약</h4>
+                <table>
+                    <tr><th>개요·요약</th><td>수행 기간, 환경, 총 TC, Pass/Fail 비율</td></tr>
+                    <tr><th>KPI 측정</th><td>STP KPI 항목의 목표 / 측정 결과</td></tr>
+                    <tr><th>결함 통계</th><td>심각도별 결함 수 및 조치율</td></tr>
+                    <tr><th>주요 이슈</th><td>부팅 None 가드, 응답 정책, DC 대칭 등 핵심 점검 결과</td></tr>
+                    <tr><th>잔여 이슈</th><td>차기 이관 + 운영 우회</td></tr>
+                    <tr><th>최종 승인</th><td>Go/No-Go, 서명란</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <h2>3. 추적성 매트릭스 (소스 모듈 ↔ 테스트 카테고리)</h2>
+    <p>실제 소스 모듈과 TCL v1.0 카테고리를 연결하여, 회귀 시 어떤 케이스를 재수행해야 하는지 즉시 식별함</p>
+    <table>
+        <tr>
+            <th style="width:26%;">소스 모듈</th>
+            <th style="width:34%;">역할</th>
+            <th style="width:24%;">관련 TCL 카테고리</th>
+            <th style="width:16%;">핵심 검증</th>
+        </tr>
+        <tr><td>main.py / process_data.py</td><td>UART 루프, 명령 디스패치, 응답 정책</td><td>연결·시스템, BLE·파이프라인</td><td style="text-align:center;">TC-CONN, TC-BLE</td></tr>
+        <tr><td>commandexecutor.js</td><td>블록→명령, F&amp;F 분류, BATCH 직렬화</td><td>블록 엔진, BATCH</td><td style="text-align:center;">TC-BLK, TC-BAT</td></tr>
+        <tr><td>bluetooth.js / constants.js</td><td>BLE UUID, 청킹, 응답 매칭</td><td>BLE·파이프라인</td><td style="text-align:center;">TC-BLE</td></tr>
+        <tr><td>blocklyconfig.js</td><td>블록 정의, BATCH_FORBIDDEN_TYPES</td><td>BATCH, 블록 엔진</td><td style="text-align:center;">TC-BAT-003~005</td></tr>
+        <tr><td>wheel.py</td><td>연속회전 서보 휠 제어</td><td>서보 모터 휠</td><td style="text-align:center;">TC-SRV</td></tr>
+        <tr><td>dcmotor.py</td><td>dual PWM brake-modulated</td><td>DC 모터</td><td style="text-align:center;">TC-DCM</td></tr>
+        <tr><td>leds.py</td><td>LED 6개 PWM, 스와이프</td><td>LED 6개</td><td style="text-align:center;">TC-LED</td></tr>
+        <tr><td>ssd1306.py</td><td>OLED 128x64 표시</td><td>디스플레이 OLED</td><td style="text-align:center;">TC-OLED</td></tr>
+        <tr><td>buzzer.py</td><td>논블로킹 부저, halamadrid</td><td>소리·부저</td><td style="text-align:center;">TC-SND</td></tr>
+        <tr><td>gun.py</td><td>발사기 soft_start/fire_once</td><td>전투</td><td style="text-align:center;">TC-GUN</td></tr>
+        <tr><td>ultrasonic.py / magsensor.py</td><td>HC-SR04 거리, 디지털 자기</td><td>센서 입력</td><td style="text-align:center;">TC-SEN</td></tr>
+        <tr><td>system_config.py</td><td>설정 파일 영구 저장, 모듈 활성</td><td>설정·안정성</td><td style="text-align:center;">TC-SYS</td></tr>
+        <tr><td>hardware.py</td><td>모듈 싱글톤, None 가드</td><td>설정·안정성</td><td style="text-align:center;">TC-SYS-005</td></tr>
+        <tr><td>simulation.js, Sim_Parts/ (dispatch·movement·leds·oled·gun·rocket·traffic)</td><td>3D 시뮬레이터, simSink 명령 매핑, 4개 주제</td><td>시뮬레이터 3D</td><td style="text-align:center;">TC-SIM</td></tr>
+        <tr><td>Sim_Parts/, XML Presets/</td><td>시뮬레이터 씬, 전수/발사 프리셋</td><td>시뮬레이터·프리셋 E2E</td><td style="text-align:center;">TC-E2E</td></tr>
+    </table>
+
+    <h2>4. 운영 매뉴얼 (강사·교사용) 핵심 가이드</h2>
+    <p>실제 코드 특성상 유의해야 할 운영 지침을 강사/교사 매뉴얼에 포함함</p>
+    <ul>
+        <li><strong>분단별 순차 페어링</strong> : 다수 동시 페어링 시 BLE 혼선 - 기기 이름으로 구분하고 5명씩 순차 연결</li>
+        <li><strong>BATCH 안 SLEEP 누적 4초 이내</strong> : RESPONSE_TIMEOUT 5초 초과 시 timeout으로 오인 - 긴 대기는 BATCH 밖 SLEEP 블록 사용</li>
+        <li><strong>BATCH 금지 블록</strong> : 값반환(거리/자기/PING)·제어흐름(반복/조건/변수/함수)·batch 중첩은 넣을 수 없음</li>
+        <li><strong>하드웨어 사양 정정</strong> : LED는 6개, 자기센서는 디지털(1/0), 바퀴는 연속회전 서보 (각도 위치 제어 아님)</li>
+        <li><strong>설정 저장</strong> : SYS_SET은 ModelFactorySetting.txt에 저장되어 재부팅 후에도 유지 - 잘못 저장 시 파일을 메모장으로 수정</li>
+        <li><strong>수업 전 배터리 완충 점검</strong> : 전압 감시가 미구현(<code>get_battery_voltage()</code>가 항상 100)이라 방전 시 서보·모터가 조용히 약해질 수 있음 - 수업 시작 전 완충 확인 (STP 리스크 6)</li>
+        <li><strong>BLE 끊김 시 안전</strong> : 모터 구동 중 연결이 끊기면 실행이 중단되고 재연결 안내가 뜸 - 로버가 계속 움직이면 즉시 STOP_ALL 또는 Pico 전원 차단 (STP 리스크 7)</li>
+        <li><strong>시뮬레이터 활용</strong> : 하드웨어가 없거나 학교망에서 BLE가 막히면 Web/Sim_Parts로 블록-명령 경로를 먼저 검증</li>
+        <li><strong>비상 정지 범위</strong> : STOP_ALL/STOP은 ABORT_CMDS로 분류되어 진행 중인 타임드 동작(SERVO_t*/DC_t*/SLEEP)도 즉시 중단시킴 - 로버가 계속 움직이면 이 두 명령 중 하나로 즉시 정지 가능</li>
+    </ul>
+
+</div>
+
+</body>
+</html>

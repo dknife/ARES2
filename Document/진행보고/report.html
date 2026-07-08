@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~9일차</title>
+    <title>ARES 진행 보고 — 1~11일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,7 +194,7 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 9일차</span></h1>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 11일차</span></h1>
             <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검.</p>
             <div class="stat-row">
                 <div class="stat"><b>9</b><span>DAYS</span></div>
@@ -283,10 +283,10 @@
         <section class="day">
             <div class="day-head">
                 <span class="live-badge">● LIVE</span>
-                <h2>배포된 웹 서비스 주요 기능</h2>
+                <h2>2025년 겨울·준비단계 구현 내용 — 배포된 웹 서비스</h2>
                 <span class="day-date"><a class="live-link" href="https://dknife.github.io/ARES2" target="_blank">dknife.github.io/ARES2</a></span>
             </div>
-            <p class="day-summary">GitHub Pages로 배포된 ARES 웹 서비스를 직접 구동하며 주요 기능을 점검했다. 설치 없이 브라우저만으로 <b>학습 콘텐츠 열람 · 블록 코딩 · 3D 시뮬레이션 · AI 도움 · 기기 모니터링</b>이 가능하다. 블록 1개가 명령 문자열로 변환돼 BLE로 로버에 전달되는 전체 경로를, 실물 기기 없이도 시뮬레이션으로 체험할 수 있다.</p>
+            <p class="day-summary">6월 현장 착수 이전 <b>2025년 겨울부터 준비단계</b>에 구현해 GitHub Pages로 배포한 ARES 웹 서비스다. 이후 1~11일차 현장 개발은 이 준비단계 결과물을 기반으로 진행됐다. 설치 없이 브라우저만으로 <b>학습 콘텐츠 열람 · 블록 코딩 · 3D 시뮬레이션 · AI 도움 · 기기 모니터링</b>이 가능하다. 블록 1개가 명령 문자열로 변환돼 BLE로 로버에 전달되는 전체 경로를, 실물 기기 없이도 시뮬레이션으로 체험할 수 있다.</p>
 
             <div class="tasks">
                 <h3>🚀 주요 기능 — 학습 관제실부터 3D 시뮬레이션까지</h3>
@@ -1813,11 +1813,237 @@ async _executeFunctionCall(callBlock) {
                 </ul>
             </div>
         </section>
+
+        <!-- ============ Day 10 ============ -->
+        <section class="day" id="day10">
+            <div class="day-head">
+                <span class="day-badge">DAY 10</span>
+                <h2>UI 정비 · 블록코딩 화면 개선 · 시뮬레이터 오브젝트 편집 · 교구/UI 디자인 · 브랜치 종합 병합</h2>
+                <span class="day-date">2026.07.06 (월) · 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">2주 중간 보고 이후, 컴퓨터실에서 <b>서비스 UI·시뮬레이터·디자인</b> 트랙을 병행하며 그동안 팀원 브랜치에 흩어져 있던 작업을 <b>main으로 종합 병합</b>했다. 서비스는 모바일 미션 UI·블록코딩 화면을 다듬고(<code>ui_07_06</code>), <b>폰트를 웹 최적화</b>(원본 TTF → 서브셋 woff2, 로딩 폰트 약 11MB → 3.9MB)했으며, 개요 차시 아코디언에서 <b>미션 제목이 차시 제목보다 커 보이던 위계 결함</b>을 바로잡았다. 시뮬레이터는 팀원 두 브랜치를 합쳐 <b>오브젝트 우클릭 생성·상속·삭제</b>와 <code>Sim_Parts</code> 리팩터(<code>Jihun</code>), <b>LED 중복 기능 통합</b>(<code>Simulation_LeeMinhyuck</code>)을 반영했다. 디자인은 Illustrator로 <b>차시 흐름 원형 번호카드('준비·탐사·채굴') 시안</b>을 다듬고, 화성발사대 크림슨 외장 부품을 병행 정리했다. 모든 병합은 헤드리스 브라우저로 모듈 로드·화면 렌더를 검증한 뒤 <b>main에 push</b>했다.</p>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_개발현장1.jpg" alt="개발 현장 — 코드 편집·병합">
+                        <span class="time">13:17</span></div>
+                    <figcaption>개발 현장 — 코드 편집과 브랜치 병합 작업을 진행하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_개발현장2.jpg" alt="컴퓨터실 전경">
+                        <span class="time">13:17</span></div>
+                    <figcaption>컴퓨터실 전경 — 팀이 서비스·시뮬레이터·디자인 트랙을 병행 개발하고 있다.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_개발현장3.jpg" alt="서비스·교구 병행 점검">
+                        <span class="time">13:17</span></div>
+                    <figcaption>서비스 화면과 실물 교구를 함께 놓고 병행 점검하는 모습.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 서비스 UI — 블록코딩 화면 개선 · 폰트 웹 최적화 · 제목 위계 수정</h3>
+                <p class="lead">모바일 미션 UI와 <b>블록코딩 화면</b>을 다듬은 팀원 브랜치(<code>ui_07_06</code>)를 병합하고, 서비스 폰트를 <b>웹 최적화</b>했다. 강원교육튼튼체에 쓰던 <b>서브셋+woff2</b> 방식을 본문(Noto Sans KR)·원형 숫자(VITRO Inspire)에도 적용했다.</p>
+                <div class="chips">
+                    <span class="chip">ui_07_06 병합</span>
+                    <span class="chip">woff2 서브셋(강원교육튼튼 방식 확장)</span>
+                    <span class="chip">원본 TTF 추적 해제</span>
+                    <span class="chip">차시 &gt; 미션 제목 위계</span>
+                    <span class="chip">.flow-num 중복 정리</span>
+                </div>
+                <ul>
+                    <li><b>폰트 최적화</b> — Noto Sans KR <b>10.4MB TTF → 3.9MB woff2</b>(무손실·가변 weight 축 유지), VITRO Inspire <b>557KB → 4.5KB</b>(숫자 서브셋). 원본 TTF는 추적 해제(로딩 폰트 약 <b>11MB → 3.9MB</b>).</li>
+                    <li><b>제목 위계 수정</b> — 개요 차시 아코디언에서 미션 제목이 <code>clamp(.84rem, 2.25vw, 1rem)</code>이라 넓은 화면일수록 차시 제목(.92rem)을 추월하던 문제를 <code>.8rem</code> 고정으로 바로잡고, 중복 정의된 원형 번호(<code>.flow-num</code>) 규칙을 정리했다.</li>
+                </ul>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_블록코딩1.jpg" alt="블록코딩 화면">
+                        <span class="time">13:17</span></div>
+                    <figcaption>블록코딩 화면 — 팔레트·블록·예제 선택·미션 전송(단일 woff2 폰트·8색 블록 팔레트).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_블록코딩2.jpg" alt="블록코딩 화면 실기 구동">
+                        <span class="time">13:17</span></div>
+                    <figcaption>블록코딩 화면 실기 구동 — 옆에 실물 교구를 놓고 병행 확인.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🧩 시뮬레이터 — 오브젝트 생성·상속·삭제 및 구조 리팩터 (팀 브랜치 종합)</h3>
+                <p class="lead">시뮬레이터 관련 팀원 두 브랜치를 <code>main</code>에 합쳤다. 두 브랜치 모두 main의 UI·폰트 변경과 <b>충돌 없이 자동 병합</b>됐고, 서비스가 시뮬레이터를 부르는 진입점(<code>setupSimulation</code>)의 계약이 유지됨을 헤드리스 로드로 확인했다.</p>
+                <div class="chips">
+                    <span class="chip">우클릭 오브젝트 생성·상속·삭제</span>
+                    <span class="chip">object_factory·sim_object 신규</span>
+                    <span class="chip">모놀리식 simulation.js 제거</span>
+                    <span class="chip">LED 중복 통합</span>
+                    <span class="chip">setupSimulation 계약 유지</span>
+                </div>
+                <ul>
+                    <li><b><code>Jihun</code></b> — 8·9일차의 객체 삽입·계층 편집을 발전시켜 씬에서 <b>우클릭 오브젝트 생성·상속·삭제</b>를 구현하고 <code>Sim_Parts</code>를 리팩터(신규 <code>object_factory.js</code>·<code>sim_object.js</code>·<code>Simulation_Base.js</code>, 모놀리식 잔재 <code>Web/simulation.js</code> 약 383줄 제거).</li>
+                    <li><b><code>Simulation_LeeMinhyuck</code></b> — <b>LED 중복 기능 통합</b>(<code>leds.js</code> 정리, 중복 <code>oled</code>·<code>topics</code> 코드 제거).</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>✏️ 교구·UI 디자인 — 차시 흐름 번호카드 시안 · 화성발사대 부품</h3>
+                <p class="lead">디자인 트랙은 Adobe Illustrator로 <b>학습 흐름을 나타내는 원형 번호카드</b>('1 준비 · 2 탐사 · 3 채굴')와 차시 번호(원형 숫자) 시안을 다듬었다 — 서비스 차시 아코디언의 원형 번호(VITRO Inspire)와 톤을 맞추기 위한 것이다. 아울러 6·9일차 방향을 이은 <b>화성발사대 크림슨(다크 레드) 외장 부품</b>을 작업대에 함께 놓고 디자인·조립 관점을 병행 점검했다.</p>
+                <div class="chips">
+                    <span class="chip">원형 번호카드(준비·탐사·채굴) 시안</span>
+                    <span class="chip">차시 번호(원형 숫자) 톤 통일</span>
+                    <span class="chip">화성발사대 크림슨 부품</span>
+                </div>
+            </div>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_디자인_번호카드.jpg" alt="원형 번호카드 시안">
+                        <span class="time">13:17</span></div>
+                    <figcaption>Illustrator — '준비·탐사·채굴' 원형 번호카드 시안(옆에 화성발사대 크림슨 부품).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/10일차_디자인작업.jpg" alt="디자인 작업">
+                        <span class="time">13:17</span></div>
+                    <figcaption>디자인 작업 — 번호카드 시안 편집과 화성발사대 크림슨 외장 부품 병행.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🔀 브랜치 종합 병합 — 흩어진 작업의 main 통합</h3>
+                <p class="lead">하루의 작업은 <b>네 갈래의 팀 작업을 하나의 <code>main</code>으로 합치는 종합 병합</b>으로 마무리했다. 각 병합은 병합 전 충돌·되돌림 위험을 점검하고, 헤드리스 브라우저로 모듈 로드·화면 렌더를 검증한 뒤 진행했다. 오늘 <code>main</code>에 반영된 병합·정비 내역은 다음과 같다.</p>
+                <ul>
+                    <li><b><code>ui_07_06</code> (병합)</b> — 모바일 미션 UI · 블록코딩 화면 개선 <i>· UI 정비 기반</i></li>
+                    <li><b>폰트 최적화 (커밋)</b> — TTF → 서브셋 woff2 · 원본 TTF 추적 해제 <i>· 로딩 11MB → 3.9MB</i></li>
+                    <li><b>UI 위계 수정 (커밋)</b> — 차시 &gt; 미션 제목 · <code>.flow-num</code> 정리 <i>· 아코디언 가독성</i></li>
+                    <li><b><code>Jihun</code> (병합)</b> — 오브젝트 생성·상속·삭제 · <code>Sim_Parts</code> 리팩터 <i>· 충돌 0</i></li>
+                    <li><b><code>Simulation_LeeMinhyuck</code> (병합)</b> — LED 중복 기능 통합 <i>· 충돌 0</i></li>
+                </ul>
+                <p>병합 뒤 접속 시 화면이 "불러오는 중…"에서 멈추는 현상이 있었으나, 캐시 없는 브라우저에서는 정상 렌더됨을 확인해 <b>브라우저 캐시 문제</b>로 판정했다(배포 시 캐시버스팅 버전 갱신 필요). 최종적으로 위 병합과 두 정비 커밋(폰트·UI)을 <b>origin/main에 push</b>했다. 남은 시뮬 계열 옛 브랜치(<code>Piiiiiiiico</code> 등)는 이미 main에 포함돼 별도 통합이 불필요함을 확인했다.</p>
+                <div class="chips">
+                    <span class="chip">4개 브랜치 → main</span>
+                    <span class="chip">충돌 없는 자동 병합</span>
+                    <span class="chip">헤드리스 렌더 검증</span>
+                    <span class="chip">origin/main push</span>
+                    <span class="chip">캐시버스팅 후속</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ Day 11 ============ -->
+        <section class="day" id="day11">
+            <div class="day-head">
+                <span class="day-badge">DAY 11</span>
+                <h2>교구 시제품 산업체 공동 점검 · 서비스 앱 디자인 점검 · 서비스 앱 동작 품질 테스트</h2>
+                <span class="day-date">2026.07.07 (화) · 산업체 방문 + 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">교구 제작 협력 업체를 다시 방문해 <b>시제품 교구를 산업체와 공동 점검</b>하고, 같은 자리에서 <b>서비스 앱 디자인을 현장 검토</b>했다. 3D 프린팅·레이저 커팅으로 제작한 <b>화성발사대 시제품</b>의 외장·내부 회로·배선·끼움 정밀도를 실물로 맞춰 보고, 스마트폰에서 서비스 앱을 함께 구동하며 미션·차시 UI와 동작을 검토했다. 컴퓨터실에서는 <b>서비스 앱 동작 품질 테스트</b>를 체계화해, <b>V-모델 기반 QA 체계</b>와 <b>통합 테스트 케이스 명세서 v1.0</b>(14개 카테고리·98개 실행형 케이스)를 작성하고 앱을 케이스별로 점검했다.</p>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_공동점검_현장.jpg" alt="산업체 공동 점검 현장"></div>
+                    <figcaption>산업체 미팅룸 — 교구 모델이 진열된 현장에서 시제품·서비스 앱을 함께 점검.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_동작테스트_수행.jpg" alt="컴퓨터실 동작 품질 테스트"></div>
+                    <figcaption>컴퓨터실 — 통합 테스트 케이스 명세서 기반으로 앱 동작 품질 테스트를 수행.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🔧 교구 시제품 — 산업체 공동 점검</h3>
+                <p class="lead">교구 제작 협력 업체를 방문해 <b>화성발사대 시제품</b>을 <b>산업체와 함께 점검</b>했다. 6·9·10일차에서 다듬어 온 <b>크림슨 외장 + 3D 프린팅 발사대 부품</b>과 내부 <b>회로 기판·배선·LED</b>를 실물로 펼쳐 놓고, 부품 끼움 정밀도·조립성·배선 정리·전원/LED 동작을 하나씩 맞춰 보며 양산 관점의 개선점을 논의했다.</p>
+                <div class="chips">
+                    <span class="chip">화성발사대 시제품</span>
+                    <span class="chip">크림슨 외장 + 3D 프린팅 부품</span>
+                    <span class="chip">회로·배선·LED 점검</span>
+                    <span class="chip">끼움 정밀도·조립성·양산성</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_공동점검_검토.jpg" alt="시제품·앱 공동 검토"></div>
+                    <figcaption>시제품 교구와 서비스 앱을 함께 놓고 산업체·개발팀이 공동 검토.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_교구부품.jpg" alt="화성발사대 부품"></div>
+                    <figcaption>화성발사대 부품 — 외장·회로 기판(LED 점등)·배선·3D 프린팅 베이스의 조립성 확인.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 서비스 앱 — 디자인 현장 점검</h3>
+                <p class="lead">같은 자리에서 <b>서비스 앱 디자인을 현장 검토</b>했다. 스마트폰에서 앱을 구동해 <b>학습 관제실(차시·미션)·미션 화면·블록코딩</b>의 화면 구성과 조작 흐름을 산업체·개발팀이 함께 보며, 교구(실물)와 앱(화면)의 연계·일관성 관점에서 개선점을 도출했다.</p>
+                <div class="chips">
+                    <span class="chip">스마트폰 실기 검토</span>
+                    <span class="chip">관제실·미션·블록코딩 화면</span>
+                    <span class="chip">교구↔앱 연계·일관성</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_앱디자인점검.jpg" alt="서비스 앱 디자인 점검"></div>
+                    <figcaption>스마트폰 서비스 앱 화면을 함께 보며 디자인·동작을 현장 검토.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🔘 서비스 앱 — 맥락 인지형 중앙 버튼 UI</h3>
+                <p class="lead">서비스 앱 하단 <b>중앙 버튼</b>을 <b>맥락 인지형(context-aware)</b>으로 구현했다. 같은 자리의 버튼 하나가 <b>사용자의 상황(화면 모드·연결 상태·실행 여부)에 따라 색·아이콘·라벨·동작을 스스로 바꿔</b> 그때 필요한 조작만 노출한다 — 연결이 안 됐으면 실행 대신 연결을, 시뮬레이션은 연결 없이 모의실행을 안내한다.</p>
+                <div class="chips">
+                    <span class="chip">상황별 자동 전환</span>
+                    <span class="chip">신호연결↔연결됨</span>
+                    <span class="chip">실행↔비상정지</span>
+                    <span class="chip">모의실행↔실험중단</span>
+                    <span class="chip">연결 없이 시뮬</span>
+                </div>
+                <ul>
+                    <li><b>미연결</b> — 빨강 ‘신호연결’(링크). 누르면 탐사선 연결 시도.</li>
+                    <li><b>연결됨</b>(비코딩) — 초록 ‘연결됨’.</li>
+                    <li><b>코딩·연결</b> — 골드(#E6AD00) ‘실행’(재생). 블록을 로버로 전송. 미연결이면 ‘신호연결’로 표시(실행 불가).</li>
+                    <li><b>코딩 실행 중</b> — #B94A45 ‘비상정지’(정지). 누르면 즉시 정지(STOP_ALL).</li>
+                    <li><b>시뮬레이션</b> — 연결 없이 블루(#3F78A8) ‘모의실행’(재생).</li>
+                    <li><b>시뮬 실행 중</b> — #B94A45 ‘실험중단’(정지). 누르면 시뮬 중지.</li>
+                </ul>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_맥락버튼_상태.png" alt="맥락 인지 버튼 6가지 상태"></div>
+                    <figcaption>상황별 6가지 상태 — 신호연결·연결됨·실행·모의실행·비상정지·실험중단(화면 캡처).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_맥락버튼_실사용.jpg" alt="맥락 인지 버튼 실사용"></div>
+                    <figcaption>실사용 — 시뮬레이션 모드에서 ‘모의실행’ 실기 구동(동영상 발췌; 촬영 시점 색상).</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>✅ 서비스 앱 — 동작 품질 테스트 (QA 체계·통합 테스트 명세서)</h3>
+                <p class="lead">컴퓨터실에서 <b>서비스 앱 동작 품질 테스트</b>를 체계화했다. <b>V-모델 기반 QA 체계</b>(요구사항 분석 → 시스템 설계 → 상세 설계 → 구현 → 단위/통합/시스템/인수 테스트)와 역할(R&amp;R)을 정리한 <b>품질 보증 명세서</b>를 작성하고, 이를 근거로 <b>통합 테스트 케이스 명세서 v1.0</b>(<b>14개 카테고리·98개 실행형 케이스</b>)을 도출했다. 케이스는 Pico 펌웨어 10개 모듈·Web 블록코딩 실행엔진·3D 시뮬레이터·XML Presets를 전수 분석해 실제 코드의 명령·블록 흐름에 대응시켜 Pass/Fail 기준과 함께 서술했고, 시뮬레이터로 실물 기기 없이도 케이스를 실행·검증할 수 있게 했다.</p>
+                <div class="chips">
+                    <span class="chip">V-모델 QA 체계·R&amp;R</span>
+                    <span class="chip">품질 보증 명세서 v1.0</span>
+                    <span class="chip">통합 테스트 케이스 98건</span>
+                    <span class="chip">펌웨어·웹·시뮬·프리셋 전수 대응</span>
+                    <span class="chip">Pass/Fail 기준·시뮬 검증</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_동작테스트_명세서.jpg" alt="통합 테스트 케이스 명세서"></div>
+                    <figcaption>통합 테스트 케이스 명세서 v1.0 — 14개 카테고리·98개 실행형 케이스.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/11일차_QA체계.png" alt="QA 체계 V-모델"></div>
+                    <figcaption>품질 보증(QA) 체계 — V-모델 기반 테스트 전략과 R&amp;R 시각화.</figcaption>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 86매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 102매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->

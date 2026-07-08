@@ -61,13 +61,13 @@
             <button id="simToggle" class="nav-btn" type="button" hidden aria-pressed="false" title="3D 시뮬레이션 열기/닫기">시뮬레이션</button>
             <select id="exampleSelect" title="예제 불러오기" disabled>
                 <option value="">예제</option>
-                <option value="greeting">👋 인사하기</option>
-                <option value="countdown">⏰ 카운트다운</option>
-                <option value="radar_demo">📡 레이더 데모</option>
-                <option value="albi_song">🎵 알비의 노래</option>
-                <option value="led_variable">🔢 변수로 LED 켜기</option>
-                <option value="obstacle_avoid">🚧 장애물 피하기</option>
-                <option value="rover_wakeup">🤖 로버 깨우기</option>
+                <option value="greeting">&nbsp;👋&nbsp; 인사하기</option>
+                <option value="countdown">&nbsp;⏰&nbsp; 카운트다운</option>
+                <option value="radar_demo">&nbsp;📡&nbsp; 레이더 데모</option>
+                <option value="albi_song">&nbsp;🎵&nbsp; 알비의 노래</option>
+                <option value="led_variable">&nbsp;🔢&nbsp; 변수로 LED 켜기</option>
+                <option value="obstacle_avoid">&nbsp;🚧&nbsp; 장애물 피하기</option>
+                <option value="rover_wakeup">&nbsp;🤖&nbsp; 로버 깨우기</option>
             </select>
             <button id="aiHelpButton" class="nav-btn" type="button" hidden title="하고 싶은 일을 자연어로 적으면 블록을 만들어 줘요">🤖 AI 도움</button>
             <span id="breadcrumb" aria-live="polite"></span>
@@ -107,13 +107,13 @@
                     <span id="codingMissionLabel" aria-live="polite"></span>
                     <select id="codingExampleSelect" title="예제 불러오기" aria-label="예제 불러오기">
                         <option value="">예제 선택</option>
-                        <option value="greeting">👋 인사하기</option>
-                        <option value="countdown">⏰ 카운트다운</option>
-                        <option value="radar_demo">📡 레이더 데모</option>
-                        <option value="albi_song">🎵 알비의 노래</option>
-                        <option value="led_variable">🔢 변수로 LED 켜기</option>
-                        <option value="obstacle_avoid">🚧 장애물 피하기</option>
-                        <option value="rover_wakeup">🤖 로버 깨우기</option>
+                        <option value="greeting">&nbsp;👋&nbsp; 인사하기</option>
+                        <option value="countdown">&nbsp;⏰&nbsp; 카운트다운</option>
+                        <option value="radar_demo">&nbsp;📡&nbsp; 레이더 데모</option>
+                        <option value="albi_song">&nbsp;🎵&nbsp; 알비의 노래</option>
+                        <option value="led_variable">&nbsp;🔢&nbsp; 변수로 LED 켜기</option>
+                        <option value="obstacle_avoid">&nbsp;🚧&nbsp; 장애물 피하기</option>
+                        <option value="rover_wakeup">&nbsp;🤖&nbsp; 로버 깨우기</option>
                     </select>
                 </div>
                 <aside id="missionPanel" class="mission-panel">
@@ -144,16 +144,17 @@
                 </aside>
                 <div class="mission-workspace">
                     <div id="blocklyDiv"></div>
+                    <div id="workspaceEmptyHint" class="workspace-empty-hint" aria-live="polite">
+                        <span class="workspace-empty-icon" aria-hidden="true">🧩</span>
+                        <span>블록을 끌어와<br>미션을 만들어보세요!</span>
+                    </div>
                     <!-- 툴박스 이미지 메뉴 아래 도구 버튼: UI 개편 전 상단에 있던 기능 복원 -->
                     <div id="toolboxActions" aria-label="미션 도구">
-                        <button type="button" class="tbx-action" data-action="run" title="미션 전송 — 블록 명령을 연결된 탐사선으로 보냅니다">
-                            <span class="tbx-ico">▶️</span><span class="tbx-lbl">미션<br>전송</span>
-                        </button>
                         <button type="button" class="tbx-action" data-action="save" title="미션 저장 — 현재 코드를 파일로 저장">
-                            <span class="tbx-ico">💾</span><span class="tbx-lbl">미션<br>저장</span>
+                            <span class="tbx-ico">💾</span><span class="tbx-lbl">미션저장</span>
                         </button>
                         <button type="button" class="tbx-action" data-action="load" title="미션 읽기 — 저장된 코드 파일 불러오기">
-                            <span class="tbx-ico">📂</span><span class="tbx-lbl">미션<br>읽기</span>
+                            <span class="tbx-ico">📂</span><span class="tbx-lbl">미션읽기</span>
                         </button>
                     </div>
                 </div>
@@ -189,9 +190,9 @@
                                 <button id="simObstacle" class="sim-launch-btn" data-action="obstacle" type="button"><span class="dot"></span>장애물 제거</button>
                             </div>
                         </div>
-                        <!-- 실행/중지 + 로그 지우기: 렌더링 창 안 하단에 띄운다 -->
+                        <!-- 시뮬 실행/중지는 하단 중앙 '모의실행' 버튼으로 통합(중앙 버튼이 toggleSimRun 호출).
+                             로그 지우기만 렌더링 창 안 하단에 남긴다. -->
                         <div class="sim-runbar">
-                            <button id="simRun" type="button" title="블록 명령을 피코로 보내는 과정을 시뮬레이션">▶ 시뮬레이션 해보기</button>
                             <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
                         </div>
                         <p class="sim-hint" id="simHint">로봇: 끌어서 회전 · 휠: 확대 · LED 버튼으로 눈·가슴 켜고 끄기</p>
