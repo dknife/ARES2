@@ -381,13 +381,14 @@ function createDcComponent(ctx, fields = {}) {
 }
 
 // ============================================================
-// Servo — { wheel: left|right, axis_rotation?, axis_direction?, axis_turn? }
+// Servo — { wheel: left|right|neutral, axis_rotation?, axis_direction?, axis_turn? }
 //   전진: left=반시계/right=시계 스핀. 좌회전: left=시계/right=반시계 스핀 + 몸체 반시계.
 //   우회전: 반대. (SIMULATOR.md 2장)
 // ============================================================
 function createServoComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
-  const wheel = fields.wheel === 'right' ? 'right' : 'left';
+  // left/right = 차동 좌우 바퀴, neutral = 어느 쪽도 아님(전진=반시계, 선회 차동 스핀 없음)
+  const wheel = fields.wheel === 'right' ? 'right' : (fields.wheel === 'neutral' ? 'neutral' : 'left');
   const axisRot = fieldVec(THREE, fields.axis_rotation);
   const axisDir = fieldVec(THREE, fields.axis_direction);
   const axisTurn = fieldVec(THREE, fields.axis_turn);
@@ -432,13 +433,16 @@ function createServoComponent(ctx, fields = {}) {
     update(dt, _c, simObject) {
       const root = simObject.root;
       // 축 방향(스핀·이동·선회)은 부모 좌표계, 기준점 오프셋만 객체 로컬(규약 2026-07-09 개정)
+      // 스핀 부호: 전진 시 left·neutral=반시계(+)/right=시계(−),
+      //           선회 시 left=시계/right=반시계 차동, neutral 은 차동 스핀 없음
       if (move !== 0) {
-        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt, rotOffset);
+        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'right' ? -1 : 1) * move * SPIN * dt, rotOffset);
         // position 은 부모 좌표이므로 부모축 그대로 더한다 — 바퀴가 스핀 중이어도 직진이 유지된다
         if (axisDir) root.position.addScaledVector(axisDir, move * MOVE * dt);
       }
       if (turn !== 0) {
-        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt, rotOffset);
+        const turnSpin = wheel === 'left' ? -1 : (wheel === 'right' ? 1 : 0);
+        if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * SPIN * dt, rotOffset);
         if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * TURN * dt, turnOffset);
       }
     },

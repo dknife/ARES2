@@ -17,7 +17,7 @@ const FIELD_SPECS = {
     { key: 'axis_translate', label: 'DC 이동축 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '이동축', def: '', kind: 'vec', optional: true },
   ],
   Servo: [
-    { key: 'wheel', label: '바퀴연결 (left/right)', short: '바퀴', def: 'left', kind: 'side' },
+    { key: 'wheel', label: '바퀴연결 (left/right/neutral — neutral 은 전진=반시계, 선회 차동 없음)', short: '바퀴', def: 'left', kind: 'side' },
     { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '스핀축', def: '1,0,0', kind: 'vec', optional: true },
     { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (객체 로컬 좌표, 체크 해제=원점)', short: '스핀 기준', def: '', kind: 'vec', optional: true },
     { key: 'axis_direction', label: '이동 방향 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '이동 방향', def: '', kind: 'vec', optional: true },
@@ -204,7 +204,10 @@ export class EditorControls {
         return;
       }
       if (spec.kind === 'int') fields[spec.key] = Math.max(0, Math.min(5, parseInt(raw, 10) || 0));
-      else if (spec.kind === 'side') fields[spec.key] = raw.toLowerCase() === 'right' ? 'right' : 'left';
+      else if (spec.kind === 'side') {
+        const side = raw.toLowerCase();
+        fields[spec.key] = side === 'right' ? 'right' : (side === 'neutral' ? 'neutral' : 'left');
+      }
       else {
         const v = parseVecStr(raw);
         if (!v) return;                                  // 형식 오류 → 중단
@@ -452,12 +455,12 @@ export class EditorControls {
         } else if (spec.kind === 'side') {
           const select = document.createElement('select');
           select.dataset.field = spec.key;
-          ['left', 'right'].forEach((side) => {
+          ['left', 'right', 'neutral'].forEach((side) => {
             const o = document.createElement('option');
             o.value = side; o.textContent = side;
             select.appendChild(o);
           });
-          select.value = value === 'right' ? 'right' : 'left';
+          select.value = ['right', 'neutral'].includes(value) ? value : 'left';
           row.appendChild(select);
         } else {   // int
           const input = document.createElement('input');
@@ -492,7 +495,8 @@ export class EditorControls {
           }
           fields[spec.key] = raw.map((v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; });
         } else if (spec.kind === 'side') {
-          fields[spec.key] = sec.querySelector(`[data-field="${spec.key}"]`)?.value === 'right' ? 'right' : 'left';
+          const side = sec.querySelector(`[data-field="${spec.key}"]`)?.value;
+          fields[spec.key] = ['right', 'neutral'].includes(side) ? side : 'left';
         } else {
           const v = parseInt(sec.querySelector(`[data-field="${spec.key}"]`)?.value, 10);
           fields[spec.key] = Math.max(0, Math.min(5, Number.isFinite(v) ? v : 0));
