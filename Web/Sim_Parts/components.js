@@ -371,9 +371,10 @@ function createDcComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       if (!dir) return;
-      // 축 방향은 부모 좌표계, 기준점·이동축은 객체 로컬 좌표계(규약 2026-07-09)
+      // 축 방향(회전·이동)은 부모 좌표계, 기준점 오프셋만 객체 로컬(규약 2026-07-09 개정)
       if (axisRot) rotateAboutParentAxis(THREE, simObject.root, axisRot, dir * speed * ROT_SPEED * dt, rotOffset);
-      if (axisMove) simObject.root.translateOnAxis(axisMove, dir * speed * MOVE_SPEED * dt);
+      // position 은 부모 좌표이므로 부모축 그대로 더하면 된다(자기 회전·스핀과 무관)
+      if (axisMove) simObject.root.position.addScaledVector(axisMove, dir * speed * MOVE_SPEED * dt);
     },
     dispose() { stop(); },
   };
@@ -430,10 +431,11 @@ function createServoComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       const root = simObject.root;
-      // 축 방향은 부모 좌표계, 기준점·이동 방향은 객체 로컬 좌표계(규약 2026-07-09)
+      // 축 방향(스핀·이동·선회)은 부모 좌표계, 기준점 오프셋만 객체 로컬(규약 2026-07-09 개정)
       if (move !== 0) {
         if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt, rotOffset);
-        if (axisDir) root.translateOnAxis(axisDir, move * MOVE * dt);
+        // position 은 부모 좌표이므로 부모축 그대로 더한다 — 바퀴가 스핀 중이어도 직진이 유지된다
+        if (axisDir) root.position.addScaledVector(axisDir, move * MOVE * dt);
       }
       if (turn !== 0) {
         if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? -1 : 1) * turn * SPIN * dt, rotOffset);
@@ -532,7 +534,7 @@ function makeSmokeTexture(THREE) {
 
 function createGunComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
-  // propel/explosion 은 로컬 좌표계(규약 개정) — 발사 시점의 객체 방향을 따른다
+  // propel 은 상위(부모) 좌표계 축, explosion 은 객체 로컬 점(규약 2026-07-09 개정)
   const propel = fieldVec(THREE, fields.propel_direction) || new THREE.Vector3(0, 0, 1);
   const expl = fieldVec(THREE, fields.explosion, { normalize: false });
   const FLY_SPEED = 6.0;    // m/s ("빠르게 이동")
@@ -578,10 +580,12 @@ function createGunComponent(ctx, fields = {}) {
       }
       if (cmd !== 'GUN_FIRE' && !cmd.startsWith('GUN_FIRE,')) return null;
       ctx.scene.updateMatrixWorld(true);
-      // 로컬 발사 방향을 발사 시점의 월드 방향으로 변환
-      const dirWorld = propel.clone()
-        .applyQuaternion(simObject.root.getWorldQuaternion(new THREE.Quaternion()))
-        .normalize();
+      // 발사 방향은 상위(부모) 좌표계 기준 — 자기 회전(스핀 등)과 무관하게
+      // 발사 시점의 부모 자세를 월드로 변환해 적용한다
+      const parentObj = simObject.root.parent;
+      const dirWorld = propel.clone();
+      if (parentObj) dirWorld.applyQuaternion(parentObj.getWorldQuaternion(new THREE.Quaternion()));
+      dirWorld.normalize();
       if (!home) home = simObject.root.position.clone();   // 복귀 지점은 첫 발사 직전 위치
       flight = { vel: dirWorld.multiplyScalar(FLY_SPEED), age: 0 };
       if (expl) spawnSmoke(localOffsetToWorld(THREE, simObject.root, expl));

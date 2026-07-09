@@ -14,20 +14,20 @@ const FIELD_SPECS = {
   DC: [
     { key: 'axis_rotation', label: 'DC 회전축 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '회전축', def: '0,1,0', kind: 'vec', optional: true },
     { key: 'rotation_offset', label: '회전 기준점 오프셋 x,y,z (객체 로컬 좌표, 체크 해제=원점)', short: '회전 기준', def: '', kind: 'vec', optional: true },
-    { key: 'axis_translate', label: 'DC 이동축 x,y,z (로컬, 체크 해제=미사용)', short: '이동축', def: '', kind: 'vec', optional: true },
+    { key: 'axis_translate', label: 'DC 이동축 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '이동축', def: '', kind: 'vec', optional: true },
   ],
   Servo: [
     { key: 'wheel', label: '바퀴연결 (left/right)', short: '바퀴', def: 'left', kind: 'side' },
     { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '스핀축', def: '1,0,0', kind: 'vec', optional: true },
     { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (객체 로컬 좌표, 체크 해제=원점)', short: '스핀 기준', def: '', kind: 'vec', optional: true },
-    { key: 'axis_direction', label: '이동 방향 x,y,z (로컬, 체크 해제=미사용)', short: '이동 방향', def: '', kind: 'vec', optional: true },
+    { key: 'axis_direction', label: '이동 방향 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '이동 방향', def: '', kind: 'vec', optional: true },
     { key: 'axis_turn', label: '선회축 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '선회축', def: '', kind: 'vec', optional: true },
     { key: 'turn_offset', label: '선회축 기준점 오프셋 x,y,z (객체 로컬 좌표, 체크 해제=원점)', short: '선회 기준', def: '', kind: 'vec', optional: true },
   ],
   UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', short: 'ray 방향', def: '0,0,1', kind: 'vec' }],
   Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', short: '감지점', def: '0,0,0', kind: 'vec' }],
   Gun: [
-    { key: 'propel_direction', label: '발사 방향 x,y,z', short: '발사 방향', def: '0,0,1', kind: 'vec' },
+    { key: 'propel_direction', label: '발사 방향 x,y,z (부모 좌표계)', short: '발사 방향', def: '0,0,1', kind: 'vec' },
     { key: 'explosion', label: '연기 발생점 오프셋 x,y,z (체크 해제=미사용)', short: '연기점', def: '', kind: 'vec', optional: true },
   ],
 };
