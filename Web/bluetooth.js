@@ -14,6 +14,8 @@ export const BluetoothManager = {
     _boundHandleRxData: null,
     _boundOnDeviceDisconnected: null,
     _sendQueue: Promise.resolve(),
+    _abortCurrentWrite: false,
+    _sendEpoch: 0,
 
     // 연결
     async connect() {
@@ -532,6 +534,31 @@ export const BluetoothManager = {
         reject(new Error(`${reason || '취소됨'}: ${command || ''}`));
     },
 
+    // 비상정지는 일반 명령 큐를 기다리면 안 된다. 현재 응답 대기와 멀티 청크
+    // 전송을 끊도록 표시한 뒤 STOP_ALL을 우선 전송한다.
+    async emergencyStop(command = 'STOP_ALL') {
+        this._abortCurrentWrite = true;
+        this._sendEpoch++;
+        this.cancelPendingResponse('비상정지');
+        this._sendQueue = Promise.resolve();
+
+        try {
+            let lastError = null;
+            for (let attempt = 0; attempt < 10; attempt++) {
+                try {
+                    await this._sendDataNow(command, false, null, { priority: true });
+                    return;
+                } catch (error) {
+                    lastError = error;
+                    await this.delay(50);
+                }
+            }
+            throw lastError;
+        } finally {
+            this._abortCurrentWrite = false;
+        }
+    },
+
     // 응답 타임아웃 계산. 펌웨어가 blocking 처리하는 시간지정 명령
     // (SERVO_t*/DC_t*/SLEEP/BATCH/SING)은 동작이 끝난 뒤에야 ack를 보내므로
     // 예상 소요시간을 기본 타임아웃에 더한다. (5초 넘는 이동이 항상
@@ -570,13 +597,26 @@ export const BluetoothManager = {
 
     // 데이터 전송
     async sendData(data, waitForResponse = false, timeoutMs = null) {
-        const sendTask = () => this._sendDataNow(data, waitForResponse, timeoutMs);
+        const epoch = this._sendEpoch;
+        const sendTask = () => {
+            if (epoch !== this._sendEpoch) {
+                throw new Error('비상정지로 대기 중인 전송을 취소했습니다.');
+            }
+            return this._sendDataNow(data, waitForResponse, timeoutMs, { epoch });
+        };
         const queuedSend = this._sendQueue.then(sendTask, sendTask);
         this._sendQueue = queuedSend.catch(() => {});
         return queuedSend;
     },
 
-    async _sendDataNow(data, waitForResponse = false, timeoutMs = null) {
+    async _sendDataNow(data, waitForResponse = false, timeoutMs = null, options = {}) {
+        if (options.epoch !== undefined && options.epoch !== this._sendEpoch) {
+            throw new Error('비상정지로 현재 전송을 중단했습니다.');
+        }
+        if (this._abortCurrentWrite && !options.priority) {
+            throw new Error('비상정지로 현재 전송을 중단했습니다.');
+        }
+
         if (!state.characteristic) {
             throw new Error('BLE 장치에 연결되어 있지 않습니다.');
         }
@@ -622,6 +662,13 @@ export const BluetoothManager = {
           state.characteristic.properties.writeWithoutResponse;
         try {
             for (let i = 0; i < encodedData.length; i += BLUETOOTH_CONFIG.MAX_CHUNK_SIZE) {
+                if (options.epoch !== undefined && options.epoch !== this._sendEpoch) {
+                    throw new Error('비상정지로 현재 전송을 중단했습니다.');
+                }
+                if (this._abortCurrentWrite && !options.priority) {
+                    throw new Error('비상정지로 현재 전송을 중단했습니다.');
+                }
+
                 const chunk = encodedData.slice(
                     i,
                     Math.min(i + BLUETOOTH_CONFIG.MAX_CHUNK_SIZE, encodedData.length)

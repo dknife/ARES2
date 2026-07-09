@@ -15,6 +15,7 @@ import { Simulation_AresRobot } from './Simulation_AresRobot.js';
 import { CommandExecutor } from '../commandexecutor.js';
 import { state } from '../state.js';
 import { serializeScene, applyScene, clearSpawnedObjects } from '../Sim_Parts/scene_store.js';
+import { attachComponent, detachComponent } from '../Sim_Parts/components.js';
 
 export class Simulation_Main {
   // Topic metadata and OLED icons constants
@@ -113,7 +114,9 @@ export class Simulation_Main {
         window.updateToolboxForActiveState();
       }
 
-      const cfg = TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC];
+      // 'scene:<id>'(저장된 씬)는 빈 씬을 기반으로 빌드하고, 로더가 객체를 채운다
+      const cfg = topicKey.startsWith('scene:') ? TOPICS.empty
+        : (TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC]);
       if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
       card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
       card.querySelectorAll('.sim-launch-led-btn').forEach((b) => b.classList.remove('on'));
@@ -201,7 +204,8 @@ export class Simulation_Main {
       <button type="button" data-dev="new">새 씬</button>
       <button type="button" data-dev="save">씬 저장</button>
       <button type="button" data-dev="load">씬 열기</button>`;
-    card.appendChild(devBar);
+    // 씬 이름 드롭다운 패널의 오른쪽 옆에 분리된 박스로 표시(개발자 모드 전용)
+    stage.appendChild(devBar);
 
     const devFileInput = document.createElement('input');
     devFileInput.type = 'file';
@@ -232,6 +236,33 @@ export class Simulation_Main {
         serialize: (opts) => serializeScene(sim.ctx, { topic: (sel && sel.value) || 'empty', ...opts }),
         apply: (json) => applyScene(sim.ctx, json),
         clear: () => clearSpawnedObjects(sim.ctx),
+        // 컴포넌트 부착/해제: id 로 객체를 찾는다(생략 시 현재 선택 객체)
+        attach: (type, fields, id) => attachComponent(sim.ctx, id
+          ? sim.ctx.objects.items.find((o) => o.id === id)
+          : sim.ctx.editor?.getSelectedSimObject(), type, fields || {}),
+        detach: (type, id) => detachComponent(sim.ctx, id
+          ? sim.ctx.objects.items.find((o) => o.id === id)
+          : sim.ctx.editor?.getSelectedSimObject(), type),
+        objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
+        state: (id) => {
+          const o = sim.ctx.objects.items.find((x) => x.id === id);
+          if (!o) return null;
+          const T = sim.ctx.THREE;
+          o.root.updateWorldMatrix(true, false);
+          const wp = o.root.getWorldPosition(new T.Vector3());
+          const ws = o.root.getWorldScale(new T.Vector3());
+          return {
+            pos: o.root.position.toArray(), quat: o.root.quaternion.toArray(),
+            scale: o.root.scale.toArray(), worldPos: wp.toArray(), worldScale: ws.toArray(),
+          };
+        },
+        setPos: (id, x, y, z) => {
+          const o = sim.ctx.objects.items.find((it) => it.id === id);
+          if (o) o.root.position.set(x, y, z);
+          return !!o;
+        },
+        sink: (cmd) => sim.simSink(cmd, false),
+        tick: (dt) => sim.ctx.objects.update(dt || 0.016),   // 수동 프레임 진행(테스트·콘솔용)
       } : undefined;
     };
 
@@ -305,8 +336,56 @@ export class Simulation_Main {
       if (f) devLoadScene(f);
     });
 
+    // ==== 저장된 씬 — 사용자도 읽을 수 있다(SIMULATOR.md 1장). scenes/manifest.json ====
+    let sceneManifest = [];
+    if (sel) {
+      fetch('scenes/manifest.json', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((m) => {
+          if (!m || !Array.isArray(m.scenes)) return;
+          sceneManifest = m.scenes;
+          m.scenes.forEach((s) => {
+            const o = document.createElement('option');
+            o.value = `scene:${s.id}`;
+            o.textContent = s.label || s.id;
+            sel.appendChild(o);
+          });
+        })
+        .catch(() => {});
+    }
+
+    const loadSavedScene = async (id) => {
+      const entry = sceneManifest.find((s) => s.id === id);
+      if (!entry) { logLine(`씬을 찾을 수 없습니다: ${id}`, 'err'); return; }
+      build(`scene:${id}`);
+      applyDevMode();
+      sim.resize();
+      cancelAnimationFrame(raf); loop();
+      try {
+        const res = await fetch(entry.file, { cache: 'no-store' });
+        const json = await res.json();
+        await applyScene(sim.ctx, json);
+        // 씬 전체가 보이도록 카메라 프레이밍
+        const T = sim.ctx.THREE;
+        const bb = new T.Box3();
+        sim.ctx.scene.updateMatrixWorld(true);
+        sim.ctx.objects.items.forEach((o) => bb.expandByObject(o.root));
+        if (!bb.isEmpty()) {
+          const size = bb.getSize(new T.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z, 1);
+          const fov = sim.ctx.camera.fov * Math.PI / 180;
+          sim.ctx.frame(Math.max(0.5, size.y * 0.55), (maxDim / 2) / Math.tan(fov / 2) * 1.9);
+        }
+        logLine(`씬 '${entry.label || id}' 로드 완료 (객체 ${json.objects.length}개)`, 'sys');
+      } catch (err) {
+        logLine('씬 로드 실패: ' + (err && err.message ? err.message : err), 'err');
+      }
+    };
+
     if (sel) sel.addEventListener('change', () => {
-      build(sel.value);
+      const v = sel.value;
+      if (v.startsWith('scene:')) { loadSavedScene(v.slice(6)); return; }
+      build(v);
       applyDevMode();   // 새 Context 의 editor 에 개발자 모드 상태 재적용
       sim.resize();
       cancelAnimationFrame(raf); loop();
@@ -464,6 +543,10 @@ export class Simulation_Main {
         simRunning = false;
         window.dispatchEvent(new CustomEvent('ares:simrun', { detail: { running: false } }));
         if (simAborted) {
+          // 컴포넌트 씬: 연속 명령(SERVO_FORWARD 등)으로 켜진 운동·LED 를 정지/소등
+          // (중단은 블록 실행만 끊으므로 컴포넌트 상태를 명시적으로 리셋해야 한다)
+          sim?.ctx?.objects?.routeCommand?.('STOP_ALL');
+          sim?.ctx?.objects?.routeCommand?.('LED_OFF,ALL');
           if (sim && sim.hasServo) sim.stopServo();
           if (sim) {
             if (sim.hasEyes) { sim.setEye('R', 0); sim.setEye('L', 0); }

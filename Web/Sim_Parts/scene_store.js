@@ -4,8 +4,9 @@
 // - 개발자 모드에서 스폰된 객체(spawned=true)만 직렬화한다.
 //   토픽이 만드는 기본 객체(알비 본체 등, spawned=false)는 topic 필드로 재현된다.
 
-import { createPrimitiveObject } from './object_factory.js';
+import { createPrimitiveObject, createGlbObject } from './object_factory.js';
 import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
+import { attachComponent, serializeComponents } from './components.js';
 
 export const SCENE_FORMAT_VERSION = 1;
 
@@ -19,7 +20,7 @@ export function serializeScene(ctx, { name = 'scene', topic = 'empty' } = {}) {
   // items 는 생성 순서라 부모가 자식보다 먼저 온다(스폰 구조상 보장).
   const objects = items.map((o) => {
     const parent = ctx.objects.getParentOf(o);
-    return {
+    const entry = {
       id: o.id,
       type: o.type === 'albi-body' ? 'albi' : o.type,
       label: o.label,
@@ -28,7 +29,10 @@ export function serializeScene(ctx, { name = 'scene', topic = 'empty' } = {}) {
       position: o.root.position.toArray(),
       quaternion: o.root.quaternion.toArray(),
       scale: o.root.scale.toArray(),
+      components: serializeComponents(o),
     };
+    if (o.type === 'glb' && o.metadata?.glbUrl) entry.url = o.metadata.glbUrl;
+    return entry;
   });
   return { version: SCENE_FORMAT_VERSION, name, unitScale: 1, topic, objects };
 }
@@ -63,6 +67,10 @@ export async function applyScene(ctx, json) {
       sim = list[0];
       ctx.objects.add(sim, parentRoot);
       list.slice(1).forEach((child) => ctx.objects.add(child, sim.root));
+    } else if (entry.type === 'glb') {
+      if (!entry.url) { console.warn('glb 노드에 url 이 없습니다:', entry.id); continue; }
+      sim = await createGlbObject(ctx, entry.url, entry.label);
+      ctx.objects.add(sim, parentRoot);
     } else {
       sim = createPrimitiveObject(ctx, entry.type);
       ctx.objects.add(sim, parentRoot);
@@ -75,6 +83,11 @@ export async function applyScene(ctx, json) {
     if (entry.position) sim.root.position.fromArray(entry.position);
     if (entry.quaternion) sim.root.quaternion.fromArray(entry.quaternion);
     if (entry.scale) sim.root.scale.fromArray(entry.scale);
+    // 선언형 컴포넌트 복원 (팩토리 기본 부착분은 동일 타입이면 덮어씀)
+    (entry.components || []).forEach(({ type, fields }) => {
+      try { attachComponent(ctx, sim, type, fields || {}); }
+      catch (err) { console.warn('컴포넌트 복원 실패:', type, err); }
+    });
     if (entry.id) byId.set(entry.id, sim);
   }
 
