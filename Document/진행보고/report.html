@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~12일차</title>
+    <title>ARES 진행 보고 — 1~13일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,13 +194,13 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 12일차</span></h1>
-            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검.</p>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 13일차</span></h1>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검, 시뮬레이터 씬 생성 도구·소프트웨어 테스트(STR), 씬 서비스 등록 체계, 교구 시제품 팀 조립·발사장치 검증.</p>
             <div class="stat-row">
-                <div class="stat"><b>9</b><span>DAYS</span></div>
-                <div class="stat"><b>39</b><span>PHOTOS</span></div>
+                <div class="stat"><b>13</b><span>DAYS</span></div>
+                <div class="stat"><b>119</b><span>PHOTOS</span></div>
                 <div class="stat"><b>18</b><span>LIVE SCREENS</span></div>
-                <div class="stat"><b>06.23~07.03</b><span>2026 · KST</span></div>
+                <div class="stat"><b>06.23~07.09</b><span>2026 · KST</span></div>
             </div>
         </div>
     </header>
@@ -2166,11 +2166,112 @@ async _executeFunctionCall(callBlock) {
                 </figure>
             </div>
         </section>
+
+        <!-- ============ DAY 13 ============ -->
+        <section class="day" id="day13">
+            <div class="day-head">
+                <span class="day-badge">DAY 13</span>
+                <h2>시뮬레이터 씬 도구 고도화·씬 서비스 등록 체계 · 교구 시제품 팀 조립과 발사장치 검증</h2>
+                <span class="day-date">2026.07.09 (목) · 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">오전에는 12일차에 구축한 <b>씬 생성 도구를 실사용하며 고도화</b>했다 — 객체 복제(Ctrl+V), 박스·구의 기본색/발광색 시스템(LED 밝기 보간), 회전축이 지나는 점을 화면에서 끌어 설정하는 <b>회전축 시각 편집</b>을 더했고, 회전 기준점 오프셋의 좌표계 규약을 <b>객체 로컬로 최종 확정</b>했다. 운영 측면에서는 개발자 모드에서 만든 씬을 <b>서비스 주제로 등록/제거</b>하는 체계(<code>scenes/manifest.json</code> 레지스트리)와 작업 씬 임시 보존을 갖춰, 첫 서비스 씬 <b>‘알비와 함께’(<code>albi_base</code>)를 실제 등록·배포</b>했다. 오후에는 팀 전체가 <b>교구 시제품(화성발사대) 조립·검증</b>을 진행했다 — 스티커 시트가 적용된 <b>완성형 시제품</b>이 조립되었고, 발사 장치가 동작하지 않던 문제를 <b>전원 출력 부족으로 진단</b>해 충전 후 정상 작동을 확인했으며, 펌웨어 후속 과제(<code>fire_once</code> DC 회전 시간 조정)와 저해상도 기기 대응 방침, 팀별 작품명을 확정했다.</p>
+
+            <div class="tasks">
+                <h3>🧰 시뮬레이터 — 씬 도구 고도화 (복제·색상·회전축 편집)</h3>
+                <p class="lead">개발자 모드에서 객체를 <b>Ctrl+V로 복제</b>하면 하위 객체·부착 컴포넌트·색상까지 재귀 복제된다. 박스·구는 <b>기본색/발광색</b>을 각각 [r,g,b,a]로 갖고 LED 밝기 t(0~1)에 따라 색·불투명도가 보간된다. 회전 컴포넌트(DC·Servo)를 가진 객체를 선택하면 화면의 <b>핸들(노란 구+축 라인)을 끌어 회전축이 지나는 점을 직접 설정</b>할 수 있으며, 이 과정에서 회전 기준점을 <b>객체 로컬 좌표의 점</b>으로 재정의해 회전 중 축이 흘러가던 결함을 수치 검증(드리프트 &lt;10⁻⁹m)과 함께 바로잡았다.</p>
+                <div class="chips">
+                    <span class="chip">객체 복제 Ctrl+V</span>
+                    <span class="chip">기본색/발광색 [r,g,b,a]</span>
+                    <span class="chip">LED 밝기 보간</span>
+                    <span class="chip">회전축 시각 편집</span>
+                    <span class="chip">회전 기준점 = 로컬 좌표 확정</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>🚀 씬 서비스 등록/제거 — manifest 레지스트리</h3>
+                <p class="lead">씬 제작이 파일 저장에 그치지 않고 <b>웹 서비스에 곧바로 반영되는 배포 행위</b>가 되도록 했다. <code>scenes/manifest.json</code>을 서비스 주제 레지스트리로 확장해 DEV 바에서 현재 씬을 <b>서비스 주제로 등록/제거</b>하고(File System Access로 폴더 직접 기록, 최초 1회만 폴더 선택), 기본 주제 숨김(<code>hiddenTopics</code>)도 manifest만으로 이뤄진다. 작업 씬은 화면 전환·새로고침 시 <b>localStorage에 자동 임시 보존</b>되어 “이어서 작업할까요?”로 복원된다. 이 체계로 첫 서비스 씬 ‘알비와 함께’(<code>albi_base</code>)를 등록·배포해 전 과정을 검증했고, 기존 하드코딩 주제 모델은 새 구조에 통합되지 않으므로 <b>모든 시뮬레이션 씬을 새 도구로 재제작</b>하기로 팀에 공지했다.</p>
+                <div class="chips">
+                    <span class="chip">씬 서비스 등록/제거</span>
+                    <span class="chip">manifest 레지스트리</span>
+                    <span class="chip">작업 씬 임시 보존</span>
+                    <span class="chip">albi_base 등록·배포</span>
+                    <span class="chip">씬 전면 재제작 방침</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>🔧 교구 시제품 — 팀 조립·부품 검증 (오후)</h3>
+                <p class="lead">팀 전체가 컴퓨터실에 모여 <b>화성발사대 시제품의 부품 확인과 조립</b>을 진행했다. 3D 프린팅 부품의 끼움새(내부 검정 패널 ↔ 크림슨 외장), 레이저컷 합판 내부 구조체와 트러스 타워·LED 링·로켓 결합을 실물로 맞춰 봤고, 12일차에 디자인한 <b>외부 스티커 시트가 적용된 완성형 시제품</b>(MARS EXPLORATION ARES LAUNCHER)까지 조립을 마쳤다. 조립 중 발견된 끼움·간섭 문제는 현장에서 논의해 해소했으며, 과정 전체를 <b>동영상 3편</b>으로 별도 기록했다.</p>
+                <div class="chips">
+                    <span class="chip">부품 끼움새 확인</span>
+                    <span class="chip">합판 구조체 + 트러스·LED</span>
+                    <span class="chip">스티커 적용 완성형</span>
+                    <span class="chip">조립 동영상 3편</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_부품확인.jpg" alt="3D 프린팅 부품 끼움새 확인"></div>
+                    <figcaption>3D 프린팅 부품 끼움새 확인 — 내부 검정 패널과 크림슨 외장.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_발사대_조립.jpg" alt="합판 구조체 조립"></div>
+                    <figcaption>레이저컷 합판 내부 구조체 + 트러스 타워·LED 링·로켓 조립.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_발사대_시제품.jpg" alt="스티커 적용 완성형 시제품"></div>
+                    <figcaption>외부 스티커 적용 완성형 시제품 — MARS EXPLORATION ARES LAUNCHER.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_조립작업.jpg" alt="팀 조립 작업"></div>
+                    <figcaption>팀 조립 작업·문제 논의 현장.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_통합점검_조립.jpg" alt="조립·동작 점검 병행"></div>
+                    <figcaption>조립·동작 점검 병행 — 자리마다 시제품을 놓고 확인.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_통합점검_현장.jpg" alt="통합 점검 현장"></div>
+                    <figcaption>통합 점검 현장 — 프로젝터에 상태 화면을 공유하며 진행.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>⚡ 발사 장치 검증 — 전원 출력 문제 진단·해결</h3>
+                <p class="lead">조립한 시제품에서 <b>발사 장치(총)가 동작하지 않는 현상</b>이 나왔다. 전력 문제 가설을 세워 <b>충분히 충전한 뒤 발사 지속시간(duration)을 길게 잡아</b> 재테스트한 결과 정상 작동을 확인했고, 원인을 <b>전기 출력(전원 부족)</b>으로 결론지었다. 펌웨어 후속 과제도 도출했다 — <code>Pico/gun.py</code>의 <code>fire_once(power, spin_time=0.22)</code>는 0.22초 동안 DC 모터를 돌려 1발을 발사하는데, DC 모터 총의 스펙이 정확하지 않아 <b>안정적인 한 바퀴 회전이 보장되지 않을 수 있어</b> 회전 시간을 여유 있게 늘리는 조정을 다음 날 피코 업로드로 점검하기로 했다.</p>
+                <div class="chips">
+                    <span class="chip">전원 출력 진단</span>
+                    <span class="chip">충전 후 정상 작동</span>
+                    <span class="chip">fire_once 회전시간 조정 과제</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 모바일 해상도 대응 · 작품명 확정</h3>
+                <p class="lead">UI 트랙은 이날 수정분을 <code>ui_07_06</code> 브랜치에 푸시했다(병합 대기). 기준 테스트 기기가 아이폰 14 Pro(2556×1179)였는데, 서비스 대상인 초등 1~6학년의 <b>보급형 기기(예: 갤럭시 A10, 1520×720)</b>에서도 화면이 맞아야 한다는 점검 요구가 나와 크롬 DevTools 기기 에뮬레이션·확장 도구로 <b>다기종 해상도 점검</b>을 진행하기로 했다. 아울러 팀별 <b>작품명을 확정</b>했다 — 「화성 탐사 미션형 ARES 학습 시뮬레이션」(시뮬레이션·펌웨어 트랙), 「ARES 미션 컨트롤 UX/UI 설계」(UI 트랙), 「ARES 화성 탐사 조립형 교구 디자인」(교구 디자인 트랙).</p>
+                <div class="chips">
+                    <span class="chip">갤럭시 A10 1520×720 대응</span>
+                    <span class="chip">DevTools 다기종 점검</span>
+                    <span class="chip">작품명 3건 확정</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_개발전경.jpg" alt="트랙별 개발·점검 전경"></div>
+                    <figcaption>트랙별 개발·점검 전경 — 시뮬레이터·UI·교구 작업 병행.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/13일차_원격모니터링.jpg" alt="서버·세션 상태 모니터링"></div>
+                    <figcaption>프로젝터 공유 — 서버·원격 세션 상태 모니터링.</figcaption>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 111매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 119매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌, 13일차 조립·점검 현장 8매는 현장 사진이며 조립 과정 3편은 동영상으로 별도 기록) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->

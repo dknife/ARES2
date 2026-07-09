@@ -131,7 +131,9 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{rulegray}\leaders\hrule height \headrulewidth\hfill}}
 \fancyhead[L]{\small\sffamily\color{deepblue}ARES 제품개발학기 진행 보고}
-\fancyhead[R]{\small\sffamily\color{rulegray}\leftmark}
+%% 우측(섹션 제목)이 길면 좌측 문서명과 겹치므로 폭을 제한해 말줄임 처리
+\usepackage{truncate}
+\fancyhead[R]{\small\sffamily\color{rulegray}\truncate{0.56\textwidth}{\leftmark}}
 \fancyfoot[C]{\small\thepage}
 
 %% ----- 박스 -----
