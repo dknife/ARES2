@@ -1,0 +1,47 @@
+# GitHub Pages 배포 — Actions 방식 (2026-07-09 전환)
+# 레거시 브랜치 빌드(Jekyll) 대신 저장소 스냅샷을 그대로 아티팩트로 배포한다.
+# - URL 구조는 기존과 동일(루트 index.html, Web/, Document/진행보고/report.html, Test/ ...)
+# - 대형 산출물(진행보고 PDF 등)은 애초에 커밋하지 않으므로(gitignore → checkout 에 없음)
+#   별도 제외 목록이 필요 없다. 새 폴더를 추가해도 자동 포함되어 조용한 404 가 없다.
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout (shallow)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Assemble site
+        run: |
+          mkdir -p /tmp/_site
+          rsync -a ./ /tmp/_site/ --exclude '.git' --exclude '.github'
+          touch /tmp/_site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/_site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
