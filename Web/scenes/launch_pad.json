@@ -1,0 +1,662 @@
+{
+  "version": 1,
+  "name": "발사대_제작",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "box-1",
+      "type": "box",
+      "label": "Box 1",
+      "parent": null,
+      "position": [
+        0,
+        0.332,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.2,
+          1,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-2",
+      "type": "box",
+      "label": "Box 2",
+      "parent": null,
+      "position": [
+        0.094728943788073,
+        0.890079496316766,
+        -0.05471130048429568
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2609022070707939,
+        1,
+        0.2537027402251567
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-3",
+      "type": "sphere",
+      "label": "Sphere 3",
+      "parent": null,
+      "position": [
+        -0.19550423385162596,
+        0.6907448178409925,
+        -0.05699035257168547
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.4319651666708978,
+        0.1883309990125632,
+        0.30109586918365666
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-4",
+      "type": "box",
+      "label": "RocketBody",
+      "parent": null,
+      "position": [
+        -0.192,
+        0.925,
+        -0.05
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.5,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "Gun",
+          "fields": {
+            "propel_direction": [
+              0,
+              1,
+              0
+            ],
+            "explosion": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-5",
+      "type": "sphere",
+      "label": "HeadRocket",
+      "parent": "box-4",
+      "position": [
+        0,
+        0.14994326921998913,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.10053557900399336,
+        0.38645775811678323,
+        0.14807305506312496
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-6",
+      "type": "sphere",
+      "label": "RocketWingL",
+      "parent": "box-4",
+      "position": [
+        -0.030035432457219097,
+        -0.058202386794187794,
+        0
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.101,
+        0.3008145294448014,
+        0.147914823714414
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-8",
+      "type": "sphere",
+      "label": "RocketWingR",
+      "parent": "box-4",
+      "position": [
+        0.026065320474438325,
+        -0.058202386794187794,
+        0
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.101,
+        0.3008145294448014,
+        0.147914823714414
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-10",
+      "type": "box",
+      "label": "Box 2_dup",
+      "parent": null,
+      "position": [
+        0,
+        0.328,
+        0.29224944551700394
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.261,
+        1,
+        0.254
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-11",
+      "type": "box",
+      "label": "Box 2_dup",
+      "parent": null,
+      "position": [
+        0.23357531972859502,
+        0.6842363310646774,
+        0.2369270418869137
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2609022070707939,
+        0.06372177375604551,
+        0.2537027402251567
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-12",
+      "type": "box",
+      "label": "AntennaDish",
+      "parent": null,
+      "position": [
+        0.23348951103224067,
+        0.8030000000000002,
+        0.24105217724971356
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.261,
+        0.16,
+        0.048
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-13",
+      "type": "box",
+      "label": "AntennaDish_dup",
+      "parent": null,
+      "position": [
+        0.23106904063942035,
+        0.743751159372464,
+        0.24105217724971356
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.028724141787381034,
+        0.16,
+        0.027698520998041265
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-14",
+      "type": "sphere",
+      "label": "Lamp",
+      "parent": null,
+      "position": [
+        0.088,
+        1.182,
+        0.026
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.3
+        ],
+        "emissive": [
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-15",
+      "type": "sphere",
+      "label": "Lamp_dup",
+      "parent": null,
+      "position": [
+        0.088,
+        1.063,
+        0.026
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.3
+        ],
+        "emissive": [
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-16",
+      "type": "sphere",
+      "label": "Lamp_dup_dup",
+      "parent": null,
+      "position": [
+        0.088,
+        0.947,
+        0.026
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 3
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.3
+        ],
+        "emissive": [
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-17",
+      "type": "sphere",
+      "label": "Lamp_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.088,
+        0.825,
+        0.026
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 4
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.3
+        ],
+        "emissive": [
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-18",
+      "type": "sphere",
+      "label": "Lamp_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.085,
+        0.712,
+        0.026
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 5
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.3
+        ],
+        "emissive": [
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ]
+}

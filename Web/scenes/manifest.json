@@ -8,6 +8,11 @@
       "id": "albi_base",
       "file": "scenes/albi_base.json",
       "label": "알비와함께"
+    },
+    {
+      "id": "launch_pad",
+      "file": "scenes/launch_pad.json",
+      "label": "발사대_제작"
     }
   ]
 }
