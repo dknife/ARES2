@@ -25,11 +25,50 @@ function forOwnMeshes(root, fn) {
 // ============================================================
 // LED — { led_no: 0~5 } : 해당 번호 LED 신호에 발광(emit)/소등
 // ============================================================
+const LED_LIGHT = { intensity: 2.5, distance: 5, decay: 2 };   // 점등 포인트 라이트 파라미터
+
 function createLedComponent(ctx, fields = {}) {
   const ledNo = Math.max(0, Math.min(5, parseInt(fields.led_no, 10) || 0));
   const saved = new Map();   // mesh -> { emissive, intensity }
+  let light = null;          // 점등 중에만 객체 중심에 존재하는 발광색 PointLight
+
+  // 포인트 라이트 색 = 객체 발광색. 색상 지원 객체는 metadata.colors.emissive,
+  // 그 외(GLB 등)는 setEmit 의 발광 규칙과 동일하게 첫 재질 고유색(어두우면 앰버).
+  const lightColorFor = (simObject) => {
+    const color = new ctx.THREE.Color(0xffbb33);
+    const glow = simObject.metadata?.colors?.emissive;
+    if (glow) {
+      color.setRGB(glow[0] ?? 1, glow[1] ?? 1, glow[2] ?? 1, 'srgb');
+      return color;
+    }
+    let found = null;
+    forOwnMeshes(simObject.root, (mesh) => {
+      if (found) return;
+      const m = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      if (m?.map) { found = new ctx.THREE.Color(0xffffff); return; }
+      if (m?.color && (m.color.r + m.color.g + m.color.b) > 0.05) found = m.color.clone();
+    });
+    return found || color;
+  };
+
+  // 발광 밝기에 맞춰 포인트 라이트를 생성/갱신하고, 소등(t=0)이면 제거한다.
+  const setLight = (simObject, t) => {
+    if (t > 0) {
+      if (!light) {
+        light = new ctx.THREE.PointLight(0xffffff, 0, LED_LIGHT.distance, LED_LIGHT.decay);
+        simObject.root.add(light);
+      }
+      light.color.copy(lightColorFor(simObject));
+      light.intensity = LED_LIGHT.intensity * t;
+    } else if (light) {
+      light.parent?.remove(light);
+      light.dispose?.();
+      light = null;
+    }
+  };
 
   const setEmit = (simObject, intensity) => {
+    setLight(simObject, Math.max(0, Math.min(1, intensity)));
     // 색상 지원 객체(박스·구): 밝기 t(0~1)로 기본색↔발광색을 보간한다.
     // t=0 → 기본색 그대로, t=1 → 발광색만 보임(확산색은 (1-t) 로 감쇠, 발광은 t 비율).
     const colors = simObject.metadata?.colors;
@@ -543,18 +582,22 @@ function createGunComponent(ctx, fields = {}) {
   const expl = fieldVec(THREE, fields.explosion, { normalize: false });
   const FLY_SPEED = 6.0;    // m/s ("빠르게 이동")
   const FLY_TIME = 1.2;     // s — 이 시간만큼 날아간 뒤 그 자리에 멈춘다
+  const RETURN_TIME = 1.0;  // s — SIM_END 후 이 시간에 걸쳐 원위치로 돌아온다
   const SMOKE_LIFE = 1.0;   // s
   let smokeTex = null;
   // 발사 = 다른 발사체를 만드는 것이 아니라 **자기 자신이** 발사 방향으로 날아간다.
   let flight = null;        // { vel(월드), age } — 비행 중 상태
   let home = null;          // 첫 발사 직전의 부모 기준 위치 — SIM_END 에 복귀
+  let returning = null;     // { from, age } — SIM_END 복귀 애니메이션 상태
   const smokes = [];        // { sprite, age, rise }
 
   const outFields = { propel_direction: [propel.x, propel.y, propel.z] };
   if (expl) outFields.explosion = [expl.x, expl.y, expl.z];
 
+  // 즉시 원위치 복귀 — 시뮬 재시작(SIM_START)·컴포넌트 해제 시 사용
   const restoreHome = (simObject) => {
     flight = null;
+    returning = null;
     if (!home) return;
     simObject.root.position.copy(home);
     home = null;
@@ -578,8 +621,13 @@ function createGunComponent(ctx, fields = {}) {
     fields: outFields,
     get isFlying() { return !!flight; },
     onCommand(cmd, _c, simObject) {
-      if (cmd === 'SIM_END') {           // 시뮬레이션 종료(자연 종료·실험중단) — 원위치 복귀
-        restoreHome(simObject);
+      if (cmd === 'SIM_END') {           // 시뮬레이션 종료(자연 종료·실험중단) — 1초에 걸쳐 원위치 복귀
+        flight = null;
+        if (home) returning = { from: simObject.root.position.clone(), age: 0 };
+        return null;
+      }
+      if (cmd === 'SIM_START') {         // 재시작 — 복귀 중이면 즉시 원위치로 스냅
+        if (returning || home) restoreHome(simObject);
         return null;
       }
       if (cmd !== 'GUN_FIRE' && !cmd.startsWith('GUN_FIRE,')) return null;
@@ -596,6 +644,14 @@ function createGunComponent(ctx, fields = {}) {
       return null;
     },
     update(dt, _ctx, simObject) {
+      if (returning) {
+        returning.age += dt;
+        const t = Math.min(1, returning.age / RETURN_TIME);
+        // smoothstep 감속 — 출발·도착이 부드럽다
+        const ease = t * t * (3 - 2 * t);
+        simObject.root.position.lerpVectors(returning.from, home, ease);
+        if (t >= 1) { home = null; returning = null; }
+      }
       if (flight) {
         flight.age += dt;
         if (flight.age >= FLY_TIME) {

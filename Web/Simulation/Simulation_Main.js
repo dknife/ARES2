@@ -745,6 +745,9 @@ export class Simulation_Main {
       if (!workspace) { logLine('워크스페이스가 준비되지 않았습니다', 'err'); return; }
       simRunning = true; simAborted = false;
       window.dispatchEvent(new CustomEvent('ares:simrun', { detail: { running: true } }));
+      // 시뮬 시작 브로드캐스트 — 이전 종료의 복귀 애니메이션이 진행 중이면
+      // 컴포넌트(Gun 등)가 즉시 원위치로 스냅해 깨끗한 상태로 시작한다.
+      sim?.ctx?.objects?.routeCommand?.('SIM_START');
       logLine('──── 시뮬레이션 시작 ────', 'sys');
       try {
         await CommandExecutor.simulateWorkspace(workspace, (cmd, waitResp) => sim.simSink(cmd, waitResp));

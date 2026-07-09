@@ -69,14 +69,18 @@ export class Context {
     key.castShadow = true;
     key.shadow.mapSize.set(4096, 4096);
     key.shadow.bias = -0.0003;
-    key.shadow.camera.left = -55;
-    key.shadow.camera.right = 55;
-    key.shadow.camera.top = 55;
-    key.shadow.camera.bottom = -55;
+    // 그림자 프러스텀은 좁게 유지해야 객체 사이 그림자가 선명하다(±55 였을 때는
+    // 텍셀이 ~2.7cm 라 작은 객체 그림자가 뭉개졌다). 좁힌 대신 매 프레임
+    // updateKeyLight() 가 카메라 타깃을 따라가며 보이는 영역을 항상 덮는다.
+    key.shadow.camera.left = -20;
+    key.shadow.camera.right = 20;
+    key.shadow.camera.top = 20;
+    key.shadow.camera.bottom = -20;
     key.shadow.camera.near = 0.5;
     key.shadow.camera.far = 140;
     key.shadow.camera.updateProjectionMatrix();
     this.scene.add(key);
+    this.scene.add(key.target);
     this.keyLight = key;
 
     const fill = new THREE.DirectionalLight(0x9fc0f0, 0.5);
@@ -107,6 +111,14 @@ export class Context {
 
     this.objects = new SimulationObjectRegistry(this);
     this.editor = new EditorControls(this);
+  }
+
+  // 키 라이트(그림자 광원)를 카메라 타깃에 추종시킨다 — 좁은 그림자 프러스텀이
+  // 항상 시야 중심을 덮어 어디서 작업하든 객체 간 그림자가 유지된다.
+  updateKeyLight() {
+    const t = this.controls.target;
+    this.keyLight.position.set(t.x + 3, t.y + 6, t.z + 5);
+    this.keyLight.target.position.copy(t);
   }
 
   clampCameraDistance(distance) {

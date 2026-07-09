@@ -133,6 +133,13 @@ export class SimulationObjectRegistry {
     const attachTo = parentSim ? this.getAttachPointFor(parentSim) : parent;
     if (!simObject.root.parent) attachTo.add(simObject.root);
 
+    // 등록되는 모든 객체는 서로 그림자를 주고받는다 — 팩토리별 플래그 누락 안전망
+    simObject.root.traverse((node) => {
+      if (!node.isMesh || node.isSprite) return;
+      node.castShadow = true;
+      node.receiveShadow = true;
+    });
+
     this.items.push(simObject);
     this.byRoot.set(simObject.root, simObject);
     simObject.root.userData.simObjectId = simObject.id;

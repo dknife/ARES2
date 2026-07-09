@@ -23,6 +23,7 @@ export class Render {
 
     ctx.updateSmoothZoom?.(dt);
     ctx.controls.update();
+    ctx.updateKeyLight?.();
 
     const m = ctx.movement;
     const g = ctx.gun;
