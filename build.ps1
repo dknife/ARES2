@@ -74,6 +74,31 @@ Copy-Item 'Web\index.css'          'Build\index.css'          -Force
 # index.html / main.html 의 <head> 최상단에서 클래식 스크립트로 로드되므로
 # Build\ 루트에도 그대로 복사해야 ?mobile=true 미리보기가 동작한다.
 Copy-Item 'Web\mobile-preview.js'  'Build\mobile-preview.js'  -Force
+# UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크). main.html/styles.css 가
+# assets/design/*.png 를 <img>/CSS url() 로 참조 — file:// 에서도 그대로 로드된다.
+Copy-Item 'Web\assets' 'Build\assets' -Recurse -Force
+# 로컬 서브셋 폰트(fonts/fonts.css + *.woff2). index/main/dashboard 가 링크한다.
+# 오프라인에서는 Google Fonts 대신 이 로컬 폰트가 시각 일관성을 보장한다.
+Copy-Item 'Web\fonts' 'Build\fonts' -Recurse -Force
+
+# CSS mask-image 는 CORS 필수 리소스라 file:// (origin: null) 에서 차단된다 —
+# 하단 내비·연결 버튼·설정 아이콘이 안 그려지는 원인. Build\styles.css 의
+# assets/ 참조 url() 을 data URI 로 인라인해 오프라인에서도 렌더되게 한다.
+# (<img src="assets/..."> 는 CORS 무관이라 파일 복사본을 그대로 쓴다)
+$cssEval = {
+    param($m)
+    $rel = $m.Groups[1].Value
+    $src = Join-Path 'Web' ($rel -replace '/', '\')
+    if (-not (Test-Path $src)) { return $m.Value }
+    $ext  = [System.IO.Path]::GetExtension($src).TrimStart('.').ToLower()
+    $mime = if ($ext -eq 'svg') { 'image/svg+xml' } else { "image/$ext" }
+    $b64  = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Resolve-Path $src).Path))
+    return "url('data:$mime;base64,$b64')"
+}
+$css = Read-Utf8 'Build\styles.css'
+$css = [regex]::Replace($css, "url\('(assets/[^'?]+)(\?[^']*)?'\)", $cssEval)
+Write-Utf8 (Resolve-Path 'Build\styles.css').Path $css
+Write-Host '        + styles.css: assets/ url() -> data URI (file:// mask-image CORS 회피)'
 
 # 랜딩 페이지의 3D 로봇 히어로 에셋.
 # three.js 로컬 번들 + 로봇 GLB를 base64 로 임베드한 클래식 스크립트.
@@ -84,6 +109,8 @@ Write-Host '        + robot 3D embed (three bundle + ares_robot.embed.js)'
 Copy-Item 'Web\vendor\three-bundle.min.js' 'Build\vendor\three-bundle.min.js' -Force
 # Meshopt(EXT_meshopt_compression) 압축 GLB 디코더 — UMD, window.MeshoptDecoder 노출.
 # main.html / index.html / viewer\index.html 의 three-bundle 직후 <script> 가 이걸 로드한다.
+# 모든 GLB(시뮬 14종·랜딩 로봇 임베드)가 meshopt 압축본이므로 필수다.
+# (2026-07-09 텍스처 1024² 리사이즈 후 meshopt 재압축으로 동일 구성 유지)
 Copy-Item 'Web\vendor\meshopt_decoder.js'  'Build\vendor\meshopt_decoder.js'  -Force
 Copy-Item 'Web\Mesh\ares_robot.embed.js'   'Build\ares_robot.embed.js'        -Force
 
@@ -129,7 +156,8 @@ $simGlbs = @(
     'LampHand1.glb',
     'LampHand2.glb',
     'LampHand3.glb',
-    'LaunchStation.glb'
+    'LaunchStation.glb',
+    'ares_robot.glb'          # 개발자 모드 GLB 스폰 메뉴(Mesh/manifest.json)가 참조
 )
 $binEntries = New-Object System.Collections.Generic.List[object]
 foreach ($name in $simGlbs) {
@@ -142,6 +170,12 @@ foreach ($name in $simGlbs) {
 }
 if (Test-Path 'Web\Mesh\RoverParts') {
     foreach ($f in (Get-ChildItem 'Web\Mesh\RoverParts' -Filter '*.glb')) {
+        $binEntries.Add([pscustomobject]@{ glb = $f.Name; src = $f.FullName })
+    }
+}
+# 환경 장식 에셋(우주인 등) — 스폰 메뉴·씬 파일이 Mesh/EnvAssets/… 로 참조한다
+if (Test-Path 'Web\Mesh\EnvAssets') {
+    foreach ($f in (Get-ChildItem 'Web\Mesh\EnvAssets' -Filter '*.glb')) {
         $binEntries.Add([pscustomobject]@{ glb = $f.Name; src = $f.FullName })
     }
 }
@@ -163,7 +197,8 @@ $c = Read-Utf8 'Build\main.html'
 $c = $c -replace 'https://unpkg\.com/blockly@11/(\w+_compressed\.js)', 'vendor/$1'
 $mainBinTags = ($binScriptNames | ForEach-Object { "    <script src=`"vendor/$_`" defer></script>" }) -join "`n"
 $mainReplacement = "$mainBinTags`n    <script src=`"vendor/inline_assets.js`" defer></script>`n    <script src=`"main.bundle.js`" defer></script>"
-$c = $c -replace '<script type="module" src="main\.js"></script>', $mainReplacement
+# src="main.js" 뒤에 캐시버스터 쿼리(?v=...)가 붙어 있어도 매치되도록 허용
+$c = $c -replace '<script type="module" src="main\.js(\?[^"]*)?"></script>', $mainReplacement
 Write-Utf8 $mainPath $c
 
 # Sanity check
@@ -246,6 +281,21 @@ if (Test-Path $exampleDir) {
         $key = 'examples/' + $f.Name
         [void]$sb.AppendLine('  DATA[' + (Encode-JsString $key) + '] = ' + (Encode-JsString $xml) + ';')
     }
+}
+
+# scenes/*.json — 서비스 씬 체계(manifest + 씬 파일). Simulation_Main 이
+# scenes/manifest.json 을 fetch 해 드롭다운을 구성하고 hiddenTopics 로 레거시
+# 토픽을 숨긴다. 인라인하지 않으면 file:// 에서 서비스 씬이 통째로 사라진다.
+if (Test-Path 'Web\scenes') {
+    foreach ($f in (Get-ChildItem 'Web\scenes' -Filter '*.json')) {
+        $key = 'scenes/' + $f.Name
+        [void]$sb.AppendLine('  DATA[' + (Encode-JsString $key) + '] = ' + (Encode-JsString (Read-Utf8 $f.FullName)) + ';')
+    }
+}
+
+# Mesh/manifest.json — 개발자 모드 'GLB 모델' 스폰 메뉴의 자산 목록
+if (Test-Path 'Web\Mesh\manifest.json') {
+    [void]$sb.AppendLine("  DATA['Mesh/manifest.json'] = " + (Encode-JsString (Read-Utf8 'Web\Mesh\manifest.json')) + ';')
 }
 
 [void]$sb.AppendLine(@'
