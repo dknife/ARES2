@@ -1731,6 +1731,24 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
     padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
 }
+/* 색상 편집(기본색·발광색 r,g,b,a) — 색상 지원 객체(박스·구)에서만 노출 */
+.sim-editor-inspector-colors {
+    display: grid;
+    grid-template-columns: 27px repeat(4, minmax(0, 1fr));
+    gap: 2px;
+    align-items: center;
+}
+.sim-editor-inspector-colors[hidden] { display: none !important; }
+.sim-editor-inspector-colors span {
+    color: rgba(238, 243, 251, 0.7);
+    font-size: 0.55em; font-weight: 700;
+}
+.sim-editor-inspector-colors input {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
 /* 컴포넌트 필드 섹션 — 트랜스폼과 동일한 행 그리드로 필드값을 직접 편집 */
 .sim-editor-inspector-comps {
     display: flex; flex-direction: column; gap: 4px;
@@ -1790,7 +1808,8 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     user-select: none;
 }
-.sim-editor-toolbar button {
+.sim-editor-toolbar button,
+.sim-editor-axisbar button {
     flex: 0 0 auto;
     min-width: 40px;
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
@@ -1803,11 +1822,25 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     padding: 3px 6px;
     cursor: pointer;
 }
-.sim-editor-toolbar button[aria-pressed="true"] {
+.sim-editor-toolbar button[aria-pressed="true"],
+.sim-editor-axisbar button[aria-pressed="true"] {
     color: #1f2430;
     background: #FFC400;
     border-color: #FFB300;
 }
+/* 회전축/스핀축/선회축 선택 바 — 시뮬레이션 화면 하단 중앙(개발자 모드, 회전 컴포넌트 선택 시) */
+.sim-editor-axisbar {
+    position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 5;
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 6px;
+    background: rgba(12, 13, 42, 0.58);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+}
+.sim-editor-axisbar[hidden] { display: none !important; }
 .sim-editor-selection {
     min-width: 70px;
     max-width: 130px;
@@ -3364,7 +3397,7 @@ details.mission-sample[open] summary::after {
 :root {
     --tb-rail: 52px;                               /* 펼침(전체 아이콘+라벨) 폭 */
     --tb-rail-col: 30px;                           /* 접힘(라벨만) 폭 */
-    --tb-cell: calc(var(--tb-rail) * 0.675551);    /* = rail * (1470/272/8), 드리프트 없음 */
+    --tb-cell: 35px;
     --tb-w: var(--tb-rail);                        /* 현재 보이는 폭(기본=펼침) */
     --tb-bg-x: 0px;                                /* 스프라이트 X 이동(기본=펼침) */
 }
@@ -3392,9 +3425,9 @@ body.toolbox-collapsed {
     padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    background-image: url('assets/design/toolbox-menu.png');
+    background-image: url('assets/design/toolbox-menu.png?v=20260708c');
     background-repeat: no-repeat;
-    background-size: var(--tb-rail) auto;      /* 스프라이트 스케일은 항상 펼침 폭 기준 */
+    background-size: var(--tb-rail) calc(var(--tb-cell) * 8);
     background-position-x: var(--tb-bg-x);     /* 접힘 시 라벨 부분만 보이도록 좌로 이동 */
     cursor: pointer;
     transition: background-position-x 0.18s ease;
@@ -3427,7 +3460,34 @@ body.toolbox-collapsed {
 .blocklyToolboxCategory:hover,
 .blocklyToolboxCategory[aria-selected="true"] {
     filter: brightness(1.08) saturate(1.05);
-    box-shadow: inset 4px 0 0 rgba(0, 0, 0, 0.38);
+}
+
+.blocklyToolboxCategory[aria-selected="true"]::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(0, 0, 0, 0.38);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.blocklyToolboxCategory.ares-muted-category {
+    background-image: url('assets/design/toolbox-menu-muted.png?v=20260708b') !important;
+    background-color: #E6E6E6 !important;
+    filter: none;
+}
+
+.blocklyToolboxCategory.ares-muted-category:hover,
+.blocklyToolboxCategory.ares-muted-category[aria-selected="true"] {
+    filter: brightness(0.98);
+}
+
+.blocklyToolboxCategory.ares-cat-category_math:not(.ares-muted-category) {
+    background-color: #CACACB !important;
+    background-blend-mode: luminosity;
 }
 
 /* 카테고리를 클릭해 관련 블록(플라이아웃)이 열릴 때 0.5초 부드럽게 나타난다 */
@@ -3446,7 +3506,7 @@ body.toolbox-collapsed {
    (mission-workspace 는 data-mode="coding" 일 때만 표시되므로 자연히 코딩 전용) */
 /* 차시·미션 표시 + 예제 선택 배너 — 코딩·시뮬레이션 모드 공유 상단 바.
    missionView 자식으로 두고, 두 모드 패널을 배너 높이만큼 아래로 내린다. */
-#missionView { --coding-banner-h: 30px; }
+#missionView { --coding-banner-h: 34px; }
 /* 설명 모드에선 배너를 숨기고(설명 패널이 자체 제목 보유), 코딩·시뮬에서만 표시 */
 #missionView[data-mode="description"] > #codingMissionBanner { display: none; }
 /* 배너가 보이는 모드에선 해당 패널을 배너 높이만큼 아래에서 시작 */
@@ -3477,9 +3537,9 @@ body.toolbox-collapsed {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+#codingMissionSelect,
 #codingExampleSelect {
     flex: 0 0 auto;
-    max-width: 45%;
     height: 22px;
     padding: 0 4px;
     border: 1px solid #d0d0d3;
@@ -3489,6 +3549,12 @@ body.toolbox-collapsed {
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 0.72rem;
     cursor: pointer;
+}
+#codingMissionSelect {
+    max-width: 34%;
+}
+#codingExampleSelect {
+    max-width: 28%;
 }
 /* mission-workspace 가 이미 배너 아래에서 시작하므로 캔버스는 이를 꽉 채운다 */
 .mission-workspace > #blocklyDiv {
@@ -3574,6 +3640,8 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     transition: background 0.15s ease, opacity 0.15s ease;
 }
 .tbx-action .tbx-ico { font-size: 1rem; line-height: 1; }
+/* 저장·읽기 아이콘 — assets/design 의 Save/Load 이미지 사용 */
+.tbx-action .tbx-ico img { width: 20px; height: 20px; object-fit: contain; display: block; }
 .tbx-action .tbx-lbl { display: block !important; white-space: nowrap; }
 /* 이전 접힘 상태가 남아 있어도 도구 이름은 계속 표시한다. */
 body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }

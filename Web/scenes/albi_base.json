@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "name": "알비와함께",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "glb-1",
+      "type": "glb",
+      "label": "AlbiStaticLow",
+      "parent": null,
+      "position": [
+        0,
+        0,
+        0.8500250000953429
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_translate": [
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        {
+          "type": "Buzzer",
+          "fields": {}
+        }
+      ],
+      "url": "Mesh/AlbiStaticLow.glb"
+    },
+    {
+      "id": "sphere-2",
+      "type": "sphere",
+      "label": "RightEye",
+      "parent": "glb-1",
+      "position": [
+        -0.16,
+        1.352,
+        0.148
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.2
+        ],
+        "emissive": [
+          1,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-3",
+      "type": "sphere",
+      "label": "LeftEye",
+      "parent": "glb-1",
+      "position": [
+        0.13,
+        1.352,
+        0.148
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.2
+        ],
+        "emissive": [
+          1,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "glb-4",
+      "type": "glb",
+      "label": "RoverWheel",
+      "parent": "glb-1",
+      "position": [
+        0.344,
+        0.09924116048755585,
+        0.26131026646975947
+      ],
+      "quaternion": [
+        -0.36488603295283867,
+        0.6056881895463563,
+        -0.3648860329528389,
+        0.6056881895463556
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              1,
+              0,
+              0
+            ],
+            "rotation_offset": [
+              0.004,
+              0.298,
+              0
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/RoverParts/RoverWheel.glb"
+    },
+    {
+      "id": "glb-5",
+      "type": "glb",
+      "label": "RoverWheel_dup",
+      "parent": "glb-1",
+      "position": [
+        -0.32114443042633356,
+        0.09924116048755585,
+        0.26131026646975947
+      ],
+      "quaternion": [
+        -0.36488603295283867,
+        0.6056881895463563,
+        -0.3648860329528389,
+        0.6056881895463556
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              1,
+              0,
+              0
+            ],
+            "rotation_offset": [
+              0.004,
+              0.298,
+              0
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/RoverParts/RoverWheel.glb"
+    }
+  ]
+}
