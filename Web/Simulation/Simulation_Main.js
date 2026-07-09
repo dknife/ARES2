@@ -215,11 +215,14 @@ export class Simulation_Main {
     devBar.hidden = true;
     devBar.innerHTML = `
       <span class="sim-devbar-tag">DEV</span>
-      <button type="button" data-dev="new">새 씬</button>
-      <button type="button" data-dev="save">씬 저장</button>
-      <button type="button" data-dev="load">씬 열기</button>
-      <button type="button" data-dev="register">서비스 등록</button>
-      <button type="button" data-dev="unregister">서비스 제거</button>`;
+      <select data-dev-menu title="씬 도구 메뉴">
+        <option value="" selected>씬 메뉴 ▾</option>
+        <option value="new">새 씬</option>
+        <option value="save">씬 저장</option>
+        <option value="load">씬 열기</option>
+        <option value="register">서비스 등록</option>
+        <option value="unregister">서비스 제거</option>
+      </select>`;
     // 씬 이름 드롭다운 패널의 오른쪽 옆에 분리된 박스로 표시(개발자 모드 전용)
     stage.appendChild(devBar);
 
@@ -390,14 +393,16 @@ export class Simulation_Main {
       }
     };
 
-    devBar.addEventListener('click', (e) => {
-      const b = e.target.closest('button[data-dev]');
-      if (!b) return;
-      if (b.dataset.dev === 'new') devNewScene();
-      else if (b.dataset.dev === 'save') devSaveScene();
-      else if (b.dataset.dev === 'load') devFileInput.click();
-      else if (b.dataset.dev === 'register') devRegisterService();
-      else if (b.dataset.dev === 'unregister') devRemoveService();
+    devBar.addEventListener('change', (e) => {
+      const m = e.target.closest('select[data-dev-menu]');
+      if (!m) return;
+      const action = m.value;
+      m.value = '';   // 실행 후 플레이스홀더로 복귀(메뉴이므로 선택 상태를 남기지 않음)
+      if (action === 'new') devNewScene();
+      else if (action === 'save') devSaveScene();
+      else if (action === 'load') devFileInput.click();
+      else if (action === 'register') devRegisterService();
+      else if (action === 'unregister') devRemoveService();
     });
     devFileInput.addEventListener('change', () => {
       const f = devFileInput.files && devFileInput.files[0];

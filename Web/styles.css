@@ -2076,14 +2076,17 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     font: 700 8px/1 'Inter Tight', sans-serif; letter-spacing: .06em;
     color: #ffd24a; padding-right: 1px;
 }
-.sim-devbar button {
+/* 씬 도구(새 씬·씬 저장·씬 열기·서비스 등록/제거)는 드롭다운 메뉴 하나로 제공 */
+.sim-devbar select {
     flex: 0 0 auto;
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.6em; font-weight: 600;
     background: rgba(255, 255, 255, 0.1); color: #eef3fb;
     border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 5px;
     padding: 3px 7px; cursor: pointer; white-space: nowrap;
+    appearance: none; -webkit-appearance: none;
 }
-.sim-devbar button:hover { background: rgba(255, 255, 255, 0.2); }
+.sim-devbar select:hover { background: rgba(255, 255, 255, 0.2); }
+.sim-devbar select option { background: #14162c; color: #eef3fb; }
 /* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
    명령 글자가 늘 바닥을 이기고 보이도록 캔버스 위 레이어로 올렸다(컨트롤 z:4~5 아래).
    반투명(opacity)·포인터 이벤트 통과라 로봇 드래그/버튼 클릭은 방해하지 않는다. 최신 줄이 아래. */
