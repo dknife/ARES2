@@ -282,6 +282,8 @@ export class EditorControls {
 
   setDevMode(on) {
     this.devMode = !!on;
+    // 개발자 모드 시각 표식 — 스테이지 배경(짙은 회색)·노란 테두리는 CSS(.sim-devmode)가 담당
+    this.ctx.stage?.classList?.toggle('sim-devmode', this.devMode);
     this.toolbar.hidden = !this.devMode;
     this.hierarchy.hidden = !this.devMode;
     this.hideContextMenu();

@@ -1669,8 +1669,16 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     flex: 1 1 0; min-height: 240px;
     overflow: hidden;        /* 3D 메시가 시뮬레이션 창 밖으로 그려지지 않도록 클립 */
     isolation: isolate;      /* 캔버스(replaced)가 stage 컨텍스트를 벗어나 로그 위로 칠해지지 않도록 격리 */
-    /* 우주 느낌의 어둡지만 채도 있는 배경: 보라 → 인디고 → 짙은 네이비 */
-    background: radial-gradient(circle at 60% 25%, #3a1d6e 0%, #1b1e58 45%, #0c0d2a 100%);
+    background: #85888e;     /* 사용자 모드 — 회색 배경 */
+}
+/* 개발자 모드(Ctrl+E) — 짙은 회색 배경 + 화면 테두리 굵은 노랑.
+   테두리는 ::after 오버레이로 캔버스(z1) 위에 그려 3D 장면에 가려지지 않게 한다. */
+.sim-stage.sim-devmode { background: #2b2d31; }
+.sim-stage.sim-devmode::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 4;
+    pointer-events: none;
+    border: 5px solid #f5c400;
 }
 /* 캔버스를 창에 절대 배치로 꽉 채운다. (플렉스 높이 모호성으로 캔버스가 창을 넘어
    아래 버튼을 덮어 클릭이 막히던 문제 방지)
