@@ -2333,7 +2333,7 @@ details.mission-section summary {
     --mockup-ink: #272526;
     --mockup-line: #d7d7d9;
     --mockup-panel: #e7e7e9;
-    --mobile-bottom-nav-height: 88px;
+    --mobile-bottom-nav-height: 70px;
 }
 
 .sr-only {
@@ -2547,7 +2547,7 @@ details.mission-section summary {
 }
 
 .mobile-bottom-nav {
-    --connect-size: clamp(78px, 16vw, 92px);
+    --connect-size: clamp(74px, 15.5vw, 88px);
     grid-template-columns:
         minmax(0, 1fr) minmax(0, 1fr)
         var(--connect-size)
@@ -2556,7 +2556,7 @@ details.mission-section summary {
     justify-items: stretch;
     column-gap: 0;
     height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
-    padding: 4px 4px calc(3px + env(safe-area-inset-bottom));
+    padding: 2px 4px calc(2px + env(safe-area-inset-bottom));
     overflow: visible;
     background: #dddde0;
     border-top: 1px solid #d2d2d4;
@@ -2571,23 +2571,24 @@ details.mission-section summary {
     position: absolute;
     left: 50%;
     top: 0;
-    width: calc(var(--connect-size) + 10px);
-    height: calc(var(--connect-size) + 10px);
+    width: calc(var(--connect-size) + 9px);
+    height: calc(var(--connect-size) + 9px);
     border-radius: 50%;
     background: #fff;
     transform: translate(-50%, -50%);
     z-index: 0;
     pointer-events: none;
+    display: none;
 }
 
 .mobile-bottom-nav [data-mobile-action="mission"] { grid-column: 1; }
 .mobile-bottom-nav [data-mobile-action="coding"] {
     grid-column: 2;
-    border-top-right-radius: 30px !important;
+    border-top-right-radius: 0 !important;
 }
 .mobile-bottom-nav [data-mobile-action="simulation"] {
     grid-column: 4;
-    border-top-left-radius: 30px !important;
+    border-top-left-radius: 0 !important;
 }
 .mobile-bottom-nav [data-mobile-action="ai"] { grid-column: 5; }
 
@@ -2597,16 +2598,16 @@ details.mission-section summary {
     width: 100%;
     min-width: 0;
     justify-self: stretch;
-    min-height: 52px;
-    padding: 3px 2px 2px;
+    min-height: 50px;
+    padding: 5px 2px 3px;
     border-radius: 0;
     color: #444448;
     font-size: .78rem;
     display: grid;
-    grid-template-rows: 32px 15px;
+    grid-template-rows: 29px 14px;
     place-items: center;
     align-content: center;
-    gap: 2px;
+    gap: 1px;
 }
 
 .mobile-bottom-nav .mobile-nav-btn.active {
@@ -2616,8 +2617,8 @@ details.mission-section summary {
 
 .mobile-bottom-nav .mobile-nav-icon {
     flex: 0 0 auto;
-    width: 34px;
-    height: 34px;
+    width: 31px;
+    height: 31px;
 }
 
 .mobile-nav-icon-mission {
@@ -2646,7 +2647,7 @@ details.mission-section summary {
     justify-content: center;
     min-height: 1em;
     width: 100%;
-    font-size: clamp(.78rem, 2.2vw, .92rem);
+    font-size: clamp(.68rem, 1.95vw, .82rem);
     font-weight: 800;
     line-height: 1;
     text-align: center;
@@ -2655,7 +2656,7 @@ details.mission-section summary {
 .mobile-bottom-nav .mobile-connect-btn {
     position: absolute;
     left: 50%;
-    bottom: calc(var(--mobile-bottom-nav-height) - clamp(39px, 8vw, 46px) - 2px);
+    bottom: calc(var(--mobile-bottom-nav-height) - clamp(37px, 7.75vw, 44px) + 9px);
     width: var(--connect-size);
     min-width: var(--connect-size);
     height: var(--connect-size);
@@ -2665,10 +2666,10 @@ details.mission-section summary {
     border-radius: 50%;
     background: var(--mockup-red) !important;
     color: #fff !important;
-    border: 4px solid #fff;
+    border: 3px solid #fff;
     z-index: 2;
     transform: translateX(-50%) !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, .08) !important;
+    box-shadow: 0 0 0 5px #fff, 0 2px 5px rgba(0, 0, 0, .08) !important;
 }
 
 .mobile-bottom-nav .mobile-connect-btn:hover,
