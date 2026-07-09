@@ -535,15 +535,24 @@ function createGunComponent(ctx, fields = {}) {
   // propel/explosion 은 로컬 좌표계(규약 개정) — 발사 시점의 객체 방향을 따른다
   const propel = fieldVec(THREE, fields.propel_direction) || new THREE.Vector3(0, 0, 1);
   const expl = fieldVec(THREE, fields.explosion, { normalize: false });
-  const PROJ_SPEED = 6.0;   // m/s ("빠르게 이동")
-  const PROJ_LIFE = 1.2;    // s
+  const FLY_SPEED = 6.0;    // m/s ("빠르게 이동")
+  const FLY_TIME = 1.2;     // s — 이 시간만큼 날아간 뒤 그 자리에 멈춘다
   const SMOKE_LIFE = 1.0;   // s
   let smokeTex = null;
-  const projectiles = [];   // { mesh, vel, age }
+  // 발사 = 다른 발사체를 만드는 것이 아니라 **자기 자신이** 발사 방향으로 날아간다.
+  let flight = null;        // { vel(월드), age } — 비행 중 상태
+  let home = null;          // 첫 발사 직전의 부모 기준 위치 — SIM_END 에 복귀
   const smokes = [];        // { sprite, age, rise }
 
   const outFields = { propel_direction: [propel.x, propel.y, propel.z] };
   if (expl) outFields.explosion = [expl.x, expl.y, expl.z];
+
+  const restoreHome = (simObject) => {
+    flight = null;
+    if (!home) return;
+    simObject.root.position.copy(home);
+    home = null;
+  };
 
   const spawnSmoke = (at) => {
     if (!smokeTex) smokeTex = makeSmokeTexture(THREE);
@@ -561,35 +570,37 @@ function createGunComponent(ctx, fields = {}) {
     declarative: true,
     type: 'Gun',
     fields: outFields,
-    get activeProjectileCount() { return projectiles.length; },
+    get isFlying() { return !!flight; },
     onCommand(cmd, _c, simObject) {
+      if (cmd === 'SIM_END') {           // 시뮬레이션 종료(자연 종료·실험중단) — 원위치 복귀
+        restoreHome(simObject);
+        return null;
+      }
       if (cmd !== 'GUN_FIRE' && !cmd.startsWith('GUN_FIRE,')) return null;
       ctx.scene.updateMatrixWorld(true);
-      const origin = simObject.root.getWorldPosition(new THREE.Vector3());
       // 로컬 발사 방향을 발사 시점의 월드 방향으로 변환
       const dirWorld = propel.clone()
         .applyQuaternion(simObject.root.getWorldQuaternion(new THREE.Quaternion()))
         .normalize();
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 12, 8),
-        new THREE.MeshStandardMaterial({ color: 0x30343c, roughness: 0.4, metalness: 0.5 }),
-      );
-      mesh.position.copy(origin).addScaledVector(dirWorld, 0.25);
-      ctx.scene.add(mesh);
-      projectiles.push({ mesh, vel: dirWorld.multiplyScalar(PROJ_SPEED), age: 0 });
+      if (!home) home = simObject.root.position.clone();   // 복귀 지점은 첫 발사 직전 위치
+      flight = { vel: dirWorld.multiplyScalar(FLY_SPEED), age: 0 };
       if (expl) spawnSmoke(localOffsetToWorld(THREE, simObject.root, expl));
       return null;
     },
-    update(dt) {
-      for (let i = projectiles.length - 1; i >= 0; i--) {
-        const p = projectiles[i];
-        p.age += dt;
-        p.mesh.position.addScaledVector(p.vel, dt);
-        if (p.age >= PROJ_LIFE) {
-          ctx.scene.remove(p.mesh);
-          p.mesh.geometry.dispose();
-          p.mesh.material.dispose();
-          projectiles.splice(i, 1);
+    update(dt, _ctx, simObject) {
+      if (flight) {
+        flight.age += dt;
+        if (flight.age >= FLY_TIME) {
+          flight = null;   // 비행 종료 — 도달 지점에 머무르다 SIM_END 에 복귀한다
+        } else {
+          // 월드 방향 속도를 부모 좌표 변위로 변환해 자기 위치를 옮긴다
+          // (스케일 비전파 규약으로 부모 월드 스케일은 1 — 회전만 되돌리면 된다)
+          const delta = flight.vel.clone().multiplyScalar(dt);
+          const parent = simObject.root.parent;
+          if (parent) {
+            delta.applyQuaternion(parent.getWorldQuaternion(new THREE.Quaternion()).invert());
+          }
+          simObject.root.position.add(delta);
         }
       }
       for (let i = smokes.length - 1; i >= 0; i--) {
@@ -607,10 +618,9 @@ function createGunComponent(ctx, fields = {}) {
         }
       }
     },
-    dispose() {
-      projectiles.forEach((p) => { ctx.scene.remove(p.mesh); p.mesh.geometry.dispose(); p.mesh.material.dispose(); });
+    dispose(_ctx, simObject) {
+      restoreHome(simObject);
       smokes.forEach((s) => { ctx.scene.remove(s.sprite); s.sprite.material.dispose(); });
-      projectiles.length = 0;
       smokes.length = 0;
       smokeTex?.dispose?.();
       smokeTex = null;

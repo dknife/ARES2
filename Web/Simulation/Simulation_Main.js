@@ -765,6 +765,9 @@ export class Simulation_Main {
       } finally {
         simRunning = false;
         window.dispatchEvent(new CustomEvent('ares:simrun', { detail: { running: false } }));
+        // 시뮬 종료 브로드캐스트(자연 종료·중단 공통) — Gun 원위치 복귀 등
+        // 종료 시 원상복구가 필요한 컴포넌트가 이 신호를 받는다.
+        sim?.ctx?.objects?.routeCommand?.('SIM_END');
         if (simAborted) {
           // 컴포넌트 씬: 연속 명령(SERVO_FORWARD 등)으로 켜진 운동·LED 를 정지/소등
           // (중단은 블록 실행만 끊으므로 컴포넌트 상태를 명시적으로 리셋해야 한다)
