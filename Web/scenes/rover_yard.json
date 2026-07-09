@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "name": "로버 훈련장",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "body",
+      "type": "box",
+      "label": "로버 몸체",
+      "parent": null,
+      "position": [
+        0,
+        0.35,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        0.7,
+        1.2
+      ],
+      "components": [
+        {
+          "type": "Servo",
+          "fields": {
+            "wheel": "left",
+            "axis_direction": [
+              0,
+              0,
+              -1
+            ],
+            "axis_turn": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "type": "UltraSonic",
+          "fields": {
+            "detect_direction": [
+              0,
+              0,
+              -1
+            ]
+          }
+        },
+        {
+          "type": "Magnet",
+          "fields": {
+            "detection_point": [
+              0,
+              -0.3,
+              0
+            ]
+          }
+        },
+        {
+          "type": "Gun",
+          "fields": {
+            "propel_direction": [
+              0,
+              0,
+              -1
+            ],
+            "explosion": [
+              0,
+              0.3,
+              -0.7
+            ]
+          }
+        },
+        {
+          "type": "Buzzer",
+          "fields": {}
+        },
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "wheel-l",
+      "type": "sphere",
+      "label": "왼쪽 바퀴",
+      "parent": "body",
+      "position": [
+        -0.42,
+        -0.12,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ],
+      "components": [
+        {
+          "type": "Servo",
+          "fields": {
+            "wheel": "left",
+            "axis_rotation": [
+              1,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "wheel-r",
+      "type": "sphere",
+      "label": "오른쪽 바퀴",
+      "parent": "body",
+      "position": [
+        0.42,
+        -0.12,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ],
+      "components": [
+        {
+          "type": "Servo",
+          "fields": {
+            "wheel": "right",
+            "axis_rotation": [
+              1,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "screen",
+      "type": "oled",
+      "label": "로버 OLED",
+      "parent": "body",
+      "position": [
+        0,
+        0.62,
+        0.1
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ],
+      "components": [
+        {
+          "type": "Oled",
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "id": "wall",
+      "type": "box",
+      "label": "장애물 벽",
+      "parent": null,
+      "position": [
+        0,
+        0.35,
+        -2.5
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        2.2,
+        1,
+        0.4
+      ],
+      "components": []
+    },
+    {
+      "id": "ore",
+      "type": "box",
+      "label": "자성 광석",
+      "parent": null,
+      "position": [
+        1.5,
+        0.18,
+        -0.8
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "components": [
+        {
+          "type": "Metal",
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "id": "flag",
+      "type": "marker",
+      "label": "목표 지점",
+      "parent": null,
+      "position": [
+        -1.6,
+        0,
+        -1.6
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "components": []
+    }
+  ]
+}

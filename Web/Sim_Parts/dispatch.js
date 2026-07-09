@@ -159,6 +159,10 @@ export class Dispatch {
         ctx.gun.setGunFire();
         ctx.audio.playGunFire();
       }
+      // 커스텀/빈 씬: Gun 객체 유무와 관계없이 발사 명령 접수 시 폭발음(SIMULATOR.md)
+      if (!cfg.launch && !cfg.parts) {
+        ctx.audio.playGunFire();
+      }
       return null;
     }
 
@@ -215,6 +219,38 @@ export class Dispatch {
     return null;
   }
 
+  // 센서 컴포넌트 질의(SIMULATOR.md 3단계) — 첫 번째 유효 측정값을 쓴다.
+  measureComponentDistance() {
+    for (const item of this.ctx.objects?.items || []) {
+      const comp = item.components?.UltraSonic;
+      if (!comp?.measure) continue;
+      const v = comp.measure(this.ctx, item);
+      if (v != null) return v;
+    }
+    return null;
+  }
+
+  measureComponentMagnet() {
+    for (const item of this.ctx.objects?.items || []) {
+      const comp = item.components?.Magnet;
+      if (!comp?.measure) continue;
+      const v = comp.measure(this.ctx, item);
+      if (v != null) return v;
+    }
+    return null;
+  }
+
+  // 명령 효과 = 레거시 토픽 효과 + 컴포넌트 라우팅(SIMULATOR.md 2장) 합성.
+  // 둘 다 cleanup 을 반환할 수 있어 합쳐서 돌려준다.
+  applyEffect(cmd) {
+    const topicCleanup = this.applyTopicEffect(cmd);
+    const componentCleanup = this.ctx.objects?.routeCommand?.(cmd) || null;
+    if (topicCleanup && componentCleanup) {
+      return () => { topicCleanup(); componentCleanup(); };
+    }
+    return topicCleanup || componentCleanup;
+  }
+
   cancelActiveWait() {
     if (this.activeWaitCancel) this.activeWaitCancel();
   }
@@ -237,7 +273,7 @@ export class Dispatch {
       for (const sub of subs) {
         if (!ctx.state.isExecuting) break;
         const subHoldMs = Math.round(this.commandHoldSeconds(sub) * 1000);
-        const cleanup = this.applyTopicEffect(sub);
+        const cleanup = this.applyEffect(sub);
         if (subHoldMs > 0) {
           await wait(subHoldMs);
         }
@@ -246,10 +282,13 @@ export class Dispatch {
       }
     } else {
       holdMs = Math.round(this.commandHoldSeconds(command) * 1000);
-      const cleanup = this.applyTopicEffect(command);
+      const cleanup = this.applyEffect(command);
       await wait(ackMs + holdMs);
-      if (command.startsWith('DISTANCE') && ctx.movement) {
-        distMeasured = ctx.movement.measureDistance();
+      if (command.startsWith('DISTANCE')) {
+        // 컴포넌트(UltraSonic) 우선, 없으면 레거시 로버 토픽 측정
+        const compDist = this.measureComponentDistance();
+        distMeasured = compDist != null ? compDist
+          : (ctx.movement ? ctx.movement.measureDistance() : null);
       }
       cleanup?.();
     }
@@ -259,7 +298,8 @@ export class Dispatch {
     if (command.startsWith('DISTANCE')) {
       reply = `DIST:${distMeasured != null ? distMeasured : 30}`;
     } else if (command.startsWith('MAGNET')) {
-      reply = 'MAG:0';
+      const compMag = this.measureComponentMagnet();
+      reply = `MAG:${compMag != null ? compMag : 0}`;
     }
     
     const holdNote = holdMs > 0 ? ` + 대기 ${holdMs}ms` : '';

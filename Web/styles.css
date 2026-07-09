@@ -1681,11 +1681,108 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     touch-action: none;
 }
 .sim-stage canvas:active { cursor: grabbing; }
+/* 개발자 모드 전용 UI 게이트 — hidden 속성이 author display 규칙(flex)에 지지 않도록 강제.
+   (UA 의 [hidden]{display:none} 은 author display:flex 에 덮여 시각적으로 노출되는 버그 방지) */
+.sim-editor-toolbar[hidden],
+.sim-editor-hierarchy[hidden],
+.sim-editor-inspector[hidden],
+.sim-devbar[hidden] {
+    display: none !important;
+}
+
+/* 컴포넌트 인스펙터 — 선택 객체의 직렬화 필드값(JSON)을 씬 드롭박스 아래에서 편집(개발자 모드) */
+.sim-editor-inspector {
+    position: absolute; left: 10px; top: 220px; z-index: 5;
+    width: 158px; max-width: calc(100% - 20px);
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 6px;
+    background: rgba(12, 13, 42, 0.62);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.sim-editor-inspector-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+}
+.sim-editor-inspector-title {
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    color: #ffd24a; font-size: 0.6em; font-weight: 800;
+}
+.sim-editor-inspector-head button {
+    flex: 0 0 auto;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.58em; font-weight: 700;
+    color: #1f2430; background: #FFC400; border: 1px solid #FFB300; border-radius: 5px;
+    padding: 2px 7px; cursor: pointer;
+}
+.sim-editor-inspector-tf {
+    display: grid;
+    grid-template-columns: 27px repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    align-items: center;
+}
+.sim-editor-inspector-tf span {
+    color: rgba(238, 243, 251, 0.7);
+    font-size: 0.55em; font-weight: 700;
+}
+.sim-editor-inspector-tf input {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
+/* 컴포넌트 필드 섹션 — 트랜스폼과 동일한 행 그리드로 필드값을 직접 편집 */
+.sim-editor-inspector-comps {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 38vh; overflow: auto;
+}
+.sim-insp-comp {
+    padding: 3px 4px;
+    background: rgba(4, 6, 18, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px;
+}
+.sim-insp-comp-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    margin-bottom: 2px;
+}
+.sim-insp-comp-head b {
+    color: #9fd0ff; font-size: 0.56em; font-weight: 800; letter-spacing: .03em;
+}
+.sim-insp-comp-head button {
+    width: 14px; height: 14px; padding: 0; line-height: 1;
+    color: #ffb0a8; background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    font-size: 10px; cursor: pointer;
+}
+.sim-insp-comp-none { color: rgba(238, 243, 251, 0.4); font-size: 0.52em; }
+.sim-insp-row {
+    display: grid;
+    grid-template-columns: 44px repeat(3, minmax(0, 1fr));
+    gap: 2px; align-items: center; margin: 1px 0;
+}
+.sim-insp-row span {
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    color: rgba(238, 243, 251, 0.66); font-size: 0.52em; font-weight: 700;
+}
+.sim-insp-row input, .sim-insp-row select {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
+.sim-insp-row select { grid-column: 2 / span 3; }
+.sim-insp-row input:only-of-type { grid-column: 2 / span 1; }
+.sim-editor-inspector-status {
+    color: #9fe3b4; font-size: 0.55em; white-space: pre-wrap;
+}
+.sim-editor-inspector-status.error { color: #ff9d94; }
+
+/* 편집 툴바(Move·Rotate·Scale) — 씬 도구·Hierarchy 와 동일한 작은 폰트로 통일(개발자 모드 전용) */
 .sim-editor-toolbar {
     position: absolute; top: 10px; right: 10px; z-index: 5;
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 4px;
     max-width: calc(100% - 188px);
-    padding: 6px;
+    padding: 4px 5px;
     background: rgba(12, 13, 42, 0.58);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1695,15 +1792,15 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
 }
 .sim-editor-toolbar button {
     flex: 0 0 auto;
-    min-width: 54px;
+    min-width: 40px;
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
-    font-size: 0.74em;
+    font-size: 0.6em;
     font-weight: 700;
     color: #eef3fb;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 6px;
-    padding: 6px 8px;
+    border-radius: 5px;
+    padding: 3px 6px;
     cursor: pointer;
 }
 .sim-editor-toolbar button[aria-pressed="true"] {
@@ -1712,13 +1809,13 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     border-color: #FFB300;
 }
 .sim-editor-selection {
-    min-width: 92px;
-    max-width: 150px;
+    min-width: 70px;
+    max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     color: rgba(238, 243, 251, 0.78);
-    font-size: 0.72em;
+    font-size: 0.58em;
     font-weight: 600;
 }
 .sim-editor-context-menu {
@@ -1778,8 +1875,9 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     top: 58px;
     right: 10px;
     z-index: 5;
-    width: 236px;
-    max-height: min(46vh, 340px);
+    width: 210px;
+    /* 폰트·행높이 축소와 함께 최대 높이를 늘려 많은 항목이 보이게 한다 */
+    max-height: min(62vh, 460px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1795,44 +1893,47 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 8px 8px 7px 10px;
+    gap: 6px;
+    padding: 4px 5px 4px 7px;
     color: rgba(238, 243, 251, 0.86);
-    font-size: 0.74em;
+    font-size: 0.6em;
     font-weight: 800;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 .sim-editor-hierarchy-head button {
-    width: 22px;
-    height: 22px;
+    width: 15px;
+    height: 15px;
     padding: 0;
+    font-size: 10px;
+    line-height: 1;
     color: #eef3fb;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
 }
 .sim-editor-hierarchy-list {
     overflow: auto;
-    padding: 5px;
+    padding: 3px;
 }
 .sim-editor-hierarchy.collapsed .sim-editor-hierarchy-list {
     display: none;
 }
+/* 많은 항목이 보이도록 행 높이·폰트를 최소화한 밀집 목록 */
 .sim-editor-hierarchy-item {
     width: 100%;
-    min-height: 28px;
+    min-height: 16px;
     display: grid;
-    grid-template-columns: 74px minmax(0, 1fr);
-    gap: 6px;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 4px;
     align-items: center;
-    margin: 2px 0;
-    padding: 5px 7px 5px calc(7px + (var(--depth, 0) * 14px));
+    margin: 1px 0;
+    padding: 1px 5px 1px calc(5px + (var(--depth, 0) * 9px));
     color: #eef3fb;
     text-align: left;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
 }
 .sim-editor-hierarchy-item:hover,
@@ -1847,20 +1948,20 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     text-overflow: ellipsis;
     color: inherit;
     opacity: 0.72;
-    font-size: 0.66em;
+    font-size: 0.52em;
     font-weight: 800;
 }
 .sim-editor-hierarchy-label {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: 0.72em;
+    font-size: 0.58em;
     font-weight: 700;
 }
 .sim-editor-hierarchy-empty {
-    padding: 10px 8px;
+    padding: 7px 6px;
     color: rgba(238, 243, 251, 0.48);
-    font-size: 0.72em;
+    font-size: 0.58em;
     text-align: center;
 }
 @media (max-width: 760px) {
@@ -1886,13 +1987,6 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
     color: #9aa6bf; font-size: 0.85em; pointer-events: none; text-align: center; padding: 12px;
 }
-/* 사용 힌트 — 렌더링 창 하단(실행 바 바로 위)에 흐릿한 캡션 오버레이 */
-.sim-hint {
-    position: absolute; left: 12px; right: 12px; bottom: 48px; z-index: 4;
-    margin: 0; padding: 0; font-size: 0.7em; text-align: center;
-    color: rgba(220, 228, 245, 0.5); border: none; background: none;
-    pointer-events: none;
-}
 
 /* 블록 명령 시뮬레이션 실행/로그 — 렌더링 창(.sim-stage) 안 하단 오버레이로 띄운다.
    (캔버스 위에 z-index 로 올려 어떤 상황에서도 버튼이 가려지지 않고 눌리도록) */
@@ -1917,23 +2011,31 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
 #simRun.running:hover { background: #c8342b; }
 #simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
-/* 개발자 모드(Ctrl+E) 씬 도구 바 — 씬 생성·저장·로드 (SIMULATOR.md) */
+/* 개발자 모드(Ctrl+E) 씬 도구 — 씬 드롭다운 패널 오른쪽 옆에 분리된 박스.
+   편집 툴바·Hierarchy 와 동일한 작은 폰트(0.6em)로 통일. 개발자 모드에서만 표시. */
 .sim-devbar {
-    position: absolute; right: 10px; bottom: 44px; z-index: 6;
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 8px; border-radius: 8px;
-    background: rgba(16, 22, 34, 0.82); border: 1px solid rgba(255, 210, 74, 0.55);
+    position: absolute; top: 10px; left: 176px; z-index: 5;
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 7px;
+    background: rgba(12, 13, 42, 0.58);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 210, 74, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
 }
 .sim-devbar-tag {
-    font: 700 10px/1 'Inter Tight', sans-serif; letter-spacing: .08em;
-    color: #ffd24a; padding-right: 2px;
+    font: 700 8px/1 'Inter Tight', sans-serif; letter-spacing: .06em;
+    color: #ffd24a; padding-right: 1px;
 }
 .sim-devbar button {
-    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.78em; font-weight: 600;
-    background: #202a3d; color: #dfe8f8; border: 1px solid #3a4a68; border-radius: 6px;
-    padding: 4px 9px; cursor: pointer;
+    flex: 0 0 auto;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.6em; font-weight: 600;
+    background: rgba(255, 255, 255, 0.1); color: #eef3fb;
+    border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 5px;
+    padding: 3px 7px; cursor: pointer; white-space: nowrap;
 }
-.sim-devbar button:hover { background: #2b3a55; }
+.sim-devbar button:hover { background: rgba(255, 255, 255, 0.2); }
 /* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
    명령 글자가 늘 바닥을 이기고 보이도록 캔버스 위 레이어로 올렸다(컨트롤 z:4~5 아래).
    반투명(opacity)·포인터 이벤트 통과라 로봇 드래그/버튼 클릭은 방해하지 않는다. 최신 줄이 아래. */

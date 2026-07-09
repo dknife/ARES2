@@ -1,0 +1,5 @@
+{
+  "scenes": [
+    { "id": "rover_yard", "file": "scenes/rover_yard.json", "label": "로버 훈련장 (컴포넌트)" }
+  ]
+}
