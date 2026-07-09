@@ -43,3 +43,6 @@ Development/
 # 웹은 Web/fonts/*.woff2(서브셋)만 사용한다. 루트 Fonts/ 는 원본 소스 폰트(수 MB~10MB)
 # 백업 전용 — 대용량이라 추적 제외(로컬 보관). 배포용 woff2 는 Web/fonts/ 에서 추적.
 /Fonts/
+
+# 대형 빌드 산출물 — 커밋 금지, GitHub Releases(progress-report)로 공유 (2026-07-09)
+Document/진행보고/latex/ProgressReport.pdf
