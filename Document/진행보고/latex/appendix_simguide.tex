@@ -1,51 +1,163 @@
 %% ============================================================
-%% appendix_simguide.tex — 부록 G: 시뮬레이터 사용법 (씬 생성 도구)
-%% 근거: SIMULATOR.md 설계·구현 규약(2026-07-08 확정) 및 실제 구현(Web/Sim_Parts, Web/Simulation)
+%% appendix_simguide.tex — 부록 G: 시뮬레이터 사용 매뉴얼 (씬 생성 도구)
+%% 근거: SIMULATOR.md 설계·구현 규약(2026-07-08 확정, 2026-07-09 개정) 및
+%%       실제 구현(Web/Sim_Parts, Web/Simulation) · 커밋 이력(~dd96fee)
+%% 그림: 2026-07-10 로컬 서버 + 헤드리스 Edge(Playwright)로 실제 구동·조작 캡처
 %% ============================================================
-\section{시뮬레이터 사용법 --- 씬 생성 도구}
+\section{시뮬레이터 사용 매뉴얼 --- 씬 생성 도구}
 \label{app:simguide}
 
-본 부록은 12일차에 구축한 \textbf{블록코딩 연계 씬 생성 도구}의 사용법이다. 시뮬레이터는
-\textbf{사용자 모드}(씬을 골라 블록 코드를 모의실행)와 \textbf{개발자 모드}(씬을 만들어
-저장)로 나뉜다. 설계$\cdot$규약 원문은 저장소의 \code{SIMULATOR.md}.
+본 부록은 12$\sim$13일차에 구축$\cdot$고도화한 \textbf{블록코딩 연계 3D 시뮬레이터}의
+사용 매뉴얼이다. 시뮬레이터는 장치(로버)가 연결되어 있지 않아도 블록 코드를 3D 씬에서
+모의실행해 볼 수 있는 기능으로, \textbf{사용자 모드}(씬을 골라 블록 코드를 모의실행)와
+\textbf{개발자 모드}(씬을 만들어 저장$\cdot$서비스 등록)로 나뉜다. 두 모드는 배경으로
+구분된다 --- 사용자 모드는 \textbf{밝은 회색}, 개발자 모드는 \textbf{짙은 회색 배경에
+노란 테두리}. 설계$\cdot$규약 원문은 저장소의 \code{SIMULATOR.md}, 구현은
+\code{Web/Sim\_Parts/}$\cdot$\code{Web/Simulation/}. 본 부록의 모든 화면은 실제
+서비스를 로컬 서버로 구동$\cdot$조작하며 캡처했다(2026-07-10, 태블릿 768px 레이아웃).
 
 \subsection{사용자 모드 --- 씬 로드와 모의실행}
 \begin{enumerate}
-  \item 미션 화면에서 \textbf{시뮬레이션}을 열면 좌상단 드롭다운에 기본 주제 4종(알비$\cdot$%
-  우주 신호등$\cdot$발사대$\cdot$로버)과 \textbf{저장된 씬}(예: `로버 훈련장 (컴포넌트)')이 나열된다.
-  씬을 고르면 자동으로 로드되고 카메라가 씬 전체를 프레이밍한다.
+  \item 미션 화면 하단 탭에서 \textbf{시뮬레이션}을 열면 좌상단 드롭다운에 기본 주제와
+  \textbf{서비스 등록된 저장 씬}이 함께 나열된다(그림~\ref{fig:simg-user} 좌).
+  목록은 \code{Web/scenes/manifest.json}이 결정한다 --- \code{scenes}에 등록된 씬이
+  추가되고, \code{hiddenTopics}에 지정된 기본 주제는 숨겨진다. 씬을 고르면 자동으로
+  로드되고 카메라가 씬 전체를 프레이밍한다.
   \item 블록을 조립한 뒤 하단 중앙 \textbf{`모의실행'} 버튼(시뮬 모드에서 파랑)을 누르면
-  장치 연결 없이 블록 명령이 씬으로 흘러 실행된다. 실행 중에는 버튼이 \textbf{`실험중단'}으로
-  바뀌고, 누르면 즉시 정지(운동 정지$\cdot$LED 소등)한다.
+  장치 연결 없이 블록 명령이 씬으로 흘러 실행된다(그림~\ref{fig:simg-run}). 실행 중에는
+  버튼이 빨간 \textbf{`실험중단'}으로 바뀌고, 누르면 즉시 정지한다(운동 정지$\cdot$LED 소등).
+  실행되는 명령$\cdot$응답 스트림(Ack$\cdot$대기 포함)은 화면 좌하단 로그에 흐른다.
+  \item LED가 점등되면 해당 객체가 발광하고 \textbf{객체 중심에 발광색 포인트 라이트}가
+  생겨 주변을 비춘다(소등 시 제거). GLB(텍스처) 메시는 자기 텍스처 색으로 전체 발광한다.
   \item 사용자는 씬을 편집할 수 없다(읽기 전용) --- 편집 UI는 개발자 모드에서만 나타난다.
 \end{enumerate}
 
-\subsection{개발자 모드 --- 진입과 화면 구성}
-시뮬레이션 화면이 열린 상태에서 \textbf{Ctrl+E}를 누르면 개발자 모드가 토글된다.
-다음 도구가 나타난다.
-\begin{itemize}
-  \item \textbf{씬 도구 바}(드롭다운 옆) --- \code{새 씬}(빈 씬 시작) $\cdot$ \code{씬 저장}
-  (JSON 파일 내보내기) $\cdot$ \code{씬 열기}(JSON 파일 불러오기)
-  \item \textbf{편집 툴바}(우상단) --- Move$\cdot$Rotate$\cdot$Scale 기즈모 모드(단축키 W/E/R)
-  \item \textbf{Hierarchy}(우측) --- 씬 객체 트리. 클릭=선택, \textbf{길게 클릭(0.6초)=이름 변경}
-  \item \textbf{인스펙터}(드롭다운 아래, 객체 선택 시) --- 위치$\cdot$회전\textdegree$\cdot$크기와
-  부착된 \textbf{컴포넌트 필드값}을 직접 입력$\cdot$[적용]. 섹션의 $-$ 버튼으로 컴포넌트 해제
-  \item \textbf{시각 보조} --- 원점 좌표축(x빨강$\cdot$y초록$\cdot$z파랑)과 3직교 평면 그리드
-  (10m$\cdot$0.5m 격자)
-\end{itemize}
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_user_scene.png}
+    \caption{시뮬레이션 진입 --- 주제 씬 로드(우주 신호등)}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_user_topics.png}
+    \caption{주제 드롭다운 --- 기본 주제 + 서비스 등록 씬}
+  \end{subfigure}
+  \caption{사용자 모드. 밝은 회색 배경, 하단 중앙 파란 `모의실행' 버튼. 드롭다운의
+  `알비와함께'$\cdot$`발사대\_제작'은 개발자 모드에서 만들어 서비스 등록한 씬이다.}
+  \label{fig:simg-user}
+\end{figure}
 
-\subsection{객체 만들기 --- 우클릭 스폰}
-3D 화면을 \textbf{우클릭}하면 그 지점에 객체를 만드는 메뉴가 뜬다.
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_user_run.png}
+    \caption{모의실행 중 --- LED 1$\cdot$2$\cdot$3 점등, `실험중단' 버튼}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_gun_fire.png}
+    \caption{Gun 발사 --- 로켓(자기 자신)이 비행하고 연기가 남는다}
+  \end{subfigure}
+  \caption{모의실행. (a) `발사대\_제작' 씬에서 예제 블록(변수로 LED 켜기)을 모의실행 ---
+  램프 객체가 차례로 발광하며 좌하단에 \code{LED\_ON,1,1 → SLEEP,0.4 → …} 명령
+  스트림이 흐른다. (b) \code{GUN\_FIRE} 수신 시 Gun 객체 자신이 발사 방향으로 날아가고
+  연기점에서 연기가 발생한다. 시뮬레이션이 끝나면 1초에 걸쳐 원위치로 복귀한다.}
+  \label{fig:simg-run}
+\end{figure}
+
+\subsection{개발자 모드 --- 진입과 화면 구성}
+시뮬레이션 화면이 열린 상태에서 \textbf{Ctrl+E}를 누르면 개발자 모드가 토글된다
+(그림~\ref{fig:simg-dev}). 배경이 짙은 회색 + 노란 테두리로 바뀌고 다음 도구가 나타난다.
+\begin{itemize}
+  \item \textbf{DEV 바 `씬 메뉴'}(주제 드롭다운 옆 드롭다운 메뉴) --- \code{새 씬}(빈 씬 시작)
+  $\cdot$ \code{씬 저장}(JSON 파일 내보내기) $\cdot$ \code{씬 열기}(JSON 파일 불러오기) $\cdot$
+  \code{서비스 등록} $\cdot$ \code{서비스 제거}(\ref{sec:simg-deploy}절)
+  \item \textbf{편집 툴바}(우상단) --- Move$\cdot$Rotate$\cdot$Scale 기즈모 모드(단축키 W/E/R)와
+  현재 선택 객체$\cdot$부착 컴포넌트 표시
+  \item \textbf{Hierarchy}(우측) --- 씬 객체 트리. 클릭=선택, \textbf{길게 클릭(0.6초)=이름 변경}
+  \item \textbf{인스펙터}(좌측, 객체 선택 시) --- 트랜스폼$\cdot$색상$\cdot$컴포넌트 필드 편집
+  (\ref{sec:simg-inspector}절)
+  \item \textbf{시각 보조} --- 원점 좌표축(x빨강$\cdot$y초록$\cdot$z파랑)과 3직교 평면 그리드
+  (10\,m$\cdot$0.5\,m 격자)
+\end{itemize}
+개발자 모드에서 작업하던 씬은 주제 전환$\cdot$모드 이탈$\cdot$새로고침 시
+\textbf{localStorage에 자동 임시 저장}된다(기반 주제 포함). 개발자 모드 재진입(빈 화면일 때)
+이나 `새 씬' 선택 시 ``이어서 작업할까요?''로 복원을 제안하며, 씬 저장$\cdot$서비스 등록이
+완료되거나 새 씬 시작을 확정하면 임시본을 폐기한다.
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_dev_overview.png}
+    \caption{개발자 모드 전경 --- `발사대\_제작' 씬}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_dev_spawn.png}
+    \caption{우클릭 스폰 메뉴 + 선택 객체 인스펙터}
+  \end{subfigure}
+  \caption{개발자 모드(Ctrl+E). 짙은 배경 + 노란 테두리, DEV 바 `씬 메뉴', 우상단
+  Move$\cdot$Rotate$\cdot$Scale 툴바와 Hierarchy 트리. (b) 3D 화면 우클릭 →
+  \textsc{Create Object}(Box$\cdot$Sphere$\cdot$Marker$\cdot$OLED Panel$\cdot$GLB 모델…)$\cdot$
+  \textsc{Create Child}$\cdot$컴포넌트 부착$\cdot$삭제 메뉴. 좌측 인스펙터에는 선택 객체
+  (\code{Box 2\_dup})의 트랜스폼$\cdot$기본색/발광색$\cdot$부착 컴포넌트(Buzzer)가 보인다.}
+  \label{fig:simg-dev}
+\end{figure}
+
+\subsection{객체 만들기 --- 우클릭 스폰$\cdot$GLB$\cdot$복제$\cdot$색상}
+3D 화면을 \textbf{우클릭}하면 그 지점에 객체를 만드는 메뉴가 뜬다(그림~\ref{fig:simg-dev}b).
 \begin{itemize}
   \item \textbf{Create object} --- Box $\cdot$ Sphere $\cdot$ Marker $\cdot$ OLED Panel $\cdot$
-  \textbf{GLB 모델…}. GLB 를 고르면 \code{Web/Mesh}의 자산 목록(\code{Mesh/manifest.json},
-  16종)이 파일명으로 나열되고, 선택하면 그 자리에 배치된다. 객체 라벨은 파일명을 그대로
-  쓰며, \textbf{씬 파일에는 상대경로(\code{Mesh/….glb})가 기록}된다.
+  \textbf{GLB 모델…}. GLB를 고르면 \code{Web/Mesh}의 자산 목록(\code{Mesh/manifest.json})이
+  파일명으로 나열되고(그림~\ref{fig:simg-insp}a), 선택하면 그 자리에 배치된다. 객체 라벨은
+  파일명을 그대로 쓰며, \textbf{씬 파일에는 상대경로(\code{Mesh/….glb})가 기록}된다.
   새 GLB 자산은 \code{Web/Mesh}에 넣고 \code{Mesh/manifest.json}에 한 줄 등록하면 메뉴에 나타난다.
   \item \textbf{Create child} --- 선택한 객체의 \emph{하위}로 생성(부모를 움직이면 함께 이동).
   \item \textbf{Component} --- 선택 객체에 컴포넌트 부착($+$)/해제($-$).
   \item \textbf{Delete runtime object} --- 선택 객체(+하위) 삭제. Delete 키도 동일.
+  \item \textbf{복제(Ctrl+V)} --- 선택 객체를 원본과 같은 부모를 갖는 \textbf{sibling}으로
+  복제한다. 라벨은 \code{원본이름\_dup}, 위치는 부모 좌표계 기준 x축 $+1$\,m, 하위 객체와
+  부착 컴포넌트도 함께 복제된다. (Ctrl+D는 브라우저 북마크와 충돌해 V를 쓴다.)
+  \item \textbf{색상} --- 박스$\cdot$구는 \textbf{기본색}과 \textbf{발광색}을 각각
+  $[r,g,b,a]$(0$\sim$1, $a$=불투명도)로 갖는다. 평상시는 기본색으로만 렌더링되고, LED
+  컴포넌트가 부착된 객체는 LED 밝기 $t$(0$\sim$1)에 따라 기본색$\leftrightarrow$발광색이
+  보간된다($t{=}0$ 기본색, $t{=}1$ 발광색, 불투명도 포함). 인스펙터의 색상 행에서 편집하며
+  씬 직렬화(\code{colors} 필드)$\cdot$복제에 함께 실린다.
 \end{itemize}
+
+\subsection{인스펙터 --- 트랜스폼$\cdot$컴포넌트 필드$\cdot$회전축 시각 편집}
+\label{sec:simg-inspector}
+객체를 선택하면 좌측에 인스펙터가 열린다(그림~\ref{fig:simg-insp}b).
+\begin{itemize}
+  \item \textbf{트랜스폼} --- 위치$\cdot$회전\textdegree$\cdot$크기를 직접 입력하고 [적용].
+  \item \textbf{컴포넌트 필드} --- JSON 편집 대신 \textbf{구조화 입력칸}으로 필드별 편집.
+  선택적 벡터 필드(스핀 기준$\cdot$이동 방향$\cdot$선회축 등)에는 \textbf{사용/미사용
+  체크박스}가 있어, 체크를 끄면 해당 축이 동작에서 빠진다. 섹션의 $-$ 버튼으로 컴포넌트 해제.
+  \item \textbf{회전축 시각 편집} --- 회전 특성 컴포넌트(DC 회전축, Servo 스핀축$\cdot$선회축)를
+  가진 객체를 선택하면 화면 \textbf{하단 중앙에 축 버튼}(회전축/스핀축/선회축)이 나타난다.
+  버튼을 켜면 축이 지나는 지점에 핸들(노란 구 + 축 라인)이 표시되고, 이동 기즈모로 핸들을
+  끌어 놓은 위치가 그대로 회전기준(\code{rotation\_offset})$\cdot$선회기준(\code{turn\_offset})
+  값이 된다(\textbf{객체 로컬 좌표}로 저장 --- 어떤 변환 상태든 같은 자리). 핸들을 객체
+  원점에 두면 오프셋 미사용으로 정리된다(그림~\ref{fig:simg-insp}c).
+\end{itemize}
+
+\begin{figure}[H]\centering
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_dev_glb.png}
+    \caption{GLB 모델 메뉴 --- \code{Web/Mesh} 자산 목록}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_dev_inspector.png}
+    \caption{컴포넌트 인스펙터 --- `로버 훈련장' 로버 몸체}
+  \end{subfigure}
+
+  \medskip
+  \begin{subfigure}{0.49\linewidth}\centering
+    \figbox{simguide/simg_dev_axis.png}
+    \caption{스핀축 핸들 편집 --- 하단 `스핀축' 버튼 활성}
+  \end{subfigure}
+  \caption{인스펙터와 시각 편집. (b) 로버 몸체에 부착된 Servo(이동 방향$\cdot$선회축 체크,
+  스핀축 미사용)$\cdot$UltraSonic(ray 방향)$\cdot$Magnet(감지점)$\cdot$Gun(발사 방향$\cdot$연기점)
+  $\cdot$Buzzer$\cdot$LED 필드가 구조화 입력칸으로 나열된다. 하단 중앙에 `선회축' 축 버튼.
+  (c) 왼쪽 바퀴(Servo 스핀축) 선택 후 축 버튼을 켜면 노란 핸들이 나타나고, 끌어 놓은
+  위치가 회전 기준점 오프셋으로 저장된다.}
+  \label{fig:simg-insp}
+\end{figure}
 
 \subsection{컴포넌트 레퍼런스 (9종)}
 객체에 컴포넌트를 부착하면 블록 명령이 해당 객체에서 동작한다 --- 씬 구성만으로
@@ -58,43 +170,69 @@
 \toprule
 \sffamily 컴포넌트 & \sffamily 반응 명령 & \sffamily 필드 · 동작 \\
 \midrule
-LED & LED\_ON/OFF/ALL, 배치 & \code{led\_no}(0$\sim$5). 해당 번호 신호에 메시 발광/소등.
-  GLB(텍스처) 메시는 자기 텍스처 색으로 \textbf{전체 발광} \\
+LED & LED\_ON/OFF/ALL, 배치 & \code{led\_no}(0$\sim$5). 해당 번호 신호에 발광/소등 +
+  \textbf{발광색 포인트 라이트}로 주변 조명. 박스$\cdot$구는 기본색$\to$발광색 보간,
+  GLB(텍스처) 메시는 자기 텍스처 색으로 전체 발광 \\
 Buzzer & BUZZER\_ON & 객체 중심에서 음파 링 발산 + 비프음 \\
 Oled & MSG/MSG\_XY/ICON/CLEAR & 검정 패널에 128$\times$64 텍스트$\cdot$아이콘 표시 \\
 DC & DC\_FORWARD/BACKWARD/STOP & \code{axis\_rotation}(회전축)$\cdot$\code{rotation\_offset}
   (기준점)$\cdot$\code{axis\_translate}(이동축). 강도 인자로 속도 \\
-Servo & SERVO\_* (전진/후진/좌/우/정지) & \code{wheel}(left/right)$\cdot$\code{axis\_rotation}
-  (스핀축)$\cdot$\code{axis\_direction}(이동)$\cdot$\code{axis\_turn}(선회)$\cdot$각 기준점 오프셋 \\
+Servo & SERVO\_* (전진/후진/좌/우/정지) & \code{wheel}(left/right/\textbf{neutral})$\cdot$
+  \code{axis\_rotation}(스핀축)$\cdot$\code{axis\_direction}(이동)$\cdot$\code{axis\_turn}(선회)
+  $\cdot$각 기준점 오프셋. neutral 바퀴는 전$\cdot$후진 스핀은 하되 좌/우회전의 차동
+  스핀에는 참여하지 않는다 \\
 UltraSonic & DISTANCE & \code{detect\_direction}. ray 최근접 거리(cm, 소수 둘째 자리) 회신 \\
-Magnet & MAGNET & \code{detection\_point}. 반경 5cm 내 Metal 존재 시 1 회신 \\
+Magnet & MAGNET & \code{detection\_point}. 반경 5\,cm 내 Metal 존재 시 1 회신 \\
 Metal & --- & 자기장 센서가 감지하는 대상 표시 \\
-Gun & GUN\_FIRE & \code{propel\_direction}(발사)$\cdot$\code{explosion}(연기점). 발사체+연기,
-  폭발음은 Gun 유무와 무관 \\
+Gun & GUN\_FIRE & \code{propel\_direction}(발사 방향)$\cdot$\code{explosion}(연기점).
+  발사체가 따로 생기지 않고 \textbf{객체 자신이} 발사 방향으로 비행(6\,m/s$\cdot$1.2초 후
+  정지)하며 연기점에서 연기 발생. 시뮬레이션 종료 시 1초에 걸쳐 원위치로 복귀, 복귀 중
+  재시작하면 즉시 스냅. 폭발음은 Gun 유무와 무관하게 재생 \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\noindent\textbf{좌표계 규약(요지)} --- 회전축$\cdot$선회축과 그 기준점 오프셋은 \textbf{부모
-좌표계}, 이동축은 \textbf{객체 로컬}(선회 후 전진은 틀어진 방향), 오프셋 거리는 \textbf{m
-그대로}(스케일 미적용), \textbf{스케일은 하위로 전파되지 않음}. 1 unit = 1 m.
+\noindent\textbf{좌표계 규약(2026-07-09 확정)} --- \textbf{모든 축 방향은 부모 객체
+좌표계} 기준이다: 회전축(\code{axis\_rotation})$\cdot$선회축(\code{axis\_turn})$\cdot$
+이동축(\code{axis\_direction}/\code{axis\_translate})$\cdot$Gun 발사 방향
+(\code{propel\_direction}). 객체 자신이 어떤 자세로 돌아도(바퀴가 스핀 중이어도) 축
+방향은 부모 기준으로 고정된다. 반면 각 \textbf{기준점 오프셋}(\code{rotation\_offset}$\cdot$
+\code{turn\_offset})과 센서$\cdot$연출 \textbf{점}(UltraSonic ray 시점$\cdot$Magnet 감지점$\cdot$
+Gun 연기점)은 \textbf{객체 로컬 좌표}다 --- 객체에 붙은 재질점처럼 어떤 변환 상태에서도
+같은 자리에 놓인다. 오프셋 거리는 m 그대로(\textbf{스케일 미적용})이고, \textbf{스케일은
+하위 객체로 전파되지 않는다}(상위를 키워도 하위 모양$\cdot$간격 불변). 1\,unit = 1\,m,
+Magnet 감지 반경 5\,cm.
 
 \smallskip
 \noindent\textbf{구성 예 --- 바퀴가 돌며 나아가는 로버}: 몸체에 Servo\{이동 방향, 선회축\},
 좌$\cdot$우 바퀴(몸체의 child)에 각각 Servo\{wheel: left/right, 스핀축\}. `로버 훈련장' 씬
-(\code{Web/scenes/rover\_yard.json})이 이 구성의 표준 예제다.
+(\code{Web/scenes/rover\_yard.json})이 이 구성의 표준 예제다(그림~\ref{fig:simg-insp}b$\cdot$c).
+이동$\cdot$회전의 적용 주체는 씬 구성자가 정한다 --- 컴포넌트는 자신이 부착된 객체(+하위)만,
+설정된 축만 움직인다.
 
-\subsection{씬 저장·배포}
+\subsection{씬 저장 · 서비스 등록 · 배포}
+\label{sec:simg-deploy}
 \begin{enumerate}
-  \item \code{씬 저장} --- 스폰한 객체들의 계층$\cdot$트랜스폼$\cdot$컴포넌트(필드 포함)가
-  JSON 으로 내려받아진다(\code{ares\_scene.json}).
-  \item 파일을 \code{Web/scenes/}에 두고 \code{scenes/manifest.json}에
-  \code{\{id, file, label\}} 한 줄을 등록하면, \textbf{사용자 드롭다운에 자동 노출}된다.
-  \item \code{씬 열기}로 저장한 JSON 을 다시 불러 이어서 편집할 수 있다.
+  \item \textbf{씬 저장} --- 스폰한 객체들의 계층$\cdot$트랜스폼$\cdot$색상$\cdot$컴포넌트
+  (필드 포함)가 JSON으로 내려받아진다(\code{ares\_scene.json}). \textbf{씬 열기}로 다시
+  불러 이어서 편집할 수 있다.
+  \item \textbf{서비스 등록} --- DEV 바 씬 메뉴의 `서비스 등록'은 현재 화면(기반 주제 +
+  스폰 객체)을 \code{Web/scenes/<id>.json}으로 직렬화하고 \code{scenes/manifest.json}의
+  \code{scenes} 목록에 추가해, 기본 주제와 \textbf{같은 형식으로 사용자 드롭다운에 노출}한다.
+  파일 기록은 File System Access API로 \code{Web/scenes} 폴더에 직접 쓴다 --- 최초 1회만
+  폴더를 선택하면 핸들이 저장되어 이후 등록/제거는 자동 기록된다. 로컬 서비스에 즉시
+  반영되고 git push로 배포에도 반영되며, 미지원 브라우저는 갱신 파일 다운로드로 폴백한다.
+  \item \textbf{서비스 제거} --- 선택된 주제를 서비스에서 뺀다. 등록 주제는 \code{scenes}
+  에서 제거(씬 파일은 보존), 기본 주제(알비$\cdot$로버 등)는 manifest의 \code{hiddenTopics}에
+  넣어 숨긴다.
+  \item 저장된 씬은 로드 시 \code{topic} 필드의 기반 주제 위에 재구성된다. 수동 배포도
+  가능하다 --- JSON을 \code{Web/scenes/}에 두고 \code{manifest.json}에
+  \code{\{id, file, label\}} 한 줄을 등록하면 된다.
 \end{enumerate}
 
 \subsection{콘솔 도구 (고급)}
 개발자 모드에서는 브라우저 콘솔에 \code{window.\_\_aresSimDev}가 노출된다 ---
 \code{serialize/apply/clear}(씬), \code{attach/detach}(컴포넌트), \code{objects/state/setPos}
 (객체 조회$\cdot$이동), \code{sink('LED\_ON,0,1')}(명령 주입), \code{tick(dt)}(수동 프레임).
-자동화 테스트$\cdot$디버깅에 사용한다.
+자동화 테스트$\cdot$디버깅에 사용한다. 본 부록의 Gun 발사 장면(그림~\ref{fig:simg-run}b)도
+\code{sink('GUN\_FIRE')} 주입으로 재현$\cdot$캡처한 것이다.

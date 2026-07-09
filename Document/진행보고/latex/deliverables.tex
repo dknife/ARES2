@@ -22,7 +22,7 @@
 중간 점검 머지 --- 주요 코드 변경 & 통합 머지로 반영된 부록 A 대비 변경의 트랙별 요약 & 부록 D \\
 중간 보고 시점 코드 분석 & 부록 A 장 구조를 현재 코드에 재적용한 변화 중심 재분석 & 부록 E \\
 소프트웨어 테스트 결과 보고서(STR v1.1) & TCL v1.0(98케이스) 1차 실측 --- 85 Pass$\cdot$0 Fail, 조건부 Go & 부록 F \\
-시뮬레이터 사용법 & 씬 생성 도구(컴포넌트 9종$\cdot$개발자/사용자 모드) 사용 안내 & 부록 G \\
+시뮬레이터 사용 매뉴얼 & 씬 생성 도구(컴포넌트 9종$\cdot$개발자/사용자 모드) 사용 안내 --- 실구동 캡처 수록 & 부록 G \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -95,13 +95,17 @@ E2E는 전건 Pass. 미결 13건은 전건 \emph{비결함}(테스트 인프라 
 관리하며, 판정은 \textbf{조건부 Go}(재시험 R1$\cdot$R2 완료 시 확정)다.
 \noindent 전문: \ref{app:str} (원문 \code{Test/3\_STR.html}).
 
-\subsection{시뮬레이터 사용법 (요약)}
-12일차에 구축한 \textbf{블록코딩 연계 씬 생성 도구}의 사용 안내서다. 사용자는 씬
-드롭다운에서 저장된 씬을 골라 \textbf{모의실행/실험중단}으로 블록 코드를 장치 없이
-실행하고, 개발자는 \textbf{Ctrl+E}로 진입해 우클릭 스폰(기본 도형$\cdot$OLED$\cdot$GLB 16종
-목록), 기즈모$\cdot$Hierarchy(길게 클릭 이름 변경)$\cdot$인스펙터(트랜스폼$\cdot$컴포넌트
-필드 편집)로 씬을 구성한 뒤 JSON 으로 저장한다. \textbf{컴포넌트 9종 레퍼런스}
-(LED$\cdot$Buzzer$\cdot$Oled$\cdot$DC$\cdot$Servo$\cdot$UltraSonic$\cdot$Magnet$\cdot$Metal$\cdot$Gun)와
-좌표계 규약(회전=부모$\cdot$이동=로컬$\cdot$오프셋 m$\cdot$스케일 비전파), 씬 배포 절차
-(\code{Web/scenes/} + \code{manifest.json} 등록 $\to$ 사용자 드롭다운 노출)를 담았다.
+\subsection{시뮬레이터 사용 매뉴얼 (요약)}
+12$\sim$13일차에 구축$\cdot$고도화한 \textbf{블록코딩 연계 씬 생성 도구}의 사용
+매뉴얼로, 실제 서비스를 구동$\cdot$조작하며 캡처한 \textbf{실구동 화면 9장}을 수록했다.
+사용자는 씬 드롭다운(기본 주제 + 서비스 등록 씬)에서 씬을 골라
+\textbf{모의실행/실험중단}으로 블록 코드를 장치 없이 실행하고, 개발자는 \textbf{Ctrl+E}로
+진입해 우클릭 스폰(기본 도형$\cdot$OLED$\cdot$GLB 자산 목록)$\cdot$복제(Ctrl+V)$\cdot$기본색/발광색
+편집, 기즈모$\cdot$Hierarchy(길게 클릭 이름 변경)$\cdot$인스펙터(트랜스폼$\cdot$구조화 컴포넌트
+필드$\cdot$사용/미사용 체크박스$\cdot$회전축 핸들 편집)로 씬을 구성한 뒤 JSON 저장 또는
+\textbf{서비스 등록}(manifest 자동 갱신)으로 배포한다. \textbf{컴포넌트 9종 레퍼런스}
+(LED$\cdot$Buzzer$\cdot$Oled$\cdot$DC$\cdot$Servo$\cdot$UltraSonic$\cdot$Magnet$\cdot$Metal$\cdot$Gun --- Gun
+자기 비행$\cdot$복귀, LED 포인트 라이트, Servo neutral 포함)와 좌표계 규약(\textbf{축
+방향=부모 좌표계$\cdot$기준점/감지점=객체 로컬}$\cdot$오프셋 m$\cdot$스케일 비전파),
+작업 씬 임시 보존을 담았다.
 \noindent 전문: \ref{app:simguide}.
