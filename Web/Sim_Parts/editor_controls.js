@@ -1,9 +1,9 @@
 // ARES Simulation Editor Controls
 // Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
 
-import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
-import { createPrimitiveObject, createGlbObject } from './object_factory.js';
+import { createPrimitiveObject, createGlbObject, applyObjectColors } from './object_factory.js';
 import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents } from './components.js';
+import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
 
 const RENAME_HOLD_MS = 600;   // Hierarchy 항목 길게 클릭 → 이름 변경
 
@@ -13,16 +13,16 @@ const FIELD_SPECS = {
   LED: [{ key: 'led_no', label: 'LED 번호 (0~5)', short: 'LED 번호', def: '0', kind: 'int' }],
   DC: [
     { key: 'axis_rotation', label: 'DC 회전축 x,y,z (부모 좌표계, 빈칸=미사용)', short: '회전축', def: '0,1,0', kind: 'vec', optional: true },
-    { key: 'rotation_offset', label: '회전 기준점 오프셋 x,y,z (부모 좌표계, 빈칸=원점)', short: '회전 기준', def: '', kind: 'vec', optional: true },
+    { key: 'rotation_offset', label: '회전 기준점 오프셋 x,y,z (객체 로컬 좌표, 빈칸=원점)', short: '회전 기준', def: '', kind: 'vec', optional: true },
     { key: 'axis_translate', label: 'DC 이동축 x,y,z (로컬, 빈칸=미사용)', short: '이동축', def: '', kind: 'vec', optional: true },
   ],
   Servo: [
     { key: 'wheel', label: '바퀴연결 (left/right)', short: '바퀴', def: 'left', kind: 'side' },
     { key: 'axis_rotation', label: '바퀴 스핀축 x,y,z (부모 좌표계, 빈칸=미사용)', short: '스핀축', def: '1,0,0', kind: 'vec', optional: true },
-    { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (부모 좌표계, 빈칸=원점)', short: '스핀 기준', def: '', kind: 'vec', optional: true },
+    { key: 'rotation_offset', label: '스핀축 기준점 오프셋 x,y,z (객체 로컬 좌표, 빈칸=원점)', short: '스핀 기준', def: '', kind: 'vec', optional: true },
     { key: 'axis_direction', label: '이동 방향 x,y,z (로컬, 빈칸=미사용)', short: '이동 방향', def: '', kind: 'vec', optional: true },
     { key: 'axis_turn', label: '선회축 x,y,z (부모 좌표계, 빈칸=미사용)', short: '선회축', def: '', kind: 'vec', optional: true },
-    { key: 'turn_offset', label: '선회축 기준점 오프셋 x,y,z (부모 좌표계, 빈칸=원점)', short: '선회 기준', def: '', kind: 'vec', optional: true },
+    { key: 'turn_offset', label: '선회축 기준점 오프셋 x,y,z (객체 로컬 좌표, 빈칸=원점)', short: '선회 기준', def: '', kind: 'vec', optional: true },
   ],
   UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', short: 'ray 방향', def: '0,0,1', kind: 'vec' }],
   Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', short: '감지점', def: '0,0,0', kind: 'vec' }],
@@ -33,8 +33,8 @@ const FIELD_SPECS = {
 };
 
 const MODES = ['translate', 'rotate', 'scale'];
+// (Albi Robot 항목은 제거 — GLB 메뉴의 AlbiStaticLow.glb 로 대체)
 const SPAWN_MENU = [
-  { type: 'albi', label: 'Albi Robot' },
   { type: 'box', label: 'Box' },
   { type: 'sphere', label: 'Sphere' },
   { type: 'marker', label: 'Marker' },
@@ -59,6 +59,8 @@ export class EditorControls {
     this.mode = 'translate';
     this.lastSpawnPoint = new this.THREE.Vector3();
     this.hierarchyVersion = -1;
+    this.axisEdit = null;     // 회전축 편집 상태 { simObject, comp, offsetField, axisField }
+    this.axisHandle = null;   // 축 핸들(구 + 축 라인) — 끌어서 회전기준/선회기준을 설정
 
     this.raycaster = new this.THREE.Raycaster();
     this.pointer = new this.THREE.Vector2();
@@ -71,6 +73,11 @@ export class EditorControls {
 
     this.toolbar = this.createToolbar();
     this.ctx.stage.appendChild(this.toolbar);
+    // 회전축/스핀축/선회축 선택 바 — 시뮬레이션 화면 하단 중앙(회전 컴포넌트 선택 시 노출)
+    this.axisBar = document.createElement('div');
+    this.axisBar.className = 'sim-editor-axisbar';
+    this.axisBar.hidden = true;
+    this.ctx.stage.appendChild(this.axisBar);
     this.menu = this.createContextMenu();
     this.ctx.stage.appendChild(this.menu);
     this.hierarchy = this.createHierarchyPanel();
@@ -278,10 +285,12 @@ export class EditorControls {
     this.toolbar.hidden = !this.devMode;
     this.hierarchy.hidden = !this.devMode;
     this.hideContextMenu();
+    if (this.glbMenu) this.glbMenu.hidden = true;
     if (this.devMode) this.ensureDevGrids();
     if (this.devGrids) this.devGrids.visible = this.devMode;
     if (!this.devMode) this.select(null);
     else this.updateHierarchy(true);
+    this.updateAxisButtons(this.getSelectedSimObject());
     this.updateInspector();
   }
 
@@ -299,6 +308,10 @@ export class EditorControls {
         <span>위치</span><input data-tf="p0"><input data-tf="p1"><input data-tf="p2">
         <span>회전°</span><input data-tf="r0"><input data-tf="r1"><input data-tf="r2">
         <span>크기</span><input data-tf="s0"><input data-tf="s1"><input data-tf="s2">
+      </div>
+      <div class="sim-editor-inspector-colors" hidden>
+        <span>기본색</span><input data-col="b0" title="R (0~1)"><input data-col="b1" title="G (0~1)"><input data-col="b2" title="B (0~1)"><input data-col="b3" title="A — 불투명도 (0~1)">
+        <span>발광색</span><input data-col="e0" title="R (0~1)"><input data-col="e1" title="G (0~1)"><input data-col="e2" title="B (0~1)"><input data-col="e3" title="A — 발광 시 불투명도 (0~1)">
       </div>
       <div class="sim-editor-inspector-comps"></div>
       <div class="sim-editor-inspector-status" hidden></div>
@@ -342,8 +355,26 @@ export class EditorControls {
     }
     this.inspector.querySelector('.sim-editor-inspector-title').textContent = simObject.label;
     this.refreshInspectorTransform();
+    this.refreshInspectorColors(simObject);
     this.renderInspectorComponents(simObject);
     this.setInspectorStatus('');
+  }
+
+  // 색상 입력칸(기본색·발광색 r,g,b,a) 갱신 — 색상 지원 객체(박스·구)만 노출
+  refreshInspectorColors(simObject) {
+    const wrap = this.inspector?.querySelector('.sim-editor-inspector-colors');
+    if (!wrap) return;
+    const colors = simObject?.metadata?.colors;
+    wrap.hidden = !colors;
+    if (!colors) return;
+    const vals = {
+      b0: colors.base[0], b1: colors.base[1], b2: colors.base[2], b3: colors.base[3],
+      e0: colors.emissive[0], e1: colors.emissive[1], e2: colors.emissive[2], e3: colors.emissive[3],
+    };
+    Object.entries(vals).forEach(([key, v]) => {
+      const el = wrap.querySelector(`[data-col="${key}"]`);
+      if (el && document.activeElement !== el) el.value = Math.round((v ?? 0) * 1000) / 1000;
+    });
   }
 
   // 부착된 컴포넌트들을 필드별 입력칸(트랜스폼과 동일한 방식)으로 렌더
@@ -464,7 +495,20 @@ export class EditorControls {
     root.rotation.set(num('r0', root.rotation.x / rad) * rad, num('r1', root.rotation.y / rad) * rad, num('r2', root.rotation.z / rad) * rad);
     root.scale.set(num('s0', root.scale.x), num('s1', root.scale.y), num('s2', root.scale.z));
 
-    // (2) 컴포넌트 필드 적용 — 입력칸에서 수집해 재부착
+    // (2) 색상(기본색·발광색 r,g,b,a) 적용 — 색상 지원 객체(박스·구)만. 값은 0~1 로 클램프
+    const colors = simObject.metadata?.colors;
+    if (colors) {
+      const col = (key, fallback) => {
+        const el = this.inspector.querySelector(`[data-col="${key}"]`);
+        const v = parseFloat(el?.value);
+        return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : fallback;
+      };
+      colors.base = [col('b0', colors.base[0]), col('b1', colors.base[1]), col('b2', colors.base[2]), col('b3', colors.base[3])];
+      colors.emissive = [col('e0', colors.emissive[0]), col('e1', colors.emissive[1]), col('e2', colors.emissive[2]), col('e3', colors.emissive[3])];
+      applyObjectColors(simObject);
+    }
+
+    // (3) 컴포넌트 필드 적용 — 입력칸에서 수집해 재부착
     try {
       const list = this.collectInspectorComponents();
       serializeComponents(simObject).forEach(({ type }) => detachComponent(this.ctx, simObject, type));
@@ -503,6 +547,7 @@ export class EditorControls {
 
   setMode(mode) {
     if (!MODES.includes(mode)) return;
+    this.stopAxisEdit();   // 이동/회전/크기 모드로 돌아오면 축 편집 종료
 
     this.mode = mode;
     if (this.transform) this.transform.setMode(mode);
@@ -513,6 +558,7 @@ export class EditorControls {
   }
 
   select(object) {
+    this.stopAxisEdit();
     this.selected = object || null;
 
     if (this.selected && this.transform) {
@@ -531,7 +577,150 @@ export class EditorControls {
       || this.selected?.userData?.simEditorLabel || 'No selection';
     const text = this.toolbar.querySelector('.sim-editor-selection');
     if (text) text.textContent = label;
+    this.updateAxisButtons(simObject);
     this.updateHierarchy(true);
+    this.updateInspector();
+  }
+
+  // ==== 회전축 편집 (2026-07-09) — 회전 특성 컴포넌트를 가진 객체 선택 시 하단 바에
+  // 축 버튼이 나타나고, 핸들을 끌어 옮긴 위치가 회전기준(rotation_offset)·
+  // 선회기준(turn_offset) 값이 된다(**객체 로컬 좌표**로 저장 — 변환 상태와 무관). ====
+  getAxisEditEntries(simObject) {
+    const entries = [];
+    const dc = simObject?.components?.DC;
+    if (dc?.fields?.axis_rotation) {
+      entries.push({ comp: 'DC', label: '회전축', axisField: 'axis_rotation', offsetField: 'rotation_offset' });
+    }
+    const sv = simObject?.components?.Servo;
+    if (sv?.fields?.axis_rotation) {
+      entries.push({ comp: 'Servo', label: '스핀축', axisField: 'axis_rotation', offsetField: 'rotation_offset' });
+    }
+    if (sv?.fields?.axis_turn) {
+      entries.push({ comp: 'Servo', label: '선회축', axisField: 'axis_turn', offsetField: 'turn_offset' });
+    }
+    return entries;
+  }
+
+  updateAxisButtons(simObject) {
+    const wrap = this.axisBar;
+    if (!wrap) return;
+    wrap.textContent = '';
+    const entries = this.getAxisEditEntries(simObject);
+    wrap.hidden = !this.devMode || entries.length === 0;
+    entries.forEach((entry) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = entry.label;
+      btn.title = `${entry.comp} ${entry.label} 옮기기 — 끌어 놓은 위치가 기준점 오프셋이 된다`;
+      const active = this.axisEdit && this.axisEdit.comp === entry.comp && this.axisEdit.offsetField === entry.offsetField;
+      btn.setAttribute('aria-pressed', String(!!active));
+      btn.addEventListener('click', () => {
+        if (this.axisEdit && this.axisEdit.comp === entry.comp && this.axisEdit.offsetField === entry.offsetField) {
+          this.stopAxisEdit();
+        } else {
+          this.startAxisEdit(entry);
+        }
+        this.updateAxisButtons(this.getSelectedSimObject());
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  ensureAxisHandle() {
+    if (this.axisHandle) return;
+    const THREE = this.THREE;
+    const group = new THREE.Group();
+    group.name = 'sim-axis-handle';
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffd24a, depthTest: false, transparent: true, opacity: 0.9 }),
+    );
+    sphere.renderOrder = 998;
+    this.axisLine = new THREE.Line(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({ color: 0xffd24a, depthTest: false, transparent: true, opacity: 0.75 }),
+    );
+    this.axisLine.renderOrder = 998;
+    group.add(sphere, this.axisLine);
+    this.axisHandle = group;
+  }
+
+  // 핸들을 실제 회전 기준점과 같은 위치에 배치하고 축 라인을 그린다.
+  // 기준점은 객체에 붙은 재질점(pivotLocal)이라, 객체가 회전해도 축이 지나는 점은
+  // 공간에 고정된다 — 오프셋 필드값을 그대로 더하면 회전 중 그림이 따라 돌아 틀린다.
+  syncAxisHandle() {
+    if (!this.axisEdit || !this.axisHandle) return;
+    const { simObject, comp, offsetField, axisField } = this.axisEdit;
+    const component = simObject.components?.[comp];
+    const fields = component?.fields;
+    if (!fields) { this.stopAxisEdit(); return; }
+    const pivotLocal = component.getPivotLocal?.(offsetField) || null;
+    const p = simObject.root.position;
+    if (pivotLocal) {
+      this.axisHandle.position
+        .copy(pivotLocal)
+        .applyQuaternion(simObject.root.quaternion)
+        .add(p);
+    } else {
+      this.axisHandle.position.copy(p);   // 오프셋 미사용 — 객체 원점을 지나는 축
+    }
+    const a = fields[axisField];
+    const dir = new this.THREE.Vector3(+a[0] || 0, +a[1] || 0, +a[2] || 0);
+    if (dir.lengthSq() > 1e-12) {
+      dir.normalize();
+      this.axisLine.geometry.setFromPoints([dir.clone().multiplyScalar(-1.5), dir.clone().multiplyScalar(1.5)]);
+      this.axisLine.visible = true;
+    } else {
+      this.axisLine.visible = false;
+    }
+  }
+
+  startAxisEdit(entry) {
+    const simObject = this.getSelectedSimObject();
+    if (!simObject || !this.transform) return;
+    this.stopAxisEdit();
+    this.axisEdit = { simObject, ...entry };
+    this.ensureAxisHandle();
+    (simObject.root.parent || this.ctx.scene).add(this.axisHandle);
+    this.syncAxisHandle();
+    this.transform.attach(this.axisHandle);
+    this.transform.setMode('translate');   // 축 옮기기는 이동 기즈모로만
+  }
+
+  stopAxisEdit() {
+    if (!this.axisEdit) return;
+    this.axisEdit = null;
+    this.axisHandle?.parent?.remove(this.axisHandle);
+    if (this.transform) {
+      if (this.selected) {
+        this.transform.attach(this.selected);
+      } else {
+        this.transform.detach();
+        this.transform.visible = false;
+      }
+      this.transform.setMode(this.mode);
+    }
+    this.updateAxisButtons(this.getSelectedSimObject());
+  }
+
+  // 핸들 드롭 → 새 오프셋을 **객체 로컬 좌표**로 변환해 컴포넌트 필드에 반영.
+  // 로컬로 저장하므로 객체가 어떤 변환 상태여도 축은 항상 같은 자리에 놓인다.
+  applyAxisHandleDrop() {
+    if (!this.axisEdit || !this.axisHandle) return;
+    const { simObject, comp, offsetField } = this.axisEdit;
+    const cmp = simObject.components?.[comp];
+    if (!cmp) { this.stopAxisEdit(); return; }
+    const root = simObject.root;
+    const round3 = (v) => Math.round(v * 1000) / 1000;
+    const offLocal = this.axisHandle.position.clone()
+      .sub(root.position)
+      .applyQuaternion(root.quaternion.clone().invert());
+    const off = [round3(offLocal.x), round3(offLocal.y), round3(offLocal.z)];
+    const fields = { ...cmp.fields };
+    if (off.every((v) => v === 0)) delete fields[offsetField];   // 원점 = 오프셋 미사용
+    else fields[offsetField] = off;
+    attachComponent(this.ctx, simObject, comp, fields);
+    this.syncAxisHandle();
     this.updateInspector();
   }
 
@@ -552,9 +741,6 @@ export class EditorControls {
   }
 
   async spawn(type, options = {}) {
-    if (type === 'albi') {
-      return this.spawnAlbi(options);
-    }
     if (type === 'glb') {
       return this.spawnGlb(options);
     }
@@ -572,58 +758,77 @@ export class EditorControls {
     return simObject.root;
   }
 
-  // GLB 파일 경로를 물어 씬에 배치(SIMULATOR.md 1장 — glb 로딩)
+  // GLB 스폰(SIMULATOR.md 1장 — glb 로딩) — Web/Mesh 의 자산 목록(Mesh/manifest.json)에서
+  // 골라 배치한다. 씬 파일에는 선택한 상대경로(url)가 그대로 기록된다.
   async spawnGlb(options = {}) {
-    const url = prompt('GLB 경로 (Web/ 기준):', 'Mesh/LaunchStation.glb');
-    if (!url || !url.trim()) { this.hideContextMenu(); return null; }
+    this.hideContextMenu();
+    let models = this.glbModels;
+    if (!models) {
+      try {
+        const res = await fetch('Mesh/manifest.json', { cache: 'no-store' });
+        const json = res.ok ? await res.json() : null;
+        models = Array.isArray(json?.models) ? json.models : null;
+      } catch { models = null; }
+      this.glbModels = models;
+    }
+    if (!models || models.length === 0) {
+      // 매니페스트가 없으면 경로 직접 입력으로 폴백
+      const url = prompt('GLB 경로 (Web/ 기준):', 'Mesh/LaunchStation.glb');
+      if (url && url.trim()) return this.spawnGlbFile(url.trim(), null, options);
+      return null;
+    }
+    this.showGlbMenu(models, options);
+    return null;
+  }
 
+  // Mesh/ GLB 선택 메뉴 — 컨텍스트 메뉴와 동일한 스타일로 파일 목록을 띄운다
+  showGlbMenu(models, options) {
+    if (!this.glbMenu) {
+      this.glbMenu = document.createElement('div');
+      this.glbMenu.className = 'sim-editor-context-menu sim-editor-glb-menu';
+      this.glbMenu.hidden = true;
+      this.ctx.stage.appendChild(this.glbMenu);
+    }
+    const menu = this.glbMenu;
+    menu.textContent = '';
+    const title = document.createElement('div');
+    title.className = 'sim-editor-context-title';
+    title.textContent = 'GLB 모델 (Web/Mesh)';
+    menu.appendChild(title);
+    models.forEach((m) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      // 파일명을 그대로 표시·사용한다(객체 라벨 = 파일명). 한글 설명은 툴팁으로.
+      btn.textContent = m.url.split('/').pop();
+      btn.title = m.label ? `${m.label} — ${m.url}` : m.url;
+      btn.addEventListener('click', () => {
+        menu.hidden = true;
+        this.spawnGlbFile(m.url, null, options);
+      });
+      menu.appendChild(btn);
+    });
+    // 직전 컨텍스트 메뉴 위치 근처에 표시
+    menu.style.left = this.menu.style.left || '12px';
+    menu.style.top = this.menu.style.top || '12px';
+    menu.hidden = false;
+  }
+
+  async spawnGlbFile(url, label, options = {}) {
     const parent = this.getSpawnParentFor(options);
     const worldPoint = this.lastSpawnPoint.clone();
-    this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
     try {
-      const simObject = await createGlbObject(this.ctx, url.trim());
+      const simObject = await createGlbObject(this.ctx, url, label || undefined);
       this.ctx.objects.add(simObject, parent);
       simObject.setWorldPosition(worldPoint, parent);
       this.select(simObject.root);
-      this.hideContextMenu();
       this.updateHierarchy(true);
       return simObject.root;
     } catch (err) {
       console.error('GLB 로드 실패:', url, err);
       return null;
-    } finally {
-      this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = false; });
-      this.updateContextMenuState();
     }
   }
 
-  async spawnAlbi(options = {}) {
-    const parent = this.getSpawnParentFor(options);
-    const worldPoint = this.lastSpawnPoint.clone();
-
-    this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
-    try {
-      const simObjects = await createSpawnedAlbiObjects(this.ctx);
-      const body = simObjects[0];
-      this.ctx.objects.add(body, parent);
-      body.setWorldPosition(worldPoint, parent);
-
-      simObjects.slice(1).forEach((child) => {
-        this.ctx.objects.add(child, body.root);
-      });
-
-      this.select(body.root);
-      this.hideContextMenu();
-      this.updateHierarchy(true);
-      return body.root;
-    } catch (err) {
-      console.error('Failed to spawn Albi robot:', err);
-      return null;
-    } finally {
-      this.menu.querySelectorAll('button').forEach((btn) => { btn.disabled = false; });
-      this.updateContextMenuState();
-    }
-  }
 
   deleteSelected() {
     const object = this.selected;
@@ -638,11 +843,84 @@ export class EditorControls {
     this.updateHierarchy(true);
   }
 
+  // Ctrl+V — 선택 객체를 복제해 원본과 같은 부모의 형제(sibling)로 만든다.
+  // 라벨은 `원본_dup`, 위치는 부모 좌표계 기준 x축 +1. 하위 객체·컴포넌트도 함께 복제.
+  async duplicateSelected() {
+    const source = this.getSelectedSimObject();
+    if (!source?.spawned) return;
+
+    // 원본이 실제로 붙어 있는 부모(최상위면 worldGroup, 하위면 부모의 자식 홀더)에
+    // 그대로 붙여야 동일 부모의 sibling 이 된다.
+    const parent = source.root.parent || this.getSpawnParent();
+    const clone = await this.cloneObjectTree(source, parent, true);
+    if (!clone) return;
+
+    this.select(clone.root);
+    this.updateHierarchy(true);
+  }
+
+  // 씬 로드(applyScene)와 같은 방식으로 타입별 재생성 → 트랜스폼·라벨·컴포넌트 복사.
+  // isTop 인 최상위만 _dup 라벨과 x+1 오프셋을 받고, 하위는 원본 그대로 재귀 복제한다.
+  async cloneObjectTree(source, parent, isTop) {
+    let sim = null;
+    try {
+      if (source.type === 'albi-body') {
+        const list = await createSpawnedAlbiObjects(this.ctx);
+        sim = list[0];
+        this.ctx.objects.add(sim, parent);
+        list.slice(1).forEach((child) => this.ctx.objects.add(child, sim.root));
+      } else if (source.type === 'glb') {
+        if (!source.metadata?.glbUrl) return null;
+        sim = await createGlbObject(this.ctx, source.metadata.glbUrl, source.label);
+        this.ctx.objects.add(sim, parent);
+      } else {
+        sim = createPrimitiveObject(this.ctx, source.type);
+        this.ctx.objects.add(sim, parent);
+      }
+    } catch (err) {
+      console.error('객체 복제 실패:', source.label, err);
+      return null;
+    }
+
+    sim.label = isTop ? `${source.label}_dup` : source.label;
+    sim.root.userData.simEditorLabel = sim.label;
+    sim.root.position.copy(source.root.position);
+    sim.root.quaternion.copy(source.root.quaternion);
+    sim.root.scale.copy(source.root.scale);
+    if (isTop) sim.root.position.x += 1;
+    if (source.metadata?.colors && sim.metadata?.colors) {
+      sim.metadata.colors.base = [...source.metadata.colors.base];
+      sim.metadata.colors.emissive = [...source.metadata.colors.emissive];
+      applyObjectColors(sim);
+    }
+
+    serializeComponents(source).forEach(({ type, fields }) => {
+      try { attachComponent(this.ctx, sim, type, fields || {}); }
+      catch (err) { console.warn('컴포넌트 복제 실패:', type, err); }
+    });
+
+    // 하위 객체 재귀 복제 — 알비 스폰 시 자동 생성되는 LED 는 위에서 이미 만들어졌으니 제외
+    for (const child of this.ctx.objects.getChildrenOf(source)) {
+      if (child.type === 'albi-led') continue;
+      await this.cloneObjectTree(child, sim.root, false);
+    }
+    return sim;
+  }
+
   onKeyDown(event) {
     if (!this.devMode) return;
-    // Ctrl+E(개발자 모드 토글) 등 조합키는 편집 단축키(W/E/R)와 충돌하지 않게 무시
-    if (event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/i.test(event.target.tagName)) return;
+
+    // Ctrl+V — 선택 객체 복제(Ctrl+D 는 브라우저 북마크 단축키라 가로채지 못해 V 사용)
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'v') {
+      if (this.getSelectedSimObject()?.spawned) {
+        event.preventDefault();
+        this.duplicateSelected();
+      }
+      return;
+    }
+    // Ctrl+E(개발자 모드 토글) 등 다른 조합키는 편집 단축키(W/E/R)와 충돌하지 않게 무시
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
 
     const key = event.key.toLowerCase();
     if (key === 'w') this.setMode('translate');
@@ -829,17 +1107,24 @@ export class EditorControls {
   }
 
   onDocumentPointerDown(event) {
+    if (this.glbMenu && !this.glbMenu.hidden && !this.glbMenu.contains(event.target)) {
+      this.glbMenu.hidden = true;
+    }
     if (this.menu.hidden || this.menu.contains(event.target) || event.target === this.dom) return;
     this.hideContextMenu();
   }
 
   onDraggingChanged(event) {
     this.orbit.enabled = !event.value;
-    if (!event.value) this.refreshInspectorTransform();   // 기즈모 조작 종료 시 입력칸 동기화
+    if (!event.value) {
+      if (this.axisEdit) this.applyAxisHandleDrop();       // 축 핸들 드롭 → 기준점 오프셋 반영
+      this.refreshInspectorTransform();                    // 기즈모 조작 종료 시 입력칸 동기화
+    }
   }
 
   update() {
     if (this.selected) this.boxHelper.setFromObject(this.selected);
+    if (this.axisEdit && !this.transform?.dragging) this.syncAxisHandle();   // 객체 이동을 따라감
     this.updateHierarchy();
   }
 
@@ -849,7 +1134,9 @@ export class EditorControls {
     document.removeEventListener('pointerdown', this.onDocumentPointerDown);
     window.removeEventListener('keydown', this.onKeyDown);
     this.toolbar?.remove();
+    this.axisBar?.remove();
     this.menu?.remove();
+    this.glbMenu?.remove();
     this.hierarchy?.remove();
     this.inspector?.remove();
 
@@ -863,6 +1150,15 @@ export class EditorControls {
     this.boxHelper.geometry?.dispose?.();
     this.boxHelper.material?.dispose?.();
     this.boxHelper.parent?.remove(this.boxHelper);
+
+    if (this.axisHandle) {
+      this.axisHandle.traverse((node) => {
+        node.geometry?.dispose?.();
+        node.material?.dispose?.();
+      });
+      this.axisHandle.parent?.remove(this.axisHandle);
+      this.axisHandle = null;
+    }
 
     if (this.devGrids) {
       this.devGrids.traverse((node) => {

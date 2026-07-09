@@ -30,23 +30,51 @@ function createLedComponent(ctx, fields = {}) {
   const saved = new Map();   // mesh -> { emissive, intensity }
 
   const setEmit = (simObject, intensity) => {
+    // 색상 지원 객체(박스·구): 밝기 t(0~1)로 기본색↔발광색을 보간한다.
+    // t=0 → 기본색 그대로, t=1 → 발광색만 보임(확산색은 (1-t) 로 감쇠, 발광은 t 비율).
+    const colors = simObject.metadata?.colors;
     forOwnMeshes(simObject.root, (mesh) => {
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       mats.forEach((m) => {
         if (!m || m.emissive === undefined) return;   // Basic 계열 등 emissive 없는 재질은 무시
+        if (colors) {
+          const t = Math.max(0, Math.min(1, intensity));
+          const base = colors.base || [1, 1, 1, 1];
+          const glow = colors.emissive || [1, 1, 1, 1];
+          m.color.setRGB((base[0] ?? 1) * (1 - t), (base[1] ?? 1) * (1 - t), (base[2] ?? 1) * (1 - t), 'srgb');
+          m.emissive.setRGB(glow[0] ?? 0, glow[1] ?? 0, glow[2] ?? 0, 'srgb');
+          m.emissiveIntensity = t;
+          // 불투명도(a)도 함께 보간 — t=0 기본색 a, t=1 발광색 a
+          m.opacity = Math.max(0, Math.min(1, (base[3] ?? 1) * (1 - t) + (glow[3] ?? 1) * t));
+          m.transparent = m.opacity < 1;
+          m.needsUpdate = true;
+          return;
+        }
         if (!saved.has(m)) {
-          saved.set(m, { emissive: m.emissive.clone(), intensity: m.emissiveIntensity ?? 1 });
+          saved.set(m, {
+            emissive: m.emissive.clone(),
+            intensity: m.emissiveIntensity ?? 1,
+            emissiveMap: m.emissiveMap ?? null,
+          });
         }
         if (intensity > 0) {
-          // 재질 고유색 계열로 발광(순검정이면 LED 느낌의 앰버로)
-          const base = m.color && (m.color.r + m.color.g + m.color.b) > 0.05 ? m.color : null;
-          if (base) m.emissive.copy(base); else m.emissive.set(0xffbb33);
+          if (m.map) {
+            // GLB 등 텍스처 재질: 자기 텍스처 색 그대로 발광시켜 메시 전체가 밝게 빛나게 한다
+            m.emissiveMap = m.map;
+            m.emissive.set(0xffffff);
+          } else {
+            // 단색 재질: 고유색 계열로 발광(순검정이면 LED 느낌의 앰버로)
+            const base = m.color && (m.color.r + m.color.g + m.color.b) > 0.05 ? m.color : null;
+            if (base) m.emissive.copy(base); else m.emissive.set(0xffbb33);
+          }
           m.emissiveIntensity = 0.4 + intensity * 1.6;
         } else {
           const orig = saved.get(m);
           m.emissive.copy(orig.emissive);
           m.emissiveIntensity = orig.intensity;
+          m.emissiveMap = orig.emissiveMap;
         }
+        m.needsUpdate = true;   // emissiveMap 변경은 셰이더 재컴파일 필요
       });
     });
   };
@@ -59,7 +87,9 @@ function createLedComponent(ctx, fields = {}) {
       if (cmd.startsWith('LED_ON,')) {
         const parts = cmd.split(',');
         if (parseInt(parts[1], 10) === ledNo) {
-          setEmit(simObject, Math.max(0, Math.min(1, parseFloat(parts[2]) || 1)));
+          // 밝기 0 도 유효값(기본색) — `|| 1` 폴백은 0 을 1 로 바꿔버리므로 금지
+          const b = parseFloat(parts[2]);
+          setEmit(simObject, Math.max(0, Math.min(1, Number.isFinite(b) ? b : 1)));
         }
         return null;
       }
@@ -277,15 +307,17 @@ function fieldVec(THREE, arr, { normalize = true } = {}) {
   return v;
 }
 
-// 회전축 규약(2026-07-08 재확정): 회전축·선회축과 그 기준점 오프셋은 **부모 객체
-// 좌표계** 기준이다. 기준점 = 객체 원점에서 부모 좌표축 방향으로 오프셋만큼 떨어진
-// 점(부모 공간: pos + offset). 오프셋이 없으면 객체 원점을 지나는 축 둘레로 회전한다.
-// (거리는 m 그대로 — 스케일 미적용. 객체가 어떤 자세여도 축은 부모 기준으로 고정)
-function rotateAboutParentAxis(THREE, obj, axisParent, angle, offsetParent) {
+// 회전축 규약(2026-07-09 재정의): 축 **방향**은 부모 좌표계 기준, 축 **기준점 오프셋**은
+// **객체 로컬 좌표** 기준이다. 로컬로 정의된 기준점은 객체에 붙은 재질점이라 객체가
+// 어떤 변환 상태(이동·회전)에 있어도 항상 같은 자리에 놓이고, 회전이 진행돼도 축이
+// 공간에 고정된 채 객체가 그 둘레를 돈다 — 문 경첩, 원점이 어긋난 바퀴 보정.
+// (거리는 m 그대로 — 스케일 미적용. 오프셋이 없으면 객체 원점을 지나는 축)
+function rotateAboutParentAxis(THREE, obj, axisParent, angle, pivotLocal) {
   const q = new THREE.Quaternion().setFromAxisAngle(axisParent, angle);
-  if (offsetParent) {
-    const delta = offsetParent.clone().sub(offsetParent.clone().applyQuaternion(q));
-    obj.position.add(delta);
+  if (pivotLocal) {
+    // 축 통과점(부모 공간) = 원점 + 현재 자세로 회전시킨 로컬 기준점 — 회전 불변점
+    const pivot = pivotLocal.clone().applyQuaternion(obj.quaternion).add(obj.position);
+    obj.position.sub(pivot).applyQuaternion(q).add(pivot);
   }
   obj.quaternion.premultiply(q);
 }
@@ -304,7 +336,7 @@ function createDcComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   const axisRot = fieldVec(THREE, fields.axis_rotation);
   const axisMove = fieldVec(THREE, fields.axis_translate);
-  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 회전 기준점(부모 좌표계)
+  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 회전 기준점(객체 로컬 좌표)
   const ROT_SPEED = 6.0;    // rad/s (강도 1 기준)
   const MOVE_SPEED = 0.5;   // m/s  (강도 1 기준)
   let dir = 0, speed = 1;
@@ -324,6 +356,8 @@ function createDcComponent(ctx, fields = {}) {
     declarative: true,
     type: 'DC',
     fields: outFields,
+    // 편집기 표시용 — 회전축이 지나는 점(객체 로컬 기준점). null 이면 원점 통과
+    getPivotLocal(field) { return field === 'rotation_offset' ? rotOffset : null; },
     onCommand(cmd) {
       if (cmd === 'STOP_ALL' || cmd === 'DC_STOP' || cmd.startsWith('DC_STOP,')) { stop(); return null; }
       if (cmd.startsWith('DC_tFORWARD,') || cmd.startsWith('DC_tBACKWARD,')) {
@@ -337,7 +371,7 @@ function createDcComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       if (!dir) return;
-      // 회전축(+기준점)은 부모 좌표계, 이동축은 객체 로컬 좌표계(규약 재확정)
+      // 축 방향은 부모 좌표계, 기준점·이동축은 객체 로컬 좌표계(규약 2026-07-09)
       if (axisRot) rotateAboutParentAxis(THREE, simObject.root, axisRot, dir * speed * ROT_SPEED * dt, rotOffset);
       if (axisMove) simObject.root.translateOnAxis(axisMove, dir * speed * MOVE_SPEED * dt);
     },
@@ -356,8 +390,8 @@ function createServoComponent(ctx, fields = {}) {
   const axisRot = fieldVec(THREE, fields.axis_rotation);
   const axisDir = fieldVec(THREE, fields.axis_direction);
   const axisTurn = fieldVec(THREE, fields.axis_turn);
-  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 스핀축 기준점(부모 좌표계)
-  const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });      // 선회축 기준점(부모 좌표계)
+  const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 스핀축 기준점(객체 로컬 좌표)
+  const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });      // 선회축 기준점(객체 로컬 좌표)
   const SPIN = 8.0;   // 바퀴 스핀 rad/s
   const MOVE = 0.4;   // 이동 m/s
   const TURN = 1.5;   // 선회 rad/s
@@ -375,6 +409,12 @@ function createServoComponent(ctx, fields = {}) {
     declarative: true,
     type: 'Servo',
     fields: outFields,
+    // 편집기 표시용 — 각 축이 지나는 점(객체 로컬 기준점). null 이면 원점 통과
+    getPivotLocal(field) {
+      if (field === 'rotation_offset') return rotOffset;
+      if (field === 'turn_offset') return turnOffset;
+      return null;
+    },
     onCommand(cmd) {
       if (cmd === 'STOP_ALL' || cmd === 'SERVO_STOP' || cmd.startsWith('SERVO_STOP,')) { stop(); return null; }
       const is = (p) => cmd.startsWith(p);
@@ -390,7 +430,7 @@ function createServoComponent(ctx, fields = {}) {
     },
     update(dt, _c, simObject) {
       const root = simObject.root;
-      // 스핀축·선회축(+기준점)은 부모 좌표계, 이동 방향은 객체 로컬 좌표계(규약 재확정)
+      // 축 방향은 부모 좌표계, 기준점·이동 방향은 객체 로컬 좌표계(규약 2026-07-09)
       if (move !== 0) {
         if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'left' ? 1 : -1) * move * SPIN * dt, rotOffset);
         if (axisDir) root.translateOnAxis(axisDir, move * MOVE * dt);
@@ -431,6 +471,7 @@ function createUltraSonicComponent(ctx, fields = {}) {
         if (under(h.object, simObject.root)) continue;                       // 자기 자신 제외
         if (cctx.editor?.transform && under(h.object, cctx.editor.transform)) continue;   // 기즈모 제외
         if (cctx.editor?.boxHelper && under(h.object, cctx.editor.boxHelper)) continue;
+        if (cctx.editor?.axisHandle && under(h.object, cctx.editor.axisHandle)) continue; // 축 핸들 제외
         return Math.round(h.distance * 100 * 100) / 100;   // 1 unit = 1 m → cm, 소수 둘째 자리
       }
       return null;

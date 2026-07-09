@@ -444,14 +444,14 @@ export const BlocklyConfig = {
       tooltip: "자기장 센서로 자석 감지 여부(0=없음, 1=감지)를 변수에 저장합니다."
     },
 
-    // 시간 블록 (제어 #2b638f)
+    // 시간 블록 (제어 #7954B5)
     {
       type: "time_sleep",
       message0: "⏱️ 기다리기 %1 초",
       args0: [{ type: "input_value", name: "SECONDS", check: "Number" }],
       previousStatement: null,
       nextStatement: null,
-      colour: "#2b638f",
+      colour: "#7954B5",
       tooltip: "지정한 시간(초)만큼 다음 명령 실행을 대기합니다."
     },
 
@@ -484,7 +484,7 @@ export const BlocklyConfig = {
       tooltip: "지정한 범위 내에서 무작위 정수를 반환합니다."
     },
 
-    // 묶음 실행 (제어 #2b638f)
+    // 묶음 실행 (제어 #7954B5)
     {
       type: "batch_block",
       message0: "🚀 한꺼번에 실행 %1 %2",
@@ -494,7 +494,7 @@ export const BlocklyConfig = {
       ],
       previousStatement: null,
       nextStatement: null,
-      colour: "#2b638f",
+      colour: "#7954B5",
       tooltip: "안에 담은 블록들을 한 묶음으로 Pico에 보내 빠르게 차례 실행합니다. 센서값을 받는 블록과 제어/반복 블록은 안에 넣을 수 없습니다."
     }
   ]

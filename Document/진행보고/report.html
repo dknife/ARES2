@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~11일차</title>
+    <title>ARES 진행 보고 — 1~12일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,7 +194,7 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 11일차</span></h1>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 12일차</span></h1>
             <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검.</p>
             <div class="stat-row">
                 <div class="stat"><b>9</b><span>DAYS</span></div>
@@ -2039,11 +2039,138 @@ async _executeFunctionCall(callBlock) {
                 </figure>
             </div>
         </section>
+
+        <!-- ============ Day 12 ============ -->
+        <section class="day" id="day12">
+            <div class="day-head">
+                <span class="day-badge">DAY 12</span>
+                <h2>시뮬레이터 씬 생성 도구(컴포넌트 시스템) 구축 · 소프트웨어 테스트 본격 수행(STR v1.1)</h2>
+                <span class="day-date">2026.07.08 (수) · 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">두 갈래의 큰 작업을 진행했다. <b>시뮬레이터 개선</b> — 설계서(<code>SIMULATOR.md</code>)와 수정 전 <b>기저 동작 분석</b>(동작 기준선·회귀 체크포인트)을 근거로, 시뮬레이터를 <b>블록코딩과 연계해 다양한 씬을 생성할 수 있는 도구</b>로 재구축했다. 객체에 <b>컴포넌트 9종</b>(LED·Buzzer·Oled·DC·Servo·UltraSonic·Magnet·Metal·Gun)을 부착하면 블록 명령이 컴포넌트로 라우팅되어 동작하고, 개발자 모드(Ctrl+E)에서 만든 씬을 저장하면 사용자는 드롭다운에서 골라 쓰기만 하면 된다. <b>소프트웨어 테스트</b> — 11일차 TCL v1.0(98케이스)에 따라 <b>1차 테스트를 본격 수행</b>해 STR v1.1을 얻었다: <b>85건 Pass · 0건 Fail(86.7%)</b>, 미결 13건은 전건 비결함(검증 수단·환경·명세 문제)으로 분석되어 <b>조건부 Go</b> 판정.</p>
+
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_SW테스트_수행.jpg" alt="SW 테스트 수행"></div>
+                    <figcaption>TCL 실행형 시트를 프로젝터에 띄워 놓고 케이스를 실행·기록.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_SW테스트_병행.jpg" alt="실기·시뮬 병행 테스트"></div>
+                    <figcaption>실기(BLE)·시뮬레이터 병행 테스트 수행 전경.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🧩 시뮬레이터 — 블록코딩 연계 씬 생성 도구 구축</h3>
+                <p class="lead"><code>SIMULATOR.md</code>의 설계(씬 생성·저장·로딩, 객체 부착 컴포넌트, 개발자/사용자 분리)와 수정 전 <b>시뮬레이션 기저 동작 분석</b>(모듈 로드·렌더·명령 스트림 기준선, <code>setupSimulation</code>·<code>simulateWorkspace</code> 회귀 체크포인트)을 바탕으로 4단계 로드맵으로 재구축했다.</p>
+                <div class="chips">
+                    <span class="chip">컴포넌트 9종</span>
+                    <span class="chip">블록 명령→컴포넌트 라우팅</span>
+                    <span class="chip">개발자 모드(Ctrl+E) 씬 저장</span>
+                    <span class="chip">사용자 씬 드롭다운 로드</span>
+                    <span class="chip">인스펙터·Hierarchy·기즈모</span>
+                    <span class="chip">데모 씬 '로버 훈련장'</span>
+                </div>
+                <ul>
+                    <li><b>씬 시스템</b> — 씬 그래프 직렬화(JSON, 1unit=1m)·저장/로드, 빈 씬·GLB 배치, <code>scenes/manifest.json</code>으로 저장 씬을 사용자 드롭다운에 노출(읽기 전용).</li>
+                    <li><b>컴포넌트 9종</b> — LED(발광)·Buzzer(음파)·Oled(128×64 표시)·DC(회전·이동)·Servo(좌우 바퀴·이동·선회)·UltraSonic(ray 거리)·Magnet/Metal(자기 5cm)·Gun(발사체·연기). 디스패처가 모든 블록 명령을 컴포넌트로 브로드캐스트해 <b>토픽 하드코딩 없이 씬 구성만으로 동작</b>.</li>
+                    <li><b>좌표계 규약 확정</b> — 회전·선회축(+기준점)은 부모 좌표계, 이동축은 로컬(선회 후 전진은 틀어진 방향), 오프셋 거리는 m(스케일 미적용), 스케일 비전파.</li>
+                    <li><b>편집 도구</b> — Hierarchy(길게 클릭 이름 변경), 인스펙터(트랜스폼+컴포넌트 필드 편집), 원점 좌표축·3직교 그리드(개발자 모드 전용).</li>
+                    <li><b>데모 씬 '로버 훈련장'</b> — 컴포넌트 로버(몸체+바퀴+OLED)·장애물 벽·자성 광석. 모의실행으로 전진·선회·거리 측정·발사가 그대로 동작(전진 1초=0.400m 정확).</li>
+                </ul>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_시뮬_개발자모드.png" alt="개발자 모드"></div>
+                    <figcaption>개발자 모드 — 씬 도구·기즈모·Hierarchy(Ctrl+E 전용).</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_시뮬_인스펙터.png" alt="인스펙터"></div>
+                    <figcaption>인스펙터 — 위치·회전·크기와 컴포넌트 필드값 직접 편집.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_시뮬_로버훈련장.png" alt="로버 훈련장"></div>
+                    <figcaption>데모 씬 '로버 훈련장' — 컴포넌트 로버·장애물·자성 광석.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>📖 시뮬레이터 사용법 (요약 — 전문은 진행보고 PDF 부록 G)</h3>
+                <p class="lead">씬 생성 도구의 사용법을 문서화해 진행보고 <b>부록 G</b>에 수록했다. 사용 흐름 요지:</p>
+                <ul>
+                    <li><b>사용자</b> — 시뮬 드롭다운에서 씬 선택 → 블록 조립 → <b>모의실행</b>(실행 중 <b>실험중단</b>으로 즉시 정지). 씬 편집은 불가(읽기 전용).</li>
+                    <li><b>개발자</b> — <b>Ctrl+E</b> 진입 → '새 씬' → <b>우클릭</b>으로 객체 생성(Box·Sphere·Marker·OLED·<b>GLB 16종 목록</b>) → 기즈모(W/E/R)·Hierarchy(길게 클릭=이름 변경)·인스펙터(트랜스폼+컴포넌트 필드)로 편집 → 컴포넌트 부착(9종) → <b>씬 저장</b>(JSON).</li>
+                    <li><b>배포</b> — 저장한 JSON을 <code>Web/scenes/</code>에 두고 <code>manifest.json</code>에 등록하면 사용자 드롭다운에 자동 노출. GLB는 상대경로로 기록.</li>
+                </ul>
+            </div>
+
+            <div class="tasks">
+                <h3>✅ 소프트웨어 테스트 — 1차 수행 결과(STR v1.1) 요약</h3>
+                <p class="lead">11일차 QA 체계·TCL v1.0(14 카테고리·98 케이스)에 따라 <b>1차 테스트를 본격 수행</b>했다. 하드웨어 의존 항목은 실기(BLE)로, 그 외는 시뮬레이터로 병행 검증하고 테스터 실측 기록(r.txt)을 취합해 STR v1.1로 정리했다.</p>
+                <div class="chips">
+                    <span class="chip">총 98케이스</span>
+                    <span class="chip">85 Pass · 0 Fail (86.7%)</span>
+                    <span class="chip">보류 7 · 기타 3 · 미수행 3</span>
+                    <span class="chip">미결 13건 전건 비결함</span>
+                    <span class="chip">판정: 조건부 Go</span>
+                </div>
+                <ul>
+                    <li><b>실행 완료 85건 기준 Fail 0건</b> — 기능 결함 미발견. 서보·DC·OLED·센서와 <b>시뮬레이터 3D 24건·프리셋 E2E 4건 전건 Pass</b>로 핵심 교육 시나리오 완성도가 실측으로 확인.</li>
+                    <li><b>미결 13건은 전건 비결함</b> — 테스트 인프라(Web 수신 로그 미표시) 5건, 장비 부족(총 모듈·BLE 베드) 4건, 명세/절차 2건, 레거시/미노출 2건. 개선 항목 IMP-001~004(최우선: 실기 BLE 수신 로그 표시)로 관리.</li>
+                    <li><b>판정: 조건부 Go</b> — 기능 품질은 배포 수준, High 보류 5건의 독립 검증(재시험 R1·R2)을 확정 조건으로 함.</li>
+                </ul>
+                <a class="doclink" href="../../Test/3_STR.html" target="_blank">소프트웨어 테스트 결과 보고서 (STR v1.1) 전문 ↗</a>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_로그점검개선.png" alt="로그 점검 화면 개선"></div>
+                    <figcaption>테스트에서 도출된 개선 항목(IMP-001, 수신 로그 표시)의 즉시 반영 — 점검 이벤트 로그 화면.</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🎨 서비스 앱 — 코딩 모드 UI 개선</h3>
+                <p class="lead">시뮬레이터·테스트와 병행해 <b>코딩 모드 UI 개선</b>도 이뤄졌다(팀 브랜치 <code>ui_07_06</code> 통합). 코딩 화면 상단 배너에 <b>차시·미션 선택 리스트</b>를 두어 화면을 떠나지 않고 미션을 오가고, 모든 카테고리가 활성화되는 <b>'자유 모드 — 전체 블록'</b>을 추가했다. 좌측 카테고리 메뉴는 <b>미션에서 쓰지 않는 카테고리를 회색(음소거)</b>으로 구분하고, 제어 블록 색을 보라(#7954B5)로 통일했다.</p>
+                <div class="chips">
+                    <span class="chip">차시·미션 선택 리스트</span>
+                    <span class="chip">자유 모드(전체 블록)</span>
+                    <span class="chip">비활성 카테고리 음소거</span>
+                    <span class="chip">제어 블록 색 통일</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_코딩UI개선.png" alt="코딩 모드 UI 개선"></div>
+                    <figcaption>코딩 화면 — 미션 선택 리스트·카테고리 활성/음소거·보라 제어 블록(4차시 미션 1 구동).</figcaption>
+                </figure>
+            </div>
+
+            <div class="tasks">
+                <h3>🛠️ 교구 실물 — 외부 스티커 디자인 · 시작품 출력</h3>
+                <p class="lead">교구 실물 제작 트랙의 개선 작업도 이어졌다. <b>화성발사대 외부 스티커 시트</b>를 디자인 — 태극기·ARES 로고 패널, 'WARNING TRACKING'·'CAUTION' 경고, 'PULL'·'CLOSE' 조작 표기, 위험 스트라이프, 'MARS EXPLORATION ARES LAUNCHER' 네임플레이트로 <b>기능적 그래픽</b> 원칙을 유지했다. 아울러 개선 반영된 <b>시작품 부품(크림슨 외장)을 3D 프린터로 출력</b>하며 실물 검증을 이어갔다.</p>
+                <div class="chips">
+                    <span class="chip">발사대 외부 스티커 시트</span>
+                    <span class="chip">경고·조작 기능적 그래픽</span>
+                    <span class="chip">네임플레이트</span>
+                    <span class="chip">크림슨 부품 3D 프린팅</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_스티커디자인.png" alt="외부 스티커 디자인"></div>
+                    <figcaption>화성발사대 외부 스티커 시트 디자인 — 경고·조작·네임플레이트 기능적 그래픽.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/12일차_시작품출력.png" alt="시작품 3D 프린팅 출력"></div>
+                    <figcaption>시작품 부품(크림슨 외장) 3D 프린팅 출력 진행.</figcaption>
+                </figure>
+            </div>
+        </section>
     </div>
 
     <footer>
         <p>ARES — Autonomous Rover Exploration System · 진행 보고 · 코리아사이언스</p>
-        <p style="margin-top:6px;">사진 102매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
+        <p style="margin-top:6px;">사진 111매 (조립형 모델 4매·슬라이드형 조립 시작품 4매는 제작 영상에서 캡처, 발표자료 6매·UI/UX 가이드 9매는 디자인 자료 PDF 발췌, 6일차 시뮬레이터 커스터마이징 3매는 화면 캡처·발사대 출력 디자인 1매는 3D 렌더, 7일차 개발 현장 3매는 현장 사진·UI/시뮬 결과 5매는 화면 캡처, 8일차 개발 현장 3매는 현장 사진·시뮬레이터 객체 삽입 3매는 기능 시연 동영상 발췌·블록코딩 디자인 시안 1매·커밋 히스토리 1매는 화면 캡처, 9일차 개발 현장·UI 디자인 작업 3매와 시뮬레이터 Hierarchy 편집기 구현 1매는 현장 사진·UI 적용 2매는 실서비스 화면 캡처·UI 설계안 시안 5매는 디자인 자료(PDF) 발췌·시뮬레이터 Hierarchy 편집기 2매와 발사대 조립 테스트 3매는 동영상 발췌) · 원본 HEIC → 웹용 JPEG 변환 (1600px, EXIF 방향·촬영시각 반영) · <a href="../../index.html">프로젝트 홈</a></p>
     </footer>
 
     <!-- Lightbox -->

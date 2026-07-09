@@ -106,7 +106,12 @@ export class Simulation_AresRobot extends Simulation_Base {
     const THREE = ctx.THREE;
     const cfg = ctx.cfg;
 
-    if (!cfg.model) return;
+    // 빈 씬(개발자 모드): 모델 없이 기본 카메라 프레이밍만 하고 로딩 표시를 닫는다.
+    if (!cfg.model) {
+      ctx.frame(0.6, 4.2);
+      if (ctx.loadingEl) ctx.loadingEl.style.display = 'none';
+      return;
+    }
 
     this.albiGroup = new THREE.Group();
 
@@ -164,7 +169,7 @@ export class Simulation_AresRobot extends Simulation_Base {
       if (ctx.loadingEl && !ctx.disposed) ctx.loadingEl.style.display = 'none';
     }, () => {
       if (ctx.loadingEl && !ctx.disposed) {
-        ctx.loadingEl.textContent = '紐⑤뜽??遺덈윭?ㅼ? 紐삵뻽?댁슂';
+        ctx.loadingEl.textContent = '모델을 불러오지 못했어요';
       }
     });
   }

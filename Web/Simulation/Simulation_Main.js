@@ -97,11 +97,14 @@ export class Simulation_Main {
     }
 
     let sim = null, raf = 0, builtTopic = null;
+    let currentBaseTopic = 'empty';   // 현재 씬의 기반 주제(임시 작업 씬 저장에 기록)
     const loop = () => { sim.render(); raf = requestAnimationFrame(loop); };
 
     // 선택한 주제의 객체를 (재)빌드. 이전 씬은 dispose.
-    const build = (topicKey) => {
+    // baseCfg — 저장된 씬('scene:<id>')이 기반 주제 위에 객체를 얹을 때 그 주제 cfg 를 넘긴다.
+    const build = (topicKey, baseCfg) => {
       cancelAnimationFrame(raf); raf = 0;
+      saveWorkScene();   // 개발 중 씬을 임시 백업 — 주제 전환으로 사라지지 않게
       if (sim) { sim.dispose(); sim = null; }
 
       // 시뮬레이션 선택 주제에 맞춰 activeModel 설정
@@ -114,9 +117,11 @@ export class Simulation_Main {
         window.updateToolboxForActiveState();
       }
 
-      // 'scene:<id>'(저장된 씬)는 빈 씬을 기반으로 빌드하고, 로더가 객체를 채운다
-      const cfg = topicKey.startsWith('scene:') ? TOPICS.empty
-        : (TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC]);
+      // 'scene:<id>'(저장된 씬)는 씬의 기반 주제(topic 필드) 위에 빌드하고, 로더가 객체를 채운다
+      const cfg = baseCfg
+        || (topicKey.startsWith('scene:') ? TOPICS.empty : (TOPICS[topicKey] || TOPICS[DEFAULT_TOPIC]));
+      currentBaseTopic = TOPICS[topicKey] ? topicKey
+        : (Object.keys(TOPICS).find((k) => TOPICS[k] === cfg) || 'empty');
       if (loadingEl) { loadingEl.style.display = ''; loadingEl.textContent = '불러오는 중…'; }
       card.querySelectorAll('.sim-led-btn').forEach((b) => b.classList.remove('on'));
       card.querySelectorAll('.sim-launch-led-btn').forEach((b) => b.classList.remove('on'));
@@ -153,8 +158,16 @@ export class Simulation_Main {
         try { onOpen(); } catch {}
       }
       if (!sim && sel) sel.value = defaultTopicForMission();
-      const t = (sel && sel.value) || DEFAULT_TOPIC;
-      if (!sim || builtTopic !== t) build(t);
+      // 기본 주제가 서비스에서 제거(hiddenTopics)된 경우: 아직 씬이 없을 때만 첫 주제로 폴백.
+      // 개발자 '빈 씬' 작업 중(선택 없음 상태)에는 폴백하지 않아 작업 씬을 보존한다.
+      if (sel && !sel.value && sel.options.length && !sim) sel.selectedIndex = 0;
+      const t = (sel && sel.value) || builtTopic || DEFAULT_TOPIC;
+      if (!sim || builtTopic !== t) {
+        if (t.startsWith('scene:')) {
+          build('empty');                  // 먼저 빈 씬을 띄우고, 씬 로드가 재빌드한다
+          loadSavedScene(t.slice(6));
+        } else build(t);
+      }
       sim.resize();
       cancelAnimationFrame(raf); loop();
       btn.textContent = '코드 확인';
@@ -162,6 +175,7 @@ export class Simulation_Main {
     };
 
     const finalizeClose = () => {
+      saveWorkScene();   // 다른 모드로 나가는 동안 새로고침돼도 작업 씬이 남게 백업
       card.hidden = true;
       cancelAnimationFrame(raf); raf = 0;
       btn.textContent = '시뮬레이션';
@@ -203,7 +217,9 @@ export class Simulation_Main {
       <span class="sim-devbar-tag">DEV</span>
       <button type="button" data-dev="new">새 씬</button>
       <button type="button" data-dev="save">씬 저장</button>
-      <button type="button" data-dev="load">씬 열기</button>`;
+      <button type="button" data-dev="load">씬 열기</button>
+      <button type="button" data-dev="register">서비스 등록</button>
+      <button type="button" data-dev="unregister">서비스 제거</button>`;
     // 씬 이름 드롭다운 패널의 오른쪽 옆에 분리된 박스로 표시(개발자 모드 전용)
     stage.appendChild(devBar);
 
@@ -213,24 +229,10 @@ export class Simulation_Main {
     devFileInput.hidden = true;
     card.appendChild(devFileInput);
 
-    // '빈 씬' 토픽 옵션은 개발자 모드에서만 드롭다운에 노출한다.
-    const ensureEmptyOption = () => {
-      if (!sel || sel.querySelector('option[value="empty"]')) return;
-      const o = document.createElement('option');
-      o.value = 'empty';
-      o.textContent = `${TOPICS.empty.label} (개발자)`;
-      sel.appendChild(o);
-    };
-    const removeEmptyOption = () => {
-      const o = sel?.querySelector('option[value="empty"]');
-      if (o && sel.value !== 'empty') o.remove();
-    };
-
     // build() 마다 Context/editor 가 새로 만들어지므로, 빌드 후에도 다시 적용해야 한다.
     const applyDevMode = () => {
       sim?.ctx?.editor?.setDevMode?.(devMode);
       devBar.hidden = !devMode;
-      if (devMode) ensureEmptyOption(); else removeEmptyOption();
       // 콘솔 디버그 핸들 — 개발자 모드에서만 노출
       window.__aresSimDev = devMode && sim?.ctx ? {
         serialize: (opts) => serializeScene(sim.ctx, { topic: (sel && sel.value) || 'empty', ...opts }),
@@ -270,17 +272,81 @@ export class Simulation_Main {
       if (!(e.ctrlKey || e.metaKey) || (e.key || '').toLowerCase() !== 'e') return;
       if (card.hidden) return;                 // 시뮬 화면이 열려 있을 때만 동작
       e.preventDefault();
+      if (devMode) saveWorkScene();            // OFF 전환 직전 작업 씬 백업
       devMode = !devMode;
       applyDevMode();
       logLine(devMode ? '── 개발자 모드 ON (Ctrl+E 로 해제) ──' : '── 개발자 모드 OFF ──', 'sys');
+      // ON 진입 시, 현재 씬에 작업물이 없고 임시 작업 씬이 있으면 이어서 복원 제안
+      if (devMode && !(sim?.ctx?.objects?.items || []).some((o) => o.spawned)) {
+        maybeOfferRestore();
+      }
     });
 
     const rebuildTo = (topicKey) => {
-      if (sel) sel.value = topicKey;
+      if (sel) {
+        sel.value = topicKey;
+        // 드롭다운에 없는 주제(빈 씬 등 개발자 전용)면 '선택 없음'으로 표시
+        if (sel.value !== topicKey) sel.selectedIndex = -1;
+      }
       build(topicKey);
       applyDevMode();
       sim.resize();
       cancelAnimationFrame(raf); loop();
+    };
+
+    // ==== 개발 중 씬 임시 보존 (2026-07-09) ====
+    // 개발자 모드에서 작업하던 씬이 모드 전환·주제 변경·새로고침으로 사라지지 않도록
+    // localStorage 에 임시 저장한다. 씬 저장/서비스 등록(작업 완료) 때 지운다.
+    const WORK_KEY = 'ares-sim-workscene';
+    const saveWorkScene = () => {
+      if (!devMode || !sim?.ctx) return;
+      try {
+        const json = serializeScene(sim.ctx, { name: '작업 씬(임시)', topic: currentBaseTopic });
+        if (json.objects.length > 0) localStorage.setItem(WORK_KEY, JSON.stringify(json));
+      } catch {}
+    };
+    const loadWorkScene = () => {
+      try { return JSON.parse(localStorage.getItem(WORK_KEY) || 'null'); } catch { return null; }
+    };
+    const clearWorkScene = () => { try { localStorage.removeItem(WORK_KEY); } catch {} };
+
+    const restoreWorkScene = async (saved) => {
+      rebuildTo(TOPICS[saved.topic] ? saved.topic : 'empty');
+      try {
+        await applyScene(sim.ctx, saved);
+        saveWorkScene();   // 복원된 상태로 임시본 동기화
+        logLine(`임시 작업 씬 복원 — 객체 ${saved.objects.length}개`, 'sys');
+      } catch (err) {
+        logLine('임시 작업 씬 복원 실패: ' + (err && err.message ? err.message : err), 'err');
+      }
+    };
+
+    const hasWorkScene = () => {
+      const saved = loadWorkScene();
+      return saved && Array.isArray(saved.objects) && saved.objects.length > 0 ? saved : null;
+    };
+
+    // 임시 작업 씬이 있으면 이어서 작업할지 묻는다(개발자 모드 진입 시 호출)
+    const maybeOfferRestore = async () => {
+      const saved = hasWorkScene();
+      if (!saved) return;
+      if (!confirm(`임시 저장된 작업 씬(객체 ${saved.objects.length}개)이 있습니다. 이어서 작업할까요?`)) return;
+      await restoreWorkScene(saved);
+    };
+
+    // 새로고침·탭 전환 시에도 작업 씬을 잃지 않게 백업
+    window.addEventListener('beforeunload', saveWorkScene);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) saveWorkScene(); });
+
+    // 새 씬: 임시 작업 씬이 있으면 이어서 작업할지 묻고, 아니면 빈 씬으로 시작(임시본 폐기)
+    const devNewScene = async () => {
+      const saved = hasWorkScene();
+      if (saved && confirm(`임시 저장된 작업 씬(객체 ${saved.objects.length}개)이 있습니다. 이어서 작업할까요?`)) {
+        await restoreWorkScene(saved);
+        return;
+      }
+      rebuildTo('empty');
+      clearWorkScene();   // 새 씬 시작 — 직전 작업 임시본 폐기(rebuild 중 자동 백업분 포함)
     };
 
     const devSaveScene = async () => {
@@ -296,6 +362,7 @@ export class Simulation_Main {
           const w = await handle.createWritable();
           await w.write(text);
           await w.close();
+          clearWorkScene();   // 작업 완료 — 임시 작업 씬 폐기
           logLine(`씬 저장 완료 — ${handle.name} (객체 ${json.objects.length}개)`, 'sys');
           return;
         } catch (err) {
@@ -307,6 +374,7 @@ export class Simulation_Main {
       const a = document.createElement('a');
       a.href = url; a.download = 'ares_scene.json'; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
+      clearWorkScene();   // 작업 완료 — 임시 작업 씬 폐기
       logLine(`씬 저장(다운로드) — 객체 ${json.objects.length}개`, 'sys');
     };
 
@@ -314,7 +382,6 @@ export class Simulation_Main {
       try {
         const json = JSON.parse(await file.text());
         const topic = TOPICS[json.topic] ? json.topic : 'empty';
-        if (topic === 'empty') ensureEmptyOption();
         if (!sim || builtTopic !== topic) rebuildTo(topic);
         await applyScene(sim.ctx, json);
         logLine(`씬 로드 완료 — ${json.name || file.name} (객체 ${json.objects.length}개)`, 'sys');
@@ -326,9 +393,11 @@ export class Simulation_Main {
     devBar.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-dev]');
       if (!b) return;
-      if (b.dataset.dev === 'new') { ensureEmptyOption(); rebuildTo('empty'); }
+      if (b.dataset.dev === 'new') devNewScene();
       else if (b.dataset.dev === 'save') devSaveScene();
       else if (b.dataset.dev === 'load') devFileInput.click();
+      else if (b.dataset.dev === 'register') devRegisterService();
+      else if (b.dataset.dev === 'unregister') devRemoveService();
     });
     devFileInput.addEventListener('change', () => {
       const f = devFileInput.files && devFileInput.files[0];
@@ -336,13 +405,19 @@ export class Simulation_Main {
       if (f) devLoadScene(f);
     });
 
-    // ==== 저장된 씬 — 사용자도 읽을 수 있다(SIMULATOR.md 1장). scenes/manifest.json ====
+    // ==== 저장된 씬(서비스 주제) — 사용자도 읽을 수 있다(SIMULATOR.md 1장). scenes/manifest.json ====
+    // manifest 는 서비스 주제 레지스트리를 겸한다: scenes(등록된 주제)와
+    // hiddenTopics(서비스에서 제거된 기본 주제)를 함께 담는다.
     let sceneManifest = [];
+    let hiddenTopics = [];
     if (sel) {
       fetch('scenes/manifest.json', { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((m) => {
-          if (!m || !Array.isArray(m.scenes)) return;
+          if (!m) return;
+          hiddenTopics = Array.isArray(m.hiddenTopics) ? m.hiddenTopics : [];
+          hiddenTopics.forEach((k) => sel.querySelector(`option[value="${k}"]`)?.remove());
+          if (!Array.isArray(m.scenes)) return;
           sceneManifest = m.scenes;
           m.scenes.forEach((s) => {
             const o = document.createElement('option');
@@ -357,13 +432,14 @@ export class Simulation_Main {
     const loadSavedScene = async (id) => {
       const entry = sceneManifest.find((s) => s.id === id);
       if (!entry) { logLine(`씬을 찾을 수 없습니다: ${id}`, 'err'); return; }
-      build(`scene:${id}`);
-      applyDevMode();
-      sim.resize();
-      cancelAnimationFrame(raf); loop();
       try {
         const res = await fetch(entry.file, { cache: 'no-store' });
         const json = await res.json();
+        // 씬의 기반 주제(topic 필드) 위에 빌드 — devLoadScene(파일 열기)과 동일한 규약
+        build(`scene:${id}`, TOPICS[json.topic] || TOPICS.empty);
+        applyDevMode();
+        sim.resize();
+        cancelAnimationFrame(raf); loop();
         await applyScene(sim.ctx, json);
         // 씬 전체가 보이도록 카메라 프레이밍
         const T = sim.ctx.THREE;
@@ -390,6 +466,153 @@ export class Simulation_Main {
       sim.resize();
       cancelAnimationFrame(raf); loop();
     });
+
+    // ==== 서비스 등록/제거 (2026-07-09) — 개발자 모드에서 현재 주제를 서비스 주제로 ====
+    // 웹 서비스가 제공하는 scenes/manifest.json + scenes/<id>.json 을 같은 형식으로 갱신한다.
+    // File System Access API 로 Web/scenes 폴더에 직접 쓰면 로컬 서비스에 즉시 반영되고,
+    // git push 로 배포에도 반영된다. 미지원 브라우저는 갱신 파일 다운로드로 폴백.
+    // 폴더 핸들은 IndexedDB 에 저장해 재사용한다 — 최초 1회만 폴더를 고르면
+    // 이후 등록/제거는 선택 창 없이 자동으로 Web/scenes 에 기록된다.
+    const idbKv = (mode, fn) => new Promise((resolve) => {
+      const req = indexedDB.open('ares-sim-dev', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onerror = () => resolve(null);
+      req.onsuccess = () => {
+        const tx = req.result.transaction('kv', mode);
+        const r = fn(tx.objectStore('kv'));
+        tx.oncomplete = () => { resolve(r && 'result' in r ? r.result : null); req.result.close(); };
+        tx.onerror = () => { resolve(null); req.result.close(); };
+      };
+    });
+    const idbGetDir = () => idbKv('readonly', (store) => store.get('scenesDir'));
+    const idbSetDir = (dir) => idbKv('readwrite', (store) => store.put(dir, 'scenesDir'));
+
+    // 선택한 폴더가 scenes 가 아니면 Web/scenes(또는 scenes) 하위 폴더로 자동 진입
+    const descendToScenes = async (dir) => {
+      if (!dir || dir.name === 'scenes') return dir;
+      try { return await (await dir.getDirectoryHandle('Web')).getDirectoryHandle('scenes'); } catch {}
+      try { return await dir.getDirectoryHandle('scenes'); } catch {}
+      return dir;
+    };
+
+    let scenesDir = null;
+    const ensureScenesDir = async () => {
+      if (scenesDir) return scenesDir;
+      if (!window.showDirectoryPicker) return null;
+
+      // (1) 저장된 핸들 재사용 — 권한만 확인/요청하고 선택 창은 띄우지 않는다
+      let dir = await idbGetDir();
+      if (dir) {
+        try {
+          let perm = await dir.queryPermission({ mode: 'readwrite' });
+          if (perm === 'prompt') perm = await dir.requestPermission({ mode: 'readwrite' });
+          if (perm !== 'granted') dir = null;
+        } catch { dir = null; }
+      }
+
+      // (2) 저장된 핸들이 없으면 최초 1회 폴더 선택 (id 로 지난 위치를 기억한다)
+      if (!dir) {
+        try {
+          dir = await window.showDirectoryPicker({ id: 'ares-scenes', mode: 'readwrite' });
+        } catch { return null; }                        // 폴더 선택 취소
+        dir = await descendToScenes(dir);
+        idbSetDir(dir);
+      }
+
+      scenesDir = dir;
+      return dir;
+    };
+
+    const downloadJson = (name, text) => {
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    };
+
+    // scenes 폴더에 파일 기록. 폴더 접근이 없으면 다운로드 폴백('download' 반환).
+    const writeServiceFile = async (name, text) => {
+      const dir = await ensureScenesDir();
+      if (!dir) { downloadJson(name, text); return 'download'; }
+      const fh = await dir.getFileHandle(name, { create: true });
+      const w = await fh.createWritable();
+      await w.write(text);
+      await w.close();
+      return 'dir';
+    };
+
+    const writeManifest = () =>
+      writeServiceFile('manifest.json', JSON.stringify({ hiddenTopics, scenes: sceneManifest }, null, 2) + '\n');
+
+    // 현재 화면(기반 주제 + 스폰 객체)을 새 서비스 주제로 등록
+    const devRegisterService = async () => {
+      if (!sim?.ctx) return;
+      const cur = (sel && sel.value) || 'empty';
+      const defId = cur.startsWith('scene:') ? cur.slice(6) : '';
+      const id = (prompt('등록할 주제 ID (영문 소문자·숫자·-_):', defId) || '').trim();
+      if (!id) return;
+      if (!/^[a-z0-9_-]+$/.test(id)) { logLine('주제 ID 는 영문 소문자·숫자·-_ 만 사용할 수 있습니다', 'err'); return; }
+      if (TOPICS[id]) { logLine(`'${id}' 는 기본 주제 ID 와 겹쳐 사용할 수 없습니다`, 'err'); return; }
+      const prev = sceneManifest.find((s) => s.id === id);
+      const label = (prompt('주제 이름 (드롭다운 표시):', prev?.label || '') || '').trim();
+      if (!label) return;
+
+      const baseTopic = TOPICS[cur] ? cur : 'empty';   // 기반 주제는 로드 시 build 로 재현된다
+      const json = serializeScene(sim.ctx, { name: label, topic: baseTopic });
+      try {
+        const how = await writeServiceFile(`${id}.json`, JSON.stringify(json, null, 2) + '\n');
+        if (prev) { prev.file = `scenes/${id}.json`; prev.label = label; }
+        else sceneManifest.push({ id, file: `scenes/${id}.json`, label });
+        await writeManifest();
+
+        if (sel) {
+          let opt = sel.querySelector(`option[value="scene:${id}"]`);
+          if (!opt) {
+            opt = document.createElement('option');
+            opt.value = `scene:${id}`;
+            sel.appendChild(opt);
+          }
+          opt.textContent = label;
+          sel.value = `scene:${id}`;
+        }
+        builtTopic = `scene:${id}`;   // 화면이 등록한 씬 그대로라 재빌드 불필요
+        clearWorkScene();             // 작업 완료(서비스 등록) — 임시 작업 씬 폐기
+        logLine(how === 'dir'
+          ? `서비스 등록 완료 — '${label}' (scenes/${id}.json, 객체 ${json.objects.length}개)`
+          : `서비스 등록 — ${id}.json·manifest.json 다운로드됨. Web/scenes/ 에 넣어 반영하세요`, 'sys');
+      } catch (err) {
+        logLine('서비스 등록 실패: ' + (err && err.message ? err.message : err), 'err');
+      }
+    };
+
+    // 현재 선택된 주제를 서비스에서 제거 — 등록 주제는 manifest 의 scenes 에서 빼고,
+    // 기본 주제는 hiddenTopics 에 넣어 드롭다운에서 숨긴다(씬 파일은 남겨둔다).
+    const devRemoveService = async () => {
+      const v = (sel && sel.value) || '';
+      if (!v || v === 'empty') { logLine('서비스에서 제거할 주제를 드롭다운에서 선택하세요', 'err'); return; }
+      const isScene = v.startsWith('scene:');
+      const id = isScene ? v.slice(6) : v;
+      const label = isScene
+        ? (sceneManifest.find((s) => s.id === id)?.label || id)
+        : (TOPICS[v]?.label || v);
+      if (!confirm(`'${label}' 주제를 서비스에서 제거할까요?`)) return;
+      try {
+        if (isScene) sceneManifest = sceneManifest.filter((s) => s.id !== id);
+        else if (!hiddenTopics.includes(v)) hiddenTopics.push(v);
+        const how = await writeManifest();
+        sel?.querySelector(`option[value="${v}"]`)?.remove();
+        // 남은 첫 주제로 전환
+        const next = (sel && sel.value) || DEFAULT_TOPIC;
+        if (next.startsWith('scene:')) loadSavedScene(next.slice(6));
+        else rebuildTo(next);
+        logLine(how === 'dir'
+          ? `서비스 제거 완료 — '${label}'${isScene ? ` (scenes/${id}.json 파일은 남겨둠)` : ''}`
+          : `서비스 제거 — manifest.json 다운로드됨. Web/scenes/ 에 넣어 반영하세요`, 'sys');
+      } catch (err) {
+        logLine('서비스 제거 실패: ' + (err && err.message ? err.message : err), 'err');
+      }
+    };
 
     btn.addEventListener('click', () => { ensureAudio(); card.hidden ? open() : close(); });
 
