@@ -2468,7 +2468,7 @@ details.mission-section summary {
     --mockup-ink: #272526;
     --mockup-line: #d7d7d9;
     --mockup-panel: #e7e7e9;
-    --mobile-bottom-nav-height: 108px;
+    --mobile-bottom-nav-height: 70px;
 }
 
 .sr-only {
@@ -2682,7 +2682,7 @@ details.mission-section summary {
 }
 
 .mobile-bottom-nav {
-    --connect-size: clamp(88px, 18vw, 104px);
+    --connect-size: clamp(74px, 15.5vw, 88px);
     grid-template-columns:
         minmax(0, 1fr) minmax(0, 1fr)
         var(--connect-size)
@@ -2691,7 +2691,7 @@ details.mission-section summary {
     justify-items: stretch;
     column-gap: 0;
     height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
-    padding: 8px 4px calc(5px + env(safe-area-inset-bottom));
+    padding: 2px 4px calc(2px + env(safe-area-inset-bottom));
     overflow: visible;
     background: #dddde0;
     border-top: 1px solid #d2d2d4;
@@ -2706,23 +2706,24 @@ details.mission-section summary {
     position: absolute;
     left: 50%;
     top: 0;
-    width: calc(var(--connect-size) + 10px);
-    height: calc(var(--connect-size) + 10px);
+    width: calc(var(--connect-size) + 9px);
+    height: calc(var(--connect-size) + 9px);
     border-radius: 50%;
     background: #fff;
     transform: translate(-50%, -50%);
     z-index: 0;
     pointer-events: none;
+    display: none;
 }
 
 .mobile-bottom-nav [data-mobile-action="mission"] { grid-column: 1; }
 .mobile-bottom-nav [data-mobile-action="coding"] {
     grid-column: 2;
-    border-top-right-radius: 30px !important;
+    border-top-right-radius: 0 !important;
 }
 .mobile-bottom-nav [data-mobile-action="simulation"] {
     grid-column: 4;
-    border-top-left-radius: 30px !important;
+    border-top-left-radius: 0 !important;
 }
 .mobile-bottom-nav [data-mobile-action="ai"] { grid-column: 5; }
 
@@ -2732,16 +2733,16 @@ details.mission-section summary {
     width: 100%;
     min-width: 0;
     justify-self: stretch;
-    min-height: 66px;
+    min-height: 50px;
     padding: 5px 2px 3px;
     border-radius: 0;
     color: #444448;
     font-size: .78rem;
     display: grid;
-    grid-template-rows: 42px 18px;
+    grid-template-rows: 29px 14px;
     place-items: center;
     align-content: center;
-    gap: 2px;
+    gap: 1px;
 }
 
 .mobile-bottom-nav .mobile-nav-btn.active {
@@ -2751,8 +2752,8 @@ details.mission-section summary {
 
 .mobile-bottom-nav .mobile-nav-icon {
     flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
+    width: 31px;
+    height: 31px;
 }
 
 .mobile-nav-icon-mission {
@@ -2781,7 +2782,7 @@ details.mission-section summary {
     justify-content: center;
     min-height: 1em;
     width: 100%;
-    font-size: clamp(.78rem, 2.2vw, .92rem);
+    font-size: clamp(.68rem, 1.95vw, .82rem);
     font-weight: 800;
     line-height: 1;
     text-align: center;
@@ -2790,20 +2791,20 @@ details.mission-section summary {
 .mobile-bottom-nav .mobile-connect-btn {
     position: absolute;
     left: 50%;
-    bottom: calc(var(--mobile-bottom-nav-height) - clamp(44px, 9vw, 52px));
+    bottom: calc(var(--mobile-bottom-nav-height) - clamp(37px, 7.75vw, 44px) + 9px);
     width: var(--connect-size);
     min-width: var(--connect-size);
     height: var(--connect-size);
     min-height: var(--connect-size);
     margin: 0;
-    padding: 14px 6px 10px;
+    padding: 12px 6px 9px;
     border-radius: 50%;
     background: var(--mockup-red) !important;
     color: #fff !important;
-    border: 4px solid #fff;
+    border: 3px solid #fff;
     z-index: 2;
     transform: translateX(-50%) !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, .08) !important;
+    box-shadow: 0 0 0 5px #fff, 0 2px 5px rgba(0, 0, 0, .08) !important;
 }
 
 .mobile-bottom-nav .mobile-connect-btn:hover,
@@ -3398,6 +3399,8 @@ details.mission-sample[open] summary::after {
     --tb-rail: 52px;                               /* 펼침(전체 아이콘+라벨) 폭 */
     --tb-rail-col: 30px;                           /* 접힘(라벨만) 폭 */
     --tb-cell: 35px;
+    --tb-gap: 8px;
+    --tb-top-gap: 2px;
     --tb-w: var(--tb-rail);                        /* 현재 보이는 폭(기본=펼침) */
     --tb-bg-x: 0px;                                /* 스프라이트 X 이동(기본=펼침) */
 }
@@ -3414,7 +3417,7 @@ body.toolbox-collapsed {
     overflow-y: auto !important;
     background: #ffffff !important;
 }
-.blocklyToolboxContents { padding: 0 !important; }
+.blocklyToolboxContents { padding: var(--tb-top-gap) 0 0 !important; }
 
 .blocklyToolboxCategory {
     position: relative;
@@ -3423,9 +3426,9 @@ body.toolbox-collapsed {
     max-width: var(--tb-w) !important;
     height: var(--tb-cell) !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 0 var(--tb-gap) 0 !important;
     box-sizing: border-box !important;
-    background-image: url('assets/design/toolbox-menu.png?v=20260708c');
+    background-image: url('assets/design/toolbox-menu-web.png?v=20260709a');
     background-repeat: no-repeat;
     background-size: var(--tb-rail) calc(var(--tb-cell) * 8);
     background-position-x: var(--tb-bg-x);     /* 접힘 시 라벨 부분만 보이도록 좌로 이동 */
@@ -3475,9 +3478,30 @@ body.toolbox-collapsed {
 }
 
 .blocklyToolboxCategory.ares-muted-category {
-    background-image: url('assets/design/toolbox-menu-muted.png?v=20260708b') !important;
-    background-color: #E6E6E6 !important;
+    background-image: url('assets/design/toolbox-menu-muted-web.png?v=20260709f') !important;
+    background-color: transparent !important;
     filter: none;
+}
+
+.blocklyToolboxCategory.ares-muted-category .blocklyTreeRow {
+    position: relative;
+}
+
+.blocklyToolboxCategory.ares-muted-category .blocklyTreeLabel {
+    display: block !important;
+    position: absolute;
+    left: 34px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777777 !important;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    white-space: nowrap;
 }
 
 .blocklyToolboxCategory.ares-muted-category:hover,
@@ -3592,6 +3616,9 @@ body.toolbox-collapsed {
     box-sizing: border-box;
 }
 .workspace-empty-hint[hidden] { display: none !important; }
+body.toolbox-flyout-open .workspace-empty-hint {
+    display: none !important;
+}
 .workspace-empty-icon {
     font-size: 5.2rem;
     line-height: 1;
@@ -3608,7 +3635,7 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     position: absolute;
     left: 0;
     /* 카테고리 8칸 바로 아래 (workspace 가 이미 배너 아래에서 시작) */
-    top: calc(var(--tb-cell) * 8 + 8px);
+    top: calc(var(--tb-top-gap) + (var(--tb-cell) * 8) + (var(--tb-gap) * 7) + 8px);
     width: var(--tb-w);
     display: flex;
     flex-direction: column;
@@ -3639,9 +3666,21 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     cursor: pointer;
     transition: background 0.15s ease, opacity 0.15s ease;
 }
-.tbx-action .tbx-ico { font-size: 1rem; line-height: 1; }
 /* 저장·읽기 아이콘 — assets/design 의 Save/Load 이미지 사용 */
-.tbx-action .tbx-ico img { width: 20px; height: 20px; object-fit: contain; display: block; }
+.tbx-action .tbx-ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+}
+.tbx-action .tbx-ico img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
 .tbx-action .tbx-lbl { display: block !important; white-space: nowrap; }
 /* 이전 접힘 상태가 남아 있어도 도구 이름은 계속 표시한다. */
 body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }

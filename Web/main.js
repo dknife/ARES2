@@ -328,6 +328,8 @@ function lightenColor(hex, amt) {
 function setupFlyoutBehavior(ws) {
   const toolbox = ws.getToolbox?.();
   if (!toolbox) return;
+  const FLYOUT_SCALE_MAX = 0.75;
+  const FLYOUT_SCALE_MIN = 0.58;
 
   const applyFlyoutCfg = () => {
     const flyout = toolbox.getFlyout?.();
@@ -336,6 +338,37 @@ function setupFlyoutBehavior(ws) {
     // 코딩창(워크스페이스)을 눌러도 닫힌다.
     flyout.autoClose = true;
     flyout.GAP_Y = 12;   // 블록 사이 간격 절반
+    try {
+      const blocklyDiv = document.getElementById('blocklyDiv');
+      const baseWidth = blocklyDiv?.clientWidth || window.innerWidth;
+      const targetWidth = Math.max(260, Math.floor(baseWidth - 58));
+      if (typeof flyout.setWidth === 'function') flyout.setWidth(targetWidth);
+      else flyout.width_ = targetWidth;
+      flyout.position?.();
+    } catch {}
+  };
+  const fitFlyoutBlocks = () => {
+    const flyout = toolbox.getFlyout?.();
+    const flyoutWs = flyout?.getWorkspace?.();
+    const blocklyDiv = document.getElementById('blocklyDiv');
+    if (!flyout || !flyoutWs || !blocklyDiv) return;
+
+    const blocks = flyoutWs.getTopBlocks(false);
+    const maxBlockWidth = blocks.reduce((max, block) => {
+      const size = block.getHeightWidth?.();
+      return Math.max(max, size?.width || 0);
+    }, 0);
+    if (!maxBlockWidth) return;
+
+    const availableWidth = Math.max(210, blocklyDiv.clientWidth - 70);
+    const nextScale = Math.max(
+      FLYOUT_SCALE_MIN,
+      Math.min(FLYOUT_SCALE_MAX, availableWidth / maxBlockWidth)
+    );
+    flyout.__aresFlyoutScale = nextScale;
+    try { flyoutWs.setScale(nextScale); } catch {}
+    try { flyout.reflow?.(); } catch {}
+    try { flyout.position?.(); } catch {}
   };
   applyFlyoutCfg();
 
@@ -344,10 +377,15 @@ function setupFlyoutBehavior(ws) {
   toolbox.setSelectedItem = function (item) {
     origSetSelected(item);
     applyFlyoutCfg();
+    document.body.classList.toggle('toolbox-flyout-open', !!item);
     const idx = toolbox.getToolboxItems().indexOf(item);
     const color = getActiveCategoryColour(idx);
     const bg = document.querySelector('.blocklyFlyoutBackground');
     if (bg && color) bg.style.fill = lightenColor(color, 0.82);
+    requestAnimationFrame(() => {
+      applyFlyoutCfg();
+      fitFlyoutBlocks();
+    });
   };
 }
 
@@ -355,14 +393,15 @@ function setupFlyoutBehavior(ws) {
 // 기본은 flyout.getFlyoutScale() 이 메인 워크스페이스 scale 을 따라가므로, 이를
 // 고정값(자연 크기의 0.6배)으로 오버라이드한다.
 function setupFlyoutFixedScale(ws) {
-  const FLYOUT_SCALE = 0.6;
+  const FLYOUT_SCALE = 0.75;
   const flyout = ws.getFlyout?.();
   if (!flyout) return;
   const proto = Object.getPrototypeOf(flyout);
   if (proto && typeof proto.getFlyoutScale === 'function' && !proto.__aresFixedFlyoutScale) {
-    proto.getFlyoutScale = function () { return FLYOUT_SCALE; };
+    proto.getFlyoutScale = function () { return this.__aresFlyoutScale || FLYOUT_SCALE; };
     proto.__aresFixedFlyoutScale = true;
   }
+  flyout.__aresFlyoutScale = FLYOUT_SCALE;
   try { flyout.getWorkspace().setScale(FLYOUT_SCALE); } catch {}
 }
 
@@ -378,6 +417,7 @@ function setupToolboxDrawer(ws) {
   const collapse = () => {
     if (isCollapsed()) return;
     document.body.classList.add('toolbox-collapsed');
+    document.body.classList.remove('toolbox-flyout-open');
     try { ws.getToolbox().clearSelection(); } catch {}
     reflow();
   };
@@ -489,11 +529,28 @@ function initializeBlockly() {
 
   // 빈 작업공간에서만 PDF 5페이지의 안내 카드를 표시한다.
   const emptyHint = document.getElementById('workspaceEmptyHint');
+  let emptyHintSuppressed = false;
   const refreshEmptyHint = () => {
     if (!emptyHint) return;
-    emptyHint.hidden = workspace.getAllBlocks(false).length > 0;
+    emptyHint.hidden = emptyHintSuppressed || workspace.getAllBlocks(false).length > 0;
+  };
+  const suppressEmptyHintWhileDragging = (event) => {
+    const target = event.target;
+    if (!target?.closest?.('.blocklyFlyout, .blocklyToolboxDiv')) return;
+    emptyHintSuppressed = true;
+    refreshEmptyHint();
+  };
+  const restoreEmptyHintAfterDrag = () => {
+    if (!emptyHintSuppressed) return;
+    setTimeout(() => {
+      emptyHintSuppressed = false;
+      refreshEmptyHint();
+    }, 250);
   };
   workspace.addChangeListener(refreshEmptyHint);
+  document.addEventListener('pointerdown', suppressEmptyHintWhileDragging, true);
+  document.addEventListener('pointerup', restoreEmptyHintAfterDrag, true);
+  document.addEventListener('pointercancel', restoreEmptyHintAfterDrag, true);
   refreshEmptyHint();
 
   return workspace;
