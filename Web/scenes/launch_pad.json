@@ -243,7 +243,7 @@
       }
     },
     {
-      "id": "sphere-8",
+      "id": "sphere-7",
       "type": "sphere",
       "label": "RocketWingR",
       "parent": "box-4",
@@ -280,7 +280,7 @@
       }
     },
     {
-      "id": "box-10",
+      "id": "box-8",
       "type": "box",
       "label": "Box 2_dup",
       "parent": null,
@@ -322,7 +322,7 @@
       }
     },
     {
-      "id": "box-11",
+      "id": "box-9",
       "type": "box",
       "label": "Box 2_dup",
       "parent": null,
@@ -359,7 +359,7 @@
       }
     },
     {
-      "id": "box-12",
+      "id": "box-10",
       "type": "box",
       "label": "AntennaDish",
       "parent": null,
@@ -370,9 +370,9 @@
       ],
       "quaternion": [
         0,
-        0.9550572476073096,
         0,
-        0.29642141250716836
+        0,
+        1
       ],
       "scale": [
         0.261,
@@ -407,7 +407,7 @@
       }
     },
     {
-      "id": "box-13",
+      "id": "box-11",
       "type": "box",
       "label": "AntennaDish_dup",
       "parent": null,
@@ -444,7 +444,7 @@
       }
     },
     {
-      "id": "sphere-14",
+      "id": "sphere-12",
       "type": "sphere",
       "label": "Lamp",
       "parent": null,
@@ -488,7 +488,7 @@
       }
     },
     {
-      "id": "sphere-15",
+      "id": "sphere-13",
       "type": "sphere",
       "label": "Lamp_dup",
       "parent": null,
@@ -532,7 +532,7 @@
       }
     },
     {
-      "id": "sphere-16",
+      "id": "sphere-14",
       "type": "sphere",
       "label": "Lamp_dup_dup",
       "parent": null,
@@ -576,7 +576,7 @@
       }
     },
     {
-      "id": "sphere-17",
+      "id": "sphere-15",
       "type": "sphere",
       "label": "Lamp_dup_dup_dup",
       "parent": null,
@@ -620,7 +620,7 @@
       }
     },
     {
-      "id": "sphere-18",
+      "id": "sphere-16",
       "type": "sphere",
       "label": "Lamp_dup_dup_dup_dup",
       "parent": null,
