@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     --primary-color: #0D1117;
     --accent-color: #FF6A00;
     --secondary-color: #4A515C;
@@ -3410,7 +3410,7 @@ details.mission-sample[open] summary::after {
 /* ============================================================
    이미지형 툴박스 카테고리 메뉴
    (동작·출력·발사·감지·제어·변수·수학·함수 — XML 카테고리 순서와 동일)
-   272×1470 스프라이트(assets/design/toolbox-menu.png)를 8칸으로 슬라이스해
+   104×560(2x) 웹 스프라이트(assets/design/toolbox-menu-active-web.png)를 8칸으로 슬라이스해
    각 Blockly 카테고리 배경으로 깐다. 기본 라벨/아이콘/색상바는 숨긴다.
    마우스 호버 시 setupToolboxHover() 가 해당 카테고리 플라이아웃을 연다.
    (미디어쿼리 밖 + 파일 맨 끝 + !important 로 모바일 규칙보다 우선.)
@@ -3448,13 +3448,26 @@ body.toolbox-collapsed {
     padding: 0 !important;
     margin: 0 0 var(--tb-gap) 0 !important;
     box-sizing: border-box !important;
-    background-image: url('assets/design/toolbox-menu-web.png?v=20260709a');
+    background-image: url('assets/design/toolbox-menu-active-web.png?v=20260710e');
     background-repeat: no-repeat;
     background-size: var(--tb-rail) calc(var(--tb-cell) * 8);
     background-position-x: var(--tb-bg-x);     /* 접힘 시 라벨 부분만 보이도록 좌로 이동 */
     cursor: pointer;
     transition: background-position-x 0.18s ease;
 }
+
+.blocklyToolboxCategory::after {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    pointer-events: none;
+    z-index: 0;
+}
+
 .blocklyToolboxCategory:nth-child(1) { background-position-y: top; }
 .blocklyToolboxCategory:nth-child(2) { background-position-y: calc(var(--tb-cell) * -1); }
 .blocklyToolboxCategory:nth-child(3) { background-position-y: calc(var(--tb-cell) * -2); }
@@ -3466,6 +3479,8 @@ body.toolbox-collapsed {
 
 /* Blockly 기본 행/라벨/아이콘/색상바 제거 (이미지가 전부 담고 있음) */
 .blocklyToolboxCategory .blocklyTreeRow {
+    position: relative;
+    z-index: 1;
     width: var(--tb-w) !important;
     max-width: var(--tb-w) !important;
     height: var(--tb-cell) !important;
@@ -3476,22 +3491,43 @@ body.toolbox-collapsed {
     background: transparent !important;
     box-sizing: border-box !important;
 }
-.blocklyToolboxCategory .blocklyTreeLabel,
+
+.blocklyToolboxCategory .blocklyTreeLabel {
+    display: block !important;
+    position: absolute;
+    left: 34px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #3f4542 !important;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    white-space: nowrap;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
 .blocklyToolboxCategory .blocklyTreeIcon { display: none !important; }
 
 /* 호버/선택 강조 */
 .blocklyToolboxCategory:hover,
 .blocklyToolboxCategory[aria-selected="true"] {
-    filter: brightness(1.08) saturate(1.05);
+    filter: none;
 }
 
 .blocklyToolboxCategory[aria-selected="true"]::before {
     content: '';
     position: absolute;
-    left: 0;
+    right: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
+    width: 3px;
     background: rgba(0, 0, 0, 0.38);
     pointer-events: none;
     z-index: 1;
@@ -3503,30 +3539,13 @@ body.toolbox-collapsed {
     filter: none;
 }
 
-.blocklyToolboxCategory.ares-muted-category .blocklyTreeRow {
-    position: relative;
-}
-
 .blocklyToolboxCategory.ares-muted-category .blocklyTreeLabel {
-    display: block !important;
-    position: absolute;
-    left: 34px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #777777 !important;
-    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
-    font-size: 10px !important;
-    font-weight: 800 !important;
-    line-height: 1.05 !important;
-    letter-spacing: 0 !important;
-    writing-mode: vertical-rl;
-    text-orientation: upright;
-    white-space: nowrap;
+    color: #9a9a9a !important;
 }
 
 .blocklyToolboxCategory.ares-muted-category:hover,
 .blocklyToolboxCategory.ares-muted-category[aria-selected="true"] {
-    filter: brightness(0.98);
+    filter: none;
 }
 
 .blocklyToolboxCategory.ares-cat-category_math:not(.ares-muted-category) {
