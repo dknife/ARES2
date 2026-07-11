@@ -43,14 +43,15 @@ three.js는 CDN이 아닌 로컬 사전 번들로 동봉된다.
 (\code{window.\allowbreak ARES\_ROBOT\_GLB\_B64})로 제공된다.
 프로토콜에 따라 분기한다.
 
-\begin{lstlisting}[style=js, caption={file:// 분기 로딩}]
+\captionof{listing}{file:// 분기 로딩}
+\begin{minted}{javascript}
 if (location.protocol === 'file:') {
   ensureEmbed()                       // base64 임베드 스크립트 로드
     .then(b64 => loader.parse(b64ToBuffer(b64), '', onModelLoad, onModelErr));
 } else {
   loader.load('Mesh/ares_robot.glb', onModelLoad, undefined, onModelErr);
 }
-\end{lstlisting}
+\end{minted}
 
 \code{file://}에서는 \code{fetch} 대신 base64 ArrayBuffer를 직접
 \code{GLTFLoader.parse()}에 넘겨 오프라인 로딩을 보장한다.
@@ -103,7 +104,8 @@ if (location.protocol === 'file:') {
     \end{itemize}
 \end{enumerate}
 
-\begin{lstlisting}[style=js, caption={inline\_assets.js의 fetch 심(개념)}]
+\captionof{listing}{inline\_assets.js의 fetch 심(개념)}
+\begin{minted}{javascript}
 window.fetch = function (input, init) {
   const url = norm(input);
   const bk = find(BIN, url);   // 바이너리(GLB) 우선 매칭
@@ -116,7 +118,7 @@ window.fetch = function (input, init) {
       { status: 200, headers: { 'Content-Type': mimeFor(tk) } }));
   return origFetch ? origFetch(input, init) : Promise.reject(...);
 };
-\end{lstlisting}
+\end{minted}
 
 \code{defer} 로딩 순서는 (1) \code{bin\_*.js}가 \code{window.\_\_ARES\_BIN\_\_}을
 채우고, (2) \code{inline\_assets.js}가 fetch 심을 설치하며, (3)

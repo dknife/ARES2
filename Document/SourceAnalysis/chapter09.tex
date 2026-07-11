@@ -7,7 +7,8 @@
 
 블록 하나가 실행되어 하드웨어가 반응하기까지의 호출 사슬은 다음과 같다.
 
-\begin{lstlisting}[style=json, caption={블록 1개 실행의 호출 사슬}]
+\captionof{listing}{블록 1개 실행의 호출 사슬}
+\begin{minted}{text}
 [웹]
   main.js : 실행 버튼
     -> commandexecutor.processBlock(block)
@@ -24,7 +25,7 @@
     -> 응답 필요 시 _send_response("1")  // 20바이트 청크
 [웹]
   bluetooth.handleRxData() -> pendingResolve("1")  // 프라미스 해소
-\end{lstlisting}
+\end{minted}
 
 같은 사슬을 시간 축 시퀀스로 표현하면 그림~\ref{fig:e2e}와 같다. 6개 참여
 요소가 호출(실선)과 응답(점선)으로 이어지며, 시간 명령(\code{tFORWARD,2})의

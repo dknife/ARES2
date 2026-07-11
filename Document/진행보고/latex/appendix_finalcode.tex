@@ -1,0 +1,542 @@
+%% ============================================================
+%% appendix_finalcode.tex — 부록 H: 최종 산출물 코드 정리
+%% 부록 A(1일차 「코드 분석 종합 보고서」)의 장 구조를 14일차 최종 코드에
+%% 적용한 정리. 각 장에서 [현재 최종] 구현 + [부록 A 대비] 변화를 실제 코드로
+%% 드러내고, 마지막에 「변화와 개선점」을 트랙별로 종합한다.
+%% 부록 E(중간 재분석)와 같은 방식이되, 최종 형상 + 개선점 결론을 갖춘다.
+%% ============================================================
+\chaptersummary{14일차 최종 코드를 부록 A의 구조에 맞춰 다시 정리한 문서다. 초기 대비 변화와 개선점을 종합해 최종 코드베이스의 상태를 보여준다.}
+\chapter{최종 산출물 코드 정리 (부록 A 구조 적용)}
+\label{app:finalcode}
+
+본 부록은 \textbf{\ref{app:code}(1일차 「코드 분석 종합 보고서」)의 장 구성을 14일차
+\emph{최종 산출물 코드}에 적용해 정리}한 것이다. \ref{app:midcode}(중간 재분석)가 2주차
+시점의 코드를 같은 틀로 훑었다면, 본 부록은 \textbf{최종 형상}을 대상으로 각 장에서
+\textbf{현재 구현을 기술하고 \textnormal{[부록 A 대비]} 무엇이 완성$\cdot$개선됐는지를 실제
+코드로} 드러낸 뒤, 말미에 \textbf{「변화와 개선점」을 트랙별로 종합}한다. 인용 코드는 모두
+저장소~\cite{ares-repo}의 최종 \code{main} 형상에서 그대로 발췌한 것이다.
+
+\section{개요 및 분석 범위}
+세 런타임 도메인(웹 UI$\cdot$피코 펌웨어$\cdot$AI 보조)과 \emph{개행 구분 텍스트 명령 프로토콜}
+이라는 단일 계약은 부록 A와 동일하게 유지된다. 최종 산출물에서 두드러진 변화는 네 축이다 ---
+\textbf{① 시뮬레이터가 씬 생성 도구(14$\to$17 모듈)로 확장}, \textbf{② 시뮬 시각 품질$\cdot$에셋
+최적화}(그림자$\cdot$LED 포인트 라이트$\cdot$Gun 자기비행$\cdot$텍스처 다운스케일), \textbf{③ 웹의
+맥락 인지형 UI와 오프라인 \code{file://} 배포}, \textbf{④ 펌웨어 발사(\code{fire\_once})와
+공장 초기 설정 텍스트화}. 본 부록이 다루는 파일과 최종 규모는 다음과 같다.
+
+\begin{table}[htbp]\centering\small
+\caption{분석 대상 파일과 최종 규모(라인 수)}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}l >{\ttfamily\footnotesize}X c@{}}
+\toprule
+\sffamily 도메인 & \sffamily 파일 & \sffamily 라인 \\
+\midrule
+피코 펌웨어 & process\_data.py & 778 \\
+            & main.py / system\_config.py / hardware.py / pins.py & 263 / 332 / 214 / 61 \\
+            & gun.py (발사 모듈) & 70 \\
+웹 코어 & bluetooth.js / commandexecutor.js & 710 / 656 \\
+        & blocklyconfig.js / constants.js / ui.js & 583 / 75 / 109 \\
+시뮬레이터 & Simulation/Simulation\_Main.js (오케스트레이터, 진입) & 863 \\
+           & Sim\_Parts/ (\textbf{17모듈}, 씬 도구 포함) & \textbf{4{,}990} \\
+           & \quad 신규: editor\_controls / components / object\_factory & 1{,}208 / 742 / 173 \\
+           & \quad 신규: sim\_object / scene\_store & 224 / 108 \\
+서비스 씬 & scenes/manifest.json + albi\_base$\cdot$launch\_pad$\cdot$rover\_yard & 4 파일 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{사용 하드웨어와 연결 핀 (부록 A 3장 적용)}
+\textbf{[현재]} 모든 GP 핀은 \code{Pico/pins.py}에 모듈 상수로 중앙 집중된다 --- UART GP0/1,
+DC 모터 GP8/9, I2C(OLED) GP4/5, 초음파 GP6/7, 서보 휠 GP12(우)/13(좌), 부저 GP15, LED 6개
+GP21\,--\,16, 발사기 GP22, 자기장 GP26, 예비 GP10/11/14/27/28.
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} \textbf{변동 없음.} 기준선$\cdot$중간$\cdot$최종을 통틀어 하드웨어$\cdot$%
+핀 계층은 \emph{완전히 동일}하다. 3주간의 모든 변화는 상위(펌웨어 로직$\cdot$설정, 웹, 시뮬)에서
+일어났고, 물리 계층의 안정성이 상위 반복 개선의 토대가 되었다.
+
+\section{보드 펌웨어 --- 명령 처리·설정·안전·발사 (부록 A 4장 적용)}
+\textbf{[현재]} \code{main.py}(\code{AresRover})가 UART를 폴링해
+\code{CommandProcessor.process()}로 넘기고, \code{process()}는 접두어 매칭 디스패처로 각
+\code{\_handle\_*}에 분배한다(부록 A ``유형 B 디스패처'' 유지). 최종 펌웨어에는 \textbf{발사
+명령(\code{GUN\_FIRE})}, \textbf{공장 초기 설정 텍스트 파일}, \textbf{중단 가능 sleep$\cdot$속도
+클램프}가 모두 들어 있다.
+
+\captionof{listing}{\code{process\_data.py} --- 접두어 매칭 디스패처(유형 B 유지, \code{GET\_NAMES}·\code{GUN\_FIRE} 포함)}
+\begin{minted}{python}
+def process(self, data):
+    if   data == "PING":        return self._handle_ping()
+    elif data == "STOP_ALL":    return self._handle_stop_all()
+    elif data == "GET_SYS":     return self._handle_get_sys()
+    elif data == "GET_MODULES": return self._handle_get_modules()
+    elif data == "GET_NAMES":   return self._handle_get_names()   # 커스텀 탭 이름
+    elif data.startswith("SYS_SET"): return self._handle_sys_set(data)
+    elif data.startswith("BATCH;"):  return self._handle_batch(data)
+    elif data.startswith("GUN_FIRE"):                             # 발사(신규)
+        if robot.gun: robot.gun.fire_once()
+        return 1
+    # ... 이동/센서/LED/디스플레이 접두어별 _handle_*
+\end{minted}
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 디스패처 골격은 같으나, 부록 A에 없던 \textbf{발사$\cdot$공장
+설정 텍스트화$\cdot$비상정지 협조 취소$\cdot$속도 제한}이 최종본에 완성됐다.
+
+\begin{itemize}
+  \item \textbf{발사 (\code{GUN\_FIRE} $\to$ \code{fire\_once})} --- 발사 모듈(\code{gun.py})이
+  PWM을 부드럽게 램프업(\code{soft\_start})한 뒤 \textbf{회전 시간 \code{spin\_time}만큼} 돌리고
+  멈춘다. 13$\cdot$14일차 실물 검증에서 도출한 ``\code{fire\_once} 회전시간 조정'' 과제가 기본값
+  \code{spin\_time=0.22}로 반영됐다.
+  \item \textbf{공장 초기 설정 텍스트화} --- 부록 A의 \code{system.json}(JSON)을 교사$\cdot$어린이가
+  메모장으로 고치는 \code{ModelFactorySetting.txt}로 교체했다. 최초 부팅 시 기본 템플릿을
+  자동 생성하고, \code{key=value}/\code{key:value} 줄을 파싱한다. 블록 카테고리 \textbf{한글 표시
+  이름}과 \textbf{모듈 활성화(\code{enable\_*})}를 파일만으로 바꾼다.
+\end{itemize}
+
+\captionof{listing}{\code{gun.py} --- \code{fire\_once}: 램프업 → 회전시간(\code{spin\_time}) → 정지}
+\begin{minted}{python}
+def fire_once(self, power=50000, spin_time=0.22, cooldown_ms=250):
+    """한 발 발사."""
+    self.soft_start(power)   # 1) 모터 램프업(8스텝, 150ms)
+    sleep(spin_time)         # 2) 발사 시간(회전) — 실물 검증으로 튜닝된 값
+    self.stop()              # 3) 정지
+\end{minted}
+
+\captionof{listing}{\code{system\_config.py} --- 공장 초기 설정 텍스트 파서(자동 템플릿 생성 + 부팅 안전)}
+\begin{minted}{python}
+def load_config(self):
+    """ModelFactorySetting.txt 설정 파일 로드"""
+    if "ModelFactorySetting.txt" not in os.listdir():
+        with open("ModelFactorySetting.txt", "w") as f:
+            f.write(DEFAULT_FACTORY_TEXT)          # 공장 초기 템플릿 생성
+    with open("ModelFactorySetting.txt", "r") as f:
+        for line in f.read().replace('﻿', '').split('\n'):
+            line = line.strip()
+            if not line or line.startswith("#"): continue  # 주석·빈 줄 무시
+            # "=" 또는 ":" 로 분리 → key=parts[0].lower(), val=parts[1](정수면 int)
+
+def is_module_enabled(self, module_name):     # hardware.py가 import 시점에 호출
+    try:
+        return int(self.config.get(f"enable_{module_name}", 0)) == 1
+    except (ValueError, TypeError):
+        return False                          # 오타 값이면 크래시 대신 모듈만 비활성
+\end{minted}
+
+\noindent 비상정지$\cdot$수신 버퍼 골격은 중간(부록 E)에서 자리 잡은 형태가 그대로 최종본이다 ---
+\code{main.py}의 \code{\_poll\_abort()}가 동작 중에도 UART를 읽어 \textbf{STOP만 선별 소비}하고,
+수신 버퍼를 \textbf{bytes}로 유지해 한글 장치명 등 멀티바이트 문자가 20바이트 청크 경계에서
+잘려도 복원한다. 하드웨어 접근은 \textbf{싱글턴 \code{robot} + 모듈 가드}(부록 A 유지)이며,
+\code{gun} 모듈이 가드 목록에 추가됐다.
+
+\captionof{listing}{\code{hardware.py} --- 싱글턴 + 모듈 가드(부록 A 유지, \code{gun} 추가)}
+\begin{minted}{python}
+class RobotHardware:
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._init_hardware()      # 인스턴스 1개만
+        return cls._instance
+    # ...
+    if sys_config.is_module_enabled('gun'):     # 활성화된 모듈만 조건부 로딩
+        try:
+            from gun import KSGun
+            self.gun = KSGun()
+        except Exception as e:
+            print(f"[HW] 총 초기화 실패: {e}")   # 실패해도 부팅은 계속
+\end{minted}
+
+\section{서비스 계층 --- 웹 앱 구조·맥락 인지형 UI (부록 A 5장 적용)}
+\textbf{[현재]} 엔트리 \code{main.js}가 전 모듈을 오케스트레이션하고, 순수 UI 보조 함수는
+\code{ui.js}로 분리됐다(부록 E에서 시작한 분리의 최종형). 화면 하단에는 \textbf{5-탭 모바일
+내비}(미션$\cdot$코딩$\cdot$신호연결$\cdot$시뮬레이션$\cdot$AI도움)가 있고, 중앙 버튼은 \textbf{상황
+(모드$\cdot$연결$\cdot$실행)에 따라 라벨$\cdot$동작이 바뀌는 맥락 인지형}이다.
+
+\captionof{listing}{\code{ui.js} --- 맥락 인지형 중앙 버튼: 상황별 라벨(점검 열림/코딩 단계/개요)}
+\begin{minted}{javascript}
+export function updateBlockCodingButtonUI(
+  btn = document.getElementById('blockCodingButton'), helpers = {}) {
+  if (!btn) return;
+  const isDashboardVisible   = helpers.isDashboardVisible   || (() => false);
+  const isInBlockCodingStage = helpers.isInBlockCodingStage || (() => false);
+  if (isDashboardVisible())        { btn.textContent = '🧩 코딩'; }   // 점검 닫고 코딩
+  else if (isInBlockCodingStage()) { btn.textContent = '🏠 메인'; }   // 개요로 복귀
+  else                             { btn.textContent = '🧩 블록코딩'; }
+}
+\end{minted}
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 5장에는 \code{ui.js}도, 모바일 내비도, 맥락 버튼도
+\emph{없었다}. 최종본은 실행 상태(\code{state.isExecuting})에 따라 중앙 버튼이 \textbf{`미션 전송'
+$\leftrightarrow$ `비상정지'}로 바뀌고(\code{updateRunButtonUI}), 연결 상태에 따라 하단 연결
+버튼 라벨이 \textbf{신호연결$\to$연결 중$\to$연결됨$\to$재연결}로 전환된다. 배선은 커스텀
+이벤트(\code{ares:connection}$\cdot$\code{ares:execution})로 느슨하게 묶여, 통신$\cdot$실행 계층이
+UI를 직접 알지 않고도 상태 변화를 통지한다.
+
+\captionof{listing}{\code{main.js} --- 단계 판정과 이벤트 기반 UI 갱신(맥락 버튼 배선)}
+\begin{minted}{javascript}
+function isInBlockCodingStage() {
+  const inDashboard = dashboardFrame && dashboardFrame.style.display === 'block';
+  return currentView === 'mission' && _contentMode === 'coding' && !inDashboard;
+}
+// 연결/실행 상태 변화 이벤트에 UI 갱신을 구독
+window.addEventListener('ares:connection', refreshBlockCodingButtonUI);
+window.addEventListener('ares:execution', updateRunButtonUI);
+\end{minted}
+
+\section{블루투스 --- 응답 동기화 (부록 A 6장 적용)}
+\textbf{[현재]} \code{bluetooth.js}(710줄)는 20바이트 청크 송신(부록 A 유지)에 \textbf{동적
+타임아웃$\cdot$기대 응답 접두어 검증$\cdot$대기 취소} 세 방어를 더한 최종형이다.
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 6장은 \textbf{고정 5초 타임아웃}만 기술했다 --- 시간지정
+blocking 명령(예: 10초 전진)은 5초에 먼저 만료돼 항상 실패했다. 최종본은 (a) 명령 자체의
+소요시간을 타임아웃에 가산(BATCH는 하위 명령 합산)하고, (b) 값 반환 명령의 응답 접두어를
+검증해 무관한 늦은 ack를 버리며, (c) 비상정지 시 대기 promise를 즉시 취소한다.
+
+\captionof{listing}{\code{bluetooth.js} --- 동적 타임아웃(명령 소요시간 가산, BATCH 합산)}
+\begin{minted}{javascript}
+_estimateTimeoutMs(command) {
+  return BLUETOOTH_CONFIG.RESPONSE_TIMEOUT + this._estimateBlockingMs(command);
+},
+_estimateBlockingMs(command) {
+  if (command.startsWith('BATCH;')) {         // 배치는 하위 명령 소요시간 합산
+    let total = 0;
+    for (const sub of command.slice(6).split('|')) total += this._estimateBlockingMs(sub.trim());
+    return total;
+  }
+  // SERVO_t*/DC_t*/SLEEP/BUZZER_ON/SING 의 초를 파싱 → ms(최대 120초)
+  return Math.min(Math.max(sec, 0), 120) * 1000;
+},
+\end{minted}
+
+\captionof{listing}{\code{bluetooth.js} --- 기대 응답 접두어 검증(늦은 무관 ack 폐기)과 비상정지 취소}
+\begin{minted}{javascript}
+_expectedResponsePrefix(command) {
+  switch (command.split(',')[0]) {
+    case 'DISTANCE':  return 'DIST';   case 'MAGNET':   return 'MAG';
+    case 'GET_SYS':   return 'SYS_VALUES'; case 'GET_NAMES': return 'NAMES';
+    default:          return null;     // 검증 대상 아님
+  }
+},
+cancelPendingResponse(reason) {                // STOP_ALL 이 타임아웃을 안 기다림
+  if (!state.pendingReject) return;
+  if (state.pendingTimeout) clearTimeout(state.pendingTimeout);
+  const reject = state.pendingReject, command = state.pendingCommand;
+  state.pendingCommand = state.pendingResolve = state.pendingReject = state.pendingTimeout = null;
+  reject(new Error(`${reason || '취소됨'}: ${command || ''}`));
+},
+\end{minted}
+
+\section{코드 블록 구현 --- 블록 정의와 실행기 (부록 A 7장 적용)}
+\textbf{[현재]} \code{blocklyconfig.js}(583줄)가 블록 정의$\cdot$8색 카테고리$\cdot$모델별 동적
+라벨링을 담고, \code{commandexecutor.js}(656줄)가 블록 트리를 순회해 명령 문자열을 만든다.
+이동 블록은 속도 인자를 갖고, 값 반환 함수는 비동기 사전 해석된다.
+
+\smallskip
+\noindent\textbf{[부록 A 대비]} 부록 A 7장의 명령표에는 \textbf{속도 인자가 없었고}, 툴박스가
+세분 카테고리로 나열됐다. 최종본은 (a) 모든 이동 블록에 \code{SPEED} 인자, (b)
+else-if(\code{IF0..IFn}) 순회, (c) 반환값 함수의 비동기 사전 해석$\cdot$캐시, (d) \code{GET\_NAMES}
+수신값으로 탭 한글 이름을 갱신하는 동적 라벨을 갖췄다.
+
+\captionof{listing}{\code{commandexecutor.js} --- else-if 순회와 속도 인자 명령(SECONDS 60초 클램프)}
+\begin{minted}{javascript}
+} else if (block.type === 'controls_if') {
+  let ran = false;
+  for (let n = 0; block.getInput('IF' + n); n++) {   // mutator "아니면 만약" 순서 평가
+    if (this.evaluateValueBlock(block.getInputTargetBlock('IF' + n)) === 'true') {
+      await this.processBlock(block.getInputTargetBlock('DO' + n)); ran = true; break;
+    }
+  }
+  if (!ran && block.getInput('ELSE')) await this.processBlock(block.getInputTargetBlock('ELSE'));
+}
+case 'timed_forward': {                              // 속도 인자: SERVO_tFORWARD,초,속도
+  const seconds = this._clampSeconds(this.evaluateValueBlock(block.getInputTargetBlock('SECONDS')) || '0');
+  const speed   = this.evaluateValueBlock(block.getInputTargetBlock('SPEED')) || '100';
+  return `SERVO_tFORWARD,${seconds},${speed}`;
+}
+\end{minted}
+
+\captionof{listing}{\code{blocklyconfig.js} --- 모델별 동적 라벨(\code{GET\_NAMES}의 \code{NAMES,…}로 탭 이름 갱신)}
+\begin{minted}{javascript}
+const MODULE_LABEL_CONFIG = {
+  wheel:   { field: 'WHEEL_LABEL',   emoji: '🚗', defaultName: '서보 모터' },
+  dcmotor: { field: 'DCMOTOR_LABEL', emoji: '⚡', defaultName: 'DC 모터' },
+  leds:    { field: 'LEDS_LABEL',    emoji: '💡', defaultName: 'LED' },
+  // ... oled / buzzer / sensors / gun (launchpad 모델이면 gun 이모지 🔫→🚀)
+};
+function getModuleBlockLabel(blockNames, activeModel, moduleName) {
+  const cfg = MODULE_LABEL_CONFIG[moduleName];
+  const emoji = (moduleName === 'gun' && activeModel === 'launchpad') ? '🚀' : cfg.emoji;
+  return `${emoji} ${blockNames?.[moduleName] || cfg.defaultName}`;   // 펌웨어 커스텀명 우선
+}
+\end{minted}
+
+\section{WebGL 3D 시뮬레이션 --- 씬 생성 도구로 확장 (부록 A 8장 적용)}
+\textbf{[현재]} 부록 E 시점의 ``얇은 \code{simulation.js}(383줄) + \code{Sim\_Parts/} 14모듈''
+구조는 최종본에서 두 방향으로 진화했다. \textbf{(a) 진입점 이동} --- 옛 \code{Web/simulation.js}는
+\emph{삭제}되고, \code{main.js}가 \code{Simulation/Simulation\_Main.js}(863줄) 오케스트레이터의
+\code{setupSimulation}을 부른다. \textbf{(b) 씬 생성 도구} --- \code{Sim\_Parts/}가 14$\to$%
+\textbf{17모듈}로 늘며 런타임 객체 시스템$\cdot$선언형 컴포넌트$\cdot$실시간 편집기를 갖췄다.
+
+\captionof{listing}{\code{Sim\_Parts/context.js} --- 공유 ctc(=this)로 17 서브시스템 조립(객체 레지스트리·에디터 신규)}
+\begin{minted}{javascript}
+this.leds = new Leds(this);         this.movement = new Movement(this);
+this.gun  = new Gun(this);          this.rocket   = new Rocket(this);
+this.traffic = new Traffic(this);   this.waves    = new Waves(this);
+this.audio = new Audio(this);       this.assets   = new Assets(this);
+this.renderEngine = new Render(this);  this.dispatcher = new Dispatch(this);
+this.objects = new SimulationObjectRegistry(this);   // 신규 — 씬 객체 레지스트리
+this.editor  = new EditorControls(this);             // 신규 — 복제·기즈모·축 편집
+\end{minted}
+
+\begin{table}[htbp]\centering\small
+\caption{\code{Web/Sim\_Parts/} 17개 모듈과 책임 (부록 E의 14모듈 + 씬 도구 3계층)}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}L{0.26\linewidth} >{\raggedright\arraybackslash}X@{}}
+\toprule
+\sffamily 묶음 & \sffamily 모듈(책임) \\
+\midrule
+허브 & \code{context}(공유 ctx$\cdot$\code{buildSim}), \code{topics}(주제 정의) \\
+표현$\cdot$소리 & \code{render}(dt 프레임$\cdot$그림자), \code{assets}(GLTF), \code{leds}, \code{gun}(머즐 플래시), \code{waves}, \code{audio} \\
+동작 & \code{movement}(주행$\cdot$레이더$\cdot$거리센서), \code{rocket}(발사$\cdot$추적), \code{traffic}(신호등$\cdot$RPS) \\
+연동 & \code{dispatch}(\code{CommandDispatcher}$\cdot$\code{simSink}$\cdot$컴포넌트 라우팅) \\
+씬 도구 (신규) & \code{object\_factory}(도형$\cdot$GLB 팩토리), \code{sim\_object}(\code{SimulationObject}$\cdot$레지스트리), \code{components}(선언형 컴포넌트$\cdot$색상/발광/회전/발사), \code{scene\_store}(직렬화$\cdot$\code{applyScene}), \code{editor\_controls}(Move/Rotate/Scale$\cdot$복제$\cdot$축 편집) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\smallskip
+\noindent\textbf{[부록 A$\cdot$E 대비]} 부록 E 8장은 \textbf{14 서브시스템}이었다. 최종본은 (i)
+\code{SimulationObject}$\cdot$\code{Registry}로 런타임 객체를 \emph{1급}으로 다루고, (ii) \textbf{선언형
+컴포넌트}(\code{components.js})로 색상$\cdot$발광$\cdot$회전$\cdot$발사를 데이터로 부착하며, (iii)
+\code{editor\_controls}로 실시간 편집(복제$\cdot$기즈모$\cdot$축)을 제공한다. dt 기반 주사율
+독립(부록 E)은 유지되고, 여기에 \textbf{그림자 선명화$\cdot$LED 포인트 라이트$\cdot$Gun 자기비행}이
+더해졌다. 또 부록 A의 GLB 텍스처를 2048$^2\to$1024$^2$로 다운스케일해 시뮬 자산을
+\textbf{9.1\,MB $\to$ 2.9\,MB}로 줄였다.
+
+\captionof{listing}{\code{Sim\_Parts/editor\_controls.js} --- Ctrl+V 복제(같은 부모의 형제로 재귀 복제)}
+\begin{minted}{javascript}
+async duplicateSelected() {                 // Ctrl+V — 원본과 같은 부모의 형제(sibling)로
+  const source = this.getSelectedSimObject();
+  if (!source?.spawned) return;
+  const parent = source.root.parent || this.getSpawnParent();
+  const clone = await this.cloneObjectTree(source, parent, true);  // 하위·컴포넌트·색 재귀 복제
+  if (!clone) return;
+  this.select(clone.root); this.updateHierarchy(true);
+}
+\end{minted}
+
+\captionof{listing}{\code{Sim\_Parts/components.js} --- 기본색$\leftrightarrow$발광색 [r,g,b,a] 보간(불투명도 포함)과 LED 점등 포인트 라이트}
+\begin{minted}{javascript}
+const t = Math.max(0, Math.min(1, intensity));      // LED 밝기 0~1
+const base = colors.base || [1,1,1,1];              // 평상시 색
+const glow = colors.emissive || [1,1,1,1];          // 발광 색
+m.color.setRGB(base[0]*(1-t), base[1]*(1-t), base[2]*(1-t), 'srgb');
+m.emissive.setRGB(glow[0], glow[1], glow[2], 'srgb');   m.emissiveIntensity = t;
+m.opacity = base[3]*(1-t) + glow[3]*t;   m.transparent = m.opacity < 1;  // 불투명도도 보간
+
+const LED_LIGHT = { intensity: 2.5, distance: 5, decay: 2 };
+const setLight = (simObject, t) => {
+  if (t > 0) {                                       // 점등 시 발광색 PointLight 생성(밝기 비례)
+    if (!light) { light = new ctx.THREE.PointLight(0xffffff, 0, LED_LIGHT.distance, LED_LIGHT.decay);
+                  simObject.root.add(light); }
+    light.color.copy(lightColorFor(simObject));  light.intensity = LED_LIGHT.intensity * t;
+  } else if (light) { light.parent?.remove(light); light.dispose?.(); light = null; }  // 소등 시 제거
+};
+\end{minted}
+
+\captionof{listing}{\code{Sim\_Parts/components.js} --- 회전축 규약(2026-07-09): 축 방향=부모, 기준점=객체 로컬(회전 불변점)}
+\begin{minted}{javascript}
+function rotateAboutParentAxis(THREE, obj, axisParent, angle, pivotLocal) {
+  const q = new THREE.Quaternion().setFromAxisAngle(axisParent, angle);  // 방향은 부모 좌표계
+  if (pivotLocal) {   // 축 통과점 = 원점 + 현재 자세로 회전시킨 로컬 기준점 → 공간 고정
+    const pivot = pivotLocal.clone().applyQuaternion(obj.quaternion).add(obj.position);
+    obj.position.sub(pivot).applyQuaternion(q).add(pivot);
+  }
+  obj.quaternion.premultiply(q);
+}
+\end{minted}
+
+\captionof{listing}{\code{Sim\_Parts/render.js} + \code{context.js} --- dt 프레임 독립과 그림자 선명화(프러스텀 ±20·카메라 추종)}
+\begin{minted}{javascript}
+// render.js: 매 프레임 dt(초) 계산 후 그림자 광원을 카메라 타깃에 추종
+const nowSec = performance.now() * 0.001;
+const dt = ctx.lastRenderTime > 0 ? Math.min(0.1, nowSec - ctx.lastRenderTime) : 0.016;
+ctx.lastRenderTime = nowSec;   ctx.controls.update();   ctx.updateKeyLight?.();
+// context.js: 그림자 프러스텀 ±55→±20 (텍셀 2.7cm→1cm) + 타깃 추종
+key.shadow.camera.left = -20; key.shadow.camera.right = 20;
+key.shadow.camera.top  =  20; key.shadow.camera.bottom = -20;
+updateKeyLight() { const t = this.controls.target;
+  this.keyLight.position.set(t.x + 3, t.y + 6, t.z + 5); this.keyLight.target.position.copy(t); }
+\end{minted}
+
+\captionof{listing}{\code{Sim\_Parts/components.js} --- Gun: 발사 시 자기 자신이 비행, \code{SIM\_END}에 1초 smoothstep 복귀}
+\begin{minted}{javascript}
+onCommand(cmd, _c, simObject) {
+  if (cmd === 'SIM_END') {                     // 모의실행 종료 → 원위치 복귀 시작
+    flight = null;
+    if (home) returning = { from: simObject.root.position.clone(), age: 0 };
+    return null;
+  }
+  if (!home) home = simObject.root.position.clone();          // 복귀점 = 첫 발사 직전 위치
+  flight = { vel: dirWorld.multiplyScalar(FLY_SPEED), age: 0 };  // 자기 자신이 비행
+},
+update(dt, _ctx, simObject) {
+  if (returning) {
+    const t = Math.min(1, (returning.age += dt) / RETURN_TIME);
+    const ease = t*t*(3 - 2*t);                                // smoothstep 감속
+    simObject.root.position.lerpVectors(returning.from, home, ease);
+    if (t >= 1) { home = null; returning = null; }
+  }
+}
+\end{minted}
+
+\section{씬 서비스 등록·배포 체계 (부록 A에 없던 신규 계층)}
+\textbf{[현재]} 씬 제작이 파일 저장에 그치지 않고 \textbf{웹 서비스에 곧바로 반영되는 배포
+행위}가 되도록, \code{scenes/manifest.json} 레지스트리와 File System Access 직접 기록,
+작업 씬 임시 보존(localStorage), 오프라인 \code{file://} 인라인 빌드를 갖췄다. 씬 파일은
+\textbf{버전$\cdot$주제(topic)$\cdot$객체 배열(트랜스폼$\cdot$컴포넌트$\cdot$색상)} 스키마의 JSON이다.
+
+\captionof{listing}{\code{Web/scenes/albi\_base.json} --- 씬 파일 스키마(기반 주제 + 스폰 객체·컴포넌트)}
+\begin{minted}{json}
+{ "version": 1, "name": "알비와함께", "unitScale": 1, "topic": "empty",
+  "objects": [
+    { "id": "glb-1", "type": "glb", "label": "AlbiStaticLow", "parent": null,
+      "position": [0, 0, 0.85], "quaternion": [0, 0, 0, 1], "scale": [1, 1, 1],
+      "components": [ { "type": "DC", "fields": { "axis_translate": [0, 0, 1] } },
+                      { "type": "Buzzer", "fields": {} } ],
+      "url": "Mesh/AlbiStaticLow.glb" } ] }
+\end{minted}
+
+\captionof{listing}{\code{Sim\_Parts/scene\_store.js} --- \code{applyScene}: 씬 JSON을 타입별로 재생성}
+\begin{minted}{javascript}
+export async function applyScene(ctx, json) {
+  if (!json || json.version !== SCENE_FORMAT_VERSION || !Array.isArray(json.objects))
+    throw new Error('올바른 씬 파일이 아닙니다 (version/objects 확인)');
+  clearSpawnedObjects(ctx);
+  for (const entry of json.objects) {          // 타입별 재생성 후 트랜스폼·색·컴포넌트 복원
+    let sim;
+    if (entry.type === 'glb') sim = await createGlbObject(ctx, entry.url, entry.label);
+    else                      sim = createPrimitiveObject(ctx, entry.type);
+    ctx.objects.add(sim, parentRoot);
+  }
+}
+\end{minted}
+
+\captionof{listing}{\code{Simulation/Simulation\_Main.js} --- 서비스 등록(File System Access로 \code{scenes/} 기록 + manifest 갱신)}
+\begin{minted}{javascript}
+const writeServiceFile = async (name, text) => {            // scenes 폴더에 직접 쓰기
+  const dir = await ensureScenesDir();
+  if (!dir) { downloadJson(name, text); return 'download'; } // 미지원 브라우저는 다운로드 폴백
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable(); await w.write(text); await w.close();
+  return 'dir';
+};
+const writeManifest = () =>                                 // 서비스 주제 레지스트리
+  writeServiceFile('manifest.json',
+    JSON.stringify({ hiddenTopics, scenes: sceneManifest }, null, 2) + '\n');
+\end{minted}
+
+\captionof{listing}{\code{Simulation/Simulation\_Main.js} --- 작업 씬 임시 보존(localStorage) 및 복원 제안}
+\begin{minted}{javascript}
+const WORK_KEY = 'ares-sim-workscene';
+const saveWorkScene = () => {                    // 개발 중 씬을 임시 백업(주제 전환·새로고침 대비)
+  if (!devMode || !sim?.ctx) return;
+  const json = serializeScene(sim.ctx, { name: '작업 씬(임시)', topic: currentBaseTopic });
+  if (json.objects.length > 0) localStorage.setItem(WORK_KEY, JSON.stringify(json));
+};
+// 재진입 시: confirm(`임시 저장된 작업 씬(객체 ${saved.objects.length}개)이 있습니다. 이어서 작업할까요?`)
+\end{minted}
+
+\noindent 배포 측면에서는, 오프라인 \code{file://} 빌드(\code{build.sh}/\code{build.ps1})가
+\code{scenes/*.json}$\cdot$\code{Mesh/manifest.json}과 GLB$\cdot$UI 자산을 fetch shim에 인라인해,
+인터넷$\cdot$서버 없이도 씬 드롭다운$\cdot$\code{hiddenTopics}가 동작하도록 현행화됐다.
+
+\section{코드별 연계 구조 (부록 A 9장 적용)}
+\textbf{[현재]} 하드웨어 경로와 시뮬 경로는 \textbf{명령 파이프라인(sink) 하나}로 일반화된
+상태가 그대로 최종본이다 --- \code{CommandExecutor.\_dispatch()}가 \code{simSink} 유무로 분기해
+시뮬(\code{dispatch.js}) 또는 하드웨어(\code{bluetooth.js})로 보내고, 시뮬에서도
+\code{DIST}/\code{MAG} 센서 응답을 Blockly 변수에 동일하게 반영한다. 시뮬 진입 배선은
+\code{main.js} $\to$ \code{Simulation/Simulation\_Main.js(setupSimulation$\cdot$buildSim)} $\to$
+\code{Sim\_Parts/context.js}이다.
+
+\begin{notebox}[사실 확인 --- 부록 E의 ``죽은 코드'' \code{Web/Simulation/}가 되살아남]
+\small
+부록 E는 \code{Web/Simulation/}(5래퍼)를 어떤 파일도 import하지 않는 \emph{미사용 코드}로,
+런타임은 \code{Sim\_Parts/}를 직접 쓴다고 확인했다. \textbf{최종본에서는 반대다} --- \code{main.js}가
+\code{./Simulation/Simulation\_Main.js}의 \code{setupSimulation}을 import하고, 이 오케스트레이터가
+\code{Sim\_Parts/}를 조립하며 \textbf{개발자 모드 씬 도구(등록$\cdot$임시 보존)}까지 호스팅한다.
+옛 \code{Web/simulation.js}(얇은 진입)는 \emph{삭제}됐다. 즉 부록 E가 남긴 정리 과제가 해소되어,
+CLAUDE.md의 ``\code{Simulation\_Main.js}로 배선'' 설명이 이제 코드와 일치한다.
+\end{notebox}
+
+\section{소스 코드별 API Reference --- 최종 델타 (부록 A A.1$\sim$A.3 적용)}
+부록 A의 소스별 API Reference 대비, 최종 산출물에서 \textbf{신규$\cdot$변경된 주요 시그니처}를
+추린다(중간 시점 델타는 부록 E 참조).
+
+\begin{table}[htbp]\centering\small
+\caption{부록 A API Reference 대비 최종 신규$\cdot$변경 시그니처(발췌)}
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}l >{\ttfamily\footnotesize}l L{0.38\linewidth}@{}}
+\toprule
+\sffamily 파일 & \sffamily 심볼 & \sffamily 성격 \\
+\midrule
+gun.py & fire\_once() / soft\_start() & 신규 --- 발사$\cdot$램프업(회전시간 튜닝) \\
+system\_config.py & get\_custom\_component\_names() & 신규 --- 커스텀 탭 이름 \\
+                  & (\code{ModelFactorySetting.txt}) & 변경 --- 텍스트 공장 설정 \\
+process\_data.py & \_handle\_get\_names() / GUN\_FIRE & 신규 --- 이름 반환$\cdot$발사 \\
+                & \_handle\_led\_on(밝기) & 변경 --- 개별 LED PWM \\
+bluetooth.js & \_estimateBlockingMs() & 신규 --- 동적 타임아웃 \\
+             & \_expectedResponsePrefix() / cancelPendingResponse() & 신규 --- 응답 검증$\cdot$취소 \\
+ui.js & updateBlockCodingButtonUI() & 신규 --- 맥락 인지형 버튼 \\
+Sim\_Parts/sim\_object.js & SimulationObject / Registry & 신규 --- 런타임 객체 1급화 \\
+Sim\_Parts/components.js & attachComponent() / createGunComponent() & 신규 --- 선언형 컴포넌트 \\
+Sim\_Parts/editor\_controls.js & duplicateSelected() / startAxisEdit() & 신규 --- 복제$\cdot$축 편집 \\
+Sim\_Parts/scene\_store.js & serializeScene() / applyScene() & 신규 --- 씬 직렬화$\cdot$복원 \\
+Simulation\_Main.js & devRegisterService() / saveWorkScene() & 신규 --- 서비스 등록$\cdot$임시 보존 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{변화와 개선점 정리}
+부록 A(기준선) $\to$ 부록 E(중간) $\to$ 본 부록(최종)의 궤적을 계층별로 종합하면, \textbf{하부
+(하드웨어$\cdot$핀)는 불변}으로 안정적 토대를 제공했고, \textbf{상부는 반복적으로 완성$\cdot$고도화}
+되었다. 핵심 변화를 한 표로 요약한다.
+
+\begin{table}[htbp]\centering\small
+\caption{계층별 변화 궤적 --- 기준선(부록 A) $\to$ 중간(부록 E) $\to$ 최종(부록 H)}
+\renewcommand{\arraystretch}{1.28}
+\begin{tabularx}{\linewidth}{@{}>{\sffamily\bfseries}L{0.15\linewidth} L{0.24\linewidth} L{0.25\linewidth} >{\raggedright\arraybackslash}X@{}}
+\toprule
+\sffamily 계층 & \sffamily 부록 A (기준선) & \sffamily 부록 E (중간) & \sffamily 부록 H (최종) \\
+\midrule
+하드웨어$\cdot$핀 & \code{pins.py} 중앙 집중 & 동일 & \textbf{동일(불변)} --- 상위 개선의 토대 \\
+펌웨어 안전 & blocking sleep(중단 불가) & 중단 가능 sleep$\cdot$속도 클램프 & \textbf{+ 발사 \code{fire\_once}}(회전시간 튜닝) \\
+펌웨어 설정 & \code{system.json}(JSON) & \code{ModelFactorySetting.txt} 텍스트 & \textbf{+ 카테고리 한글$\cdot$모듈 토글 공장 설정} \\
+웹 구조 & 단일 \code{main} & \code{ui.js} 분리 & \textbf{+ 맥락 인지형 버튼$\cdot$5탭 모바일 내비} \\
+블루투스 & 고정 5초 타임아웃 & 동적 타임아웃$\cdot$접두어 검증$\cdot$취소 & 동일(안정화 유지) \\
+블록코딩 & 속도 인자 없음 & 속도$\cdot$else-if$\cdot$동적 라벨 & \textbf{+ \code{GET\_NAMES} 커스텀 탭명} \\
+시뮬 구조 & 2{,}333줄 단일 파일 & 383줄 진입 + 14모듈(\code{Simulation/}=죽은 코드) & \textbf{\code{Simulation\_Main} 오케스트레이터 + 17모듈}(\code{Simulation/} 부활) \\
+시뮬 편집 & 없음 & 객체 배치(기즈모) & \textbf{씬 생성 도구}(복제$\cdot$색상/발광$\cdot$회전축$\cdot$Hierarchy$\cdot$인스펙터) \\
+시뮬 시각 & 프레임 고정(주사율 의존) & dt 독립 & \textbf{+ 그림자 선명$\cdot$LED 포인트 라이트$\cdot$Gun 자기비행} \\
+배포$\cdot$씬 & --- & --- & \textbf{씬 서비스 등록(manifest$\cdot$FSA)$\cdot$작업 씬 임시 보존$\cdot$오프라인 \code{file://}}(텍스처 9.1$\to$2.9\,MB) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{infobox}[title=최종 산출물 코드 정리 결론]
+\small
+부록 A의 분석 틀을 최종 코드에 적용한 결과, 세 도메인은 \textbf{느슨한 텍스트 명령 프로토콜}
+이라는 계약을 유지한 채 각자 성숙했다. \textbf{하드웨어$\cdot$핀}은 3주 내내 불변이었고,
+\textbf{펌웨어}는 안전(중단 가능 sleep)$\cdot$설정(텍스트 공장 설정)$\cdot$발사(\code{fire\_once})까지
+완비됐다. \textbf{웹}은 \code{ui.js} 분리에서 맥락 인지형 UI$\cdot$모바일 내비$\cdot$오프라인 배포로
+이어졌고, \textbf{시뮬레이터}는 최대 변화 지점으로 --- 단일 파일에서 17모듈 라이브러리로,
+단순 재생에서 \emph{씬을 만들어 서비스로 배포하는 도구}로 --- 도약했다. 특히 부록 E가 지목한
+두 과제(\code{Web/Simulation/} 죽은 코드, \code{Simulation\_Main.js} 배선 문서 불일치)가
+\textbf{해소}되어, 진입 오케스트레이터가 코드와 문서에서 일치한다. 남은 여지는 부록 A가 처음
+짚은 \emph{블록 type $\leftrightarrow$ \code{commandexecutor} case $\leftrightarrow$ \code{ai\_helper}}의
+3중 결합으로, 프로토콜 확장 시 세 지점을 짝으로 유지해야 한다는 구조적 제약이다 --- 이는
+결함이 아니라 \emph{계약 문서(\code{API\_DOCUMENTATION.md}) 동기화로 관리}되는 항목이다.
+\end{infobox}
+

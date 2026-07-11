@@ -4,7 +4,8 @@
 %%       실제 구현(Web/Sim_Parts, Web/Simulation) · 커밋 이력(~dd96fee)
 %% 그림: 2026-07-10 로컬 서버 + 헤드리스 Edge(Playwright)로 실제 구동·조작 캡처
 %% ============================================================
-\section{시뮬레이터 사용 매뉴얼 --- 씬 생성 도구}
+\chaptersummary{씬 생성 도구의 컴포넌트 9종과 개발자·사용자 모드 사용법을 안내하는 시뮬레이터 매뉴얼이다. 실제 구동 화면 캡처를 곁들여 조작 절차를 설명한다.}
+\chapter{시뮬레이터 사용 매뉴얼 --- 씬 생성 도구}
 \label{app:simguide}
 
 본 부록은 12$\sim$13일차에 구축$\cdot$고도화한 \textbf{블록코딩 연계 3D 시뮬레이터}의
@@ -16,7 +17,7 @@
 \code{Web/Sim\_Parts/}$\cdot$\code{Web/Simulation/}. 본 부록의 모든 화면은 실제
 서비스를 로컬 서버로 구동$\cdot$조작하며 캡처했다(2026-07-10, 태블릿 768px 레이아웃).
 
-\subsection{사용자 모드 --- 씬 로드와 모의실행}
+\section{사용자 모드 --- 씬 로드와 모의실행}
 \begin{enumerate}
   \item 미션 화면 하단 탭에서 \textbf{시뮬레이션}을 열면 좌상단 드롭다운에 기본 주제와
   \textbf{서비스 등록된 저장 씬}이 함께 나열된다(그림~\ref{fig:simg-user} 좌).
@@ -32,7 +33,7 @@
   \item 사용자는 씬을 편집할 수 없다(읽기 전용) --- 편집 UI는 개발자 모드에서만 나타난다.
 \end{enumerate}
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
   \begin{subfigure}{0.49\linewidth}\centering
     \figbox{simguide/simg_user_scene.png}
     \caption{시뮬레이션 진입 --- 주제 씬 로드(우주 신호등)}
@@ -46,7 +47,7 @@
   \label{fig:simg-user}
 \end{figure}
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
   \begin{subfigure}{0.49\linewidth}\centering
     \figbox{simguide/simg_user_run.png}
     \caption{모의실행 중 --- LED 1$\cdot$2$\cdot$3 점등, `실험중단' 버튼}
@@ -62,7 +63,7 @@
   \label{fig:simg-run}
 \end{figure}
 
-\subsection{개발자 모드 --- 진입과 화면 구성}
+\section{개발자 모드 --- 진입과 화면 구성}
 시뮬레이션 화면이 열린 상태에서 \textbf{Ctrl+E}를 누르면 개발자 모드가 토글된다
 (그림~\ref{fig:simg-dev}). 배경이 짙은 회색 + 노란 테두리로 바뀌고 다음 도구가 나타난다.
 \begin{itemize}
@@ -82,7 +83,7 @@
 이나 `새 씬' 선택 시 ``이어서 작업할까요?''로 복원을 제안하며, 씬 저장$\cdot$서비스 등록이
 완료되거나 새 씬 시작을 확정하면 임시본을 폐기한다.
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
   \begin{subfigure}{0.49\linewidth}\centering
     \figbox{simguide/simg_dev_overview.png}
     \caption{개발자 모드 전경 --- `발사대\_제작' 씬}
@@ -99,7 +100,7 @@
   \label{fig:simg-dev}
 \end{figure}
 
-\subsection{객체 만들기 --- 우클릭 스폰$\cdot$GLB$\cdot$복제$\cdot$색상}
+\section{객체 만들기 --- 우클릭 스폰$\cdot$GLB$\cdot$복제$\cdot$색상}
 3D 화면을 \textbf{우클릭}하면 그 지점에 객체를 만드는 메뉴가 뜬다(그림~\ref{fig:simg-dev}b).
 \begin{itemize}
   \item \textbf{Create object} --- Box $\cdot$ Sphere $\cdot$ Marker $\cdot$ OLED Panel $\cdot$
@@ -120,7 +121,7 @@
   씬 직렬화(\code{colors} 필드)$\cdot$복제에 함께 실린다.
 \end{itemize}
 
-\subsection{인스펙터 --- 트랜스폼$\cdot$컴포넌트 필드$\cdot$회전축 시각 편집}
+\section{인스펙터 --- 트랜스폼$\cdot$컴포넌트 필드$\cdot$회전축 시각 편집}
 \label{sec:simg-inspector}
 객체를 선택하면 좌측에 인스펙터가 열린다(그림~\ref{fig:simg-insp}b).
 \begin{itemize}
@@ -136,7 +137,7 @@
   원점에 두면 오프셋 미사용으로 정리된다(그림~\ref{fig:simg-insp}c).
 \end{itemize}
 
-\begin{figure}[H]\centering
+\begin{figure}[htbp]\centering
   \begin{subfigure}{0.49\linewidth}\centering
     \figbox{simguide/simg_dev_glb.png}
     \caption{GLB 모델 메뉴 --- \code{Web/Mesh} 자산 목록}
@@ -159,11 +160,11 @@
   \label{fig:simg-insp}
 \end{figure}
 
-\subsection{컴포넌트 레퍼런스 (9종)}
+\section{컴포넌트 레퍼런스 (9종)}
 객체에 컴포넌트를 부착하면 블록 명령이 해당 객체에서 동작한다 --- 씬 구성만으로
 새 로봇$\cdot$장치를 만들 수 있다.
 
-\begin{table}[H]\centering\small
+\begin{table}[htbp]\centering\small
 \caption{컴포넌트 9종 --- 필드와 반응 명령}
 \renewcommand{\arraystretch}{1.22}
 \begin{tabularx}{\linewidth}{@{}l l X@{}}
@@ -210,7 +211,7 @@ Magnet 감지 반경 5\,cm.
 이동$\cdot$회전의 적용 주체는 씬 구성자가 정한다 --- 컴포넌트는 자신이 부착된 객체(+하위)만,
 설정된 축만 움직인다.
 
-\subsection{씬 저장 · 서비스 등록 · 배포}
+\section{씬 저장 · 서비스 등록 · 배포}
 \label{sec:simg-deploy}
 \begin{enumerate}
   \item \textbf{씬 저장} --- 스폰한 객체들의 계층$\cdot$트랜스폼$\cdot$색상$\cdot$컴포넌트
@@ -230,7 +231,7 @@ Magnet 감지 반경 5\,cm.
   \code{\{id, file, label\}} 한 줄을 등록하면 된다.
 \end{enumerate}
 
-\subsection{콘솔 도구 (고급)}
+\section{콘솔 도구 (고급)}
 개발자 모드에서는 브라우저 콘솔에 \code{window.\_\_aresSimDev}가 노출된다 ---
 \code{serialize/apply/clear}(씬), \code{attach/detach}(컴포넌트), \code{objects/state/setPos}
 (객체 조회$\cdot$이동), \code{sink('LED\_ON,0,1')}(명령 주입), \code{tick(dt)}(수동 프레임).

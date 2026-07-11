@@ -33,11 +33,12 @@
 
 \subsubsection{웹 UI}
 
-\begin{lstlisting}[style=json, caption={웹 UI 로컬 실행}]
+\captionof{listing}{웹 UI 로컬 실행}
+\begin{minted}{bash}
 cd Web
 python -m http.server 8000
 # 브라우저에서 http://localhost:8000/main.html 열기
-\end{lstlisting}
+\end{minted}
 
 \begin{infobox}[title=주의]
 개발 중에는 Web Bluetooth가 \textbf{보안 컨텍스트}(\code{http://localhost} 또는

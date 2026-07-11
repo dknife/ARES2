@@ -131,7 +131,8 @@ ES 모듈로 분리된 JavaScript 파일들이 명확한 책임 경계를 가진
 모든 하드웨어 모듈은 동일한 안전 초기화 패턴을 따른다. 이는 일부 부품이
 없거나 고장 난 상태에서도 시스템 전체가 부팅되도록 보장한다.
 
-\begin{lstlisting}[style=py, caption={hardware.py의 모듈 초기화 패턴}]
+\captionof{listing}{hardware.py의 모듈 초기화 패턴}
+\begin{minted}{python}
 if sys_config.is_module_enabled('wheel'):
     try:
         from wheel import KSWheel
@@ -139,7 +140,7 @@ if sys_config.is_module_enabled('wheel'):
     except Exception as e:
         print("Wheel init failed:", e)
         self.wheel = None   # 실패 시 None -> 사용 측에서 건너뜀
-\end{lstlisting}
+\end{minted}
 
 명령 처리 측(\code{process\_data.py})은 사용 전 \code{if not robot.wheel: return 0}와
 같이 모듈 존재 여부를 확인하므로, 비활성 모듈에 대한 명령은 조용히 무시된다.

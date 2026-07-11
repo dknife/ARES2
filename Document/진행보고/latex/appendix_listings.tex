@@ -1,0 +1,66 @@
+%% ============================================================
+%% appendix_listings.tex — 부록 I: 최종 산출물 소스 코드 리스팅
+%% 피코 펌웨어(Pico/) + 웹 코어(Web/)를 원문 그대로 수록.
+%% minted 의 \inputminted 로 저장소 파일을 직접 읽어 구문 강조와 함께 조판한다
+%% — 저장소와 바이트 단위로 일치하며, XeLaTeX(kotex)에서도 한글 코멘트가 정확히
+%% 조판된다.
+%% ============================================================
+\chaptersummary{피코 펌웨어와 웹 코어의 소스 코드 원문을 그대로 수록한 리스팅이다. 최종 산출물의 구현 세부를 추적할 수 있도록 전체 소스를 제공한다.}
+\chapter{최종 산출물 소스 코드 리스팅}
+\label{app:listings}
+
+본 부록은 최종 산출물의 \textbf{피코 펌웨어(\code{Pico/})}와 \textbf{웹 코어(\code{Web/})}
+소스 코드를 원문 그대로 수록한다. 각 파일은 \code{minted}의 \code{inputminted}로 저장소
+파일을 직접 읽어 \textbf{구문 강조}와 함께 조판하므로 \textbf{저장소와 바이트 단위로
+일치}하며, 구조$\cdot$설계 해설은 \ref{app:finalcode}(최종 산출물 코드 정리)를 참조한다.
+분량 관계상 \textbf{대형 오케스트레이터 \code{Web/main.js}와 3D 시뮬레이터
+(\code{Sim\_Parts/}$\cdot$\code{Simulation/})는 제외}하고 부록 H의 분석$\cdot$발췌로 갈음한다.
+\code{Pico/ssd1306.py}는 표준 MicroPython OLED 드라이버(외부), \code{Pico/icon.py}는
+디스플레이 아이콘 비트맵 데이터다. 각 파일은 \textbf{코드 목차}에도 파일명으로 등재된다.
+
+%% 파일 하나를 캡션(파일명) + 줄번호 minted 로 수록하는 헬퍼
+%% #1 = 언어(python/javascript), #2 = 표시 제목(파일명), #3 = 파일 경로
+\newcommand{\srcfile}[3]{%
+  \par\medskip
+  \captionof{listing}{\ttfamily #2}%
+  \begingroup\singlespacing
+  \inputminted[linenos, numbersep=7pt, fontsize=\footnotesize,
+    frame=single, framesep=5pt, rulecolor=\color{rulegray},
+    breaklines=true, breakanywhere=true]{#1}{#3}%
+  \endgroup
+  \par\smallskip}
+
+\section{피코 펌웨어 (\texorpdfstring{\code{Pico/}}{Pico/})}
+
+\subsection*{핵심 --- 부팅·명령 처리·설정·하드웨어·핀}
+\srcfile{python}{Pico/main.py}{../../../Pico/main.py}
+\srcfile{python}{Pico/process\_data.py}{../../../Pico/process_data.py}
+\srcfile{python}{Pico/system\_config.py}{../../../Pico/system_config.py}
+\srcfile{python}{Pico/hardware.py}{../../../Pico/hardware.py}
+\srcfile{python}{Pico/pins.py}{../../../Pico/pins.py}
+
+\subsection*{하드웨어 모듈 --- 구동·발사·표시·센서}
+\srcfile{python}{Pico/wheel.py}{../../../Pico/wheel.py}
+\srcfile{python}{Pico/dcmotor.py}{../../../Pico/dcmotor.py}
+\srcfile{python}{Pico/gun.py}{../../../Pico/gun.py}
+\srcfile{python}{Pico/leds.py}{../../../Pico/leds.py}
+\srcfile{python}{Pico/buzzer.py}{../../../Pico/buzzer.py}
+\srcfile{python}{Pico/magsensor.py}{../../../Pico/magsensor.py}
+\srcfile{python}{Pico/ultrasonic.py}{../../../Pico/ultrasonic.py}
+
+\subsection*{디스플레이 --- 드라이버(외부)·아이콘 데이터}
+\srcfile{python}{Pico/ssd1306.py \normalfont(외부 드라이버)}{../../../Pico/ssd1306.py}
+\srcfile{python}{Pico/icon.py \normalfont(아이콘 비트맵 데이터)}{../../../Pico/icon.py}
+
+\section{웹 코어 (\texorpdfstring{\code{Web/}}{Web/})}
+
+\subsection*{기반 --- 상수·전역 상태·DOM 참조}
+\srcfile{javascript}{Web/constants.js}{../../../Web/constants.js}
+\srcfile{javascript}{Web/state.js}{../../../Web/state.js}
+\srcfile{javascript}{Web/elements.js}{../../../Web/elements.js}
+
+\subsection*{통신·실행·블록·UI}
+\srcfile{javascript}{Web/bluetooth.js}{../../../Web/bluetooth.js}
+\srcfile{javascript}{Web/commandexecutor.js}{../../../Web/commandexecutor.js}
+\srcfile{javascript}{Web/blocklyconfig.js}{../../../Web/blocklyconfig.js}
+\srcfile{javascript}{Web/ui.js}{../../../Web/ui.js}

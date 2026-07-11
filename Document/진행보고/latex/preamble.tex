@@ -8,18 +8,17 @@
 \usepackage{fontspec}
 \defaultfontfeatures{Mapping=tex-text}
 
-%% ----- 폰트 (KoPub 계열) -----
-%% KoPub 글꼴(무료·크로스플랫폼)을 기본으로 사용한다. 디자인이 고딕 기반이므로
-%% 본문·제목 모두 KoPubDotum(돋움)을 쓰고, 굵기는 Medium(보통)/Bold(굵게)로 둔다.
-%% (이탤릭 페이스가 없어 \emph/\textit 는 AutoFakeSlant 로 기울인다.)
-%% 본문을 바탕(serif)으로 하려면 main 만 KoPubBatang 으로 교체할 것.
+%% ----- 폰트 (KoPub 계열 — 격식화: 본문 바탕체(serif) + 제목/UI 돋움체(sans)) -----
+%% 격식 있는 조판을 위해 본문(main)을 바탕체(KoPubBatang, serif)로 두고,
+%% 제목·머리글·칩 등 \sffamily 로 지정된 UI 요소는 돋움체(KoPubDotum, sans)로 대비를 준다.
+%% 굵기는 Medium(보통)/Bold(굵게), 이탤릭 페이스가 없어 \emph/\textit 는 AutoFakeSlant 로 기울인다.
 %% 설치: https://www.kopus.org (KoPubWorld/KoPub 글꼴). macOS 도 동일 이름.
-\setmainfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
+\setmainfont{KoPubBatang Medium}[BoldFont={KoPubBatang Bold}, AutoFakeSlant=0.2]
 \setsansfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
 %% 모노(코드)용 — Consolas(Windows/Office)가 있으면 사용, 없으면 Menlo(macOS 기본)로
 %% 폴백해 크로스플랫폼 빌드를 보장한다. (Consolas 부재 시 코드 글자가 누락되던 문제 방지)
 \IfFontExistsTF{Consolas}{\setmonofont{Consolas}[Scale=0.86]}{\setmonofont{Menlo}[Scale=0.80]}
-\setmainhangulfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2, Scale=1.0]
+\setmainhangulfont{KoPubBatang Medium}[BoldFont={KoPubBatang Bold}, AutoFakeSlant=0.2, Scale=1.0]
 \setsanshangulfont{KoPubDotum Medium}[BoldFont={KoPubDotum Bold}, AutoFakeSlant=0.2]
 \setmonohangulfont{KoPubDotum Medium}[Scale=0.86]
 %% 이모지(흑백) — 부록(코드 분석 전문)이 \emj{}와 raw 이모지를 사용.
@@ -33,7 +32,9 @@
 %% ----- 레이아웃 -----
 \usepackage[a4paper, margin=25mm, headheight=22pt]{geometry}
 \usepackage{setspace}
-\setstretch{1.18}
+%% 전체 보고서 행간을 기존 1.18 의 1.5배(=1.77)로 확대.
+%% (코드 박스 minted 는 아래 etoolbox 훅으로 단일 행간을 유지한다.)
+\setstretch{1.77}
 \usepackage{microtype}
 \emergencystretch=3em
 \hfuzz=3pt
@@ -65,38 +66,40 @@
 \newcolumntype{S}[1]{>{\ttfamily\footnotesize\raggedright\arraybackslash}p{#1}}
 
 %% ----- 코드 리스팅 -----
-\usepackage{listings}
-\lstset{
-  basicstyle=\ttfamily\small,
-  backgroundcolor=\color{codebg},
-  keywordstyle=\color{codekw}\bfseries,
-  commentstyle=\color{codecmt}\itshape,
-  stringstyle=\color{codestr},
-  numberstyle=\tiny\color{rulegray},
-  frame=single,
-  rulecolor=\color{rulegray},
-  framesep=6pt,
-  xleftmargin=10pt,
-  xrightmargin=4pt,
+%% ----- 코드 리스팅: minted (Pygments 기반 구문 강조) -----
+%% minted 는 fvextra 위에서 조판하므로 XeLaTeX(kotex)에서도 한글 코멘트 옆 괄호가
+%% 밀리지 않으며(listings 의 문장부호 재배치 버그 없음) 구문 강조까지 제공한다.
+%% 빌드 필수: (1) -shell-escape, (2) Python 패키지 Pygments + latexminted 설치,
+%%            (3) 그 실행 파일(pygmentize·latexminted)이 PATH 에 있을 것.
+%%            build.sh/build.ps1 참고.
+\usepackage[newfloat]{minted}
+\usemintedstyle{friendly}
+\setminted{
+  fontsize=\footnotesize,
   breaklines=true,
-  breakatwhitespace=false,
-  showstringspaces=false,
-  tabsize=2,
-  columns=fullflexible,
-  keepspaces=true,
+  breakanywhere=true,
+  tabsize=4,
+  frame=single,
+  framesep=5pt,
+  rulecolor=\color{rulegray},
+  numbersep=6pt,
+  breaksymbolleft={},
 }
-\lstdefinestyle{py}{language=Python}
-\lstdefinelanguage{JS}{
-  morekeywords={var,let,const,function,return,if,else,for,while,await,async,
-    new,this,Promise,true,false,null,window,import,export,from},
-  sensitive=true,
-  morecomment=[l]{//},
-  morecomment=[s]{/*}{*/},
-  morestring=[b]',
-  morestring=[b]",
-}
-\lstdefinestyle{js}{language=JS}
-\lstdefinestyle{json}{language={}}
+%% 코드 리스팅 캡션 라벨을 '코드' 로, 목록 제목을 '코드 목차' 로.
+\SetupFloatingEnvironment{listing}{name=코드, listname={코드 목차}}
+%% 본문 행간(1.77)을 확대해도 코드 박스 내부 줄간은 기존(단일 행간)을 유지한다.
+%% minted 환경 시작 시 \singlespacing 을 걸어, 이후 minted 가 발동하는 폰트 크기
+%% 명령(\footnotesize 등)이 늘어난 행간을 물려받지 않게 한다. \inputminted 를 쓰는
+%% \srcfile(부록 I) 은 매크로 자체에서 \singlespacing 그룹으로 감싼다.
+\usepackage{etoolbox}
+\AtBeginEnvironment{minted}{\singlespacing}
+%% book 클래스는 그림·표·코드 번호를 장별(예: '부록 A.15')로 매기는데, 부록 장 번호가
+%% '부록 A' 라 번호가 지나치게 길어지고 목록에서 겹친다. 문서 전체 연속 번호(그림 1·표 1·
+%% 코드 1)로 되돌려 조판을 단순화한다.
+\usepackage{chngcntr}
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+\AtBeginDocument{\counterwithout{listing}{chapter}}
 
 %% 짧은 인라인 명령/식별자 — 긴 토큰(dknife/ARES2, evaluateValueBlock 등)이
 %% 넘칠 때만 문자 사이에서 줄바꿈되도록 seqsplit 으로 감싼다(overfull 방지).
@@ -113,6 +116,46 @@
 
 %% ----- 제목 스타일 -----
 \usepackage{titlesec}
+%% ----- 챕터 표제: 표지 페이지 형태 (수동 \@makechapterhead) -----
+%% 번호 있는 장·부록은 홀수 페이지에 '표지'로 시작한다. 표지에는 대형 장 번호와 제목,
+%% 하단에 요약 박스가 놓이고, 다음 짝수 페이지를 비운 뒤 홀수에서 본문이 시작된다.
+%% ([openright] + 홀수 강제 \cleardoublepage 로 장 시작을 홀수로 맞춘다.)
+%% 번호 없는 장(목차·참고문헌 등 \chapter*)은 평범한 표제(\@makeschapterhead)를 쓴다.
+%% 표지는 홀수 페이지에서 시작(\chapter 의 \cleardoublepage 가 강제)하되,
+%% 표지 다음 쪽을 비우지 않고 본문이 바로 이어지게 한다(\clearpage 만).
+\newcommand{\afterchaptercover}{\clearpage}
+%% 장 요약(표지 하단 박스) — 각 \chapter 앞에서 \chaptersummary{...} 로 설정
+\newcommand{\thischaptersummary}{}
+\newcommand{\chaptersummary}[1]{\gdef\thischaptersummary{#1}}
+%% 표지 대형 번호 블록 — 본문용(기본). \appendix 뒤 ProgressReport 에서 재정의된다.
+\newcommand{\covernumberblock}{%
+  {\sffamily\normalsize\color{aresorange}제\,\thechapter\,장}\\[0.1em]
+  {\sffamily\bfseries\color{deepblue}\fontsize{108}{108}\selectfont\thechapter}}
+\makeatletter
+\def\@makechapterhead#1{%
+  \thispagestyle{empty}%
+  \vspace*{0.12\textheight}%
+  \begin{center}\covernumberblock\\[0.85em]
+    {\color{rulegray}\rule{0.42\linewidth}{1.1pt}}\\[1.1em]
+    {\sffamily\bfseries\Huge\color{deepblue}#1}%
+  \end{center}%
+  \vfill
+  \ifx\thischaptersummary\@empty\else
+    {\begin{coversummarybox}\thischaptersummary\end{coversummarybox}}%
+    \vspace{0.05\textheight}%
+  \fi
+  \global\let\thischaptersummary\@empty
+  \afterchaptercover}
+%% 번호 없는 장(목차·참고문헌) — 평범한 표제
+\def\@makeschapterhead#1{%
+  \vspace*{16pt}{\raggedright\sffamily\bfseries\LARGE\color{deepblue}#1\par}\nobreak\vskip 18pt}
+\makeatother
+%% 부(部) 표제 — '제 1 부' 형태(한글)
+\renewcommand{\thepart}{제\,\arabic{part}\,부}
+\titleformat{\part}[display]
+  {\centering\sffamily\bfseries\color{deepblue}}
+  {\Huge\thepart}{18pt}{\Huge}
+\titlespacing*{\part}{0pt}{80pt}{40pt}
 \titleformat{\section}
   {\sffamily\Large\bfseries\color{deepblue}}
   {\thesection}{0.6em}{}
@@ -130,11 +173,13 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{rulegray}\leaders\hrule height \headrulewidth\hfill}}
-\fancyhead[L]{\small\sffamily\color{deepblue}ARES 제품개발학기 진행 보고}
-%% 우측(섹션 제목)이 길면 좌측 문서명과 겹치므로 폭을 제한해 말줄임 처리
+\fancyhead[L]{\small\sffamily\color{deepblue}2026 여름 제품개발학기 보고서}
+%% 우측(장 제목)이 길면 좌측 문서명과 겹치므로 폭을 제한해 말줄임 처리
 \usepackage{truncate}
 \fancyhead[R]{\small\sffamily\color{rulegray}\truncate{0.56\textwidth}{\leftmark}}
 \fancyfoot[C]{\small\thepage}
+%% 머리글에는 장 제목만 표시(번호·라벨 제외)
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
 
 %% ----- 박스 -----
 \usepackage[most]{tcolorbox}
@@ -143,6 +188,14 @@
   breakable, enhanced,
   colback=tablehead!50, colframe=aresorange, boxrule=0pt,
   leftrule=3pt, arc=2pt, left=10pt, right=10pt, top=6pt, bottom=6pt,
+}
+%% 장 표지 하단 요약 박스
+\newtcolorbox{coversummarybox}{
+  enhanced, breakable=false,
+  colback=tablehead!45, colframe=aresorange, boxrule=0pt, leftrule=3.5pt,
+  arc=2pt, left=12pt, right=12pt, top=9pt, bottom=9pt,
+  fonttitle=\sffamily\bfseries\color{deepblue}, coltitle=deepblue,
+  title={이 장의 요약}, before upper={\small\setstretch{1.3}},
 }
 %% 주의/메모 박스
 \newtcolorbox{notebox}[1][주의]{
@@ -184,6 +237,17 @@
 \setlist{itemsep=2pt, parsep=1pt, topsep=3pt}
 \usepackage{graphicx}
 \usepackage{float}
+%% ----- 플로트 배치 완화: 그림·표를 띄워(floating) 글이 비는 곳이 없게 -----
+%% 한 페이지에 더 많은 플로트를 허용하고, 플로트만 있는 페이지를 줄인다.
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{6}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.72}
+\renewcommand{\dbltopfraction}{0.92}
+\renewcommand{\dblfloatpagefraction}{0.72}
 \usepackage{subcaption}
 
 %% ----- 다이어그램(TikZ) — 부록 코드 분석용 -----
@@ -212,28 +276,25 @@
   {\def\diagcap{#1}\def\diaglab{#2}\begin{figure}[H]\centering\begin{tikzpicture}}
   {\end{tikzpicture}\caption{\diagcap}\label{\diaglab}\end{figure}}
 
-%% 목차 깊이: 절·소절까지 (부록 코드 분석의 소소절은 생략해 목차 과밀 방지)
-\setcounter{tocdepth}{2}
-\setcounter{secnumdepth}{3}
-
-%% 목차 절 번호 폭 확대 — 부록 라벨 '부록 A' 가 제목과 겹치지 않도록.
-%% (TOC는 문서 앞에서 한 번에 조판되므로 이 정의가 preamble에 있어야 적용됨)
+%% 목차 깊이: 장(챕터)·절(section)까지 표시. 번호는 소절(subsection)까지.
+\setcounter{tocdepth}{1}
+\setcounter{secnumdepth}{2}
+%% 목차의 장 번호 상자 폭 — '부록 A' 라벨이 제목과 겹치지 않도록 넉넉히.
 \makeatletter
-\renewcommand*\l@section[2]{%
-  \ifnum \c@tocdepth >\z@
-    \addpenalty\@secpenalty
-    \addvspace{1.0em \@plus\p@}%
-    \setlength\@tempdima{4.3em}%
+\renewcommand*\l@chapter[2]{%
+  \ifnum \c@tocdepth >\m@ne
+    \addpenalty{-\@highpenalty}%
+    \vskip 1.0em \@plus\p@
+    \setlength\@tempdima{3.4em}%
     \begingroup
       \parindent \z@ \rightskip \@pnumwidth
       \parfillskip -\@pnumwidth
       \leavevmode \bfseries\sffamily\color{deepblue}
       \advance\leftskip\@tempdima \hskip -\leftskip
       #1\nobreak\hfil \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+      \penalty\@highpenalty
     \endgroup
   \fi}
-%% 소절(subsection)도 부록 라벨 'A.14' 폭에 맞춰 약간 확대
-\renewcommand*\l@subsection{\@dottedtocline{2}{4.3em}{2.6em}}
 \makeatother
 \usepackage[hidelinks]{hyperref}
 \hypersetup{
@@ -247,6 +308,50 @@
 \usepackage{caption}
 \captionsetup{font=small, labelfont={bf,sf}, labelsep=period}
 \captionsetup[sub]{font=footnotesize}
+
+%% ----- 라벨 한글화 (Contents→목차, Figure→그림, Table→표, Listing→코드) -----
+%% kotex/패키지 기본값을 확실히 덮어쓰도록 \AtBeginDocument 에서 적용한다.
+\AtBeginDocument{%
+  \renewcommand{\contentsname}{목차}%
+  \renewcommand{\figurename}{그림}%
+  \renewcommand{\tablename}{표}%
+  \renewcommand{\listtablename}{표 목차}%
+  \renewcommand{\listfigurename}{그림 목차}%
+}
+
+%% ----- 부록 표지(별지) 체계 -----
+%% 각 부록은 (1) 홀수 페이지에서 표지로 시작하고, (2) 표지 다음 한 페이지를 비운 뒤,
+%% (3) 다시 홀수 페이지에서 본문이 시작되도록 한다. 문서가 oneside 이므로
+%% \clearoddpage 로 필요 시 빈 페이지를 삽입해 홀수(recto) 페이지를 강제한다.
+\newcommand{\clearoddpage}{%
+  \clearpage
+  \ifodd\value{page}\else
+    \hbox{}\thispagestyle{empty}\newpage
+  \fi}
+%% 완전 백지 한 장(머리글·쪽번호 없음)
+\newcommand{\blankpage}{\clearpage\hbox{}\thispagestyle{empty}\clearpage}
+%% oneside 라도 [openright] 의 \cleardoublepage 가 홀수(recto) 페이지를 강제하도록 재정의.
+%% (기본 oneside 에서는 \cleardoublepage=\clearpage 라 홀수 강제가 안 됨)
+\renewcommand{\cleardoublepage}{\clearpage\ifodd\value{page}\else\hbox{}\thispagestyle{empty}\clearpage\fi}
+%% \appendixcover{부록 라벨}{제목}{설명}
+%%   표지(홀수) → 백지(짝수) → 본문(홀수, 이어지는 \section 이 조판)
+\newcommand{\appendixcover}[3]{%
+  \clearoddpage
+  \thispagestyle{empty}%
+  \begingroup
+    \centering
+    \vspace*{0.20\textheight}%
+    {\sffamily\large\color{aresorange} ARES 제품개발학기 진행 보고 \,\textbullet\, 부록}\\[2.4em]
+    {\sffamily\fontsize{44}{48}\selectfont\bfseries\color{deepblue} #1}\\[0.7em]
+    {\color{rulegray}\rule{0.46\linewidth}{1.1pt}}\\[1.3em]
+    {\fontsize{20}{25}\selectfont\bfseries\color{inkdark} #2}\\[1.8em]
+    \begin{minipage}{0.70\linewidth}\centering\normalsize\color{inkdark}\setstretch{1.35} #3\par\end{minipage}%
+    \par
+    \vfill
+    {\sffamily\footnotesize\color{rulegray} (주)코리아사이언스 \,/\, 동명대학교 게임공학과}\\[0.6em]
+  \endgroup
+  \blankpage
+}
 
 %% ----- 참고 문헌 (biblatex + biber) -----
 \usepackage[backend=bibtex, style=numeric, sorting=none, giveninits=true]{biblatex}

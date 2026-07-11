@@ -1,69 +1,122 @@
 %% ============================================================
-%% ProgressReport.tex — ARES 현장 진행 보고 (1~7일차) · 메인
-%% 대상: https://github.com/dknife/ARES2
-%% XeLaTeX:  xelatex ProgressReport → biber ProgressReport → xelatex ×2
+%% ProgressReport.tex — 2026학년도 여름 제품개발학기 보고서 (책 편집)
+%% XeLaTeX:  xelatex → bibtex → xelatex ×2
+%% 구조: 표지 → (백지) → 제출문 → 목차/표·그림·코드 목차
+%%        → 제1부 개발 진행 보고 → 제2부 산출물(부록 A~I) → 참고문헌
 %% ============================================================
-\documentclass[11pt, oneside]{article}
+\documentclass[11pt, oneside, openright]{book}
 
 \input{preamble}
 
-\title{%
-  {\sffamily\bfseries\fontsize{24}{28}\selectfont\color{inkdark}ARES 제품개발학기 진행 보고}\\[6pt]
-  {\sffamily\large\color{aresorange}1\,$\sim$\,13일차 — 블록 코딩 화성 탐사 로버 개발 현장 기록}%
-}
-\author{\sffamily (주)코리아사이언스\quad/\quad 동명대학교 게임공학과}
-\date{2026년 6월 23일\,--\,7월 9일 (KST)}
-
 \begin{document}
 
-\maketitle
-\thispagestyle{plain}
+\frontmatter
+\pagestyle{empty}
 
-\begin{abstract}
-\noindent
-본 문서는 ARES(Autonomous Rover Exploration System) 교육용 로봇 플랫폼의
-제품개발학기 현장 진행을 1$\sim$13일차에 걸쳐 기록한 보고서이다. ARES는
-초등학생을 대상으로 한 블록 코딩 교육 플랫폼으로~\cite{papert1980, maloney2010scratch}, Google Blockly 기반 웹
-애플리케이션~\cite{blockly}, 라즈베리파이 피코 MicroPython 펌웨어~\cite{micropython,rp2040},
-그리고 보조 AI 모듈~\cite{exaone35}의 세 런타임 도메인으로 구성된다. 보고 기간 동안
-컴퓨터실 개발 착수, 교구 제작 협력 업체(코리아사이언스) 방문과 웹 서비스 시연, 디자인 프로토타입
-제작, 1차시 운영 점검 및 인터페이스 개선, \textbf{팀원별 작업 브랜치의
-\code{main} 통합 머지와 통합 후 전 계층 서비스 점검$\cdot$트랙별(웹$\cdot$피코$\cdot$시뮬레이션)
-개선}, UI 디자인 시안$\cdot$실서비스 적용과 교구 시제품 산업체 공동 점검, 그리고
-\textbf{시뮬레이터 씬 생성 도구(컴포넌트 시스템) 구축과 QA 체계 기반 소프트웨어 테스트
-본격 수행}을 진행하였다. 주요 산출물은 본문 「산출물」에 요약하고, \textbf{전문은
-참고문헌 뒤 부록 A$\sim$G에 수록}한다 --- 부록 A$\sim$C(기준선 분석$\cdot$개선 설계),
-\textbf{부록 D$\cdot$E}(통합 머지 중간 점검$\cdot$재분석), \textbf{부록 F}(소프트웨어 테스트
-결과 보고서 STR v1.1), \textbf{부록 G}(시뮬레이터 사용 매뉴얼 --- 실구동 캡처 수록).
-\end{abstract}
+%% ===================== 표지 =====================
+\begin{titlepage}
+  \centering
+  \vspace*{0.14\textheight}
+  {\sffamily\bfseries\fontsize{34}{42}\selectfont\color{inkdark}%
+    2026학년도 여름\\[10pt]제품개발학기 보고서\par}
+  \vspace{1.5em}
+  {\color{aresorange}\rule{0.52\linewidth}{1.6pt}}\par
+  \vspace{1.5em}
+  {\sffamily\Large\color{aresorange}%
+    ARES --- (주)코리아사이언스 화성탐사 코딩 교구 공동개발\par}
+  \vspace{3.6em}
+  {\sffamily\large\color{inkdark}%
+    강영민 \quad 서미라 \quad 신\,원\par
+    \vspace{0.7em}
+    김지훈 \quad 이민혁 \quad 이주현 \quad 이성빈 \quad 이재훈\par}
+  \vfill
+  {\sffamily\LARGE\bfseries\color{deepblue}동명대학교 TU-RISE 사업단\par}
+  \vspace{0.7em}
+  {\sffamily\normalsize\color{rulegray}2026\par}
+  \vspace{0.4\baselineskip}
+\end{titlepage}
 
-\vspace{0.5em}
-{\color{rulegray}\hrule height 0.6pt}
-\vspace{1.0em}
+%% ===================== 한 페이지 비움 =====================
+\null\newpage
 
+%% ===================== 제출문 =====================
+\clearpage
+\thispagestyle{empty}
+\vspace*{0.07\textheight}
+\begin{center}
+  {\sffamily\bfseries\fontsize{24}{28}\selectfont\color{deepblue}제 \; 출 \; 문}
+\end{center}
+\vspace{2.6em}
+
+\noindent 동명대학교 TU-RISE 사업단 귀중
+\vspace{1.6em}
+
+\noindent 본 보고서를 \textbf{「2026학년도 여름 제품개발학기」의 결과 보고서}로 제출합니다.
+\vspace{1.2em}
+
+\noindent 본 보고서는 ARES(Autonomous Rover Exploration System) 교육용 로봇 플랫폼의
+제품개발학기 현장 개발(1$\sim$14일차)을 정리한 것입니다. ARES는 초등학생을 대상으로 한
+블록 코딩 교육 플랫폼으로, Google Blockly 기반 웹 애플리케이션, 라즈베리파이 피코
+MicroPython 펌웨어, 그리고 보조 AI 모듈의 세 런타임 도메인으로 구성됩니다. 보고 기간 동안
+컴퓨터실 개발 착수, 교구 제작 협력 업체(코리아사이언스) 방문과 웹 서비스 시연, 디자인
+프로토타입 제작, 1차시 운영 점검과 인터페이스 개선, 팀원별 작업 브랜치의 통합 머지와 전
+계층 서비스 점검$\cdot$트랙별 개선, 시뮬레이터 씬 생성 도구 구축과 QA 체계 기반 소프트웨어
+테스트, 그리고 최종 산출물 정리$\cdot$성과물 출품을 수행하였습니다. 그 과정과 산출물을
+\textbf{제1부 「개발 진행 보고」}와 \textbf{제2부 「산출물」(부록 A$\sim$I)}로 나누어
+수록하였습니다. 이에 위 내용을 담은 보고서를 제출합니다.
+
+\vspace{2.8em}
+\begin{center}
+  {\large 2026년 7월}
+\end{center}
+\vspace{2.0em}
+\begin{center}
+  \renewcommand{\arraystretch}{1.9}
+  \begin{tabular}{@{}r@{\hskip 1.4em}l@{}}
+    \sffamily\bfseries 제출자 & 강영민\quad(하드웨어 제어 및 시뮬레이션 SW 개발총괄)\quad(인) \\
+                             & 서미라\quad(제품 디자인 지도)\quad(인) \\
+                             & 신\,\,원\quad(제품개발학기 총괄 진행$\cdot$서비스 관리)\quad(인) \\
+  \end{tabular}
+\end{center}
+
+%% ===================== 목차 / 표·그림·코드 목차 =====================
+\cleardoublepage
+\pagestyle{plain}
 \tableofcontents
-\newpage
+\clearpage
+\listoftables
+\clearpage
+\listoffigures
+\clearpage
+\listoflistings
 
+%% ===================== 본문 =====================
+\mainmatter
+\pagestyle{fancy}
+
+\part{개발 진행 보고}
+%% 제1부 표지 다음: 한 페이지 비우고, 홀수 페이지에서 팀 구성(표)
+\clearpage
+\null\thispagestyle{empty}\clearpage
+\ifodd\value{page}\else\null\thispagestyle{empty}\clearpage\fi
+\input{teampage.tex}
 \input{body.tex}
-
-%% ============ 산출물 (본문) ============
 \input{deliverables.tex}
 
-%% ============ 참고 문헌 ============
-\newpage
-\printbibliography[heading=bibliography, title={참고 문헌}]
-
-%% ============ 부록 (참고문헌 뒤, 전문) ============
-\newpage
+%% ===================== 산출물 (부록 A~I, 각 챕터) =====================
+\part{산출물}
 \appendix
-\renewcommand{\thesection}{부록 \Alph{section}}
-\renewcommand{\thesubsection}{\Alph{section}.\arabic{subsection}}
-\renewcommand{\thesubsubsection}{\Alph{section}.\arabic{subsection}.\arabic{subsubsection}}
-%% 부록 표제: 본문보다 넓은 라벨 폭(목차 겹침 방지는 tocloft 로 처리)
-\titleformat{\section}
-  {\sffamily\Large\bfseries\color{deepblue}}
-  {\thesection}{0.8em}{}
-\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+\renewcommand{\appendixname}{부록}
+%% 부록 장 번호를 '부록 A' 형태로 — \ref{app:*} 도 '부록 A' 로 표시된다.
+\renewcommand{\thechapter}{부록\,\Alph{chapter}}
+%% 절·소절 번호는 '부록' 을 빼고 'A.1', 'A.1.1' 로만(목차·표제 공통).
+\renewcommand{\thesection}{\Alph{chapter}.\arabic{section}}
+\renewcommand{\thesubsection}{\Alph{chapter}.\arabic{section}.\arabic{subsection}}
+%% 부록 표지의 대형 번호는 '부록 A' 형태로
+\renewcommand{\covernumberblock}{%
+  {\sffamily\normalsize\color{aresorange}부록}\\[0.1em]
+  {\sffamily\bfseries\color{deepblue}\fontsize{108}{108}\selectfont\Alph{chapter}}}
+
 \input{appendix_code.tex}
 \input{appendix_refactor1.tex}
 \input{appendix_refactor2.tex}
@@ -71,5 +124,11 @@
 \input{appendix_midanalysis.tex}
 \input{appendix_str.tex}
 \input{appendix_simguide.tex}
+\input{appendix_finalcode.tex}
+\input{appendix_listings.tex}
+
+%% ===================== 참고 문헌 (가장 마지막, 목차 포함) =====================
+\backmatter
+\printbibliography[heading=bibintoc, title={참고 문헌}]
 
 \end{document}
