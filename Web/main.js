@@ -113,6 +113,7 @@ let isFreeCodingMode = false;
 let _contentMode = 'description';
 let _preSimMode = 'description';
 let setContentMode = null;     // setupContentToggle() 에서 등록
+let syncSimCodeWidget = null;  // 시뮬 복귀 시 예제 코드 위젯을 현재 워크스페이스로 갱신(initializeMissionListeners 에서 등록)
 
 function getAresBlocklyTheme() {
   if (aresBlocklyTheme) return aresBlocklyTheme;
@@ -1973,6 +1974,75 @@ function initializeMissionListeners(ws) {
     reader.readAsText(file);
   });
 
+  // ===== 시뮬레이션 모드 '예제 코드 보기' 위젯 (주제 아래, 읽기전용 블록코딩) =====
+  // 예제를 불러오면 제목은 항상 두고 블록만 접기/펼치기 할 수 있다. 수정은 코딩 모드에서
+  // 하며, 시뮬레이션으로 돌아오면 현재 워크스페이스(ws)를 다시 렌더해 수정분을 반영한다.
+  let simCodeWs = null;
+  let simCodeActive = false;   // 예제를 한 번이라도 불러왔는가(위젯 표시 대상)
+  const ensureSimCodeWs = () => {
+    if (simCodeWs) return simCodeWs;
+    const div = document.getElementById('simCodeBlockly');
+    if (!div || !window.Blockly) return null;
+    try {
+      simCodeWs = Blockly.inject(div, {
+        theme: getAresBlocklyTheme(),
+        readOnly: true,      // 편집 불가 — 보기 전용
+        scrollbars: true,
+        trashcan: false,
+        zoom: { startScale: 0.7 },
+      });
+    } catch (err) { console.warn('예제 코드 위젯 생성 실패:', err); simCodeWs = null; }
+    return simCodeWs;
+  };
+  const simExampleLabel = (name) => {
+    const sel = document.getElementById('codingExampleSelect');
+    const opt = sel && sel.querySelector(`option[value="${name}"]`);
+    return (opt ? opt.textContent : name).replace(/\s+/g, ' ').trim();
+  };
+  const updateSimCodeToggleIcon = () => {
+    const panel = document.getElementById('simCodePanel');
+    const btn = document.getElementById('simCodeToggle');
+    if (!panel || !btn) return;
+    const collapsed = panel.classList.contains('sim-code-collapsed');
+    btn.textContent = collapsed ? '▸' : '▾';
+    btn.setAttribute('aria-expanded', String(!collapsed));
+  };
+  // 현재 워크스페이스(ws) 내용을 읽기전용 위젯에 다시 렌더 — 코딩 모드 수정분 반영
+  const syncSimCodeFromWorkspace = () => {
+    const panel = document.getElementById('simCodePanel');
+    if (!simCodeActive || !panel) return;
+    if (panel.classList.contains('sim-code-collapsed')) return;   // 접힘이면 렌더 보류
+    const wsRO = ensureSimCodeWs();
+    if (!wsRO) return;
+    try {
+      wsRO.clear();
+      Blockly.Xml.domToWorkspace(Blockly.Xml.workspaceToDom(ws), wsRO);
+    } catch (err) { console.warn('예제 코드 위젯 렌더 실패:', err); }
+    setTimeout(() => {
+      try { Blockly.svgResize(wsRO); wsRO.zoomToFit(); }
+      catch { try { wsRO.scrollCenter(); } catch {} }
+    }, 60);
+  };
+  syncSimCodeWidget = syncSimCodeFromWorkspace;   // 모드 전환 훅(시뮬 복귀)에서 호출
+  // 예제 적재 시: 제목 세팅 + 위젯 활성화(패널 표시, 블록 펼침)
+  const activateSimCodeWidget = (name) => {
+    const panel = document.getElementById('simCodePanel');
+    const titleEl = document.getElementById('simCodeTitle');
+    if (!panel) return;
+    simCodeActive = true;
+    if (titleEl) titleEl.textContent = simExampleLabel(name);
+    panel.hidden = false;
+    panel.classList.remove('sim-code-collapsed');   // 새 예제는 펼친 상태로 시작
+    updateSimCodeToggleIcon();
+  };
+  document.getElementById('simCodeToggle')?.addEventListener('click', () => {
+    const panel = document.getElementById('simCodePanel');
+    if (!panel) return;
+    panel.classList.toggle('sim-code-collapsed');
+    updateSimCodeToggleIcon();
+    if (!panel.classList.contains('sim-code-collapsed')) syncSimCodeFromWorkspace();  // 펼칠 때 최신 렌더
+  });
+
   // 예제 드롭다운
   document.getElementById('exampleSelect')?.addEventListener('change', async (e) => {
     const name = e.target.value;
@@ -1988,13 +2058,21 @@ function initializeMissionListeners(ws) {
       ws.clear();
       Blockly.Xml.domToWorkspace(xml, ws);
 
-      // 예제 적재 시 블록코딩 화면으로 자동 전환
-      if (setContentMode) setContentMode('coding');
-      const blocklyDiv = document.getElementById('blocklyDiv');
-      const dashboardFrame = document.getElementById('dashboardFrame');
-      if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === 'block') {
-        dashboardFrame.style.display = 'none';
-        blocklyDiv.style.display = 'block';
+      // 시뮬레이션 모드에서 불러오면: 코딩 모드로 강제 전환하지 않고,
+      // 주제 아래 '예제 코드 보기' 위젯에 읽기전용 블록으로 띄운다.
+      // 코딩 모드에서 불러오면: 기존대로 블록코딩 화면으로 전환.
+      const inSim = document.body.dataset.contentMode === 'simulation';
+      activateSimCodeWidget(name);   // 제목 세팅 + 위젯 활성화(제목은 계속 유지)
+      if (inSim) {
+        syncSimCodeFromWorkspace();  // 시뮬 모드면 즉시 블록 렌더(코딩 모드로 전환하지 않음)
+      } else {
+        if (setContentMode) setContentMode('coding');
+        const blocklyDiv = document.getElementById('blocklyDiv');
+        const dashboardFrame = document.getElementById('dashboardFrame');
+        if (blocklyDiv && dashboardFrame && dashboardFrame.style.display === 'block') {
+          dashboardFrame.style.display = 'none';
+          blocklyDiv.style.display = 'block';
+        }
       }
       Blockly.svgResize(ws);
       ws.scrollCenter();
@@ -2234,6 +2312,8 @@ function main() {
       if (wasSimulation && mode !== 'simulation' && simController) {
         simController.close();
       }
+      // 시뮬레이션으로 돌아오면 예제 코드 위젯을 현재 워크스페이스(수정분 포함)로 갱신
+      if (mode === 'simulation') syncSimCodeWidget?.();
     },
     getSimController: () => simController,
     updateBlockCodingButtonUI: () => refreshBlockCodingButtonUI(),

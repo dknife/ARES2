@@ -23,6 +23,8 @@ export class Render {
 
     ctx.updateSmoothZoom?.(dt);
     ctx.controls.update();
+    // 더블클릭 카메라 복귀 트윈 — controls.update() 뒤에서 절대 좌표를 덮어써 부드럽게 이동
+    ctx.updateCameraReset?.(dt);
     ctx.updateKeyLight?.();
 
     const m = ctx.movement;

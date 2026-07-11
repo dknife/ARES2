@@ -837,12 +837,11 @@ export class Simulation_Main {
       e.preventDefault();
     });
 
-    const isMobileLike = new URLSearchParams(location.search).get('mobile') === 'true'
-      || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-    if (isMobileLike && stage) {
+    // 더블클릭(모바일 더블탭 포함): 처음 시작할 때의 카메라 상태로 복귀
+    if (stage) {
       stage.addEventListener('dblclick', () => {
-        if (card.hidden || !sim || !sim.hasBoxes) return;
-        sim.respawnBoxes();
+        if (card.hidden || !sim || !sim.ctx) return;
+        sim.ctx.resetCameraHome();
       });
     }
 

@@ -293,6 +293,8 @@ export class EditorControls {
     if (this.glbMenu) this.glbMenu.hidden = true;
     if (this.devMode) this.ensureDevGrids();
     if (this.devGrids) this.devGrids.visible = this.devMode;
+    // 사용자 모드에서만 체커 바닥을 보인다(개발자 모드는 devGrids 로 대체).
+    this.ctx.setCheckerFloorVisible?.(!this.devMode);
     if (!this.devMode) this.select(null);
     else this.updateHierarchy(true);
     this.updateAxisButtons(this.getSelectedSimObject());
