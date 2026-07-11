@@ -147,6 +147,10 @@
       // 카메라 프레이밍(모델 높이 배수) — 머리·안테나 위 여백 확보를 위해 충분히 멀리
       // pan: 카메라/타깃을 함께 위로 올려 시야를 위로 패닝 → 객체들이 화면 아래쪽에 놓인다
       const CAM = { y: 0.5, z: 7.8, lookY: 0.5, pan: -0.55 };
+      const ROBOT_SCALE = 2.0;   // 알비 로봇을 기본 대비 2배 크게
+      // 우주에서 유영하듯 떠올라 위아래로 오르내리며, 좌우로 뱅킹(roll)해 하단 분사추진체가 드러난다
+      // base=평균 부양 높이, amp=상하 진폭(둘 다 modelH 배수), tilt=좌우 기울기(라디안)
+      const FLOAT = { base: 0.30, amp: 0.24, speed: 0.85, tilt: 0.26, tiltSpeed: 0.55 };
 
       function size() {
         return { w: stage.clientWidth, h: stage.clientHeight };
@@ -247,8 +251,9 @@
       let albiFlameBase = 0;
 
       const loader = new GLTFLoader();
-      // ares_robot.glb 는 meshopt + WebP 압축본이므로 디코더 필수
-      // (2026-06-25 최적화: 7.2MB→0.56MB, EXT_meshopt_compression + EXT_texture_webp + KHR_mesh_quantization)
+      // AlbiRobot.min.glb 는 meshopt + WebP 압축본이므로 디코더 필수
+      // (2026-07-11 최적화: AlbiRobot.glb 11.77MB→0.39MB, 텍스처 2048→1024 WebP,
+      //  EXT_meshopt_compression + EXT_texture_webp + KHR_mesh_quantization)
       if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
       function onModelLoad(gltf) {
         const root = gltf.scene;
@@ -418,10 +423,10 @@
         return new Promise((res, rej) => {
           if (window.ARES_ROBOT_GLB_B64) return res(window.ARES_ROBOT_GLB_B64);
           const s = document.createElement('script');
-          s.src = 'Mesh/ares_robot.embed.js';
+          s.src = 'Mesh/AlbiRobot/AlbiRobot.embed.js';
           s.onload = () => window.ARES_ROBOT_GLB_B64
             ? res(window.ARES_ROBOT_GLB_B64) : rej(new Error('임베드 데이터 없음'));
-          s.onerror = () => rej(new Error('Mesh/ares_robot.embed.js 로드 실패'));
+          s.onerror = () => rej(new Error('Mesh/AlbiRobot/AlbiRobot.embed.js 로드 실패'));
           document.head.appendChild(s);
         });
       }
@@ -432,7 +437,7 @@
           .then((b64) => loader.parse(b64ToBuffer(b64), '', onModelLoad, onModelErr))
           .catch(onModelErr);
       } else {
-        loader.load('Mesh/ares_robot.glb', onModelLoad, undefined, onModelErr);
+        loader.load('Mesh/AlbiRobot/AlbiRobot.min.glb', onModelLoad, undefined, onModelErr);
       }
 
       // 등장 애니메이션 (easeOutBack 팝인)
@@ -458,8 +463,11 @@
         // 등장 진행도
         const introP = Math.min(t / WAVE.introDur, 1);
         const pop = easeOutBack(introP);
-        group.scale.setScalar(pop);
-        group.position.y = (1 - introP) * -0.25 * modelH;
+        group.scale.setScalar(pop * ROBOT_SCALE);
+        // 등장 시 살짝 아래에서 올라오고(-0.25), 등장 후에는 떠올라 유영하며 좌우로 뱅킹
+        const floatY = introP * modelH * (FLOAT.base + FLOAT.amp * Math.sin(t * FLOAT.speed));
+        group.position.y = (1 - introP) * -0.25 * modelH + floatY;
+        group.rotation.z = introP * FLOAT.tilt * Math.sin(t * FLOAT.tiltSpeed);
 
         // 손 흔들기 게이트(등장 후 시작, 부드럽게 램프업)
         const g = Math.max(0, Math.min((t - WAVE.introDur) / 0.5, 1));
