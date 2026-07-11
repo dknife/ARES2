@@ -68,7 +68,7 @@ function createAlbiLedObject(ctx, led, label, role, options = {}) {
 export async function createSpawnedAlbiObjects(ctx) {
   const THREE = ctx.THREE;
   const model = await new Promise((resolve, reject) => {
-    ctx.assets.loadModel('Mesh/AlbiStaticLow.glb', resolve, reject);
+    ctx.assets.loadModel('Mesh/AlbiRobot/AlbiRobot.min.glb', resolve, reject);
   });
   centerModelOnGround(ctx.THREE, model);
   const holder = new THREE.Group();

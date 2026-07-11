@@ -2,7 +2,7 @@
 // Topic configurations, OLED icons, and palette constants.
 
 export const TOPICS = {
-  albi:      { label: '알비와 함께',   model: 'Mesh/AlbiStaticLow.glb', eyes: { radius: 0.11, left: [0.145, 0.375, 0.12], right: [-0.145, 0.375, 0.12] }, chest: { radius: 0.07, pos: [0, -0.10, 0.135] } },
+  albi:      { label: '알비와 함께',   model: 'Mesh/AlbiRobot/AlbiRobot.min.glb', eyes: { radius: 0.11, left: [0.145, 0.375, 0.12], right: [-0.145, 0.375, 0.12] }, chest: { radius: 0.07, pos: [0, -0.10, 0.135] } },
   traffic:   { label: '우주 신호등',   model: 'Mesh/LampBox.glb',       eyes: null, traffic: { lamp: 'Mesh/LampGeneral.glb', hands: ['Mesh/LampHand1.glb', 'Mesh/LampHand2.glb', 'Mesh/LampHand3.glb'], count: 3 } },
   launchpad: { label: '발사대', model: 'Mesh/LaunchStation.glb', eyes: null, postProcess: null, radar: true,
     launch: {
