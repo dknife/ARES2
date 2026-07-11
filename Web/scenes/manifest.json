@@ -13,6 +13,11 @@
       "id": "launch_pad",
       "file": "scenes/launch_pad.json",
       "label": "발사대_제작"
+    },
+    {
+      "id": "newalbo_01",
+      "file": "scenes/newalbo_01.json",
+      "label": "알비 기본 모델"
     }
   ]
 }

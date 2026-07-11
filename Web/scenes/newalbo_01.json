@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "name": "알비 기본 모델",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "glb-1",
+      "type": "glb",
+      "label": "AlbiRobot.min",
+      "parent": null,
+      "position": [
+        0,
+        0,
+        0.4249750000014956
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_translate": [
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/AlbiRobot/AlbiRobot.min.glb"
+    },
+    {
+      "id": "sphere-2",
+      "type": "sphere",
+      "label": "RightEye",
+      "parent": "glb-1",
+      "position": [
+        -0.157,
+        1.344,
+        0.108
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.1,
+          0.1,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-3",
+      "type": "sphere",
+      "label": "LeftEye",
+      "parent": "glb-1",
+      "position": [
+        0.155,
+        1.344,
+        0.108
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.1,
+          0.1,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-4",
+      "type": "sphere",
+      "label": "chestBuzzer",
+      "parent": "glb-1",
+      "position": [
+        0.013446798868256948,
+        0.8068440239244627,
+        0.108
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "components": [
+        {
+          "type": "Buzzer",
+          "fields": {}
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          0.2
+        ],
+        "emissive": [
+          1,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "glb-5",
+      "type": "glb",
+      "label": "RoverWheel",
+      "parent": "glb-1",
+      "position": [
+        0.31834560010744267,
+        0.4414507835673821,
+        0.20687254734420785
+      ],
+      "quaternion": [
+        -0.6554487047462891,
+        -0.26530547571886975,
+        0.6554487047462889,
+        0.26530547571886975
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              1,
+              0,
+              0
+            ],
+            "rotation_offset": [
+              0.003,
+              0.29,
+              0
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/RoverParts/RoverWheel.glb"
+    },
+    {
+      "id": "glb-6",
+      "type": "glb",
+      "label": "RoverWheel_dup",
+      "parent": "glb-1",
+      "position": [
+        -0.2937507785644624,
+        0.4414507835673821,
+        0.20687254734420785
+      ],
+      "quaternion": [
+        -0.6554487047462891,
+        -0.26530547571886975,
+        0.6554487047462889,
+        0.26530547571886975
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              1,
+              0,
+              0
+            ],
+            "rotation_offset": [
+              0.003,
+              0.29,
+              0
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/RoverParts/RoverWheel.glb"
+    }
+  ]
+}
