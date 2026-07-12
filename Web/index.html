@@ -186,7 +186,7 @@
             <canvas id="cutscene-canvas"></canvas>
             <div class="cutscene-content">
                 <h2 id="cutscene-greeting" class="cutscene-greeting"></h2>
-                <p class="cutscene-instruction">탐사를 실시할 대원의 요원 코드를 입력하세요.<br>코드는 전세계 대원들이 볼 수 있게 알파벳 코드를 입력해요.</p>
+                <p class="cutscene-instruction">탐사를 실시할 대원의 요원 코드를 입력하세요.<br>코드는 전세계 대원들이 볼 수 있게 알파벳·숫자로 입력해요.</p>
                 <input id="agentCode" class="cutscene-input" type="text" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false">
                 <button id="missionStartBtn" class="cutscene-start">미션 시작</button>
             </div>
@@ -620,7 +620,7 @@
       if (!btn || !cut || !input) return;
 
       const STORE_KEY = 'ares-agent-code';
-      const sanitize = (s) => (s || '').replace(/[^A-Za-z]/g, '');
+      const sanitize = (s) => (s || '').replace(/[^A-Za-z0-9]/g, '');   // 알파벳·숫자 허용
 
       function openCutscene(e) {
         if (e) e.preventDefault();
