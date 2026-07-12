@@ -689,8 +689,8 @@
 
         // 로켓 그룹: 상단(nose,+Y)이 화성(좌하단)을 향하도록 눕히고 비스듬한 옆면이 보이게
         const rocket = new THREE.Group();
-        rocket.rotation.set(0.55, 0.55, 2.18 + Math.PI);   // 상하 뒤집음 + 상단부 뒤로/하단부 카메라쪽 피치
-        rocket.position.set(0.30, 0.18, 0);           // 조금 더 왼쪽에 배치
+        rocket.rotation.set(0.85, 0.55, 2.18 + Math.PI);   // 상하 뒤집음 + 상단부 뒤로/하단부 카메라쪽 피치
+        rocket.position.set(0.48, 0.18, 0);           // 왼쪽 이동량을 절반으로 줄임
         fgScene.add(rocket);
         let flame = null, flameLight = null;
 
