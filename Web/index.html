@@ -98,6 +98,63 @@
             font-size: 0.82em; color: #9aa1ad; text-decoration: none;
         }
         .back-link:hover { color: #C0392B; }
+
+        /* ── 탐사 시작 컷씬 (planet_approach WebGL 배경 + 요원 코드 입력) ── */
+        .cutscene {
+            position: fixed; inset: 0; z-index: 50; overflow: hidden;
+            background: #03030c; opacity: 1; transition: opacity 1s ease;
+            display: flex; flex-direction: column;
+        }
+        .cutscene[hidden] { display: none; }
+        /* 미션 화면과 동일한 상단 타이틀 바 */
+        .cutscene-header {
+            flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            min-height: 74px; padding: 9px clamp(18px, 6.25vw, 45px) 8px;
+            background: #fff; border-bottom: 1px solid #d7d7d9;
+        }
+        .cutscene-brand { display: inline-flex; align-items: center; }
+        .cutscene-brand img { display: block; width: 112px; height: 48px; object-fit: contain; }
+        .cutscene-gear {
+            width: 34px; height: 34px; display: block; background: #aeb1b5;
+            -webkit-mask: url('assets/design/icon-settings.png') no-repeat center / contain;
+            mask: url('assets/design/icon-settings.png') no-repeat center / contain;
+        }
+        /* 타이틀 바 아래에 놓이는 컷씬 무대 */
+        .cutscene-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+        #cutscene-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+        .cutscene-content {
+            position: absolute; inset: 0; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 20px; padding: 34px; text-align: center;
+            background: linear-gradient(rgba(3,3,12,0.28), rgba(3,3,12,0.58));
+        }
+        .cutscene-greeting {
+            font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+            font-size: 1.8em; font-weight: 800; color: #fff; margin: 0;
+            text-shadow: 0 2px 18px rgba(0,0,0,0.75);
+        }
+        .cutscene-instruction {
+            font-size: 1.02em; color: #e3e9f6; font-weight: 600; line-height: 1.65;
+            margin: 0; max-width: 34ch; text-shadow: 0 2px 12px rgba(0,0,0,0.85);
+        }
+        .cutscene-input {
+            font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+            font-size: 1.3em; font-weight: 700; text-align: center; letter-spacing: 2px;
+            width: min(82%, 320px); height: 54px; padding: 0 16px;
+            border: 2px solid rgba(255,255,255,0.5); border-radius: 12px;
+            background: rgba(0,0,0,0.38); color: #FF6A00; outline: none;
+        }
+        .cutscene-input:focus { border-color: #FF6A00; }
+        .cutscene-start {
+            font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+            font-size: 1.12em; font-weight: 700;
+            height: 54px; padding: 0 48px; margin-top: 4px;
+            border: none; border-radius: 14px; background: #FF6A00; color: #fff; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .cutscene-start:hover { background: #ff7f22; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.35); }
+        .cutscene.fading { opacity: 0; }
     </style>
 </head>
 <body>
@@ -113,8 +170,27 @@
         <h1 class="intro-title">화성 탐사선 제어</h1>
         <p class="robot-greet" id="robot-greet">안녕! 나는 탐사로봇 알비야</p>
         <p class="intro-desc">이제 탐험을 시작하자!</p>
-        <a href="main.html"><button class="start-btn">탐사선 연결</button></a>
+        <button class="start-btn" id="connectBtn">탐사선 연결</button>
         <a href="../index.html" class="back-link">프로젝트 소개로 돌아가기</a>
+    </div>
+
+    <!-- 탐사 시작 컷씬: planet_approach WebGL 배경 + 요원 코드 입력 -->
+    <div id="cutscene" class="cutscene" hidden>
+        <!-- 미션 화면과 동일한 타이틀 바 -->
+        <header class="cutscene-header">
+            <a class="cutscene-brand" aria-label="ARES 화성탐사"><img src="assets/design/ares-logo.png" alt="ARES 화성탐사"></a>
+            <span class="cutscene-gear" aria-hidden="true"></span>
+        </header>
+        <!-- 타이틀 바 아래 컷씬 무대 -->
+        <div class="cutscene-stage">
+            <canvas id="cutscene-canvas"></canvas>
+            <div class="cutscene-content">
+                <h2 id="cutscene-greeting" class="cutscene-greeting"></h2>
+                <p class="cutscene-instruction">탐사를 실시할 대원의 요원 코드를 입력하세요.<br>코드는 전세계 대원들이 볼 수 있게 알파벳 코드를 입력해요.</p>
+                <input id="agentCode" class="cutscene-input" type="text" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                <button id="missionStartBtn" class="cutscene-start">미션 시작</button>
+            </div>
+        </div>
     </div>
 
     <!-- three.js 로컬 번들 (CDN 없이 동작) → window.THREE, window.ARES3 -->
@@ -528,6 +604,174 @@
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
       });
+    })();
+    </script>
+
+    <!-- 탐사 시작 컷씬 컨트롤러 -->
+    <script>
+    'use strict';
+    (function () {
+      if (window.__ARES_MOBILE_FRAME__) return;   // 모바일 프레임 래퍼에서는 실행 안 함
+      const btn = document.getElementById('connectBtn');
+      const cut = document.getElementById('cutscene');
+      const greet = document.getElementById('cutscene-greeting');
+      const input = document.getElementById('agentCode');
+      const startBtn = document.getElementById('missionStartBtn');
+      if (!btn || !cut || !input) return;
+
+      const STORE_KEY = 'ares-agent-code';
+      const sanitize = (s) => (s || '').replace(/[^A-Za-z]/g, '');
+
+      function openCutscene(e) {
+        if (e) e.preventDefault();
+        let saved = '';
+        try { saved = localStorage.getItem(STORE_KEY) || ''; } catch (_) {}
+        if (saved) {
+          greet.textContent = '탐험대원 ' + saved + ', 환영합니다.';
+          input.value = saved;
+        } else {
+          greet.textContent = '탐험대원을 환영합니다.';
+          input.value = 'YourCode';
+        }
+        cut.hidden = false;
+        // 컷씬이 뜨면 랜딩 히어로·패널은 숨겨(페이드 시 어두운 배경만 드러나게)
+        const stage = document.getElementById('robot-stage');
+        const panel = document.querySelector('.intro-panel');
+        if (stage) stage.style.display = 'none';
+        if (panel) panel.style.display = 'none';
+        initCutsceneWebGL();
+        setTimeout(() => { input.focus(); input.select(); }, 120);
+      }
+      btn.addEventListener('click', openCutscene);
+
+      let navigating = false;
+      function startMission() {
+        if (navigating) return;
+        const code = sanitize(input.value) || 'YourCode';
+        try { localStorage.setItem(STORE_KEY, code); } catch (_) {}
+        navigating = true;
+        cut.classList.add('fading');   // 서서히 사라짐
+        const go = () => { window.location.href = 'main.html' + location.search + location.hash; };
+        cut.addEventListener('transitionend', go, { once: true });
+        setTimeout(go, 1300);          // transitionend 미발생 대비 폴백
+      }
+      startBtn.addEventListener('click', startMission);
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') startMission(); });
+
+      // ── planet_approach 배경(ortho 풀스크린) + 로켓 메시(perspective) 2패스 렌더 ──
+      let cwStarted = false;
+      function initCutsceneWebGL() {
+        if (cwStarted) return; cwStarted = true;
+        const THREE = window.THREE, A = window.ARES3;
+        const canvas = document.getElementById('cutscene-canvas');
+        if (!THREE || !canvas) return;
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.autoClear = false;
+
+        // 배경: planet_approach 풀스크린 텍스처(느린 줌인)
+        const bgScene = new THREE.Scene();
+        const bgCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10);
+        bgCam.position.z = 1;
+        const tex = new THREE.TextureLoader().load('assets/background/planet_approach.png', () => resize());
+        if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+        bgScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: tex })));
+        let bgZoom = 1;
+
+        // 전경: 로켓(perspective) + 조명
+        const fgScene = new THREE.Scene();
+        const fgCam = new THREE.PerspectiveCamera(38, 1, 0.05, 100);
+        fgCam.position.set(0, 0, 5);
+        fgScene.add(new THREE.HemisphereLight(0xbcd4ff, 0x2a1712, 1.05));
+        const key = new THREE.DirectionalLight(0xfff2e0, 2.2); key.position.set(-3, 2, 4); fgScene.add(key);
+        const rim = new THREE.DirectionalLight(0xff8a3c, 1.1);  rim.position.set(4, -1, -2); fgScene.add(rim);
+
+        // 로켓 그룹: 상단(nose,+Y)이 화성(좌하단)을 향하도록 눕히고 비스듬한 옆면이 보이게
+        const rocket = new THREE.Group();
+        rocket.rotation.set(0.12, 0.55, 2.18 + Math.PI);   // 상하 뒤집음(z에 180° 추가)
+        rocket.position.set(0.30, 0.18, 0);           // 조금 더 왼쪽에 배치
+        fgScene.add(rocket);
+        let flame = null, flameLight = null;
+
+        function makeFlame(len) {
+          const g = new THREE.Group();
+          const mk = (r, h, color, op) => {
+            const m = new THREE.Mesh(
+              new THREE.ConeGeometry(r, h, 20, 1, true),
+              new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op,
+                blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+            m.rotation.x = Math.PI; m.position.y = -h / 2;   // 뾰족한 끝이 아래(−Y)
+            return m;
+          };
+          g.add(mk(len * 0.20, len, 0xff7a1a, 0.85));       // 바깥 화염
+          g.add(mk(len * 0.10, len * 0.6, 0xffe08a, 0.95)); // 코어
+          flameLight = new THREE.PointLight(0xff7a1a, 2.4, 3.5);
+          flameLight.position.y = -len * 0.4;
+          g.add(flameLight);
+          return g;
+        }
+
+        if (A && A.GLTFLoader) {
+          const loader = new A.GLTFLoader();
+          if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
+          loader.load('Mesh/RocketAndLauncher/Rocket.min.glb', (gltf) => {
+            const model = gltf.scene;
+            const box = new THREE.Box3().setFromObject(model);
+            const c = box.getCenter(new THREE.Vector3());
+            const sz = box.getSize(new THREE.Vector3());
+            const modelH = sz.y || 1.9;
+            model.position.sub(c);                    // 원점 중심 정렬
+            const s = 1.7 / modelH;                   // 화면 적정 크기(꼬리·화염까지 보이게)
+            const inner = new THREE.Group(); inner.add(model); inner.scale.setScalar(s);
+            inner.rotation.y = Math.PI / 6 + Math.PI / 18;   // 로컬 y축(장축) 기준 40°(30°+10°) 회전
+            rocket.add(inner);
+            flame = makeFlame(0.9);
+            flame.position.y = -(modelH * s) / 2 + 0.05;   // 로켓 하단(−Y)에서 분사
+            rocket.add(flame);
+          }, undefined, (e) => console.log('cutscene rocket load fail', e && e.message || e));
+        }
+
+        function resize() {
+          const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+          renderer.setSize(w, h, false);
+          fgCam.aspect = w / h; fgCam.updateProjectionMatrix();
+          const img = tex.image;
+          if (img) {
+            const ia = img.width / img.height, va = w / h;
+            let rx = 1, ry = 1;
+            if (va > ia) ry = ia / va; else rx = va / ia;
+            tex.repeat.set(rx * bgZoom, ry * bgZoom);
+            tex.offset.set((1 - rx * bgZoom) / 2, (1 - ry * bgZoom) / 2);
+            tex.needsUpdate = true;
+          }
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const t0 = performance.now();
+        (function tick() {
+          if (cut.hidden) return;
+          requestAnimationFrame(tick);
+          const t = (performance.now() - t0) / 1000;
+          bgZoom = 1 - Math.min(t * 0.01, 0.15);          // 배경 느린 줌인
+          resize();
+          // 카메라: 로켓에 더 다가가고(z=3.6), 로켓의 상하를 훑으며 관찰(느린 상하 이동 + 추적)
+          const camY = Math.sin(t * 0.4) * 1.1;
+          fgCam.position.set(0.42, camY, 3.6);
+          fgCam.lookAt(0.66, camY * 0.5, 0);
+          rocket.rotation.z = 2.18 + Math.PI + Math.sin(t * 0.5) * 0.02;
+          if (flame) {                                     // 추진 화염 깜빡임
+            flame.scale.set(1, 0.8 + Math.abs(Math.sin(t * 15)) * 0.5, 1);
+            flame.children.forEach((ch) => { if (ch.material) ch.material.opacity = 0.65 + Math.random() * 0.3; });
+            if (flameLight) flameLight.intensity = 2.0 + Math.random() * 1.3;
+          }
+          renderer.clear();
+          renderer.render(bgScene, bgCam);
+          renderer.clearDepth();
+          renderer.render(fgScene, fgCam);
+        })();
+      }
     })();
     </script>
 </body>
