@@ -5,6 +5,7 @@
     { "url": "Mesh/AlbiRobot/AlbiRobot.min.glb", "label": "알비 로봇 (고해상)" },
     { "url": "Mesh/ares_robot.glb", "label": "아레스 로봇" },
     { "url": "Mesh/LaunchStation.glb", "label": "발사대" },
+    { "url": "Mesh/RocketAndLauncher/Rocket.min.glb", "label": "로켓·발사대" },
     { "url": "Mesh/LampBox.glb", "label": "램프 박스" },
     { "url": "Mesh/LampGeneral.glb", "label": "램프 (일반)" },
     { "url": "Mesh/LampHand1.glb", "label": "램프 손 1 (가위)" },

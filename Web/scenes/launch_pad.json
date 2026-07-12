@@ -123,170 +123,6 @@
       }
     },
     {
-      "id": "box-4",
-      "type": "box",
-      "label": "RocketBody",
-      "parent": null,
-      "position": [
-        -0.192,
-        0.925,
-        -0.05
-      ],
-      "quaternion": [
-        0,
-        0,
-        0,
-        1
-      ],
-      "scale": [
-        0.1,
-        0.5,
-        0.1
-      ],
-      "components": [
-        {
-          "type": "Gun",
-          "fields": {
-            "propel_direction": [
-              0,
-              1,
-              0
-            ],
-            "explosion": [
-              0,
-              0,
-              0
-            ]
-          }
-        }
-      ],
-      "colors": {
-        "base": [
-          1,
-          0.48,
-          0.35,
-          1
-        ],
-        "emissive": [
-          1,
-          1,
-          1,
-          1
-        ]
-      }
-    },
-    {
-      "id": "sphere-5",
-      "type": "sphere",
-      "label": "HeadRocket",
-      "parent": "box-4",
-      "position": [
-        0,
-        0.14994326921998913,
-        0
-      ],
-      "quaternion": [
-        0,
-        0,
-        0,
-        1
-      ],
-      "scale": [
-        0.10053557900399336,
-        0.38645775811678323,
-        0.14807305506312496
-      ],
-      "components": [],
-      "colors": {
-        "base": [
-          0.31,
-          0.76,
-          1,
-          1
-        ],
-        "emissive": [
-          1,
-          1,
-          1,
-          1
-        ]
-      }
-    },
-    {
-      "id": "sphere-6",
-      "type": "sphere",
-      "label": "RocketWingL",
-      "parent": "box-4",
-      "position": [
-        -0.030035432457219097,
-        -0.058202386794187794,
-        0
-      ],
-      "quaternion": [
-        0,
-        0.7071067811865475,
-        0,
-        0.7071067811865476
-      ],
-      "scale": [
-        0.101,
-        0.3008145294448014,
-        0.147914823714414
-      ],
-      "components": [],
-      "colors": {
-        "base": [
-          0.31,
-          0.76,
-          1,
-          1
-        ],
-        "emissive": [
-          1,
-          1,
-          1,
-          1
-        ]
-      }
-    },
-    {
-      "id": "sphere-7",
-      "type": "sphere",
-      "label": "RocketWingR",
-      "parent": "box-4",
-      "position": [
-        0.026065320474438325,
-        -0.058202386794187794,
-        0
-      ],
-      "quaternion": [
-        0,
-        0.7071067811865475,
-        0,
-        0.7071067811865476
-      ],
-      "scale": [
-        0.101,
-        0.3008145294448014,
-        0.147914823714414
-      ],
-      "components": [],
-      "colors": {
-        "base": [
-          0.31,
-          0.76,
-          1,
-          1
-        ],
-        "emissive": [
-          1,
-          1,
-          1,
-          1
-        ]
-      }
-    },
-    {
       "id": "box-8",
       "type": "box",
       "label": "Box 2_dup",
@@ -377,9 +213,9 @@
       ],
       "quaternion": [
         0,
-        0.9999948910375063,
+        0.6546972360139247,
         0,
-        0.003196544834674051
+        0.7558912151597758
       ],
       "scale": [
         0.261,
@@ -669,6 +505,41 @@
           1
         ]
       }
+    },
+    {
+      "id": "glb-17",
+      "type": "glb",
+      "label": "Rocket.min",
+      "parent": null,
+      "position": [
+        -0.204,
+        0.7560000000000002,
+        -0.02
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "components": [
+        {
+          "type": "Gun",
+          "fields": {
+            "propel_direction": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/RocketAndLauncher/Rocket.min.glb"
     }
   ]
 }
