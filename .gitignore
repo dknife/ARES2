@@ -51,5 +51,8 @@ Document/진행보고/latex/ProgressReport.pdf
 # 원본 AlbiRobot.glb(11.7MB)는 압축 소스일 뿐이라 히스토리 비대화 방지 위해 추적 제외(로컬 보관).
 Web/Mesh/AlbiRobot/AlbiRobot.glb
 
-# 로켓·발사대: 압축본(Rocket.min.glb, 344KB)만 추적. 원본 Rocket.glb(20.8MB)는 로컬 보관.
+# 로켓·발사대: 압축본(*.min.glb)만 추적. 원본 대용량 GLB는 압축 소스일 뿐이라 로컬 보관.
 Web/Mesh/RocketAndLauncher/Rocket.glb
+Web/Mesh/RocketAndLauncher/LaunchStand.glb
+Web/Mesh/RocketAndLauncher/RadaDish.glb
+Web/Mesh/RocketAndLauncher/RadarBody.glb
