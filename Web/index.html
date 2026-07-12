@@ -131,11 +131,11 @@
         }
         .cutscene-greeting {
             font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
-            font-size: 1.32em; font-weight: 800; color: #fff; margin: 0;
+            font-size: 1.18em; font-weight: 800; color: #fff; margin: 0;
             text-shadow: 0 2px 18px rgba(0,0,0,0.75);
         }
         .cutscene-instruction {
-            font-size: 0.8em; color: #e3e9f6; font-weight: 600; line-height: 1.5;
+            font-size: 0.72em; color: #e3e9f6; font-weight: 600; line-height: 1.5;
             margin: 0; max-width: 28ch; text-shadow: 0 2px 12px rgba(0,0,0,0.85);
         }
         .cutscene-input {
@@ -186,7 +186,7 @@
             <canvas id="cutscene-canvas"></canvas>
             <div class="cutscene-content">
                 <h2 id="cutscene-greeting" class="cutscene-greeting"></h2>
-                <p class="cutscene-instruction">탐사를 실시할 대원의 요원 코드를 입력하세요.<br>코드는 전세계 대원들이 볼 수 있게 알파벳·숫자로 입력해요.</p>
+                <p class="cutscene-instruction">대원의 요원 코드를 입력하세요.<br>코드는 알파벳과 숫자만 가능</p>
                 <input id="agentCode" class="cutscene-input" type="text" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false">
                 <button id="missionStartBtn" class="cutscene-start">미션 시작</button>
             </div>
@@ -689,7 +689,7 @@
 
         // 로켓 그룹: 상단(nose,+Y)이 화성(좌하단)을 향하도록 눕히고 비스듬한 옆면이 보이게
         const rocket = new THREE.Group();
-        rocket.rotation.set(0.12, 0.55, 2.18 + Math.PI);   // 상하 뒤집음(z에 180° 추가)
+        rocket.rotation.set(0.55, 0.55, 2.18 + Math.PI);   // 상하 뒤집음 + 상단부 뒤로/하단부 카메라쪽 피치
         rocket.position.set(0.30, 0.18, 0);           // 조금 더 왼쪽에 배치
         fgScene.add(rocket);
         let flame = null, flameLight = null;
