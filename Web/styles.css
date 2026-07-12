@@ -1241,7 +1241,24 @@ body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    display: flex; flex-direction: column;
 }
+/* 앱/미션/컷씬과 동일한 상단 타이틀 바(아레스 로고 + 설정 아이콘) */
+.landing-header {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 74px; padding: 9px clamp(18px, 6.25vw, 45px) 8px;
+    background: #fff; border-bottom: 1px solid #d7d7d9;
+}
+.landing-brand { display: inline-flex; align-items: center; }
+.landing-brand img { display: block; width: 112px; height: 48px; object-fit: contain; }
+.landing-gear {
+    width: 34px; height: 34px; display: block; background: #aeb1b5;
+    -webkit-mask: url('assets/design/icon-settings.png') no-repeat center / contain;
+    mask: url('assets/design/icon-settings.png') no-repeat center / contain;
+}
+/* 타이틀 바 아래 게임 무대 — HUD·버튼·결과 패널은 이 무대 기준으로 배치 */
+.landing-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .landing-canvas { display: block; width: 100%; height: 100%; }
 
 .landing-hud {

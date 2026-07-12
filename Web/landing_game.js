@@ -54,31 +54,39 @@ export function launchLandingGame() {
   // ---------- DOM 오버레이 ----------
   const overlay = document.createElement('div');
   overlay.className = 'landing-overlay';
+  // 앱 전체와 동일한 상단 타이틀 바(아레스 로고+설정) 아래에 게임 무대를 배치해 인터페이스 일관성 유지
   overlay.innerHTML = `
-    <canvas class="landing-canvas"></canvas>
-    <div class="landing-hud">
-      <div class="hud-row"><span>고도</span><b data-hud="alt">0</b> m</div>
-      <div class="hud-row"><span>하강속도</span><b data-hud="spd">0</b> m/s</div>
-      <div class="hud-fuel"><i data-hud="fuelbar"></i></div>
-    </div>
-    <button class="landing-close" title="닫기">✕</button>
-    <div class="landing-help">위쪽 화살표(↑) 또는 <b>역추진</b> 버튼을 눌러 <b>감속</b>!<br>지면에 <b>천천히</b> 내려앉히면 착륙 성공이에요.</div>
-    <button class="thrust-btn thrust-main" data-dir="up" aria-label="역추진">
-      <span class="thrust-ico">▲</span><span class="thrust-label">역추진</span>
-    </button>
-    <div class="landing-result" hidden>
-      <div class="landing-result-panel">
-        <h2 data-res="title"></h2>
-        <p class="landing-result-msg" data-res="msg"></p>
-        <p class="landing-result-stat" data-res="stat"></p>
-        <div class="landing-result-btns">
-          <button class="landing-retry">다시 도전</button>
-          <button class="landing-quit">그만하기</button>
+    <header class="landing-header">
+      <span class="landing-brand" aria-label="ARES 화성탐사"><img src="assets/design/ares-logo.png" alt="ARES 화성탐사"></span>
+      <span class="landing-gear" aria-hidden="true"></span>
+    </header>
+    <div class="landing-stage">
+      <canvas class="landing-canvas"></canvas>
+      <div class="landing-hud">
+        <div class="hud-row"><span>고도</span><b data-hud="alt">0</b> m</div>
+        <div class="hud-row"><span>하강속도</span><b data-hud="spd">0</b> m/s</div>
+        <div class="hud-fuel"><i data-hud="fuelbar"></i></div>
+      </div>
+      <button class="landing-close" title="닫기">✕</button>
+      <div class="landing-help">위쪽 화살표(↑) 또는 <b>역추진</b> 버튼을 눌러 <b>감속</b>!<br>지면에 <b>천천히</b> 내려앉히면 착륙 성공이에요.</div>
+      <button class="thrust-btn thrust-main" data-dir="up" aria-label="역추진">
+        <span class="thrust-ico">▲</span><span class="thrust-label">역추진</span>
+      </button>
+      <div class="landing-result" hidden>
+        <div class="landing-result-panel">
+          <h2 data-res="title"></h2>
+          <p class="landing-result-msg" data-res="msg"></p>
+          <p class="landing-result-stat" data-res="stat"></p>
+          <div class="landing-result-btns">
+            <button class="landing-retry">다시 도전</button>
+            <button class="landing-quit">그만하기</button>
+          </div>
         </div>
       </div>
     </div>`;
   document.body.appendChild(overlay);
 
+  const stage = overlay.querySelector('.landing-stage');
   const canvas = overlay.querySelector('.landing-canvas');
   const hud = {
     alt: overlay.querySelector('[data-hud="alt"]'),
@@ -285,7 +293,7 @@ export function launchLandingGame() {
 
   // ---------- 리사이즈 ----------
   function onResize() {
-    const w = overlay.clientWidth, h = overlay.clientHeight;
+    const w = stage.clientWidth, h = stage.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
