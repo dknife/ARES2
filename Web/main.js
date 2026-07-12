@@ -1613,19 +1613,22 @@ async function enterMission(n, m) {
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
   document.getElementById('missionHardware').textContent = mission.hardware;
 
-  // 스토리
+  // 스토리 — 요원 코드가 저장돼 있으면 '아레스' 뒤에 붙여 개인화
+  let agentCode = '';
+  try { agentCode = (localStorage.getItem('ares-agent-code') || '').replace(/[^A-Za-z0-9]/g, ''); } catch (_) {}
+  const aresName = agentCode ? `아레스 ${escapeHtml(agentCode)}` : '아레스';
   const storyEl = document.getElementById('missionStory');
   const storyLines = (mission.story || []).map(line => `
     <div class="story-line story-${line.speaker}">
       <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${line.speaker === 'ares' ? '아레스' : '알비'}"></span>
-      <span class="story-name">${line.speaker === 'ares' ? '아레스' : '알비'}</span>
+      <span class="story-name">${line.speaker === 'ares' ? aresName : '알비'}</span>
       <span class="story-text">${escapeHtml(line.text)}</span>
     </div>
   `).join('');
   storyEl.innerHTML = `${storyLines}
     <div class="story-line story-ares story-goal-question">
       <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="아레스"></span>
-      <span class="story-name">아레스</span>
+      <span class="story-name">${aresName}</span>
       <span class="story-text">우와! 그러면 오늘 학습목표는 뭐야?</span>
     </div>`;
 
