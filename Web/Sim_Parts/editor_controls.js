@@ -27,7 +27,7 @@ const FIELD_SPECS = {
   UltraSonic: [{ key: 'detect_direction', label: '거리 측정 ray 방향 x,y,z (로컬축)', short: 'ray 방향', def: '0,0,1', kind: 'vec' }],
   Magnet: [{ key: 'detection_point', label: '감지점 오프셋 x,y,z (로컬 좌표, 반경 5cm)', short: '감지점', def: '0,0,0', kind: 'vec' }],
   Gun: [
-    { key: 'propel_direction', label: '발사 방향 x,y,z (부모 좌표계)', short: '발사 방향', def: '0,0,1', kind: 'vec' },
+    { key: 'propel_direction', label: '발사 방향 x,y,z (부모 좌표계, 체크 해제=미사용)', short: '발사 방향', def: '0,0,1', kind: 'vec', optional: true },
     { key: 'explosion', label: '연기 발생점 오프셋 x,y,z (체크 해제=미사용)', short: '연기점', def: '', kind: 'vec', optional: true },
   ],
 };

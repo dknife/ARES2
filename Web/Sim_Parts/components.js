@@ -578,7 +578,8 @@ function makeSmokeTexture(THREE) {
 function createGunComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   // propel 은 상위(부모) 좌표계 축, explosion 은 객체 로컬 점(규약 2026-07-09 개정)
-  const propel = fieldVec(THREE, fields.propel_direction) || new THREE.Vector3(0, 0, 1);
+  // 발사 방향(선택) — 체크 해제 시 null → 자기 추진(비행) 없이 발사 효과(연기)만 낸다.
+  const propel = fieldVec(THREE, fields.propel_direction);
   const expl = fieldVec(THREE, fields.explosion, { normalize: false });
   const FLY_SPEED = 6.0;    // m/s ("빠르게 이동")
   const FLY_TIME = 1.2;     // s — 이 시간만큼 날아간 뒤 그 자리에 멈춘다
@@ -591,7 +592,8 @@ function createGunComponent(ctx, fields = {}) {
   let returning = null;     // { from, age } — SIM_END 복귀 애니메이션 상태
   const smokes = [];        // { sprite, age, rise }
 
-  const outFields = { propel_direction: [propel.x, propel.y, propel.z] };
+  const outFields = {};
+  if (propel) outFields.propel_direction = [propel.x, propel.y, propel.z];
   if (expl) outFields.explosion = [expl.x, expl.y, expl.z];
 
   // 즉시 원위치 복귀 — 시뮬 재시작(SIM_START)·컴포넌트 해제 시 사용
@@ -632,6 +634,9 @@ function createGunComponent(ctx, fields = {}) {
       }
       if (cmd !== 'GUN_FIRE' && !cmd.startsWith('GUN_FIRE,')) return null;
       ctx.scene.updateMatrixWorld(true);
+      if (expl) spawnSmoke(localOffsetToWorld(THREE, simObject.root, expl));
+      // 발사 방향 미사용(체크 해제) 시 자기 자신은 날아가지 않는다 — 연기 효과만.
+      if (!propel) return null;
       // 발사 방향은 상위(부모) 좌표계 기준 — 자기 회전(스핀 등)과 무관하게
       // 발사 시점의 부모 자세를 월드로 변환해 적용한다
       const parentObj = simObject.root.parent;
@@ -640,7 +645,6 @@ function createGunComponent(ctx, fields = {}) {
       dirWorld.normalize();
       if (!home) home = simObject.root.position.clone();   // 복귀 지점은 첫 발사 직전 위치
       flight = { vel: dirWorld.multiplyScalar(FLY_SPEED), age: 0 };
-      if (expl) spawnSmoke(localOffsetToWorld(THREE, simObject.root, expl));
       return null;
     },
     update(dt, _ctx, simObject) {
