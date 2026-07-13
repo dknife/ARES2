@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARES 진행 보고 — 1~13일차</title>
+    <title>ARES 진행 보고 — 1~15일차</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -194,13 +194,13 @@
     <header class="report-head">
         <div class="wrap">
             <div class="eyebrow">ARES Project · Progress Report</div>
-            <h1>현장 진행 보고<br><span class="accent">1 ~ 13일차</span></h1>
-            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검, 시뮬레이터 씬 생성 도구·소프트웨어 테스트(STR), 씬 서비스 등록 체계, 교구 시제품 팀 조립·발사장치 검증.</p>
+            <h1>현장 진행 보고<br><span class="accent">1 ~ 15일차</span></h1>
+            <p class="sub">블록 코딩 화성 탐사 로버(ARES) 개발 현장 기록 — 컴퓨터실 개발, 교구 제작 협력 업체(코리아사이언스) 방문, 웹 서비스 시연, 1차시 운영·인터페이스 점검, 작업 브랜치 통합과 서비스 점검, 시뮬레이터 객체 삽입·관제실 UX 개편, UI 디자인 시안·적용, 시뮬레이터 Hierarchy 편집기, 발사대 조립 테스트, 전체 코드 점검, 시뮬레이터 씬 생성 도구·소프트웨어 테스트(STR), 씬 서비스 등록 체계, 교구 시제품 팀 조립·발사장치 검증, 작업 정리·성과물 출품과 신규 개발 통합, 진입 컷씬 제작·시뮬 씬 확장·오프라인 file:// 서비스·네이티브 앱 전략.</p>
             <div class="stat-row">
-                <div class="stat"><b>13</b><span>DAYS</span></div>
+                <div class="stat"><b>15</b><span>DAYS</span></div>
                 <div class="stat"><b>119</b><span>PHOTOS</span></div>
                 <div class="stat"><b>18</b><span>LIVE SCREENS</span></div>
-                <div class="stat"><b>06.23~07.09</b><span>2026 · KST</span></div>
+                <div class="stat"><b>06.23~07.13</b><span>2026 · KST</span></div>
             </div>
             <!-- 전체 보고서 PDF 는 저장소가 아닌 GitHub Releases 에서 제공(고정 링크, 빌드 시 자동 갱신) -->
             <p style="margin-top:18px;font-size:0.9em;"><a href="https://github.com/dknife/ARES2/releases/download/progress-report/ProgressReport.pdf" style="color:#ffb37a;text-decoration:none;font-weight:600;">📄 전체 보고서 PDF 내려받기 (LaTeX 판, 부록 A~G 포함)</a></p>
@@ -2266,6 +2266,153 @@ async _executeFunctionCall(callBlock) {
                 <figure>
                     <div class="imgbox"><img src="img/13일차_원격모니터링.jpg" alt="서버·세션 상태 모니터링"></div>
                     <figcaption>프로젝터 공유 — 서버·원격 세션 상태 모니터링.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ DAY 14 ============ -->
+        <section class="day" id="day14">
+            <div class="day-head">
+                <span class="day-badge">DAY 14</span>
+                <h2>작업 정리·성과물 출품 · 신규 개발 통합</h2>
+                <span class="day-date">2026.07.10 (금) · 컴퓨터실 개발 KST</span>
+            </div>
+            <p class="day-summary">3주(14일) 제품개발학기의 <b>마지막 날</b>이다. 팀원 각자가 담당 트랙의 3주 작업을 <b>회고·정리</b>하고 산학연계 <b>성과물 출품서</b>를 작성했다 — 피코·블록코딩(이주현), 시뮬레이터 서브시스템/개발자 도구(김지훈), 시뮬레이션 리팩토링·코드 결합(이민혁), 웹 UI/UX 고도화(이성빈), 웹·제품 디자인(이재훈). 아울러 13일차 저녁 이후 이어진 <b>신규 개발 작업을 통합·정리</b>했다 — 시뮬레이터 <b>시각 품질·상호작용 강화</b>(객체 간 그림자 선명화, LED 점등 포인트 라이트, Gun 복귀 애니메이션), <b>에셋 성능 최적화</b>(14종 GLB 텍스처 2048→1024 + meshopt 재압축, <b>9.1→2.9&nbsp;MB</b>), <b>오프라인 <code>file://</code> 빌드 현행화</b>, <b>발사대_제작 서비스 씬 등록</b>, <b>펌웨어 공장 초기 설정</b>(<code>system.json</code>).</p>
+
+            <div class="tasks">
+                <h3>🎨 신규 개발 통합 — 시각 품질·에셋 최적화·오프라인 빌드·공장 설정</h3>
+                <p class="lead">키 라이트 그림자 프러스텀을 ±55→±20으로 좁혀 그림자맵 텍셀을 <b>2.7&nbsp;cm→1&nbsp;cm</b>로 정밀화하고, LED 점등 시 발광색 <code>PointLight</code>로 주변까지 밝혔으며, Gun 발사 후 복귀를 <b>1초 smoothstep 애니메이션</b>으로 바꿨다. <code>gltf-transform</code>으로 14종 GLB 텍스처를 <b>1024²</b>로 축소·재압축해 시뮬 자산을 <b>9.1&nbsp;MB→2.9&nbsp;MB</b>로 줄였고, 인터넷 없이 여는 <b>오프라인 <code>file://</code> 빌드</b>를 현재 서비스에 맞춰 되살렸다. 펌웨어는 <code>system.json</code>으로 <b>카테고리 한글 이름·모듈 활성화</b>를 설정만으로 커스터마이즈하도록 정비했다.</p>
+                <div class="chips">
+                    <span class="chip">그림자 텍셀 2.7cm→1cm</span>
+                    <span class="chip">LED 포인트 라이트</span>
+                    <span class="chip">Gun 복귀 smoothstep 1초</span>
+                    <span class="chip">GLB 9.1→2.9MB</span>
+                    <span class="chip">오프라인 file:// 빌드</span>
+                    <span class="chip">발사대_제작 씬 등록</span>
+                    <span class="chip">공장 초기 설정</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>📦 성과물 출품 — 5개 트랙</h3>
+                <p class="lead">팀원별 3주 성과를 출품작으로 정리했다 — 이주현(피코·블록코딩: 프리뷰·공장 초기 설정·하드웨어 코드·테스트표), 김지훈(시뮬레이터: 객체 생성·런타임 Hierarchy 관리·배치/변형), 이민혁(시뮬레이션: 객체 삽입·동작 확인·버그 픽스), 이성빈(UX/UI: 미션·블록코딩·시뮬레이션·AI 팝업), 이재훈(웹·제품 디자인: 화성발사대 <b>MARS EXPLORATION ARES LAUNCHER</b> 정면·측면·후면·프리뷰).</p>
+                <div class="chips">
+                    <span class="chip">출품서 5건</span>
+                    <span class="chip">피코·블록코딩</span>
+                    <span class="chip">시뮬레이터 도구</span>
+                    <span class="chip">시뮬 리팩토링</span>
+                    <span class="chip">UI/UX</span>
+                    <span class="chip">제품 디자인</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/14일차_출품_이주현_블록프리뷰.png" alt="이주현 출품작 — 블록 프리뷰"></div>
+                    <figcaption>이주현(피코·블록코딩) — 블록 프리뷰.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/14일차_출품_김지훈_오브젝트1.png" alt="김지훈 출품작 — 시뮬레이터 객체 생성"></div>
+                    <figcaption>김지훈(시뮬레이터) — 객체 생성·배치.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/14일차_출품_이민혁_오브젝트삽입.png" alt="이민혁 출품작 — 시뮬레이션 객체 삽입"></div>
+                    <figcaption>이민혁(시뮬레이션) — 객체 삽입.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/14일차_출품_이성빈_미션.png" alt="이성빈 출품작 — 미션 화면 UX/UI"></div>
+                    <figcaption>이성빈(UX/UI) — 미션 화면.</figcaption>
+                </figure>
+                <figure>
+                    <div class="imgbox"><img src="img/14일차_출품_이재훈_프리뷰.jpg" alt="이재훈 출품작 — 화성발사대 디자인 프리뷰"></div>
+                    <figcaption>이재훈(제품 디자인) — 화성발사대 프리뷰.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- ============ DAY 15 ============ -->
+        <section class="day" id="day15">
+            <div class="day-head">
+                <span class="day-badge">DAY 15</span>
+                <h2>컷씬·시뮬 씬·오프라인 서비스·네이티브 앱 전략</h2>
+                <span class="day-date">2026.07.13 (월) · 원격 개발 KST</span>
+            </div>
+            <p class="day-summary">3주 개발을 마감한 뒤 이어진 <b>마무리·확장 작업</b>이다. 서비스 진입점에 <b>화성 접근 컷씬</b>을 제작해 ‘탐사선 연결’부터 미션 화면까지의 서사를 연결하고 <b>요원 코드</b>를 도입해 컷씬→차시 대화까지 개인화했다. 시뮬레이터의 <b>서비스 씬을 확장</b>해 발사대_제작·알비 기본 모델·레이더 데모·우주 신호등을 정비하고 신규 메시를 압축·등록했다. <code>FinalBuild.md</code>에 정리된 <b><code>file://</code> 오프라인 서비스</b>를 현재 콘텐츠에 맞게 되살려 인터넷·서버 없이 더블클릭만으로 3D·BLE 전 기능이 동작하도록 완성했고, 다음 단계인 <b>네이티브 앱 전환</b>의 플랫폼별 전략과 Web Bluetooth 지원 격차·해법을 정리했다.</p>
+
+            <div class="tasks">
+                <h3>🎬 진입 컷씬의 제작과 통합</h3>
+                <p class="lead">‘탐사선 연결’을 누르면 미션 화면과 <b>동일한 타이틀 바</b> 아래에 화성 접근 컷씬이 뜬다. <code>planet_approach.png</code> 배경과 압축 로켓 메시를 <b>2패스 WebGL</b>(정사영 배경 + 원근 로켓)로 합성하고, <b>요원 코드</b> 입력값을 <code>localStorage</code>에 저장해 재방문 시 ‘탐험대원 YMK26, 환영합니다’로 맞이한다. 이 코드는 <b>차시별 아레스·알비 대화</b>에도 반영돼 ‘아레스 YMK26’처럼 개인화되며, 보너스 <b>화성 착륙 게임</b>에도 같은 타이틀 바를 적용해 하나의 앱 경험으로 묶었다.</p>
+                <div class="chips">
+                    <span class="chip">2패스 WebGL 컷씬</span>
+                    <span class="chip">요원 코드 localStorage</span>
+                    <span class="chip">차시 대화 개인화</span>
+                    <span class="chip">착륙 게임 타이틀 바 통합</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>🧩 시뮬레이터 활용 씬 제작</h3>
+                <p class="lead">신규 발사대·레이더 원본 메시를 <code>gltf-transform</code>(1024² WebP + meshopt)으로 압축해(<code>LaunchStand</code> 10.6MB→266KB 등) <b>발사대_제작</b> 씬과 스폰 목록에 등록하고, <b>알비 기본 모델</b>(<code>newalbo_01</code>)·레이더 데모·우주 신호등을 정비했다. 로켓·발사 거치대·레이더·알비 메시에 구워져 있던 <b>자체 발광(emissive)을 제거</b>해 씬 조명에만 반응하도록 톤을 통일했고, 예제를 불러오면 <b>코드 프리뷰 위젯</b>으로 로드된 블록 코드를 확인할 수 있게 했다.</p>
+                <div class="chips">
+                    <span class="chip">신규 메시 압축·등록</span>
+                    <span class="chip">newalbo_01 통일</span>
+                    <span class="chip">emissive 제거</span>
+                    <span class="chip">코드 프리뷰 위젯</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>💿 FinalBuild.md와 file://을 통한 오프라인 서비스</h3>
+                <p class="lead">인터넷·서버 없는 교실·USB 배포를 위해 <code>Web/</code>을 <code>file://</code>로 더블클릭만 해도 동작하는 <b>자족 오프라인 빌드</b>(<code>Build/</code>)를 완성했다. 신규 씬 메시 인라인 누락을 바로잡고, 히어로 로봇 임베드(<code>AlbiRobot.embed.js</code>)를 교정했으며, 컷씬 로켓·유영 우주인은 <code>fetch</code> shim으로, <b>화성 배경·설정 아이콘</b>은 <b>data URI</b>로 치환해 <code>file://</code> CORS 차단을 해소했다. 학교 내부망 배포를 위해 <code>Build/</code>를 git 추적으로 전환했다.</p>
+                <div class="chips">
+                    <span class="chip">fetch shim 인라인</span>
+                    <span class="chip">히어로 임베드 교정</span>
+                    <span class="chip">data URI CORS 회피</span>
+                    <span class="chip">Build/ git 추적</span>
+                </div>
+            </div>
+
+            <div class="tasks">
+                <h3>📱 네이티브 앱 제작을 위한 플랫폼별 전략과 난점·해법</h3>
+                <p class="lead">현재 서비스는 웹 표준(정적 HTML/JS + Web Bluetooth)으로 데스크톱·안드로이드 크롬과 오프라인 <code>file://</code>에서 동작한다. 설치형 네이티브 앱으로 확장할 때 가장 큰 제약은 <b>Web Bluetooth 지원 격차</b>다 — 데스크톱 크롬·안드로이드 크롬은 지원하지만 <b>iOS WKWebView와 일반 WebView는 미지원</b>이라 웹뷰로 감싸는 것만으로는 BLE 연결이 끊긴다. 명령 프로토콜이 <b>개행 텍스트 + 20바이트 청크</b>로 전송 독립적이므로, <code>bluetooth.js</code>의 BLE 계층을 인터페이스로 두고 <b>Web Bluetooth 구현</b>과 <b>네이티브 BLE 플러그인 구현</b>(Capacitor)으로 분리하는 것을 해법으로 정리했다.</p>
+                <div class="chips">
+                    <span class="chip">Web BT 플랫폼 격차</span>
+                    <span class="chip">iOS: CoreBluetooth 브리지</span>
+                    <span class="chip">Capacitor BLE 플러그인</span>
+                    <span class="chip">BLE 전송 계층 추상화</span>
+                </div>
+            </div>
+            <div class="gallery">
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_컷씬_환영.png" alt="컷씬 — 요원 코드 환영"></div>
+                    <figcaption>진입 컷씬 — 요원 코드 환영(화성 배경 + 로켓).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_차시대화.png" alt="차시 대화 개인화"></div>
+                    <figcaption>차시 대화 — ‘아레스 YMK26’ 개인화.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_씬_발사대제작.png" alt="시뮬레이터 발사대_제작 씬"></div>
+                    <figcaption>시뮬레이터 — 발사대_제작(신규 압축 메시).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_씬_레이더데모.png" alt="시뮬레이터 레이더 데모 씬"></div>
+                    <figcaption>시뮬레이터 — 레이더 데모.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_오프라인_히어로.png" alt="오프라인 file:// 히어로 로봇과 우주인"></div>
+                    <figcaption>오프라인 <code>file://</code> — 히어로 로봇 + 유영 우주인.</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_오프라인_컷씬.png" alt="오프라인 file:// 컷씬 화성 배경"></div>
+                    <figcaption>오프라인 <code>file://</code> — 컷씬 화성 배경(data URI).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_오프라인_크레딧.png" alt="오프라인 file:// 크레딧"></div>
+                    <figcaption>오프라인 <code>file://</code> — 크레딧(우주인 + 텍스트).</figcaption>
+                </figure>
+                <figure class="shot">
+                    <div class="imgbox"><img src="img/15일차_착륙게임.png" alt="화성 착륙 게임"></div>
+                    <figcaption>화성 착륙 게임 — 역추진 착륙(동일 타이틀 바).</figcaption>
                 </figure>
             </div>
         </section>
