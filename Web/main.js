@@ -475,8 +475,8 @@ function setupToolboxDrawer(ws) {
 
 function initializeBlockly() {
   if (!navigator.bluetooth) {
-    alert('이 블라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
-    Logger.add('[오류] 블라우저가 Web Bluetooth API를 지원하지 않습니다', 'error');
+    alert('이 브라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
+    Logger.add('[오류] 브라우저가 Web Bluetooth API를 지원하지 않습니다', 'error');
   }
 
   Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
