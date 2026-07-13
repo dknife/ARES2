@@ -48,7 +48,9 @@ ARES_Project/
 
 > GLB 메시(`AlbiStaticLow`, `LampBox`, `LampGeneral`, `LampHand1~3`, `LaunchStation`,
 > 로버 토픽용 `RoverParts/Rover{Body,Gun,Head,LED,OLED,Radar,Wheel}.glb` 7종,
-> 개발자 스폰 메뉴용 `ares_robot.glb`, 환경 장식 `EnvAssets/*.glb`(우주인 등))는
+> 개발자 스폰 메뉴용 `ares_robot.glb`, 환경 장식 `EnvAssets/*.glb`(우주인 등),
+> **서비스 씬용 `AlbiRobot/AlbiRobot.min.glb`(알비 기본 모델)와
+> `RocketAndLauncher/*.min.glb`(발사대_제작: Rocket·LaunchStand·RadarBody·RadaDish)**)는
 > **GLB 1개당 청크 1개**로 `vendor/bin_<stem>.js` 에 base64 분리되어 있고, 각 청크는
 > `window.__ARES_BIN__['Foo.glb'] = "<base64>"` 한 줄만 담는다. 모든 청크가 `defer` 순서로
 > 먼저 실행되어 BIN 글로벌을 채우고, 그 다음 `vendor/inline_assets.js` 가 텍스트 DATA 등록
@@ -120,7 +122,8 @@ build.bat
        ├── 6) Web/main.html → Build/main.html 두 곳 패치 + 검증
        │      (Blockly CDN → vendor/, ES module(?v= 캐시버스터 허용) →
        │       bin_*.js + inline_assets shim + bundle defer 체인)
-       ├── (5.5) GLB 소스 열거(시뮬 + ares_robot + RoverParts/ + EnvAssets/)
+       ├── (5.5) GLB 소스 열거(시뮬 + ares_robot + RoverParts/ + EnvAssets/
+       │      + AlbiRobot/ + RocketAndLauncher/ 의 *.min.glb — 서비스 씬 메시)
        │      → bin 청크 파일 이름 목록 사전 결정
        └── 7) Build/vendor/bin_<stem>.js (GLB 1개당 청크 1개, base64)
               + Build/vendor/inline_assets.js (overview.html + 12 lesson.json
@@ -144,7 +147,7 @@ macOS·Linux에서는 프로젝트 루트의 `./build.sh`를 실행하세요. `b
 `file://`는 로컬 GLB를 `fetch`할 수 없으므로(CORS, `origin: null`), 빌드는 GLB를 다음과 같이 인라인합니다.
 
 - **랜딩 로봇**(`index.html`): `ares_robot.embed.js`(base64, Build 루트)를 동적 로드 후 `GLTFLoader.parse()`. (랜딩의 우주인 장식(`Mesh/EnvAssets/Astronaut.glb`)은 코드가 `file://` 에서 스스로 생략한다 — 장식용이라 의도된 동작.)
-- **미션 시뮬레이션**(`main.html`) + **뷰어**(`viewer/`): GLB 전부(시뮬 14종 + `ares_robot.glb` + `EnvAssets/*.glb` — §2 참고)를 GLB 1개당 `vendor/bin_<stem>.js` 1개로 base64 인라인해 `window.__ARES_BIN__` 을 채우고, `vendor/inline_assets.js` 의 `window.fetch` shim이 이를 **바이너리 `Response`로 반환**한다. 키를 파일명(`Foo.glb`)으로 두어 `Mesh/...`·`Mesh/RoverParts/...`·`Mesh/EnvAssets/...`·`Resources/...` 어떤 경로의 fetch도 가로챈다. 따라서 `main.js`(번들) 코드는 일반 `fetch`를 그대로 쓰고, 빌드 산출물만 file://에서 동작한다.
+- **미션 시뮬레이션**(`main.html`) + **뷰어**(`viewer/`): GLB 전부(시뮬 + `ares_robot.glb` + `EnvAssets/*.glb` + 서비스 씬용 `AlbiRobot/*.min.glb`·`RocketAndLauncher/*.min.glb` — §2 참고)를 GLB 1개당 `vendor/bin_<stem>.js` 1개로 base64 인라인해 `window.__ARES_BIN__` 을 채우고, `vendor/inline_assets.js` 의 `window.fetch` shim이 이를 **바이너리 `Response`로 반환**한다. 키를 파일명(`Foo.glb`)으로 두어 `Mesh/...`·`Mesh/RoverParts/...`·`Mesh/EnvAssets/...`·`Mesh/AlbiRobot/...`·`Mesh/RocketAndLauncher/...`·`Resources/...` 어떤 경로의 fetch도 가로챈다. 따라서 `main.js`(번들) 코드는 일반 `fetch`를 그대로 쓰고, 빌드 산출물만 file://에서 동작한다.
 - **서비스 씬 + 개발자 스폰 메뉴**: `scenes/*.json`(씬 manifest + 씬 파일)과 `Mesh/manifest.json` 은 텍스트로 `inline_assets.js` 의 DATA 에 인라인되어 같은 shim 이 JSON `Response` 로 반환한다.
 - 모든 GLB는 meshopt 압축본(2026-07-09 텍스처 1024² 리사이즈 후에도 재압축으로 유지) — 두 경로 다 `vendor/meshopt_decoder.js` 가 먼저 로드되어 있어야 한다.
 

@@ -93,6 +93,12 @@ for p in sorted(glob.glob('Web/Mesh/RoverParts/*.glb')):
 # 환경 장식 에셋(우주인 등) — 스폰 메뉴·씬 파일이 Mesh/EnvAssets/… 로 참조
 for p in sorted(glob.glob('Web/Mesh/EnvAssets/*.glb')):
     entries.append((os.path.basename(p), p))
+# 서비스 씬(newalbo_01·launch_pad)이 참조하는 압축 메시 — 하위 폴더의 *.min.glb 만
+# 인라인한다(원본 대용량 *.glb 는 .gitignore 대상이라 제외). 이 폴더들을 빠뜨리면
+# file:// 빌드에서 '알비 기본 모델'·'발사대_제작' 씬의 3D 메시가 로드되지 않는다.
+for sub in ('AlbiRobot', 'RocketAndLauncher'):
+    for p in sorted(glob.glob('Web/Mesh/%s/*.min.glb' % sub)):
+        entries.append((os.path.basename(p), p))
 
 bin_scripts = []
 for name, p in entries:

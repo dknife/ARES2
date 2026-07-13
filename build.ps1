@@ -179,6 +179,17 @@ if (Test-Path 'Web\Mesh\EnvAssets') {
         $binEntries.Add([pscustomobject]@{ glb = $f.Name; src = $f.FullName })
     }
 }
+# 서비스 씬(newalbo_01·launch_pad)이 참조하는 압축 메시 — 하위 폴더의 *.min.glb 만
+# 인라인한다(원본 대용량 *.glb 는 .gitignore 대상이라 제외). 이 폴더들을 빠뜨리면
+# file:// 빌드에서 '알비 기본 모델'·'발사대_제작' 씬의 3D 메시가 로드되지 않는다.
+foreach ($sub in @('AlbiRobot', 'RocketAndLauncher')) {
+    $dir = "Web\Mesh\$sub"
+    if (Test-Path $dir) {
+        foreach ($f in (Get-ChildItem $dir -Filter '*.min.glb')) {
+            $binEntries.Add([pscustomobject]@{ glb = $f.Name; src = $f.FullName })
+        }
+    }
+}
 $binScriptNames = @($binEntries | ForEach-Object {
     'bin_' + [System.IO.Path]::GetFileNameWithoutExtension($_.glb) + '.js'
 })
