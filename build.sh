@@ -40,8 +40,9 @@ cp Web/mobile-preview.js Build/mobile-preview.js
 # UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크) + 로컬 서브셋 폰트
 cp -R Web/assets Build/assets
 cp -R Web/fonts  Build/fonts
-# 임시작업/ 등 배포와 무관한 작업용 폴더는 산출물에서 제외(추적 대상 Build/ 오염 방지)
+# 임시작업/ 등 배포와 무관한 작업용 폴더·.DS_Store 는 산출물에서 제외(추적 대상 Build/ 오염 방지)
 rm -rf Build/assets/임시작업
+find Build -name '.DS_Store' -delete 2>/dev/null || true
 cp Web/vendor/three-bundle.min.js Build/vendor/three-bundle.min.js
 # meshopt 디코더: 모든 GLB(시뮬 14종·랜딩 로봇 임베드)가 meshopt 압축본 — 필수
 cp Web/vendor/meshopt_decoder.js  Build/vendor/meshopt_decoder.js
@@ -182,7 +183,7 @@ if os.path.exists('Web/Mesh/manifest.json'):
 shim = r'''  function b64ToU8(b64){ var s=atob(b64), n=s.length, u=new Uint8Array(n); for(var i=0;i<n;i++)u[i]=s.charCodeAt(i); return u; }
   var origFetch = window.fetch ? window.fetch.bind(window) : null;
   function norm(input){ var url=(typeof input==='string')?input:(input&&input.url)||''; return String(url).split('?')[0].split('#')[0]; }
-  function find(obj, url){ for(var k in obj){ if(!Object.prototype.hasOwnProperty.call(obj,k))continue; if(url===k||url.endsWith('/'+k)||url.endsWith(k))return k; } return null; }
+  function find(obj, url){ for(var k in obj){ if(!Object.prototype.hasOwnProperty.call(obj,k))continue; if(url===k||url.endsWith('/'+k))return k; } return null; }
   function mimeFor(key){ if(key.endsWith('.json'))return 'application/json'; if(key.endsWith('.xml'))return 'application/xml'; return 'text/html; charset=utf-8'; }
   window.fetch = function(input, init){
     var url = norm(input);
@@ -209,7 +210,10 @@ assert n >= 13, 'inline text entries < 13'
 # ---- 7.5) 랜딩(index.html)이 file:// 에서 fetch 로 읽는 GLB 에 fetch shim 을 제공한다.
 #      컷씬 로켓(Rocket.min.glb) + 히어로 주위 유영 우주인(Astronaut.glb). 히어로 로봇
 #      본체는 임베드(AlbiRobot.embed.js)라 별도. shim 이 설치되면 우주인 생략 가드도 풀린다. ----
-landing_bins = [s for s in bin_scripts if s.startswith('bin_Rocket') or s.startswith('bin_Astronaut')]
+# bin_AlbiRobot 포함 이유: http(s) 로 서비스되는 Build/ 랜딩은 file:// 임베드 분기 대신
+# loader.load('AlbiRobot.min.glb')(평탄화 경로) 를 타는데, Build 루트에 실파일이 없어
+# shim BIN 에 없으면 404 → '로봇을 불러오지 못했어요' 가 된다.
+landing_bins = [s for s in bin_scripts if s.startswith('bin_Rocket') or s.startswith('bin_Astronaut') or s.startswith('bin_AlbiRobot')]
 li = R('Build/index.html')
 anchor = '<script src="vendor/meshopt_decoder.js"></script>'
 if landing_bins and anchor in li and 'inline_assets.js' not in li:

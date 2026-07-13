@@ -186,17 +186,21 @@ export class Simulation_Main {
     };
     
     let closing = false;
+    // 진행 중인 모의실행 비상정지 — 모드 전환(close)·주제/씬 전환(change) 공통.
+    // simAborted 로 실행 루프를 끊으면 toggleSimRun 의 finally 가 STOP_ALL·LED OFF·
+    // 서보/로켓 원복 등 상태 정리를 수행한다. (simRunning/simAborted 는 아래 선언 —
+    // 함수 선언 호이스팅으로 close() 에서도 호출 가능, 실제 호출은 init 이후라 안전)
+    function abortActiveSimRun(label) {
+      if (!simRunning) return;
+      simAborted = true;
+      state.isExecuting = false;
+      if (sim) sim.cancelActiveWait();
+      logLine('──── 비상 정지 (' + label + ') ────', 'sys');
+    }
+
     const close = () => {
       if (card.hidden || closing) return;
-      // 진행 중이던 모의실행은 다른 모드로 전환할 때 비상정지시킨다.
-      // simAborted 로 실행 루프를 끊으면 toggleSimRun 의 finally 가 STOP_ALL·LED OFF·
-      // 서보/로켓 원복 등 하드웨어-시뮬 상태 정리를 수행한다.
-      if (simRunning) {
-        simAborted = true;
-        state.isExecuting = false;
-        if (sim) sim.cancelActiveWait();
-        logLine('──── 비상 정지 (모드 전환) ────', 'sys');
-      }
+      abortActiveSimRun('모드 전환');
       if (sim && sim.hasRocket && !sim.rocketAtRest) {
         closing = true;
         sim.setRocketLaunch(false);
@@ -473,6 +477,9 @@ export class Simulation_Main {
     };
 
     if (sel) sel.addEventListener('change', () => {
+      // 실행 중 주제/씬을 바꾸면 이전 Context 는 폐기되는데 실행 루프는 살아 있어
+      // 남은 명령이 새 씬에 그대로 흘러든다 — 전환 전에 비상정지시킨다.
+      abortActiveSimRun('주제 전환');
       const v = sel.value;
       if (v.startsWith('scene:')) { loadSavedScene(v.slice(6)); return; }
       build(v);
@@ -769,8 +776,9 @@ export class Simulation_Main {
               sim.cancelActiveWait = () => {
                 clearTimeout(id);
                 sim.cancelActiveWait = originalCancel;
-                originalCancel();
-                resolve();
+                // 프로토타입 메서드를 분리 호출하면 this 가 풀려 TypeError 로
+                // resolve() 가 막히고 simRunning 이 영구 고착된다 — call(sim) + finally 보장
+                try { originalCancel.call(sim); } finally { resolve(); }
               };
             }
           });

@@ -5028,7 +5028,8 @@
       if (cmd.startsWith("LED_ON,")) {
         const parts = cmd.split(",");
         const num2 = parseInt(parts[1], 10);
-        const intensity = Math.max(0, Math.min(1, parseFloat(parts[2])));
+        const raw = parseFloat(parts[2]);
+        const intensity = Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 1));
         this.setLedByNum(num2, intensity);
         return null;
       }
@@ -8117,8 +8118,8 @@
       if (this.roverGroup && this.roverGroup.parent) {
         this.roverGroup.parent.remove(this.roverGroup);
       }
-      if (this.worldGroup && this.worldGroup.parent) {
-        this.worldGroup.parent.remove(this.worldGroup);
+      if (this.ctx.worldGroup && this.ctx.worldGroup.parent) {
+        this.ctx.worldGroup.parent.remove(this.ctx.worldGroup);
       }
     }
     // Getters/setters delegating properties to respective subsystems
@@ -8288,8 +8289,11 @@
     get hasDistanceSensor() {
       return this.movement.irSensorBalls.length > 0;
     }
+    // worldGroup 은 Movement 가 ctx 에 싣는다(this 에는 없음) — this.worldGroup 을 읽으면
+    // 항상 undefined 라 hasServo 가 영구 false 가 되어 SERVO linger·비상정지 stopServo()
+    // 가 모두 죽는다. hasGrids 처럼 ctx 를 본다.
     get hasServo() {
-      return !!this.worldGroup;
+      return !!this.ctx.worldGroup;
     }
     get hasRadar() {
       return !!this.movement.antennaPivot;
@@ -8301,7 +8305,7 @@
       return !!this.leds.oledCanvas;
     }
     get hasRoverWave() {
-      return !!this.worldGroup;
+      return !!this.ctx.worldGroup;
     }
     get hasGrids() {
       return !!this.ctx.planeGrids;
@@ -8741,8 +8745,16 @@
         }
       };
       let closing = false;
+      function abortActiveSimRun(label) {
+        if (!simRunning) return;
+        simAborted = true;
+        state.isExecuting = false;
+        if (sim) sim.cancelActiveWait();
+        logLine("\u2500\u2500\u2500\u2500 \uBE44\uC0C1 \uC815\uC9C0 (" + label + ") \u2500\u2500\u2500\u2500", "sys");
+      }
       const close = () => {
         if (card.hidden || closing) return;
+        abortActiveSimRun("\uBAA8\uB4DC \uC804\uD658");
         if (sim && sim.hasRocket && !sim.rocketAtRest) {
           closing = true;
           sim.setRocketLaunch(false);
@@ -9015,6 +9027,7 @@
         }
       };
       if (sel) sel.addEventListener("change", () => {
+        abortActiveSimRun("\uC8FC\uC81C \uC804\uD658");
         const v = sel.value;
         if (v.startsWith("scene:")) {
           loadSavedScene(v.slice(6));
@@ -9325,8 +9338,11 @@
                 sim.cancelActiveWait = () => {
                   clearTimeout(id);
                   sim.cancelActiveWait = originalCancel;
-                  originalCancel();
-                  resolve();
+                  try {
+                    originalCancel.call(sim);
+                  } finally {
+                    resolve();
+                  }
                 };
               }
             });
@@ -10357,8 +10373,8 @@
   }
   function initializeBlockly() {
     if (!navigator.bluetooth) {
-      alert("\uC774 \uBE14\uB77C\uC6B0\uC800\uB294 Web Bluetooth API\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Chrome 56+ \uB610\uB294 Edge 79+\uB97C \uC0AC\uC6A9\uD574\uC8FC\uC138\uC694.");
-      Logger.add("[\uC624\uB958] \uBE14\uB77C\uC6B0\uC800\uAC00 Web Bluetooth API\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4", "error");
+      alert("\uC774 \uBE0C\uB77C\uC6B0\uC800\uB294 Web Bluetooth API\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. Chrome 56+ \uB610\uB294 Edge 79+\uB97C \uC0AC\uC6A9\uD574\uC8FC\uC138\uC694.");
+      Logger.add("[\uC624\uB958] \uBE0C\uB77C\uC6B0\uC800\uAC00 Web Bluetooth API\uB97C \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4", "error");
     }
     Blockly.defineBlocksWithJsonArray(BlocklyConfig.blocks);
     attachBatchBlockValidator(Blockly);
@@ -11966,9 +11982,13 @@
       workspace,
       getMode: () => _contentMode,
       setMode: (mode) => {
+        var _a;
         const wasSimulation = _contentMode === "simulation";
         _contentMode = mode;
         if (wasSimulation && mode !== "simulation" && simController) {
+          if ((_a = simController.isSimRunning) == null ? void 0 : _a.call(simController)) {
+            Logger.add("[\uBE44\uC0C1\uC815\uC9C0] \uBAA8\uB4DC \uC804\uD658 \u2014 \uC9C4\uD589 \uC911\uC774\uB358 \uC2DC\uBBAC\uB808\uC774\uC158\uC744 \uC911\uB2E8\uD569\uB2C8\uB2E4", "error");
+          }
           simController.close();
         }
         if (mode === "simulation") syncSimCodeWidget == null ? void 0 : syncSimCodeWidget();

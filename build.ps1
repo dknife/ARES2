@@ -77,8 +77,9 @@ Copy-Item 'Web\mobile-preview.js'  'Build\mobile-preview.js'  -Force
 # UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크). main.html/styles.css 가
 # assets/design/*.png 를 <img>/CSS url() 로 참조 — file:// 에서도 그대로 로드된다.
 Copy-Item 'Web\assets' 'Build\assets' -Recurse -Force
-# 임시작업\ 등 배포와 무관한 작업용 폴더는 산출물에서 제외(추적 대상 Build\ 오염 방지)
+# 임시작업\ 등 배포와 무관한 작업용 폴더·.DS_Store 는 산출물에서 제외(추적 대상 Build\ 오염 방지)
 if (Test-Path 'Build\assets\임시작업') { Remove-Item 'Build\assets\임시작업' -Recurse -Force }
+Get-ChildItem 'Build' -Recurse -Force -Filter '.DS_Store' -ErrorAction SilentlyContinue | Remove-Item -Force
 # 로컬 서브셋 폰트(fonts/fonts.css + *.woff2). index/main/dashboard 가 링크한다.
 # 오프라인에서는 Google Fonts 대신 이 로컬 폰트가 시각 일관성을 보장한다.
 Copy-Item 'Web\fonts' 'Build\fonts' -Recurse -Force
@@ -328,7 +329,7 @@ if (Test-Path 'Web\Mesh\manifest.json') {
   function b64ToU8(b64){ var s=atob(b64), n=s.length, u=new Uint8Array(n); for(var i=0;i<n;i++)u[i]=s.charCodeAt(i); return u; }
   var origFetch = window.fetch ? window.fetch.bind(window) : null;
   function norm(input){ var url=(typeof input==='string')?input:(input&&input.url)||''; return String(url).split('?')[0].split('#')[0]; }
-  function find(obj, url){ for(var k in obj){ if(!Object.prototype.hasOwnProperty.call(obj,k))continue; if(url===k||url.endsWith('/'+k)||url.endsWith(k))return k; } return null; }
+  function find(obj, url){ for(var k in obj){ if(!Object.prototype.hasOwnProperty.call(obj,k))continue; if(url===k||url.endsWith('/'+k))return k; } return null; }
   function mimeFor(key){ if(key.endsWith('.json'))return 'application/json'; if(key.endsWith('.xml'))return 'application/xml'; return 'text/html; charset=utf-8'; }
   window.fetch = function (input, init) {
     var url = norm(input);
@@ -365,7 +366,9 @@ Write-Host ''
 # 7b') 랜딩(index.html)이 file:// 에서 fetch 로 읽는 GLB 에 fetch shim 을 제공한다.
 #      컷씬 로켓(Rocket.min.glb) + 히어로 주위 유영 우주인(Astronaut.glb). 히어로 본체는
 #      임베드(AlbiRobot.embed.js)라 별도. shim 이 설치되면 우주인 생략 가드도 풀린다.
-$landingBins = $binScriptNames | Where-Object { $_ -like 'bin_Rocket*' -or $_ -like 'bin_Astronaut*' }
+# bin_AlbiRobot 포함 이유: http(s) 로 서비스되는 Build/ 랜딩은 임베드 분기 대신
+# loader.load('AlbiRobot.min.glb') 를 타므로 shim BIN 에 있어야 한다(없으면 히어로 404).
+$landingBins = $binScriptNames | Where-Object { $_ -like 'bin_Rocket*' -or $_ -like 'bin_Astronaut*' -or $_ -like 'bin_AlbiRobot*' }
 $lp = 'Build\index.html'
 $li = Read-Utf8 $lp
 $anchor = '<script src="vendor/meshopt_decoder.js"></script>'

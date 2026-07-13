@@ -72,7 +72,10 @@ export class Dispatch {
     if (cmd.startsWith('LED_ON,')) {
       const parts = cmd.split(',');
       const num = parseInt(parts[1], 10);
-      const intensity = Math.max(0, Math.min(1, parseFloat(parts[2])));
+      // 밝기가 숫자가 아니면(NaN) Math.min/max 를 그대로 통과해 재질·PointLight 를
+      // 오염시킨다 — components.js 의 LED 규약과 동일하게 유한값 아니면 1 로 폴백
+      const raw = parseFloat(parts[2]);
+      const intensity = Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 1));
       this.setLedByNum(num, intensity);
       return null;
     }

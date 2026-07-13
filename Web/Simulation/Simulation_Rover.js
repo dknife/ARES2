@@ -130,8 +130,9 @@ export class Simulation_Rover extends Simulation_Base {
     if (this.roverGroup && this.roverGroup.parent) {
       this.roverGroup.parent.remove(this.roverGroup);
     }
-    if (this.worldGroup && this.worldGroup.parent) {
-      this.worldGroup.parent.remove(this.worldGroup);
+    // worldGroup 은 Movement 가 ctx 에 싣는다 — 래퍼 자신(this)에는 없음
+    if (this.ctx.worldGroup && this.ctx.worldGroup.parent) {
+      this.ctx.worldGroup.parent.remove(this.ctx.worldGroup);
     }
   }
 
@@ -248,11 +249,14 @@ export class Simulation_Rover extends Simulation_Base {
   // Properties checked by outside Simulation_Main wrapper
   get hasRoverLeds() { return !!this.leds.get('rover-0'); }
   get hasDistanceSensor() { return this.movement.irSensorBalls.length > 0; }
-  get hasServo() { return !!this.worldGroup; }
+  // worldGroup 은 Movement 가 ctx 에 싣는다(this 에는 없음) — this.worldGroup 을 읽으면
+  // 항상 undefined 라 hasServo 가 영구 false 가 되어 SERVO linger·비상정지 stopServo()
+  // 가 모두 죽는다. hasGrids 처럼 ctx 를 본다.
+  get hasServo() { return !!this.ctx.worldGroup; }
   get hasRadar() { return !!this.movement.antennaPivot; }
   get hasGun() { return !!this.gun.gunMesh; }
   get hasOled() { return !!this.leds.oledCanvas; }
-  get hasRoverWave() { return !!this.worldGroup; }
+  get hasRoverWave() { return !!this.ctx.worldGroup; }
   get hasGrids() { return !!this.ctx.planeGrids; }
   get servoActive() { return this.movement.servoOn || this.movement.servoTurnOn; }
   get hasBoxes() { return this.movement.boxes.length > 0; }
