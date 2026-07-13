@@ -194,6 +194,7 @@
     <!-- three.js 로컬 번들 (CDN 없이 동작) → window.THREE, window.ARES3 -->
     <script src="vendor/three-bundle.min.js"></script>
     <script src="vendor/meshopt_decoder.js"></script>
+    <script src="vendor/bin_Astronaut.js"></script>
     <script src="vendor/bin_Rocket.min.js"></script>
     <script src="vendor/inline_assets.js"></script>
     <script>
@@ -417,8 +418,9 @@
       // 모델 정면 = +Z, 등(가방) = -Z. 진행방향(궤도 접선)을 향하게 돌리고 등 뒤로 화염을 뿜어
       // "추진력으로 헤엄치는" 모습을 연출한다.
       function spawnAstronauts() {
-        // file:// 에서는 fetch 불가(ALBI 는 임베드 사용) — 장식이므로 조용히 생략
-        if (location.protocol === 'file:') return;
+        // file:// 은 원래 fetch 불가라 생략했지만, 오프라인 빌드(Build/)는 inline_assets
+        // fetch shim 이 있으면 BIN 에서 Astronaut.glb 를 제공하므로 그 경우엔 로드한다.
+        if (location.protocol === 'file:' && !window.__ARES_INLINE_INSTALLED__) return;
         loader.load('Mesh/EnvAssets/Astronaut.glb', (gltf) => {
           const proto = gltf.scene;
           // [반지름(modelH배수), 높이오프셋(modelH배수), 크기(modelH배수), 공전속도(rad/s), 시작각(rad)]

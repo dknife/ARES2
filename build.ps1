@@ -353,20 +353,21 @@ if ($maxBin) {
 }
 Write-Host ''
 
-# 7b') 랜딩 컷씬(탐사선 연결) 로켓: loader.load 가 fetch 로 GLB 를 읽으므로 file:// 에서
-#      fetch shim 이 필요하다. index.html 에 Rocket bin 청크 + inline_assets shim 을 주입한다.
-#      (히어로 로봇은 임베드라 별도, 우주인은 file:// 에서 생략됨)
-$rocketBin = $binScriptNames | Where-Object { $_ -like 'bin_Rocket*' } | Select-Object -First 1
+# 7b') 랜딩(index.html)이 file:// 에서 fetch 로 읽는 GLB 에 fetch shim 을 제공한다.
+#      컷씬 로켓(Rocket.min.glb) + 히어로 주위 유영 우주인(Astronaut.glb). 히어로 본체는
+#      임베드(AlbiRobot.embed.js)라 별도. shim 이 설치되면 우주인 생략 가드도 풀린다.
+$landingBins = $binScriptNames | Where-Object { $_ -like 'bin_Rocket*' -or $_ -like 'bin_Astronaut*' }
 $lp = 'Build\index.html'
 $li = Read-Utf8 $lp
 $anchor = '<script src="vendor/meshopt_decoder.js"></script>'
-if ($rocketBin -and ($li -match [regex]::Escape($anchor)) -and ($li -notmatch 'inline_assets\.js')) {
-    $shimTags = "$anchor`n    <script src=`"vendor/$rocketBin`"></script>`n    <script src=`"vendor/inline_assets.js`"></script>"
+if ($landingBins -and ($li -match [regex]::Escape($anchor)) -and ($li -notmatch 'inline_assets\.js')) {
+    $binTags = ($landingBins | ForEach-Object { "    <script src=`"vendor/$_`"></script>" }) -join "`n"
+    $shimTags = "$anchor`n$binTags`n    <script src=`"vendor/inline_assets.js`"></script>"
     $li = $li -replace [regex]::Escape($anchor), $shimTags
     Write-Utf8 $lp $li
-    Write-Host "        injected cutscene rocket shim into index.html ($rocketBin + inline_assets)"
+    Write-Host "        injected landing shim into index.html ($($landingBins -join ', ') + inline_assets)"
 } else {
-    Write-Warning '컷씬 로켓 shim 주입 실패 -- anchor/bin 확인 필요'
+    Write-Warning '랜딩 shim 주입 실패 -- anchor/bin 확인 필요'
 }
 Write-Host ''
 

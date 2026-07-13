@@ -191,21 +191,20 @@ W('Build/vendor/inline_assets.js', '\n'.join(out) + '\n')
 print('        inlined text entries: %d' % n)
 assert n >= 13, 'inline text entries < 13'
 
-# ---- 7.5) 랜딩 컷씬(탐사선 연결) 로켓: loader.load 가 fetch 로 GLB 를 읽으므로
-#      file:// 에서 fetch shim 이 필요하다. index.html 에 Rocket bin 청크 + inline_assets
-#      shim 을 주입한다(히어로 로봇은 임베드라 별도, 우주인은 file:// 에서 생략됨). ----
-rocket_bin = next((s for s in bin_scripts if s.startswith('bin_Rocket')), None)
+# ---- 7.5) 랜딩(index.html)이 file:// 에서 fetch 로 읽는 GLB 에 fetch shim 을 제공한다.
+#      컷씬 로켓(Rocket.min.glb) + 히어로 주위 유영 우주인(Astronaut.glb). 히어로 로봇
+#      본체는 임베드(AlbiRobot.embed.js)라 별도. shim 이 설치되면 우주인 생략 가드도 풀린다. ----
+landing_bins = [s for s in bin_scripts if s.startswith('bin_Rocket') or s.startswith('bin_Astronaut')]
 li = R('Build/index.html')
 anchor = '<script src="vendor/meshopt_decoder.js"></script>'
-if rocket_bin and anchor in li and 'inline_assets.js' not in li:
-    li = li.replace(anchor,
-                    anchor
-                    + '\n    <script src="vendor/%s"></script>' % rocket_bin
-                    + '\n    <script src="vendor/inline_assets.js"></script>', 1)
+if landing_bins and anchor in li and 'inline_assets.js' not in li:
+    tags = anchor + ''.join('\n    <script src="vendor/%s"></script>' % s for s in landing_bins) \
+           + '\n    <script src="vendor/inline_assets.js"></script>'
+    li = li.replace(anchor, tags, 1)
     W('Build/index.html', li)
-    print('        injected cutscene rocket shim into index.html (%s + inline_assets)' % rocket_bin)
+    print('        injected landing shim into index.html (%s + inline_assets)' % ', '.join(landing_bins))
 else:
-    print('        WARNING: 컷씬 로켓 shim 주입 실패 -- anchor/bin 확인 필요')
+    print('        WARNING: 랜딩 shim 주입 실패 -- anchor/bin 확인 필요')
 
 # 뷰어도 file:// 에서 GLB를 fetch shim 으로 받도록 bin 청크 + inline_assets 주입
 vp = 'Build/viewer/index.html'
