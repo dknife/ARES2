@@ -7958,19 +7958,22 @@
       this.objects = new SimulationObjectRegistry(this);
       this.editor = new EditorControls(this);
     }
-    // 키 라이트(그림자 광원)를 카메라 시점의 반대편(역광)에 추종시킨다 — 카메라가
-    // 어느 방향에서 보든 빛이 장면 뒤에서 사용자 쪽으로 비춰 그림자가 화면 앞으로
-    // 드리운다. 좁은 그림자 프러스텀이 항상 시야 중심을 덮는 것은 종전과 동일.
+    // 키 라이트(그림자 광원) — 방향은 월드에 고정하되, 첫 프레임에 초기 카메라의
+    // 반대편(역광)으로 잡는다. 초기 화면에서는 그림자가 사용자 쪽으로 드리우고,
+    // 이후 카메라가 회전하면 태양처럼 세상에 고정된 조명·그림자가 자연스럽게 보인다.
+    // 위치는 종전처럼 카메라 타깃을 평행 추종해 좁은 그림자 프러스텀이 시야를 덮는다.
     updateKeyLight() {
       const t = this.controls.target;
-      if (!this._keyDir) this._keyDir = new this.THREE.Vector3();
-      const dir = this._keyDir.subVectors(t, this.camera.position);
-      dir.y = 0;
-      const len = dir.length();
-      if (len > 1e-3) dir.divideScalar(len);
-      else dir.set(0, 0, -1);
+      if (!this._keyDir) {
+        const dir = new this.THREE.Vector3().subVectors(t, this.camera.position);
+        dir.y = 0;
+        const len = dir.length();
+        if (len > 1e-3) dir.divideScalar(len);
+        else dir.set(0, 0, -1);
+        this._keyDir = dir;
+      }
       const BACK = 10, HEIGHT = 6;
-      this.keyLight.position.set(t.x + dir.x * BACK, t.y + HEIGHT, t.z + dir.z * BACK);
+      this.keyLight.position.set(t.x + this._keyDir.x * BACK, t.y + HEIGHT, t.z + this._keyDir.z * BACK);
       this.keyLight.target.position.copy(t);
     }
     // 사용자 모드에서는 카메라가 바닥 평면 아래로 내려가지 못하게 막는다.
