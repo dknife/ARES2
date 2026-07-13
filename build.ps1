@@ -114,6 +114,8 @@ Copy-Item 'Web\vendor\three-bundle.min.js' 'Build\vendor\three-bundle.min.js' -F
 # 모든 GLB(시뮬 14종·랜딩 로봇 임베드)가 meshopt 압축본이므로 필수다.
 # (2026-07-09 텍스처 1024² 리사이즈 후 meshopt 재압축으로 동일 구성 유지)
 Copy-Item 'Web\vendor\meshopt_decoder.js'  'Build\vendor\meshopt_decoder.js'  -Force
+# 히어로 로봇은 AlbiRobot.embed.js(현행), 개발자 스폰용 ares_robot.embed.js 도 함께 둔다
+Copy-Item 'Web\Mesh\AlbiRobot\AlbiRobot.embed.js' 'Build\AlbiRobot.embed.js'   -Force
 Copy-Item 'Web\Mesh\ares_robot.embed.js'   'Build\ares_robot.embed.js'        -Force
 
 # WebGL 로봇 뷰어(알비 + 눈 LED)도 함께 배포 → Build\viewer\.
@@ -138,9 +140,11 @@ Write-Host ''
 Write-Host '[5/7] generating index.html (landing page)'
 $landing = Read-Utf8 'Web\index.html'
 $landing = $landing -replace '\s*<a href="\.\./index\.html"[^>]*>[^<]*</a>\s*', ''
-# Build 산출물은 Mesh\ 폴더 없이 ares_robot.embed.js 만 루트에 둔다(§4 마지막).
-# Web\index.html 의 'Mesh/ares_robot.embed.js' / 'Mesh/ares_robot.glb' 경로를
-# 루트 기준으로 치환한다(후자는 file:// 분기에선 안 쓰이는 dead path 지만 정합성 유지).
+# Build 산출물은 Mesh\ 폴더 없이 임베드/에셋을 루트에 둔다(§4 마지막).
+# 히어로 로봇(AlbiRobot) 임베드/메시 경로를 평탄화한다 — 빠뜨리면 file:// 랜딩에서
+# '로봇을 불러오지 못했어요' 로 실패한다.
+$landing = $landing -replace 'Mesh/AlbiRobot/AlbiRobot\.embed\.js', 'AlbiRobot.embed.js'
+$landing = $landing -replace 'Mesh/AlbiRobot/AlbiRobot\.min\.glb',  'AlbiRobot.min.glb'
 $landing = $landing -replace 'Mesh/ares_robot\.embed\.js', 'ares_robot.embed.js'
 $landing = $landing -replace 'Mesh/ares_robot\.glb',       'ares_robot.glb'
 Write-Utf8 'Build\index.html' $landing
@@ -346,6 +350,23 @@ if ($maxBin) {
     if ($maxMB -gt 95) {
         Write-Warning "single bin chunk exceeds 95 MB ($($maxBin.Name)) -- GitHub 100 MB hard limit risk"
     }
+}
+Write-Host ''
+
+# 7b') 랜딩 컷씬(탐사선 연결) 로켓: loader.load 가 fetch 로 GLB 를 읽으므로 file:// 에서
+#      fetch shim 이 필요하다. index.html 에 Rocket bin 청크 + inline_assets shim 을 주입한다.
+#      (히어로 로봇은 임베드라 별도, 우주인은 file:// 에서 생략됨)
+$rocketBin = $binScriptNames | Where-Object { $_ -like 'bin_Rocket*' } | Select-Object -First 1
+$lp = 'Build\index.html'
+$li = Read-Utf8 $lp
+$anchor = '<script src="vendor/meshopt_decoder.js"></script>'
+if ($rocketBin -and ($li -match [regex]::Escape($anchor)) -and ($li -notmatch 'inline_assets\.js')) {
+    $shimTags = "$anchor`n    <script src=`"vendor/$rocketBin`"></script>`n    <script src=`"vendor/inline_assets.js`"></script>"
+    $li = $li -replace [regex]::Escape($anchor), $shimTags
+    Write-Utf8 $lp $li
+    Write-Host "        injected cutscene rocket shim into index.html ($rocketBin + inline_assets)"
+} else {
+    Write-Warning '컷씬 로켓 shim 주입 실패 -- anchor/bin 확인 필요'
 }
 Write-Host ''
 

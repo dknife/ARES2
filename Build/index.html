@@ -194,6 +194,8 @@
     <!-- three.js 로컬 번들 (CDN 없이 동작) → window.THREE, window.ARES3 -->
     <script src="vendor/three-bundle.min.js"></script>
     <script src="vendor/meshopt_decoder.js"></script>
+    <script src="vendor/bin_Rocket.min.js"></script>
+    <script src="vendor/inline_assets.js"></script>
     <script>
     'use strict';
     (function () {
@@ -497,10 +499,10 @@
         return new Promise((res, rej) => {
           if (window.ARES_ROBOT_GLB_B64) return res(window.ARES_ROBOT_GLB_B64);
           const s = document.createElement('script');
-          s.src = 'Mesh/AlbiRobot/AlbiRobot.embed.js';
+          s.src = 'AlbiRobot.embed.js';
           s.onload = () => window.ARES_ROBOT_GLB_B64
             ? res(window.ARES_ROBOT_GLB_B64) : rej(new Error('임베드 데이터 없음'));
-          s.onerror = () => rej(new Error('Mesh/AlbiRobot/AlbiRobot.embed.js 로드 실패'));
+          s.onerror = () => rej(new Error('AlbiRobot.embed.js 로드 실패'));
           document.head.appendChild(s);
         });
       }
@@ -511,7 +513,7 @@
           .then((b64) => loader.parse(b64ToBuffer(b64), '', onModelLoad, onModelErr))
           .catch(onModelErr);
       } else {
-        loader.load('Mesh/AlbiRobot/AlbiRobot.min.glb', onModelLoad, undefined, onModelErr);
+        loader.load('AlbiRobot.min.glb', onModelLoad, undefined, onModelErr);
       }
 
       // 등장 애니메이션 (easeOutBack 팝인)

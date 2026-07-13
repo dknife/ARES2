@@ -28,7 +28,8 @@ ARES_Project/
     ├── styles.css                  ← main.html이 참조하는 스타일시트
     ├── mobile-preview.js           ← ?mobile=true 휴대폰 프레임 미리보기 (index/main.html이 클래식 스크립트로 로드)
     ├── dashboard.html              ← 대시보드 (iframe 자식, ES module 사용 안 함)
-    ├── ares_robot.embed.js         ← 랜딩 로봇 GLB(base64) — file:// 오프라인 렌더용
+    ├── AlbiRobot.embed.js          ← 랜딩 히어로 로봇 GLB(base64) — file:// 오프라인 렌더용(현행)
+    ├── ares_robot.embed.js         ← 개발자 스폰용 로봇 GLB(base64) — 레거시/보조
     ├── assets/                     ← UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크) — main.html/styles.css 참조
     ├── fonts/                      ← 로컬 서브셋 폰트(fonts.css + woff2) — 오프라인 시각 일관성
     ├── vendor/
@@ -69,8 +70,8 @@ ARES_Project/
 > 숨긴다. 이 fetch 는 실패해도 조용히 넘어가므로, 인라인하지 않으면 file:// 빌드에서
 > **서비스 씬이 사라지고 숨겨 놓은 레거시 토픽이 다시 노출**된다.
 
-> **3D 로봇 오프라인 동작.** 랜딩 페이지(`index.html`)의 손 흔드는 로봇은 임베드 스크립트
-> (`ares_robot.embed.js`)의 base64 GLB를 `<script>` 태그로 정적 로드한 뒤
+> **3D 로봇 오프라인 동작.** 랜딩 페이지(`index.html`)의 손 흔드는 히어로 로봇은 임베드 스크립트
+> (`AlbiRobot.embed.js`)의 base64 GLB를 `<script>` 태그로 정적 로드한 뒤
 > `GLTFLoader.parse()`로 직접 파싱합니다. `viewer/`의 3D 뷰어는 일반 `fetch('Resources/AlbiStaticLow.glb')`
 > 를 호출하지만, `vendor/inline_assets.js` 의 fetch shim 이 `BIN` 사전에 base64 로 임베드된
 > GLB 를 바이너리 `Response` 로 즉시 반환합니다. 두 경로 모두 **인터넷 없이 `file://`로도**
@@ -139,7 +140,8 @@ macOS·Linux에서는 프로젝트 루트의 `./build.sh`를 실행하세요. `b
 
 `file://`는 로컬 GLB를 `fetch`할 수 없으므로(CORS, `origin: null`), 빌드는 GLB를 다음과 같이 인라인합니다.
 
-- **랜딩 로봇**(`index.html`): `ares_robot.embed.js`(base64, Build 루트)를 동적 로드 후 `GLTFLoader.parse()`. (랜딩의 우주인 장식(`Mesh/EnvAssets/Astronaut.glb`)은 코드가 `file://` 에서 스스로 생략한다 — 장식용이라 의도된 동작.)
+- **랜딩 히어로 로봇**(`index.html`): `AlbiRobot.embed.js`(base64, Build 루트 — 원본은 `Web/Mesh/AlbiRobot/AlbiRobot.embed.js`, `AlbiRobot.min.glb` 에서 재생성)를 동적 로드 후 `GLTFLoader.parse()`. 빌드가 `Mesh/AlbiRobot/AlbiRobot.embed.js` 경로를 루트로 평탄화한다 — 빠뜨리면 `file://` 에서 "로봇을 불러오지 못했어요" 로 실패한다. (랜딩의 우주인 장식(`Mesh/EnvAssets/Astronaut.glb`)은 코드가 `file://` 에서 스스로 생략한다 — 장식용이라 의도된 동작.)
+- **랜딩 컷씬 로켓**(`index.html`, "탐사선 연결" 클릭 후): `loader.load('Mesh/RocketAndLauncher/Rocket.min.glb')` 로 fetch 하므로, 빌드가 `index.html` 에 `vendor/bin_Rocket.min.js` + `vendor/inline_assets.js`(fetch shim)를 주입해 `file://` 에서 BIN 으로 제공한다.
 - **미션 시뮬레이션**(`main.html`) + **뷰어**(`viewer/`): GLB 전부(시뮬 + `ares_robot.glb` + `EnvAssets/*.glb` + 서비스 씬용 `AlbiRobot/*.min.glb`·`RocketAndLauncher/*.min.glb` — §2 참고)를 GLB 1개당 `vendor/bin_<stem>.js` 1개로 base64 인라인해 `window.__ARES_BIN__` 을 채우고, `vendor/inline_assets.js` 의 `window.fetch` shim이 이를 **바이너리 `Response`로 반환**한다. 키를 파일명(`Foo.glb`)으로 두어 `Mesh/...`·`Mesh/RoverParts/...`·`Mesh/EnvAssets/...`·`Mesh/AlbiRobot/...`·`Mesh/RocketAndLauncher/...`·`Resources/...` 어떤 경로의 fetch도 가로챈다. 따라서 `main.js`(번들) 코드는 일반 `fetch`를 그대로 쓰고, 빌드 산출물만 file://에서 동작한다.
 - **서비스 씬 + 개발자 스폰 메뉴**: `scenes/*.json`(씬 manifest + 씬 파일)과 `Mesh/manifest.json` 은 텍스트로 `inline_assets.js` 의 DATA 에 인라인되어 같은 shim 이 JSON `Response` 로 반환한다.
 - 모든 GLB는 meshopt 압축본(2026-07-09 텍스처 1024² 리사이즈 후에도 재압축으로 유지) — 두 경로 다 `vendor/meshopt_decoder.js` 가 먼저 로드되어 있어야 한다.
@@ -185,7 +187,7 @@ curl -L -o python_compressed.js   https://unpkg.com/blockly@11/python_compressed
 `Web/index.html`(3D 로봇 손흔들기 + "탐사선 연결" 버튼)을 `Build/index.html`로 복사하면서 두 가지를 치환합니다.
 
 1. `../index.html`(프로젝트 루트) 백링크 제거 — Build 단독 배포에서는 도착지가 없음.
-2. `Mesh/ares_robot.embed.js` → `ares_robot.embed.js` 경로 평탄화 — Build에는 `Mesh/` 폴더가 없고 embed 스크립트만 루트에 둠.
+2. 히어로 로봇 임베드 경로 평탄화 — `Mesh/AlbiRobot/AlbiRobot.embed.js` → `AlbiRobot.embed.js`(+ `Mesh/ares_robot.embed.js` → `ares_robot.embed.js`). Build에는 `Mesh/` 폴더가 없고 embed 스크립트만 루트에 둠. 또 컷씬 로켓용으로 `bin_Rocket.min.js` + `inline_assets.js` shim `<script>` 를 주입함.
 
 ### 4.4 `main.html` 패치 (블록 에디터)
 
@@ -245,6 +247,7 @@ cp -R Web/fonts           Build/fonts     # 로컬 서브셋 폰트(fonts.css + 
 ```bash
 cp Web/vendor/three-bundle.min.js  Build/vendor/three-bundle.min.js
 cp Web/vendor/meshopt_decoder.js   Build/vendor/meshopt_decoder.js
+cp Web/Mesh/AlbiRobot/AlbiRobot.embed.js  Build/AlbiRobot.embed.js   # 히어로 로봇(현행)
 cp Web/Mesh/ares_robot.embed.js    Build/ares_robot.embed.js
 ```
 
@@ -331,6 +334,7 @@ cp -R Web/assets                  Build/assets                       # UI 이미
 cp -R Web/fonts                   Build/fonts                        # 로컬 폰트
 cp Web/vendor/three-bundle.min.js Build/vendor/three-bundle.min.js
 cp Web/vendor/meshopt_decoder.js  Build/vendor/meshopt_decoder.js   # meshopt GLB 디코더 — 필수
+cp Web/Mesh/AlbiRobot/AlbiRobot.embed.js Build/AlbiRobot.embed.js  # 히어로 로봇(현행)
 cp Web/Mesh/ares_robot.embed.js   Build/ares_robot.embed.js
 
 # 6. 자산 인라인: GLB 1개당 Build/vendor/bin_<stem>.js (base64) + inline_assets.js

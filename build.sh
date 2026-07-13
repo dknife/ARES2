@@ -46,7 +46,9 @@ cp Web/vendor/three-bundle.min.js Build/vendor/three-bundle.min.js
 # meshopt 디코더: 모든 GLB(시뮬 14종·랜딩 로봇 임베드)가 meshopt 압축본 — 필수
 cp Web/vendor/meshopt_decoder.js  Build/vendor/meshopt_decoder.js
 # 랜딩 로봇 임베드는 Build 루트에 평탄화한다(build.ps1 과 동일 — Build/Mesh 없음)
-cp Web/Mesh/ares_robot.embed.js Build/ares_robot.embed.js
+# 히어로 로봇은 AlbiRobot.embed.js(현행), 개발자 스폰용 ares_robot.embed.js 도 함께 둔다
+cp Web/Mesh/AlbiRobot/AlbiRobot.embed.js Build/AlbiRobot.embed.js
+cp Web/Mesh/ares_robot.embed.js          Build/ares_robot.embed.js
 # WebGL 뷰어(개인 폴더라 없을 수 있음) — 있으면 함께 배포
 if [ -f WebGL/index.html ]; then
   echo "        + WebGL viewer -> Build/viewer/"
@@ -77,6 +79,10 @@ def js(s):  # JS 문자열 리터럴로 인코딩 + </ 무력화
 # 백링크 제거 + 로봇 임베드 경로 평탄화(Build 루트, Build/Mesh 없음 — build.ps1 동일)
 landing = R('Web/index.html')
 landing = re.sub(r'\s*<a href="\.\./index\.html"[^>]*>[^<]*</a>\s*', '', landing)
+# 히어로 로봇(AlbiRobot) 임베드/메시 경로 평탄화 — Build 에는 Mesh/ 폴더가 없다.
+# 이 평탄화를 빠뜨리면 file:// 랜딩에서 '로봇을 불러오지 못했어요' 로 실패한다.
+landing = landing.replace('Mesh/AlbiRobot/AlbiRobot.embed.js', 'AlbiRobot.embed.js')
+landing = landing.replace('Mesh/AlbiRobot/AlbiRobot.min.glb', 'AlbiRobot.min.glb')
 landing = landing.replace('Mesh/ares_robot.embed.js', 'ares_robot.embed.js')
 landing = landing.replace('Mesh/ares_robot.glb', 'ares_robot.glb')
 W('Build/index.html', landing)
@@ -184,6 +190,22 @@ out += text_parts + [shim, '})();']
 W('Build/vendor/inline_assets.js', '\n'.join(out) + '\n')
 print('        inlined text entries: %d' % n)
 assert n >= 13, 'inline text entries < 13'
+
+# ---- 7.5) 랜딩 컷씬(탐사선 연결) 로켓: loader.load 가 fetch 로 GLB 를 읽으므로
+#      file:// 에서 fetch shim 이 필요하다. index.html 에 Rocket bin 청크 + inline_assets
+#      shim 을 주입한다(히어로 로봇은 임베드라 별도, 우주인은 file:// 에서 생략됨). ----
+rocket_bin = next((s for s in bin_scripts if s.startswith('bin_Rocket')), None)
+li = R('Build/index.html')
+anchor = '<script src="vendor/meshopt_decoder.js"></script>'
+if rocket_bin and anchor in li and 'inline_assets.js' not in li:
+    li = li.replace(anchor,
+                    anchor
+                    + '\n    <script src="vendor/%s"></script>' % rocket_bin
+                    + '\n    <script src="vendor/inline_assets.js"></script>', 1)
+    W('Build/index.html', li)
+    print('        injected cutscene rocket shim into index.html (%s + inline_assets)' % rocket_bin)
+else:
+    print('        WARNING: 컷씬 로켓 shim 주입 실패 -- anchor/bin 확인 필요')
 
 # 뷰어도 file:// 에서 GLB를 fetch shim 으로 받도록 bin 청크 + inline_assets 주입
 vp = 'Build/viewer/index.html'
