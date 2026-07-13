@@ -2707,7 +2707,7 @@
       this.ctx = ctx;
     }
     render() {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       const ctx = this.ctx;
       const THREE = ctx.THREE;
       const nowSec = performance.now() * 1e-3;
@@ -2716,7 +2716,8 @@
       (_a = ctx.updateSmoothZoom) == null ? void 0 : _a.call(ctx, dt);
       ctx.controls.update();
       (_b = ctx.updateCameraReset) == null ? void 0 : _b.call(ctx, dt);
-      (_c = ctx.updateKeyLight) == null ? void 0 : _c.call(ctx);
+      (_c = ctx.clampCameraAboveFloor) == null ? void 0 : _c.call(ctx);
+      (_d = ctx.updateKeyLight) == null ? void 0 : _d.call(ctx);
       const m = ctx.movement;
       const g = ctx.gun;
       if (m && m.radarOn && m.antennaPivot) {
@@ -7910,9 +7911,9 @@
       this.homeCamPos = null;
       this.homeTarget = null;
       this.camResetTween = null;
-      this.scene.add(new THREE.HemisphereLight(14674687, 3293231, 0.55));
-      const key = new THREE.DirectionalLight(16774374, 2);
-      key.position.set(3, 6, 5);
+      this.scene.add(new THREE.HemisphereLight(13622514, 1910304, 0.34));
+      const key = new THREE.DirectionalLight(16768432, 2.6);
+      key.position.set(0, 6, -10);
       key.castShadow = true;
       key.shadow.mapSize.set(4096, 4096);
       key.shadow.bias = -3e-4;
@@ -7926,10 +7927,10 @@
       this.scene.add(key);
       this.scene.add(key.target);
       this.keyLight = key;
-      const fill = new THREE.DirectionalLight(10469616, 0.5);
-      fill.position.set(-4, 2, 4);
+      const fill = new THREE.DirectionalLight(9417968, 0.3);
+      fill.position.set(-4, 2, 6);
       this.scene.add(fill);
-      this.ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
+      this.ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.38 }));
       this.ground.rotation.x = -Math.PI / 2;
       this.ground.receiveShadow = true;
       this.scene.add(this.ground);
@@ -7957,12 +7958,28 @@
       this.objects = new SimulationObjectRegistry(this);
       this.editor = new EditorControls(this);
     }
-    // 키 라이트(그림자 광원)를 카메라 타깃에 추종시킨다 — 좁은 그림자 프러스텀이
-    // 항상 시야 중심을 덮어 어디서 작업하든 객체 간 그림자가 유지된다.
+    // 키 라이트(그림자 광원)를 카메라 시점의 반대편(역광)에 추종시킨다 — 카메라가
+    // 어느 방향에서 보든 빛이 장면 뒤에서 사용자 쪽으로 비춰 그림자가 화면 앞으로
+    // 드리운다. 좁은 그림자 프러스텀이 항상 시야 중심을 덮는 것은 종전과 동일.
     updateKeyLight() {
       const t = this.controls.target;
-      this.keyLight.position.set(t.x + 3, t.y + 6, t.z + 5);
+      if (!this._keyDir) this._keyDir = new this.THREE.Vector3();
+      const dir = this._keyDir.subVectors(t, this.camera.position);
+      dir.y = 0;
+      const len = dir.length();
+      if (len > 1e-3) dir.divideScalar(len);
+      else dir.set(0, 0, -1);
+      const BACK = 10, HEIGHT = 6;
+      this.keyLight.position.set(t.x + dir.x * BACK, t.y + HEIGHT, t.z + dir.z * BACK);
       this.keyLight.target.position.copy(t);
+    }
+    // 사용자 모드에서는 카메라가 바닥 평면 아래로 내려가지 못하게 막는다.
+    // 개발자 모드(editor.devMode)는 씬 저작을 위해 바닥 밑 시점을 허용한다.
+    clampCameraAboveFloor() {
+      var _a;
+      if ((_a = this.editor) == null ? void 0 : _a.devMode) return;
+      const MIN_Y = 0.15;
+      if (this.camera.position.y < MIN_Y) this.camera.position.y = MIN_Y;
     }
     clampCameraDistance(distance) {
       return Math.min(this.controls.maxDistance, Math.max(this.controls.minDistance, distance));

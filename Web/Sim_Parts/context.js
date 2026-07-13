@@ -80,11 +80,12 @@ export class Context {
     this.homeTarget = null;
     this.camResetTween = null;
 
-    // Lighting
-    this.scene.add(new THREE.HemisphereLight(0xdfeaff, 0x32402f, 0.55));
-    
-    const key = new THREE.DirectionalLight(0xfff4e6, 2.0);
-    key.position.set(3, 6, 5);
+    // Lighting — 드라마틱 연출(2026-07-14): 주변광을 낮추고 강한 웜톤 역광(키)을
+    // 장면 뒤에 두어 명암 대비를 키운다. 그림자는 뒤에서 사용자(카메라) 쪽으로 드리운다.
+    this.scene.add(new THREE.HemisphereLight(0xcfdcf2, 0x1d2620, 0.34));
+
+    const key = new THREE.DirectionalLight(0xffddb0, 2.6);
+    key.position.set(0, 6, -10);   // 초기값 — 매 프레임 updateKeyLight() 가 카메라 반대편(역광)으로 갱신
     key.castShadow = true;
     key.shadow.mapSize.set(4096, 4096);
     key.shadow.bias = -0.0003;
@@ -102,12 +103,13 @@ export class Context {
     this.scene.add(key.target);
     this.keyLight = key;
 
-    const fill = new THREE.DirectionalLight(0x9fc0f0, 0.5);
-    fill.position.set(-4, 2, 4);
+    // 필 라이트 — 역광으로 어두워지는 정면을 차가운 톤으로 살짝만 받쳐 준다
+    const fill = new THREE.DirectionalLight(0x8fb4f0, 0.3);
+    fill.position.set(-4, 2, 6);
     this.scene.add(fill);
 
-    // Ground
-    this.ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.25 }));
+    // Ground — 역광 그림자가 화면 앞으로 길게 드리우므로 그림자 농도를 올린다
+    this.ground = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.ShadowMaterial({ opacity: 0.38 }));
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.receiveShadow = true;
     this.scene.add(this.ground);
@@ -143,12 +145,27 @@ export class Context {
     this.editor = new EditorControls(this);
   }
 
-  // 키 라이트(그림자 광원)를 카메라 타깃에 추종시킨다 — 좁은 그림자 프러스텀이
-  // 항상 시야 중심을 덮어 어디서 작업하든 객체 간 그림자가 유지된다.
+  // 키 라이트(그림자 광원)를 카메라 시점의 반대편(역광)에 추종시킨다 — 카메라가
+  // 어느 방향에서 보든 빛이 장면 뒤에서 사용자 쪽으로 비춰 그림자가 화면 앞으로
+  // 드리운다. 좁은 그림자 프러스텀이 항상 시야 중심을 덮는 것은 종전과 동일.
   updateKeyLight() {
     const t = this.controls.target;
-    this.keyLight.position.set(t.x + 3, t.y + 6, t.z + 5);
+    if (!this._keyDir) this._keyDir = new this.THREE.Vector3();
+    const dir = this._keyDir.subVectors(t, this.camera.position);   // 카메라 → 타깃 (수평 성분만)
+    dir.y = 0;
+    const len = dir.length();
+    if (len > 1e-3) dir.divideScalar(len); else dir.set(0, 0, -1);
+    const BACK = 10, HEIGHT = 6;   // 낮은 고도(~31°)의 역광 — 긴 그림자로 드라마틱하게
+    this.keyLight.position.set(t.x + dir.x * BACK, t.y + HEIGHT, t.z + dir.z * BACK);
     this.keyLight.target.position.copy(t);
+  }
+
+  // 사용자 모드에서는 카메라가 바닥 평면 아래로 내려가지 못하게 막는다.
+  // 개발자 모드(editor.devMode)는 씬 저작을 위해 바닥 밑 시점을 허용한다.
+  clampCameraAboveFloor() {
+    if (this.editor?.devMode) return;
+    const MIN_Y = 0.15;
+    if (this.camera.position.y < MIN_Y) this.camera.position.y = MIN_Y;
   }
 
   clampCameraDistance(distance) {

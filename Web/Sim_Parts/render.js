@@ -25,6 +25,8 @@ export class Render {
     ctx.controls.update();
     // 더블클릭 카메라 복귀 트윈 — controls.update() 뒤에서 절대 좌표를 덮어써 부드럽게 이동
     ctx.updateCameraReset?.(dt);
+    // 사용자 모드 카메라 바닥 제한(개발자 모드는 통과) — 모든 카메라 갱신 뒤에 클램프
+    ctx.clampCameraAboveFloor?.();
     ctx.updateKeyLight?.();
 
     const m = ctx.movement;
