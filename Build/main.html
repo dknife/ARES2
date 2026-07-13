@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARES 관제실</title>
+    <!-- 데스크톱에서 ?mobile=true 로 모바일 화면 미리보기 (다른 스크립트보다 먼저 실행) -->
+    <script src="mobile-preview.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="fonts/fonts.css">
+    <link rel="stylesheet" href="styles.css?v=20260709f">
+    <script src="vendor/blockly_compressed.js"></script>
+    <script src="vendor/blocks_compressed.js"></script>
+    <script src="vendor/python_compressed.js"></script>
+    <script src="vendor/three-bundle.min.js"></script>
+    <script src="vendor/meshopt_decoder.js"></script>
+        <script src="vendor/bin_AlbiStaticLow.js" defer></script>
+    <script src="vendor/bin_LampBox.js" defer></script>
+    <script src="vendor/bin_LampGeneral.js" defer></script>
+    <script src="vendor/bin_LampHand1.js" defer></script>
+    <script src="vendor/bin_LampHand2.js" defer></script>
+    <script src="vendor/bin_LampHand3.js" defer></script>
+    <script src="vendor/bin_LaunchStation.js" defer></script>
+    <script src="vendor/bin_ares_robot.js" defer></script>
+    <script src="vendor/bin_RoverBody.js" defer></script>
+    <script src="vendor/bin_RoverGun.js" defer></script>
+    <script src="vendor/bin_RoverHead.js" defer></script>
+    <script src="vendor/bin_RoverLED.js" defer></script>
+    <script src="vendor/bin_RoverOLED.js" defer></script>
+    <script src="vendor/bin_RoverRadar.js" defer></script>
+    <script src="vendor/bin_RoverWheel.js" defer></script>
+    <script src="vendor/bin_Astronaut.js" defer></script>
+    <script src="vendor/bin_AlbiRobot.min.js" defer></script>
+    <script src="vendor/bin_LaunchStand.min.js" defer></script>
+    <script src="vendor/bin_RadaDish.min.js" defer></script>
+    <script src="vendor/bin_RadarBody.min.js" defer></script>
+    <script src="vendor/bin_Rocket.min.js" defer></script>
+    <script src="vendor/inline_assets.js" defer></script>
+    <script src="main.bundle.js" defer></script>
+    <style>
+        /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
+           버튼으로 닫으면 아래 원래 화면이 그대로 드러난다(원위치 복귀). */
+        #dashboardFrame {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+            z-index: 10000;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-main">
+                <a class="ares-brand" href="#" aria-label="만든 사람들 보기" title="만든 사람들">
+                    <img src="assets/design/ares-logo.png" alt="ARES 화성탐사">
+                </a>
+                <button id="inspectButton" class="header-settings" type="button" aria-label="점검 화면 열기" title="점검 화면 열기"><span class="header-settings-icon" aria-hidden="true"></span></button>
+                <div id="controls" class="utility-controls" aria-hidden="true">
+                    <button id="homeButton" class="nav-btn" title="개요로 이동">🏠 개요</button>
+                    <button id="runButton" disabled>▶️ 미션 전송</button>
+                    <button id="saveButton" disabled>💾 미션 저장</button>
+                    <button id="loadButton" disabled>📂 미션 읽기</button>
+                    <button id="blockCodingButton">🧩 블록코딩</button>
+                    <input type="file" id="fileInput" accept=".xml" style="display: none;"/>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===== 차시/미션 네비게이터 ===== -->
+        <nav id="missionNav">
+            <select id="lessonSelect" aria-label="차시 선택">
+                <option value="">차시 선택…</option>
+            </select>
+            <select id="missionSelect" aria-label="미션 선택" disabled>
+                <option value="">미션 선택…</option>
+            </select>
+            <button id="contentToggleBtn" class="nav-btn" type="button" hidden title="미션 설명 ↔ 블럭코딩 전환">블록 코딩</button>
+            <button id="simToggle" class="nav-btn" type="button" hidden aria-pressed="false" title="3D 시뮬레이션 열기/닫기">시뮬레이션</button>
+            <select id="exampleSelect" title="예제 불러오기" disabled>
+                <option value="">예제</option>
+                <option value="greeting">&nbsp;👋&nbsp; 인사하기</option>
+                <option value="countdown">&nbsp;⏰&nbsp; 카운트다운</option>
+                <option value="radar_demo">&nbsp;📡&nbsp; 레이더 데모</option>
+                <option value="albi_song">&nbsp;🎵&nbsp; 알비의 노래</option>
+                <option value="led_variable">&nbsp;🔢&nbsp; 변수로 LED 켜기</option>
+                <option value="obstacle_avoid">&nbsp;🚧&nbsp; 장애물 피하기</option>
+                <option value="rover_wakeup">&nbsp;🤖&nbsp; 로버 깨우기</option>
+            </select>
+            <button id="aiHelpButton" class="nav-btn" type="button" hidden title="하고 싶은 일을 자연어로 적으면 블록을 만들어 줘요">🤖 AI 도움</button>
+            <span id="breadcrumb" aria-live="polite"></span>
+        </nav>
+
+        <!-- ===== 콘텐츠 영역: overview / lesson / mission 3-state ===== -->
+        <div class="main-content">
+
+            <!-- 개요 뷰 (초기 진입 시 노출) -->
+            <section id="overviewView" class="content-view" data-view="overview">
+                <div id="overviewContent">불러오는 중…</div>
+            </section>
+
+            <!-- 차시 소개 뷰 -->
+            <section id="lessonView" class="content-view" data-view="lesson" hidden>
+                <div class="lesson-header">
+                    <span class="lesson-tag" id="lessonTagBadge"></span>
+                    <h2 id="lessonHeading"></h2>
+                    <p class="lesson-meta">
+                        <span id="lessonHardware"></span>
+                        <span class="dot-sep">·</span>
+                        <span id="lessonConcept"></span>
+                    </p>
+                </div>
+                <div class="lesson-body">
+                    <p id="lessonIntro"></p>
+                    <h3>미션 목록</h3>
+                    <ol id="lessonMissionList" class="mission-list"></ol>
+                    <div id="lessonSummary" class="lesson-summary"></div>
+                </div>
+            </section>
+
+            <!-- 미션 코딩 뷰 (description / coding / simulation 모드 전환) -->
+            <section id="missionView" class="content-view" data-view="mission" data-mode="description" hidden>
+                <!-- 차시·미션 표시 + 예제 선택 — 코딩·시뮬레이션 모드 공유 상단 배너 -->
+                <div id="codingMissionBanner">
+                    <span id="codingMissionLabel" aria-live="polite"></span>
+                    <select id="codingMissionSelect" title="차시·미션 선택" aria-label="차시·미션 선택">
+                        <option value="">미션 선택</option>
+                    </select>
+                    <select id="codingExampleSelect" title="예제 불러오기" aria-label="예제 불러오기">
+                        <option value="">예제 선택</option>
+                        <option value="greeting">&nbsp;👋&nbsp; 인사하기</option>
+                        <option value="countdown">&nbsp;⏰&nbsp; 카운트다운</option>
+                        <option value="radar_demo">&nbsp;📡&nbsp; 레이더 데모</option>
+                        <option value="albi_song">&nbsp;🎵&nbsp; 알비의 노래</option>
+                        <option value="led_variable">&nbsp;🔢&nbsp; 변수로 LED 켜기</option>
+                        <option value="obstacle_avoid">&nbsp;🚧&nbsp; 장애물 피하기</option>
+                        <option value="rover_wakeup">&nbsp;🤖&nbsp; 로버 깨우기</option>
+                    </select>
+                </div>
+                <aside id="missionPanel" class="mission-panel">
+                    <div class="mission-panel-head">
+                        <span class="lesson-tag" id="missionTagBadge"></span>
+                        <h3 id="missionHeading"></h3>
+                        <p class="mission-meta" id="missionHardware"></p>
+                    </div>
+                    <div class="mission-story" id="missionStory"></div>
+                    <div class="mission-goal-dialog">
+                        <div class="story-line story-albi story-goals">
+                            <span class="story-avatar"><img src="assets/design/avatar-albi.png" alt="알비"></span>
+                            <span class="story-name">알비</span>
+                            <div class="goal-bubble">
+                                <h4>학습 목표</h4>
+                                <ul id="missionGoals"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <details class="mission-section mission-sample" open>
+                        <summary># 샘플 코드 보기</summary>
+                        <pre id="missionSampleCode" class="sample-code"></pre>
+                    </details>
+                    <div class="mission-prev-next">
+                        <button id="prevMissionBtn" class="nav-btn-small" disabled>← 이전 미션</button>
+                        <button id="nextMissionBtn" class="nav-btn-small" disabled>다음 미션 →</button>
+                    </div>
+                </aside>
+                <div class="mission-workspace">
+                    <div id="blocklyDiv"></div>
+                    <div id="workspaceEmptyHint" class="workspace-empty-hint" aria-live="polite">
+                        <span class="workspace-empty-icon" aria-hidden="true">🧩</span>
+                        <span>블록을 끌어와<br>미션을 만들어보세요!</span>
+                    </div>
+                    <!-- 툴박스 이미지 메뉴 아래 도구 버튼: UI 개편 전 상단에 있던 기능 복원 -->
+                    <div id="toolboxActions" aria-label="미션 도구">
+                        <button type="button" class="tbx-action" data-action="save" title="코드 저장 — 현재 코드를 파일로 저장">
+                            <span class="tbx-ico"><img src="assets/design/Save.png" alt=""></span><span class="tbx-lbl">코드저장</span>
+                        </button>
+                        <button type="button" class="tbx-action" data-action="load" title="코드 읽기 — 저장된 코드 파일 불러오기">
+                            <span class="tbx-ico"><img src="assets/design/Load.png" alt=""></span><span class="tbx-lbl">코드읽기</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3D 시뮬레이션 카드 — 카드 전체가 하나의 렌더링 영역이며,
+                     메뉴/버튼/실행/로그가 모두 이 영역 안의 위젯(오버레이)으로 들어간다.
+                     (시뮬레이션 열기 버튼으로 토글) -->
+                <div id="simCard" class="sim-card" hidden>
+                    <div id="simStage" class="sim-stage">
+                        <!-- 통신 로그: 캔버스 위에 흐릿하게 겹친 레이어 (불투명한 바닥에도 명령 글자가 늘 보인다) -->
+                        <div id="simLog" class="sim-log" aria-live="polite"></div>
+                        <!-- 주제 선택: 렌더링 창 안 좌상단 오버레이. 주제별 버튼 그룹은 제거됨
+                             (2026-07-09) — Simulation_Main 은 요소 부재를 안전하게 처리한다. -->
+                        <div class="sim-card-head">
+                            <select id="simTopic" class="sim-topic" title="시뮬레이션 주제 선택"></select>
+                        </div>
+                        <!-- 예제 코드 보기 위젯 — 주제 아래. 예제 제목 + 읽기전용 블록코딩.
+                             닫기 가능. 개발자 모드에서는 숨김(#simStage.sim-devmode). -->
+                        <div id="simCodePanel" class="sim-code-panel" hidden>
+                            <div class="sim-code-head">
+                                <span id="simCodeTitle" class="sim-code-title"></span>
+                                <button id="simCodeToggle" type="button" class="sim-code-toggle" title="블록 접기/펼치기" aria-label="블록 접기/펼치기" aria-expanded="true">▾</button>
+                            </div>
+                            <div class="sim-code-note">✏️ 수정은 코딩 모드에서</div>
+                            <div id="simCodeBlockly" class="sim-code-blockly"></div>
+                        </div>
+                        <!-- 시뮬 실행/중지는 하단 중앙 '모의실행' 버튼으로 통합(중앙 버튼이 toggleSimRun 호출).
+                             로그 지우기만 렌더링 창 안 하단에 남긴다. -->
+                        <div class="sim-runbar">
+                            <button id="simLogClear" type="button" title="로그 지우기">지우기</button>
+                        </div>
+                        <!-- 하단 중앙 설명문(simHint)은 제거됨 — Simulation_Main 은 요소 부재를 안전하게 처리 -->
+                        <div class="sim-loading" id="simLoading">알비를 불러오는 중…</div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <section id="logContainer">
+            <div id="logHeader">
+                통신 로그
+                <button id="clearLogBtn">로그 지우기</button>
+            </div>
+            <div id="logContent"></div>
+        </section>
+    </div>
+
+    <!-- 아레스 점검(대시보드) — 어느 화면에서든 설정 버튼으로 여는 전역 오버레이.
+         닫으면(자체 "점검완료 복귀" 버튼) 아래에 있던 원래 화면이 그대로 드러난다. -->
+    <iframe id="dashboardFrame" src="dashboard.html" title="아레스 점검"></iframe>
+
+    <!-- 목업 공통 하단바: 중앙의 신호연결은 실제 BLE 연결 버튼 -->
+    <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="모바일 빠른 메뉴">
+        <button type="button" class="mobile-nav-btn active" data-mobile-action="mission" aria-label="미션 메뉴로 이동">
+             <span class="mobile-nav-icon mobile-nav-icon-mission" aria-hidden="true"></span>
+             <span class="mobile-nav-label">미션</span>
+         </button>
+         <button type="button" class="mobile-nav-btn" data-mobile-action="coding" aria-label="선택한 미션의 코딩 화면으로 이동">
+             <span class="mobile-nav-icon mobile-nav-icon-coding" aria-hidden="true"></span>
+             <span class="mobile-nav-label">코딩</span>
+         </button>
+         <button id="connectButton" type="button" class="mobile-nav-btn mobile-connect-btn" data-mobile-action="connect" aria-label="탐사선 신호 연결">
+             <span class="mobile-connect-icon" aria-hidden="true"></span>
+             <span class="mobile-nav-label">신호연결</span>
+         </button>
+         <button type="button" class="mobile-nav-btn" data-mobile-action="simulation" aria-label="시뮬레이션 화면으로 이동">
+             <span class="mobile-nav-icon mobile-nav-icon-simulation" aria-hidden="true"></span>
+             <span class="mobile-nav-label">시뮬레이션</span>
+         </button>
+         <button type="button" class="mobile-nav-btn" data-mobile-action="ai" aria-label="AI 도움 열기 또는 닫기">
+            <span class="mobile-nav-icon mobile-nav-icon-ai" aria-hidden="true"></span>
+            <span class="mobile-nav-label">AI도움</span>
+        </button>
+    </nav>
+
+    <!-- ===== 🤖 AI 도움 채팅 패널 (오프라인 규칙 기반, 외부 통신 없음) ===== -->
+    <div id="aiPanel" class="ai-panel" hidden role="dialog" aria-label="AI 도움">
+        <div class="ai-panel-head">
+            <span>🤖 AI 도움</span>
+            <button id="aiCloseButton" class="ai-close" type="button" title="닫기" aria-label="닫기">✕</button>
+        </div>
+        <div id="aiMessages" class="ai-messages" aria-live="polite"></div>
+        <div class="ai-chips">
+            <button type="button" class="ai-chip">앞으로 2초 가기</button>
+            <button type="button" class="ai-chip">불 켜줘</button>
+            <button type="button" class="ai-chip">도레미 울려줘</button>
+            <button type="button" class="ai-chip">화면에 안녕 표시</button>
+            <button type="button" class="ai-chip">3번 반복 앞으로 가기</button>
+        </div>
+        <form id="aiForm" class="ai-form" autocomplete="off">
+            <input id="aiInput" type="text" placeholder="하고 싶은 일을 적어줘 (예: 앞으로 3초 가고 도레미 울려줘)" />
+            <button type="submit" title="블록 만들기">보내기</button>
+        </form>
+    </div>
+
+
+    <xml id="toolbox" style="display: none">
+        <!-- ========== 동작 ========== -->
+        <category id="category_motion" name="동작" colour="#cf3d37">
+            <block type="timed_forward">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="timed_backward">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="timed_left">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="timed_right">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="move_forward">
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="move_backward">
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="turn_left">
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="turn_right">
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="stop_moving"></block>
+
+            <block type="main_motor_forward_timed">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="main_motor_backward_timed">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="main_motor_forward">
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="main_motor_backward">
+                <value name="SPEED"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="main_motor_stop"></block>
+        </category>
+
+        <!-- ========== 출력 ========== -->
+        <category id="category_output" name="출력" colour="#d68fa5">
+            <block type="led_on">
+                <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="BRIGHTNESS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="led_off">
+                <value name="LED_NUM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="led_off_all"></block>
+            <block type="set_lamp">
+                <value name="LAMP0"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP1"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP2"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP3"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP4"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="LAMP5"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            </block>
+
+            <block type="send_message">
+                <value name="Msg"><shadow type="text"><field name="TEXT">Hello</field></shadow></value>
+            </block>
+            <block type="send_message_xy">
+                <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="Msg"><shadow type="text"><field name="TEXT">Hello</field></shadow></value>
+            </block>
+            <block type="display_icon">
+                <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            </block>
+            <block type="clear_display"></block>
+            <block type="clear_rect">
+                <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="W"><shadow type="math_number"><field name="NUM">32</field></shadow></value>
+                <value name="H"><shadow type="math_number"><field name="NUM">32</field></shadow></value>
+            </block>
+
+            <block type="buzzer_on">
+                <value name="FREQ"><shadow type="math_number"><field name="NUM">262</field></shadow></value>
+                <value name="DURATION"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="buzzer_note">
+                <value name="DURATION"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+        </category>
+
+        <!-- ========== 발사 ========== -->
+        <category id="category_gun" name="발사" colour="#dcc342">
+            <block type="gun_fire"></block>
+        </category>
+
+        <!-- ========== 감지 ========== -->
+        <category id="category_sensors" name="감지" colour="#7daa4d">
+            <block type="pico_check_device"></block>
+            <block type="check_distance"></block>
+            <block type="check_magnetic"></block>
+        </category>
+
+        <!-- ========== 제어 ========== -->
+        <category id="category_control" name="제어" colour="#7954B5">
+            <block type="time_sleep">
+                <value name="SECONDS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="controls_repeat_ext">
+                <value name="TIMES"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+            </block>
+            <block type="controls_whileUntil">
+                <field name="MODE">WHILE</field>
+            </block>
+            <block type="controls_if"></block>
+            <block type="batch_block"></block>
+        </category>
+
+        <!-- ========== 변수 ========== -->
+        <category id="category_variables" name="변수" colour="#5483b5" custom="VARIABLE"></category>
+
+        <!-- ========== 수학 ========== -->
+        <category id="category_math" name="수학" colour="#cacacb">
+            <block type="math_number"><field name="NUM">0</field></block>
+            <block type="math_arithmetic">
+                <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="B"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="math_random_int">
+                <value name="FROM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="TO"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            </block>
+            <block type="logic_compare">
+                <value name="A"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <value name="B"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            </block>
+            <block type="logic_operation"></block>
+            <block type="logic_negate"></block>
+            <block type="logic_boolean"></block>
+        </category>
+
+        <!-- ========== 함수 ========== -->
+        <category id="category_functions" name="함수" colour="#727171" custom="PROCEDURE"></category>
+    </xml>
+</body>
+</html>

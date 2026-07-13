@@ -1,0 +1,31 @@
+/* ARES 공통 로컬 폰트 */
+@font-face {
+  font-family: 'Noto Sans KR';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./NotoSansKR.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'VITRO Inspire';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('./VITRO-Inspire.woff2') format('woff2');
+}
+
+/* 기존 컴포넌트의 서체 이름도 Noto Sans로 통일한다. */
+@font-face {
+  font-family: 'GangwonEduTeun';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./NotoSansKR.woff2') format('woff2');
+}
+
+html,
+body,
+body * {
+  font-family: 'Noto Sans KR', sans-serif !important;
+}

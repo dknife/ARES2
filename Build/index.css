@@ -1,0 +1,123 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #F8F8F8;
+    color: #0D1117;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 1.12em;   /* 강원교육튼튼 기준 — 적당히 크게 */
+    font-weight: 700;    /* 대체로 굵게 */
+    overflow: hidden;
+}
+
+.container {
+    background: #FFFFFF;
+    padding: 48px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    max-width: 480px;
+    width: 90%;
+}
+
+.brand {
+    font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif;
+    font-size: 1.6em;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #0D1117;
+    margin-bottom: 24px;
+}
+
+.brand .dot {
+    color: #FF6A00;
+}
+
+.intro-title {
+    font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif;
+    font-size: 2em;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    color: #0D1117;
+}
+
+.intro-desc {
+    font-size: 1em;
+    line-height: 1.7;
+    margin-bottom: 32px;
+    color: #4A515C;
+}
+
+.start-btn {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 1em;
+    font-weight: 600;
+    height: 48px;
+    padding: 0 32px;
+    border: none;
+    border-radius: 8px;
+    background: #0D1117;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+    background: #383838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.start-btn:active {
+    transform: translateY(0);
+}
+
+.back-link {
+    display: block;
+    margin-top: 20px;
+    font-size: 0.85em;
+    color: #8A929E;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.back-link:hover {
+    color: #FF6A00;
+}
+
+.status {
+    margin-top: 20px;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: #8A929E;
+    transition: color 0.3s;
+}
+
+.status.connecting {
+    color: #FF6A00;
+}
+
+.status.connected {
+    color: #7BDCB5;
+}
+
+.status.error {
+    color: #E74C3C;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 32px 24px;
+        width: 92%;
+    }
+    .intro-title {
+        font-size: 1.6em;
+    }
+    .intro-desc {
+        font-size: 0.95em;
+    }
+}

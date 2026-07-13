@@ -40,6 +40,8 @@ cp Web/mobile-preview.js Build/mobile-preview.js
 # UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크) + 로컬 서브셋 폰트
 cp -R Web/assets Build/assets
 cp -R Web/fonts  Build/fonts
+# 임시작업/ 등 배포와 무관한 작업용 폴더는 산출물에서 제외(추적 대상 Build/ 오염 방지)
+rm -rf Build/assets/임시작업
 cp Web/vendor/three-bundle.min.js Build/vendor/three-bundle.min.js
 # meshopt 디코더: 모든 GLB(시뮬 14종·랜딩 로봇 임베드)가 meshopt 압축본 — 필수
 cp Web/vendor/meshopt_decoder.js  Build/vendor/meshopt_decoder.js

@@ -25,10 +25,10 @@ Document/진행보고/*일차/
 # WebGL 폴더는 개인 개발용 — 공유하지 않음
 WebGL/
 
-# Build/ 는 build.ps1 / build.sh 로 매번 재생성되는 자동 산출물.
-# 시뮬 GLB 의 base64 인라인 크기(vendor/inline_assets.js)가 GitHub 절대 한도(100 MB)를
-# 초과해 push 가 거부되므로 추적 대상에서 제외. 배포는 GitHub Releases 압축본 또는 USB.
-Build/
+# Build/ 는 build.ps1 / build.sh 로 매번 재생성되는 자동 산출물이지만,
+# 학교 내부망 등 git 이 전송 수단인 배포를 위해 추적한다(2026-07-13 정책 변경).
+# 텍스처 1024² 다운스케일 이후 GLB base64 총합이 ~7 MB 수준이라 100 MB 한도와 무관.
+# (재빌드 시 build.sh 가 rm -rf Build 로 갈아엎으므로, 갱신 후 재커밋한다.)
 
 # LaTeX 빌드 부산물 (Missions/)
 Missions/_minted/

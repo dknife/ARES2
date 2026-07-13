@@ -18,7 +18,7 @@ ARES (Autonomous Rover Exploration System) — an educational robotics project w
   rsync -rc --exclude='.git/' --exclude='.DS_Store' <clone>/ "<OneDrive>/.../ARES_Project/"
   ```
   (`--delete` 금지 — OneDrive 에만 있는 `.hwp`/`.pptx` 등 비추적 문서 보존)
-- **`Build/` 는 git 에 커밋하지 않는다(.gitignore 처리).** `build.bat`/`build.sh` 로 매번 재생성되는 자동 산출물이며, 배포는 GitHub Releases 압축본·USB 로 한다. 빌드 후 OneDrive `ARES_Project/Build/` 에 복사해 배포용 사본을 최신으로 유지한다. (과거 '저장소에 커밋' 정책은 base64 인라인이 GitHub 100 MB 한도를 위협해 폐기 — `Document/FinalBuild.md` 참고)
+- **`Build/` 는 git 에 커밋한다(2026-07-13 정책 재변경).** `build.bat`/`build.sh` 로 매번 재생성되는 자동 산출물이지만, 학교 내부망 등 git 이 전송 수단인 배포를 위해 추적한다. 텍스처 1024² 다운스케일 이후 GLB base64 총합이 ~7 MB 수준이라 GitHub 100 MB 한도와 무관하다(과거 폐기 사유 해소). `build.sh` 는 `rm -rf Build` 로 갈아엎으므로, 원본(`Web/`) 수정 후에는 재빌드하고 `Build/` 를 다시 커밋한다. 배포는 GitHub Releases·USB 도 병행 가능하며, OneDrive `ARES_Project/Build/` 사본도 계속 최신으로 둔다. (`Document/FinalBuild.md` 참고)
 - **대형 빌드 산출물(진행보고 PDF)은 커밋 금지 — GitHub Releases 로 공유한다(2026-07-09 절차 변경).** `Document/진행보고/latex/ProgressReport.pdf` 는 `.gitignore` 처리되어 있고, `build.sh` 가 빌드 후 자동으로 Releases `progress-report` 태그 자산으로 갱신한다(수동: `gh release upload progress-report ProgressReport.pdf --clobber`). 고정 공유 링크: `https://github.com/dknife/ARES2/releases/download/progress-report/ProgressReport.pdf` (report.html 히어로에도 링크됨). 매 커밋 52MB PDF 가 히스토리를 불려 Pages 배포가 6~11분씩 걸리던 문제의 해소책.
 - **웹 배포는 GitHub Actions Pages 워크플로**(`.github/workflows/deploy-pages.yml`)가 담당한다 — main 푸시 시 대형 원본(latex PDF·Papers 등)을 제외한 사이트를 아티팩트로 배포한다(기존 URL 구조 보존).
 

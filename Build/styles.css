@@ -1,0 +1,3797 @@
+﻿:root {
+    --primary-color: #0D1117;
+    --accent-color: #FF6A00;
+    --secondary-color: #4A515C;
+    --background-main: #F8F8F8;
+    --background-white: #FFFFFF;
+    --background-secondary: #D9DDE2;
+    --text-primary: #0D1117;
+    --text-secondary: #4A515C;
+    --text-muted: #8A929E;
+    --success-color: #7BDCB5;
+    --error-color: #E74C3C;
+    --info-color: #FF6A00;
+    --border-color: #D9DDE2;
+    --log-background: #FFFFFF;
+    --mobile-bottom-nav-height: 72px;
+}
+
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden !important;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100dvh;
+    width: 100%;
+    display: block;
+    background: var(--background-main);
+    color: var(--text-primary);
+    font-family: 'Noto Sans KR', 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 17px;      /* 강원교육튼튼 기준 — 초등 대상에 맞춰 적당히 크게 */
+    font-weight: 700;     /* 대체로 굵게 */
+    overflow: hidden;
+    overflow-x: hidden !important;
+    max-width: 100%;
+}
+
+/* 제목·헤딩은 강원교육튼튼 (본문은 강원교육모두) */
+h1, h2, h3, h4, h5, h6 { font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif; }
+
+/* ===== Blockly Drilldown (카테고리 숨김 + 블록 목록을 그 자리로) ===== */
+body.ares-toolbox-drilldown .blocklyToolboxDiv {
+    display: none !important;
+}
+
+body.ares-toolbox-drilldown .blocklyFlyout {
+    left: 0 !important;
+    top: 110px !important;
+    height: calc(100% - 110px) !important;
+}
+
+#toolboxBackBtn {
+    position: absolute;
+    top: 62px;
+    left: 10px;
+    z-index: 65;
+
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--background-white);
+    color: var(--text-primary);
+
+    padding: 10px 10px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+#toolboxBackBtn:hover {
+    background: var(--background-secondary);
+}
+
+/* 버튼 색상 정의 */
+#connectButton {
+    background: #0D1117;
+}
+
+#connectButton:hover {
+    background: #383838;
+}
+
+/* 신호 연결 통합 버튼 상태 */
+#connectButton.btn-connected {
+    background: #2a9d6a;
+}
+#connectButton.btn-connected:hover {
+    background: #237d55;
+}
+#connectButton.btn-failed {
+    background: #E74C3C;
+}
+#connectButton.btn-failed:hover {
+    background: #c0392b;
+}
+
+#runButton {
+    background: #FF6A00;
+}
+
+#runButton:hover {
+    background: #e04d1f;
+}
+
+/* 미션 전송 → 비상정지 모드 */
+#runButton.btn-stop {
+    background: #E74C3C;
+}
+#runButton.btn-stop:hover {
+    background: #c0392b;
+}
+
+#saveButton, #loadButton {
+    background: #1F6FAE;
+}
+
+#saveButton:hover, #loadButton:hover {
+    background: #0576b9;
+}
+
+#blockCodingButton {
+    background: #1F6FAE;
+}
+
+#blockCodingButton:hover {
+    background: #0576b9;
+}
+
+.container {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: 100%;
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    overflow: hidden;
+    overflow-x: hidden !important;
+    min-height: 0;
+    margin: 0;
+}
+
+.header {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: visible;
+}
+
+.header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--background-main);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 52px;
+    overflow: visible;
+}
+
+.header-main h1 {
+    font-family: 'GangwonEduTeun', 'GangwonEduTeun', sans-serif;
+    font-size: 0.95em;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.subtitle {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+#controls {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    margin: 0;
+    min-height: 0;
+    box-sizing: border-box;
+    width: auto;
+    min-width: 0;
+    overflow: visible;
+}
+
+#controls button {
+    height: 36px;
+    padding: 0 10px;
+    margin: 0;
+    font-size: 0.75em;
+    line-height: 1.1;
+    flex-shrink: 0;
+}
+
+button {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.9em;
+    height: 40px;
+    padding: 0 16px;
+    margin: 4px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+button:focus {
+    outline: none;
+}
+
+button:focus-visible {
+    outline: 2px solid rgba(255, 106, 0, 0.55);
+    outline-offset: 2px;
+}
+
+/* ===== 하단 내비게이션 (모바일 + 데스크톱 공통 표시) ===== */
+.mobile-bottom-nav {
+    display: grid;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+    margin: 0;
+    background: rgba(255, 255, 255, 0.94);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mobile-bottom-nav .mobile-nav-btn {
+    margin: 0;
+    padding: 6px 2px 4px;
+    min-width: 0;
+    height: auto;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.74em;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.mobile-bottom-nav .mobile-nav-btn,
+.mobile-bottom-nav .mobile-nav-btn:hover,
+.mobile-bottom-nav .mobile-nav-btn:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.mobile-bottom-nav .mobile-nav-btn:not(.active),
+.mobile-bottom-nav .mobile-nav-btn:not(.active):hover,
+.mobile-bottom-nav .mobile-nav-btn:not(.active):active {
+    background: transparent;
+}
+
+.mobile-bottom-nav .mobile-nav-btn:focus,
+.mobile-bottom-nav .mobile-nav-btn:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.mobile-bottom-nav [data-mobile-action="mission"] { grid-column: 1; }
+.mobile-bottom-nav [data-mobile-action="coding"] { grid-column: 2; }
+.mobile-bottom-nav [data-mobile-action="simulation"] { grid-column: 4; }
+.mobile-bottom-nav [data-mobile-action="ai"] { grid-column: 5; }
+
+@media (hover: hover) and (pointer: fine) {
+    .mobile-bottom-nav .mobile-nav-btn:hover {
+        transform: none;
+        box-shadow: none;
+        background: rgba(255, 106, 0, 0.06);
+    }
+}
+
+.mobile-bottom-nav .mobile-nav-btn.active {
+    color: var(--accent-color);
+    background: rgba(255, 106, 0, 0.1);
+}
+
+.mobile-bottom-nav .mobile-nav-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.mobile-bottom-nav .mobile-nav-label {
+    font-size: 0.92em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* 데스크톱(≥769px): 하단 내비를 그대로 표시하되, 고정 바가 콘텐츠를
+   가리지 않도록 컨테이너 높이를 내비 높이만큼 줄여 하단 공간을 확보한다.
+   (모바일 ≤768px 은 아래 스크롤 레이아웃 규칙이 별도로 여백을 처리) */
+@media (min-width: 769px) {
+    .container {
+        height: calc(100dvh - var(--mobile-bottom-nav-height));
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height));
+    }
+}
+
+/* ===== 로그 표시/숨김 토글 ===== */
+body.log-hidden #logContainer {
+    display: none !important;
+}
+
+body.log-hidden .main-content {
+    margin-bottom: 0;
+}
+
+.main-content {
+    flex-grow: 1;
+    background: transparent; /* 전체 화면 흐름으로 표시: 박스 제거 */
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+    position: relative;
+    min-height: 0;
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+#blocklyDiv {
+    height: 100%;
+    width: 100%;
+}
+
+/* Blockly Overrides — keep workspace dark for contrast */
+.blocklyToolboxDiv {
+    background-color: var(--background-main);
+    color: var(--text-primary);
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+}
+
+.blocklyTreeLabel {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.9em;
+}
+
+.blocklyFlyoutBackground {
+    fill: #F8F8F8;
+    fill-opacity: 0.98;
+}
+
+.blocklySvg {
+    background-color: #FFFFFF !important;
+}
+
+.blocklyBlockCanvas, .blocklyBubbleCanvas {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.blocklyTreeRow {
+    background-color: var(--background-main);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#logContainer {
+    margin: 0;
+    height: 120px;
+    min-height: 100px;
+    max-height: 120px;
+    background: var(--background-white);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+#logHeader {
+    padding: 8px 12px;
+    background: var(--background-main);
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 0.85em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+#clearLogBtn {
+    font-size: 0.85em;
+    height: 32px;
+    padding: 0 12px;
+    background: var(--background-secondary);
+    color: var(--text-secondary);
+}
+
+#clearLogBtn:hover {
+    background: #ddd;
+}
+
+#logContent {
+    padding: 8px 12px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    text-align: left;
+}
+
+.log-entry { margin-bottom: 4px; }
+.log-send { color: #1F6FAE; }
+.log-receive { color: #2a9d6a; }
+.log-error { color: var(--error-color); }
+.log-info { color: var(--info-color); }
+.log-timestamp {
+    color: var(--text-muted);
+    font-size: 0.8em;
+    margin-right: 8px;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 0;
+        height: 95vh;
+    }
+    .header h1 {
+        font-size: 1.2em;
+    }
+    .subtitle {
+        font-size: 0.85em;
+    }
+    button {
+        font-size: 0.82em;
+        height: 36px;
+        padding: 0 12px;
+    }
+    /* 모바일에서는 가로 스크롤 하는 한 줄로 배치 — 아래 549라인 규칙에서 row로 재설정됨 */
+    #logContainer {
+        height: 15vh;
+    }
+}
+
+/* ============================= */
+/* Global Responsive (Mobile/Tab) */
+/* ============================= */
+
+* { -webkit-tap-highlight-color: transparent; }
+button, .nav-tab, .action-btn { touch-action: manipulation; }
+
+@media (max-width: 900px) {
+  body { font-size: 16px; }
+
+  .container {
+    max-width: 100%;
+    width: 100%;
+    padding: 0;
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .header-main {
+    flex-direction: column;
+    align-items: stretch;
+    background: var(--background-main);
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .header-main h1 {
+    font-size: 1.1em;
+    padding: 0 4px;
+  }
+
+  #controls, .nav-tabs, .quick-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  button, .btn {
+    padding: 0 12px;
+    font-size: 0.88em;
+    border-radius: 8px;
+  }
+
+  .main-content, #blocklyDiv {
+    width: 100%;
+    height: 100%;
+  }
+
+  #logContainer {
+    height: 120px;
+    min-height: 120px;
+    max-height: 120px;
+  }
+}
+
+@media (max-width: 600px) {
+  .header h1, .header h2 {
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+
+  .nav-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-tab {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .dashboard-grid { grid-template-columns: 1fr !important; }
+  .action-btn { width: 100%; min-height: 48px; font-size: 16px; }
+}
+
+iframe, #dashboardFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ===== Mobile: controls in ONE horizontal row ===== */
+@media (max-width: 600px) {
+  #controls {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+
+    overflow-x: auto;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+
+    height: auto !important;
+    min-height: fit-content !important;
+    padding: 4px 2px !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  #controls button {
+      flex: 0 0 auto !important;
+      margin: 0 2px !important;
+      display: inline-block !important;
+      padding: 0 8px !important;
+      font-size: 0.75em !important;
+      height: 32px !important;
+  }
+
+  #controls::-webkit-scrollbar {
+      height: 2px;
+  }
+  #controls::-webkit-scrollbar-track {
+      background: transparent;
+  }
+  #controls::-webkit-scrollbar-thumb {
+      background: var(--accent-color);
+      border-radius: 10px;
+  }
+
+}
+
+/* ===== Log: compact by default, expand on click ===== */
+#logContainer {
+  transition: height 0.3s ease;
+}
+
+#logContainer.compact {
+  height: 80px;
+  min-height: 80px;
+}
+
+#logContainer.expanded {
+  height: 40vh;
+  min-height: 240px;
+}
+
+#logHeader {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#logContainer.compact #logContent {
+  overflow: hidden;
+}
+
+#logContainer.expanded #logContent {
+  overflow-y: auto;
+}
+
+#logContainer.compact #logContent {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+#logContainer.expanded #logContent {
+  font-size: 13px;
+  opacity: 1;
+}
+
+.log-detail {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--border-color);
+  opacity: 0.9;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+/* ============================================================
+   ARES 미션 UI — 차시/미션 네비게이터 + 3-state 콘텐츠
+   ============================================================ */
+
+/* ----- 차시/미션 네비게이터 ----- */
+#missionNav {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    margin: 0;
+    background: transparent; /* 박스 배경 제거 */
+    border: none;
+    border-radius: 0;
+}
+
+#missionNav .nav-btn {
+    background: var(--background-white);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    height: 36px;
+    padding: 0 12px;
+    font-size: 0.85em;
+}
+
+#missionNav .nav-btn:hover {
+    background: var(--background-secondary);
+}
+
+#missionNav select {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.88em;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--background-white);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 200px;
+}
+
+#missionNav select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#breadcrumb {
+    margin-left: auto;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* 블록 코딩 / 시뮬레이션 모드: 개요·차시·미션 선택·breadcrumb 를 숨겨 네비를 단순화.
+   (body[data-content-mode] 는 main.js applyMode 에서 설정)
+   - coding     → 남는 것: 미션 설명 · 시뮬레이션 · 예제
+   - simulation → 남는 것: 시뮬레이션 닫기 · 예제 */
+body[data-content-mode="coding"]     #missionNav > #lessonSelect,
+body[data-content-mode="coding"]     #missionSelect,
+body[data-content-mode="coding"]     #breadcrumb,
+body[data-content-mode="simulation"] #homeButton,
+body[data-content-mode="simulation"] #missionNav > #lessonSelect,
+body[data-content-mode="simulation"] #missionSelect,
+body[data-content-mode="simulation"] #breadcrumb {
+    display: none !important;
+}
+/* 시뮬레이션 모드에서는 '미션 설명' 토글도 숨김 (시뮬레이션 닫기로만 빠져나감) */
+body[data-content-mode="simulation"] #missionNav > #contentToggleBtn {
+    display: none !important;
+}
+
+/* ----- 콘텐츠 뷰 공통 ----- */
+.content-view {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.content-view[hidden] {
+    display: none !important;
+}
+
+#overviewView,
+#lessonView {
+    overflow-y: auto;
+    padding: 20px 24px;
+}
+
+#missionView {
+    position: relative;
+    overflow: hidden;
+}
+
+/* missionView는 description / coding / simulation 세 모드 중 하나만 표시 */
+#missionView > .mission-panel,
+#missionView > .mission-workspace,
+#missionView > .sim-card {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+#missionView[data-mode="description"]  > .mission-workspace,
+#missionView[data-mode="description"]  > .sim-card,
+#missionView[data-mode="coding"]       > .mission-panel,
+#missionView[data-mode="coding"]       > .sim-card,
+#missionView[data-mode="simulation"]   > .mission-panel,
+#missionView[data-mode="simulation"]   > .mission-workspace {
+    display: none !important;
+}
+
+/* ----- 화면 전환 애니메이션 -----
+   개요·차시·미션 뷰가 바뀔 때는 새 화면이 옆에서 밀려 들어오듯,
+   미션 뷰 내부(설명↔블록코딩↔시뮬)가 바뀔 때는 서서히 나타나듯 전환한다.
+   showView()/setContentMode() 가 hidden·data-mode 를 바꾸면 자동 재생된다. */
+@keyframes viewSlideIn {
+    from { opacity: 0; transform: translateX(28px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes viewFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.content-view:not([hidden]) {
+    animation: viewSlideIn 1s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 미션 뷰 내부 모드 전환(설명·블록코딩·시뮬)은 위치가 겹쳐 있으므로 페이드만 */
+#missionView[data-mode="description"] > .mission-panel,
+#missionView[data-mode="coding"]      > .mission-workspace,
+#missionView[data-mode="simulation"]  > .sim-card {
+    animation: viewFadeIn 1s ease;
+}
+
+/* 모션 최소화 설정 사용자는 즉시 전환 */
+@media (prefers-reduced-motion: reduce) {
+    .content-view:not([hidden]),
+    #missionView[data-mode] > .mission-panel,
+    #missionView[data-mode] > .mission-workspace,
+    #missionView[data-mode] > .sim-card {
+        animation: none;
+    }
+}
+
+/* ----- 태그 배지 ----- */
+.lesson-tag {
+    display: inline-block;
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--background-secondary);
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tag-theory   { background:#E0E0E0; color:#555; }
+.tag-LED      { background:#FFE0E0; color:#C0392B; }
+.tag-WINK     { background:#FFE7CC; color:#C77410; }
+.tag-BUZZER   { background:#D5F1FF; color:#0577AB; }
+.tag-TRAFFIC  { background:#FFF5C2; color:#9A7800; }
+.tag-RANDOM   { background:#E9DCFF; color:#5A2EBE; }
+.tag-MOTOR    { background:#FFD7BB; color:#A04400; }
+.tag-SEQUENCE { background:#D4F4DD; color:#1E7E34; }
+.tag-SYNC     { background:#FFD6F2; color:#A02080; }
+.tag-LAUNCH   { background:#FFE2CC; color:#D94A00; }
+.tag-BONUS    { background:#FFF1E6; color:#D94A00; border:1px dashed #F0A472; }
+
+/* ----- 개요 뷰 ----- */
+.overview-hero h2 {
+    font-size: 1.6em;
+    margin: 0 0 8px;
+    color: var(--text-primary);
+}
+
+.overview-lede {
+    font-size: 1em;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0 0 24px;
+}
+
+.overview-flow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.flow-step {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: var(--background-main);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.lesson-accordion-item {
+    overflow: hidden;
+    border: 1px solid #f0d4c5;
+    border-radius: 10px;
+    background: #fffaf6;
+}
+
+.flow-step-btn {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto 18px;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 72px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 0;
+    background: #fffaf6;
+    color: var(--text-primary);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transform: none;
+}
+
+.flow-step-btn:hover,
+.flow-step-btn:active {
+    background: #fff1e7;
+    box-shadow: none;
+    transform: none;
+}
+
+.flow-step-btn[aria-expanded="true"] {
+    background: #fff0df;
+    border-bottom: 1px solid #f0d4c5;
+}
+
+.flow-main {
+    min-width: 0;
+}
+
+.flow-step-btn strong {
+    display: block;
+    margin: 0 0 4px;
+    overflow: hidden;
+    color: #a93812;
+    font-size: .96em;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow-step-btn small {
+    display: block;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: .8em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow-count {
+    color: #6878a0;
+    font-size: .76em;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.flow-arrow {
+    color: #c94a1a;
+    font-size: .78em;
+    transition: transform .18s ease;
+}
+
+.flow-step-btn[aria-expanded="true"] .flow-arrow {
+    transform: rotate(90deg);
+}
+
+.inline-mission-list {
+    background: #fff;
+}
+
+.inline-mission-btn {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 8px 14px 8px 18px;
+    border: 0;
+    border-bottom: 1px solid rgba(18, 183, 106, .14);
+    border-radius: 0;
+    background: #fff;
+    color: #3f4542;
+    text-align: left;
+    box-shadow: none;
+    transform: none;
+}
+
+.inline-mission-btn:last-child {
+    border-bottom: 0;
+}
+
+.inline-mission-btn:hover,
+.inline-mission-btn:active {
+    background: #fff3ee;
+    box-shadow: none;
+    transform: none;
+}
+
+.inline-mission-btn.completed {
+    background: linear-gradient(90deg, #e2f8ed 0%, #f1fbf6 100%);
+    color: #214d38;
+}
+
+.inline-mission-btn.completed:hover,
+.inline-mission-btn.completed:active {
+    background: #d9f4e7;
+}
+
+.inline-mission-num {
+    display: grid;
+    place-items: center;
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    background: #ff623a;
+    color: #fff;
+    font-size: .75em;
+    font-weight: 800;
+}
+
+.inline-mission-main {
+    min-width: 0;
+}
+
+.inline-mission-main strong,
+.inline-mission-main small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inline-mission-main strong {
+    margin-bottom: 2px;
+    font-size: .88em;
+}
+
+.inline-mission-main small {
+    color: #707975;
+    font-size: .74em;
+}
+
+.inline-mission-btn.completed .inline-mission-num {
+    background: #12b76a;
+}
+
+.inline-mission-btn.completed .inline-mission-main small {
+    color: #4f7562;
+}
+
+.inline-mission-check {
+    color: #12a866;
+    font-weight: 900;
+}
+
+.inline-mission-arrow {
+    color: #13945a;
+    font-size: 1.3em;
+    text-align: right;
+    transition: transform .18s ease;
+}
+
+/* ── 개요 인라인 아코디언: 차시 패널 / 미션 상세 / 차시 정보 ── */
+.lesson-panel {
+    border-left: 4px solid #ff6740;
+    background: #fff;
+}
+
+.inline-mission-item {
+    border-bottom: 1px solid rgba(18, 183, 106, .14);
+}
+.inline-mission-item:last-child {
+    border-bottom: 0;
+}
+
+/* 미션 버튼이 아코디언 토글로 동작: 펼침 시 강조 + 화살표 회전 */
+.inline-mission-btn { cursor: pointer; }
+.inline-mission-btn[aria-expanded="true"] {
+    background: #fff3ee;
+}
+.inline-mission-btn[aria-expanded="true"] .inline-mission-arrow {
+    transform: rotate(90deg);
+}
+
+/* 미션 선택 시 아래로 열리는 상세 정보 */
+.inline-mission-detail {
+    padding: 2px 16px 16px 18px;
+    background: #fffdfb;
+    border-top: 1px dashed #f2d8ca;
+}
+.inline-mission-detail .mission-section h4 { margin-top: 6px; }
+.inline-goal-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: .85em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+.inline-goal-list li { margin-bottom: 4px; }
+
+.mission-code-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent-color);
+    color: #fff;
+    font-family: inherit;
+    font-size: .9em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .18s ease, transform .1s ease;
+}
+.mission-code-btn:hover { background: #d8431b; }
+.mission-code-btn:active { transform: translateY(1px); }
+
+/* 미션 리스트 위에 담기는 차시 정보 — 푸른색 팔레트로 차별화 */
+.inline-lesson-info {
+    padding: 14px 18px 16px;
+    background: #eef5fc;
+    border-left: 3px solid #2f7fc4;
+    border-bottom: 1px solid #cfe1f2;
+}
+.inline-lesson-info-title {
+    margin: 0 0 8px;
+    font-size: .92em;
+    font-weight: 700;
+    color: #1763a6;
+}
+.inline-lesson-info-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.inline-lesson-meta {
+    font-size: .8em;
+    color: #3f5a72;
+}
+.inline-lesson-intro {
+    margin: 0;
+    font-size: .86em;
+    line-height: 1.6;
+    color: #3f5a72;
+}
+.inline-lesson-info .summary-box {
+    margin-top: 12px;
+    padding-left: 12px;
+    border-left-color: #2f7fc4;
+}
+.inline-lesson-info .summary-box h4 { color: #1763a6; }
+.inline-lesson-info .summary-box p { color: #3f5a72; }
+
+/* 아코디언 여닫이 애니메이션 — 실제 콘텐츠 높이(--acc-h)까지 부드럽게 펼치고 접음.
+   열림/닫힘은 main.js 의 openAccordion()/closeAccordion() 이 클래스로 제어한다. */
+@keyframes accordionExpand {
+    from { opacity: 0; max-height: 0;                 transform: translateY(-6px); }
+    to   { opacity: 1; max-height: var(--acc-h, 1800px); transform: translateY(0); }
+}
+@keyframes accordionCollapse {
+    from { opacity: 1; max-height: var(--acc-h, 1800px); transform: translateY(0); }
+    to   { opacity: 0; max-height: 0;                 transform: translateY(-6px); }
+}
+
+/* 펼쳐질 때: 모바일 UI에 맞춘 빠른 전환 */
+.lesson-panel.accordion-opening,
+.inline-mission-detail.accordion-opening {
+    overflow: hidden;
+    animation: accordionExpand 240ms ease-out;
+}
+
+/* 접힐 때는 열림보다 조금 더 빠르게 */
+.lesson-panel.accordion-closing,
+.inline-mission-detail.accordion-closing {
+    overflow: hidden;
+    animation: accordionCollapse 180ms ease-in forwards;
+}
+
+/* 모션 최소화 설정 사용자는 애니메이션 생략 (JS 폴백 타이머가 상태를 마무리) */
+@media (prefers-reduced-motion: reduce) {
+    .lesson-panel.accordion-opening,
+    .lesson-panel.accordion-closing,
+    .inline-mission-detail.accordion-opening,
+    .inline-mission-detail.accordion-closing {
+        animation: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .flow-step-btn {
+        grid-template-columns: 36px minmax(0, 1fr) 14px;
+        gap: 9px;
+        min-height: 60px;
+        padding: 9px 10px;
+    }
+    .flow-count { display: none; }
+    .flow-step-btn strong { font-size: .88em; }
+    .inline-mission-btn { padding-left: 12px; }
+}
+
+/* 보너스(+) 항목 — "+" 배지는 점선 테두리 + 흰 바탕으로 정규 차시와 구분 */
+.lesson-accordion-item.bonus .flow-num {
+    background: #fff;
+    color: var(--accent-color);
+    border: 2px dashed var(--accent-color);
+    font-size: 1.4em;
+    line-height: 1;
+}
+.lesson-table tr.bonus td.lesson-n { color: var(--accent-color); font-weight: 800; }
+.lesson-panel .bonus-teaser p { margin: 6px 0 0; color: var(--text-secondary); line-height: 1.5; }
+.landing-start-btn {
+    margin-top: 12px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 100px;
+    background: var(--accent-color);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(255,106,0,0.35);
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.landing-start-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.landing-start-btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(255,106,0,0.3); }
+
+/* ===== 화성 착륙 게임 오버레이 ===== */
+.landing-overlay {
+    position: fixed; inset: 0; z-index: 100000;
+    background: #05030a;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex; flex-direction: column;
+}
+/* 앱/미션/컷씬과 동일한 상단 타이틀 바(아레스 로고 + 설정 아이콘) */
+.landing-header {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 74px; padding: 9px clamp(18px, 6.25vw, 45px) 8px;
+    background: #fff; border-bottom: 1px solid #d7d7d9;
+}
+.landing-brand { display: inline-flex; align-items: center; }
+.landing-brand img { display: block; width: 112px; height: 48px; object-fit: contain; }
+.landing-gear {
+    width: 34px; height: 34px; display: block; background: #aeb1b5;
+    -webkit-mask: url('data:image/png;base64,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') no-repeat center / contain;
+    mask: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAJnElEQVR42u2dfcyXVR2HL8GClAFq4qR8gbLJArKyhYEKZkZKrjRb+RJgoqWIWU7arFmu1lorJhlrDqOpkVK+5JKyIhXfsqW5mFmpuGrhwApxIMEk+uPcLHAP8Ps9z/079zn3ua6NjT08POc+9+9zPed+Oed79tm+fTsipTLIUyAKIKIAIgogogAiCiCiACIKIKIAIgogogAiCiCiACIKIKIAIgogogAiCiCiACIKIKIAIgogogAiCiCiACIKIKIAIgogogAiCiCiACIKIKIAIgogogAiCiCiACIKIKIAIgrQS94PrAS21/TnHmCypzUd9nGj7N3yQ+BjPfrZ1wGXeoodAVLl2z0MP8Bc4GpPsyNAiowE1kdqayiwxVPuCJASn4jY1oc83QqQGodFbOtIT7cCpMa+LW1LFEBEAUQUQEQBRAE8BaIAeTAYmAHMAWYDB/vx9cl4YCm7zkG6ETjaU0O2j+HmAdf28fXlwDnAi36UAJwL3NTH18+r/pwJ3O5pymsEWLCb8AOcCjwLjPKjZNZuwr8ztwFnearyEWAh8Jm9fM+BwJ8Kl2AWsKTD712mBHkIsJDOpwwfULAE3YRfCTIRYGE/5svXIcEoYGLEfp4DnA2MiBh+JSDt6dALB7hYZD3hice6LkI/twrTYQ32exXwTeAWOpsiPZDw78xHgR8pAMksRJlbw8/pRIJ3A18ETkvwc1lUybC6x+EvXoKUBKgr/HuSYAjhUeHVDf+275QnqmO9q4fhL1qCVASoO/x9SfBJYHGmn9NfgPOBo3oU/mIlSEGAXoV/By8BG4HRPvNQgtQE6HX4RQlI9TGo4U+XZZUEjgA94lvA5eYseSYBjypAvUwHfma2suAR4D0KUC8PA8eZrWw4hM5fKnoP0AGGPz8BvAmWYnnFS6B6sRZjPmwjvD3f5ghQH0vMVTZ8vc3hb2oEGEtYxSUkPw/p2LYL0MQIsBqYZr6SZhUwpe3hb/Im+D7gZHOWbPiPAzbhVIieskIJDH/pj0GVwPAX/x5ACQx/8S/CVnhjbPhxTTBTgXszC88/gZeBrYQ9v/YnLLccY/gVoE0SPF0d1wPAQ8Bz7L2W6XjgeMLewKcCww2/AnTCe4FfJXIsNwJfJazLraNfVyVyubeUUJcIC2Olx1ENt/8ycAUwDJhZU/h33OucBBxOWBHXJGdjxegkR4AhwH9otibPZ4mzf++hhLW3kxvq64PVJZojQEJc1uBv/SnAJRE3r36+anNOQ32eArzFESAtNjRws3hTFcItDe9PfDcwoYF7nJkKUO7N7zeAKxO6/LufULYxJsMo9GlQapdA8wsOP9UIdCLxKzF82hGgeQ4m7uLr1MLf5EjwEv0v0e4IkOHN75KEw7/zSPBcpPaGV5efjgANspEwjSDGb7tRDd/wdsrRwFOR2rqZsJGeI0ADjI0UfoBTMgk/hB1vPk+8HSZxm9RmOCtiPdJHM1yYPhMYF+n8bOjyUu1J4Cdkunyy7kug8cBFwBu7lOsU4LVe+mRdSGA28P1SR4AhwM8JMzlT5apMww+hkMBPgRkJH+MSwnTw75Y2AgwGHifu7or9YWjGAkB4JPqbDI5zFPBCSTfBszII//WZh5/q3uXvGRzn5aU9BZpPHjeSbeCaDI5xWmmXQNszWPY3sSUCND1VvHXnu4Tq0Cta1JctxHsxhi/C2sEDLevPQ8ZWAehy1ZNCS7ECrFNoKVWANu5wuNrYKkCnvNDSfm01ugrQCZvsl5QswFb7JSULMLSl/Xqd0VWATthPAaRkAd7Q0n69xugqQCcc08I+jTO2CtANR7SsP8cbWwUoOTBTjK0CKIAoQIe8r0V9GU76Wy9tUoC0GNOim+FPZXCM95a2Imw58IHE+/lj4tUeomWl43FR/J75Sgb9/AgwMvPwT88g/JfmNgGxDgEeBr6UQV8vy1yALyR+fBcA11FwZbg5wALi1fjsDyO7LP2XCu8CfhuhnfvorvbQVkJpxNuwNCI7F3A6gu6qzp0IXBihv3cAZ5BfJYjngQOIszvnM2B5dFq8OcaHgTsz+oy+A1xMnCnWQ8D3ADS0civWZhB3AAdl8vlMjhR+gB+AL8Ka5AbiPhYdnPhncxDwi4jtLcAdYhplBPBixPbuqu4HtiUa/ieBQyK19zSF7hc8KLGXPLdGbO904PYER4LY4Yf21E7Nfp/gCcAfIreZ0kjQRPgh/9LxrZkLtIr4tS9PJzz7Hk3z9f//2kD4F5ca/lQnw325gTaPBf5B2OaHBp7zL6gkbOIl4tcomNQugaiuyf9Nc/NeVhImzsV4L/EO4B7g9Q319Rbg47geICm2EXZFbIoTgLXA94A396iNqYSy7Y81GH6Az4ELYlLkzgTq4M8mPB58rKbpE/sTJuStJcyZP4k0pi7jJRBuCNchjxCqMz9IqNP/rz187+GE5ZgnEN7ovjXRDLwdeEIBDH9/L9fWA5sJWxcNrX7TH5hZDoqVIDUBcgp/2yhSgkGGXyp+TzsLiWUhgOFXgmIFMPxKUKwAhl8JihXA8KcvwQR8CtQT3kbBz57Jb5ORLY4A1L4sUfLgfC+BqH0C2BhzlQ0XKgC1TwSTfBihADXfd5iprNioAPXylJnKisX4FIheFGFyo7c8GEaLN+Zu6inQueaKXGqSbvISqH6WAZeYr6SZBPwO3wT3jEVKkHT4H8WpEEqQGNcb/vbNBu21BJsJO8ZPItQdypG7CSXnLwLeZPjbtx6gVxJsJlR2WFN9sBOBkwkbQeTAIuBIYAbwt+prq3skQXHhh/SWRF5MqIdfd/j74lDCnlZXklZ90LXANYRq2XuahDYWeNbwt29RfB0S7C38vKoQ1weBecC0hvr8CrC0Cv3KLv5fHRIUG/6Uy6IMRIJuwt+XDFMJFdNiFayaw8Detg5EgqLDn3JhrP7eEwwk/BDKnKwA/hixr2sG+P/7e09QfPhT3ym+WwkGGv6c6VYCw5+BAN1IUHL4Xy3BNsPfHgF2SHDBHv59neHfRYLR9L3i7tfAOMO/K/tmcpw3AL8ErgDOrI57DaGu/q0UvMHDbn4hnEFYyDKe/+8Bts5TQzZPgZrmfkJR2xicBiz3lHsJJKIAIgogogAiCiCiAA2wpaVtiQJ0xJ8jtvWMpxvfAyRGnXPt98TjwDs93Y4AJDil4OYI7czzVCtAqpxHWBfQK6YTtloVL4GS5hhgPmFPg/0G8HP+C2wg1ERaVP1dFEDESyARBRBRABEFEFEAEQUQUQARBRBRABEFEFEAEQUQUQARBRBRABEFEFEAEQUQ2Rv/A52yRqq+bo1FAAAAAElFTkSuQmCC') no-repeat center / contain;
+}
+/* 타이틀 바 아래 게임 무대 — HUD·버튼·결과 패널은 이 무대 기준으로 배치 */
+.landing-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.landing-canvas { display: block; width: 100%; height: 100%; }
+
+.landing-hud {
+    position: absolute; top: 16px; left: 16px; z-index: 2;
+    background: rgba(10, 8, 20, 0.6);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #eaf2ff;
+    font-family: ui-monospace, 'Inter Tight', monospace;
+    font-size: 0.92em;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    min-width: 168px;
+}
+.landing-hud .hud-row { display: flex; justify-content: space-between; gap: 12px; line-height: 1.7; }
+.landing-hud .hud-row span { color: #9fb2cc; }
+.landing-hud .hud-row b { color: #fff; font-weight: 700; }
+.landing-hud .hud-fuel {
+    margin-top: 8px; height: 8px; border-radius: 100px;
+    background: rgba(255,255,255,0.14); overflow: hidden;
+}
+.landing-hud .hud-fuel i { display: block; height: 100%; width: 100%; background: #4fd1ff; transition: width .1s linear; }
+
+.landing-help {
+    position: absolute; z-index: 3;
+    bottom: 40px; left: calc(50% + 95px);   /* 역추진 버튼 오른쪽에 붙임 */
+    max-width: min(300px, 40vw);
+    text-align: left;
+    color: #cfe0ff; font-size: 0.84em; line-height: 1.5;
+    background: rgba(10, 8, 20, 0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 10px 14px;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.landing-help b { color: #fff; }
+
+.landing-close {
+    position: absolute; top: 16px; right: 16px; z-index: 3;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(10, 8, 20, 0.6); color: #fff;
+    font-size: 1.2em; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.landing-close:hover { background: rgba(231,76,60,0.85); }
+
+/* 역추진 버튼(하나, 화면 하단 중앙) */
+.thrust-btn {
+    position: absolute; z-index: 3;
+    border: 2px solid rgba(79,209,255,0.55);
+    background: rgba(30, 40, 70, 0.42);
+    color: #bfe6ff; line-height: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    cursor: pointer; touch-action: none;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: background .08s ease, transform .08s ease, box-shadow .08s ease;
+}
+.thrust-btn:hover { background: rgba(79,209,255,0.22); }
+.thrust-btn.active {
+    background: rgba(79,209,255,0.85); color: #05233a;
+    box-shadow: 0 0 30px rgba(79,209,255,0.8);
+}
+.thrust-main {
+    bottom: 34px; left: 50%; transform: translateX(-50%);
+    width: 150px; height: 92px; border-radius: 24px;
+}
+/* hover·터치·누름 어느 상태에서도 위치 고정 — 색/발광으로만 피드백(떨림 방지).
+   전역 `button:hover{transform:translateY(-1px)}` 가 중앙정렬을 덮어 버튼이 튀는 것을 방지. */
+.thrust-main:hover,
+.thrust-main.active { transform: translateX(-50%); }
+.thrust-main .thrust-ico { font-size: 1.7em; }
+.thrust-main .thrust-label { font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.9em; }
+
+/* 결과: 화면 전체를 어둡게 덮지 않고, 중앙의 반투명 패널로만 표시 */
+.landing-result {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; align-items: flex-start; justify-content: center;  /* 위쪽에 표시 */
+    padding: 7vh 20px 20px;
+    background: transparent;              /* 뒤 장면을 어둡게 하지 않음 */
+    pointer-events: none;                 /* 패널만 상호작용 */
+}
+.landing-result[hidden] { display: none; }
+.landing-result-panel {
+    pointer-events: auto;
+    max-width: min(460px, 90vw);
+    text-align: center; color: #fff;
+    background: transparent;              /* 완전 투명 — 카드 배경 없음 */
+    padding: 26px 28px;
+    /* 밝은 장면 위에서도 글자가 읽히도록 그림자로 가독성 확보 */
+    text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.75);
+}
+.landing-result-panel h2 { font-size: clamp(26px, 5.5vw, 40px); font-weight: 800; margin-bottom: 10px; }
+.landing-result.ok .landing-result-panel h2 { color: #86f0a8; }
+.landing-result:not(.ok) .landing-result-panel h2 { color: #ff9184; }
+.landing-result-msg { color: #ffffff; font-size: 1.05em; line-height: 1.6; }
+.landing-result-stat { color: #dbe6f5; font-size: 0.88em; margin-top: 10px; }
+.landing-result-btns { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+.landing-result-btns button {
+    padding: 12px 26px; border-radius: 100px; border: none;
+    font-family: inherit; font-weight: 800; font-size: 1em; cursor: pointer;
+}
+.landing-retry { background: var(--accent-color); color: #fff; }
+.landing-quit  { background: rgba(255,255,255,0.16); color: #fff; }
+.landing-retry:hover { filter: brightness(1.08); }
+.landing-quit:hover  { background: rgba(255,255,255,0.26); }
+
+@media (max-width: 600px) {
+    .thrust-main { width: 132px; height: 84px; bottom: 26px; }
+    /* 좁은 화면에선 설명을 버튼 위에 가로 중앙으로 */
+    .landing-help {
+        bottom: 122px; left: 50%; transform: translateX(-50%);
+        text-align: center; max-width: 84vw; font-size: 0.78em;
+    }
+}
+
+.flow-step strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.95em;
+}
+
+.flow-step p {
+    margin: 0;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.overview-table-title {
+    margin: 24px 0 12px;
+    font-size: 1.15em;
+}
+
+.overview-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.lesson-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    text-align: left;
+}
+
+.lesson-table thead {
+    background: var(--background-main);
+}
+
+.lesson-table th,
+.lesson-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.lesson-table tbody tr:hover {
+    background: var(--background-secondary);
+}
+
+.lesson-table td.lesson-n {
+    font-weight: 700;
+    color: var(--accent-color);
+    width: 50px;
+    text-align: center;
+}
+
+.lesson-table .lesson-title-cell a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.lesson-table .lesson-title-cell a:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+.overview-howto {
+    background: var(--background-main);
+    border-radius: 10px;
+    padding: 16px 20px;
+    border: 1px solid var(--border-color);
+}
+
+.overview-howto h3 {
+    margin: 0 0 10px;
+    font-size: 1.05em;
+}
+
+.overview-howto ol {
+    margin: 0;
+    padding-left: 22px;
+    line-height: 1.7;
+    font-size: 0.92em;
+    color: var(--text-secondary);
+}
+
+/* ----- 차시 소개 뷰 ----- */
+.lesson-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.lesson-header h2 {
+    margin: 8px 0 6px;
+    font-size: 1.45em;
+}
+
+.lesson-meta {
+    margin: 0;
+    font-size: 0.92em;
+    color: var(--text-secondary);
+}
+
+.lesson-meta .dot-sep {
+    margin: 0 6px;
+    color: var(--text-muted);
+}
+
+.lesson-body p {
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.lesson-body h3 {
+    margin: 24px 0 10px;
+    font-size: 1.1em;
+}
+
+.mission-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+}
+
+.mission-list-item a {
+    display: block;
+    padding: 14px 16px;
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.18s ease;
+}
+
+.mission-list-item a:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.12);
+}
+
+.mission-id {
+    display: inline-block;
+    font-size: 0.75em;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-right: 8px;
+    letter-spacing: 0.04em;
+}
+
+.mission-list-title {
+    font-weight: 600;
+    font-size: 0.98em;
+}
+
+.mission-list-hw {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.82em;
+    color: var(--text-muted);
+}
+
+.lesson-summary {
+    margin-top: 20px;
+}
+
+.summary-box {
+    padding: 14px 0;
+    border-left: 4px solid var(--accent-color);
+    background: transparent;
+    border-radius: 0;
+}
+
+.summary-box h4 {
+    margin: 0 0 6px;
+    font-size: 0.98em;
+}
+
+.summary-box p {
+    margin: 0;
+    font-size: 0.9em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.summary-keypoint { border-left-color: #FF6A00; }
+.summary-summary  { border-left-color: #5C81A6; }
+.summary-notebox  { border-left-color: #7BDCB5; }
+.summary-caution  { border-left-color: #E74C3C; background:#FFF3F1; }
+
+/* ----- 3D 시뮬레이션 패널 (미션 뷰의 풀-페인 모드) ----- */
+.sim-card {
+    background: var(--background-white);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.sim-card[hidden] { display: none; }
+/* 주제 선택 + 주제별 버튼 — 렌더링 창(.sim-stage) 안 좌상단에 세로로 겹쳐 띄운다.
+   (헤더 바를 없애 시뮬레이션 공간을 더 넓게 확보) */
+.sim-card-head {
+    position: absolute; top: 10px; left: 10px; z-index: 5;
+    display: flex; flex-direction: column; align-items: stretch;
+    gap: 6px; padding: 8px; width: 158px; max-width: calc(100% - 20px);
+    background: rgba(12, 13, 42, 0.55);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+}
+.sim-drag { display: none; }
+.sim-topic {
+    flex: 0 0 auto; width: 100%; min-width: 0; max-width: none;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.86em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-white);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 8px; cursor: pointer; touch-action: auto;
+}
+.sim-card-head h3 { margin: 0; font-size: 0.98em; }
+
+/* 예제 코드 보기 위젯 — 주제(.sim-card-head) 바로 아래 좌상단 오버레이.
+   제목 + 읽기전용 블록코딩. 개발자 모드에서는 숨긴다. */
+.sim-code-panel {
+    position: absolute; top: 56px; left: 10px; z-index: 5;
+    display: flex; flex-direction: column;
+    width: 300px; max-width: calc(100% - 20px);
+    max-height: calc(100% - 74px);
+    background: rgba(12, 13, 42, 0.62);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+.sim-code-panel[hidden] { display: none; }
+.sim-code-head {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 8px 6px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sim-code-panel.sim-code-collapsed .sim-code-head { border-bottom: none; }
+.sim-code-title {
+    flex: 1 1 auto; min-width: 0; color: #eef2ff;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.9em; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sim-code-toggle {
+    flex: 0 0 auto; width: 22px; height: 22px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    color: #eef2ff; background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 6px;
+    cursor: pointer; font-size: 0.8em; padding: 0;
+}
+.sim-code-toggle:hover { background: rgba(255, 255, 255, 0.22); }
+/* "수정은 코딩 모드에서" 안내 — 블록 위에 표시, 접으면 함께 숨김 */
+.sim-code-note {
+    padding: 5px 10px; font-size: 0.74em; font-weight: 600; color: #cdd6ee;
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+}
+.sim-code-blockly {
+    flex: 0 0 auto; width: 100%; height: 280px;
+    background: var(--background-white);
+}
+/* 접힘: 제목 줄만 남기고 안내·블록을 숨긴다 */
+.sim-code-panel.sim-code-collapsed .sim-code-note,
+.sim-code-panel.sim-code-collapsed .sim-code-blockly { display: none; }
+/* 개발자 모드에서는 코드 위젯을 숨긴다 */
+#simStage.sim-devmode .sim-code-panel { display: none !important; }
+/* 오버레이 안에서는 각 버튼이 위→아래로 차례로 쌓이도록 세로 배치 */
+.sim-led-buttons { display: flex; flex-direction: column; gap: 6px; }
+.sim-led-btn {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-led-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-led-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-led-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-led-btn.on { background: rgba(34, 200, 100, 0.16); border-color: #22c864; color: #0a7a3a; }
+.sim-led-btn.on .dot { background: #22e070; box-shadow: 0 0 7px 2px rgba(34, 255, 122, 0.75); }
+/* 우주 신호등 액션 버튼 — LED 버튼과 동일한 룩, 활성 색만 주황(신호등 느낌) */
+.sim-traffic-buttons { display: flex; flex-direction: column; gap: 6px; }
+.sim-traffic-btn {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-traffic-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-traffic-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-traffic-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-traffic-btn.on { background: rgba(255, 165, 0, 0.18); border-color: #ff9a3c; color: #8a4d00; }
+.sim-traffic-btn.on .dot { background: #ffa726; box-shadow: 0 0 7px 2px rgba(255, 167, 38, 0.75); }
+
+/* 탐사선 발사대 액션 버튼(레이더) — 신호등 버튼과 동일한 룩, 활성 색만 청록(레이더 느낌) */
+.sim-launch-buttons { display: flex; flex-direction: column; gap: 6px; }
+.sim-launch-btn {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-launch-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-launch-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-launch-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-launch-btn.on { background: rgba(0, 200, 200, 0.18); border-color: #3cbfbf; color: #0a5c5c; }
+.sim-launch-btn.on .dot { background: #2dd4d4; box-shadow: 0 0 7px 2px rgba(45, 212, 212, 0.75); }
+
+/* 발사대 LED 버튼(LED0=도넛, LED1..LED5=세로 줄) — 활성 색은 LED 발광색(붉은색) */
+.sim-launch-led-buttons { display: flex; flex-direction: column; gap: 6px; }
+.sim-rover-buttons { display: flex; flex-direction: column; gap: 6px; }
+.sim-launch-led-btn {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    color: var(--text-primary); background: var(--background-secondary);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 6px 9px; cursor: pointer; line-height: 1.2; text-align: center;
+    transition: all 0.15s;
+}
+.sim-launch-led-btn small { display: block; font-size: 0.78em; opacity: 0.65; font-weight: 400; }
+.sim-launch-led-btn .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #c2c8d2; margin-right: 4px; vertical-align: middle; transition: all 0.15s;
+}
+.sim-launch-led-btn:hover { border-color: var(--primary-color, #4682c8); }
+.sim-launch-led-btn.on { background: rgba(255, 60, 60, 0.16); border-color: #e54f4f; color: #a01818; }
+.sim-launch-led-btn.on .dot { background: #ff3030; box-shadow: 0 0 7px 2px rgba(255, 60, 60, 0.78); }
+
+/* 주제별 기능 버튼은 반투명하게 — 뒤의 3D 장면이 비치도록. (:not(.on) 으로 활성 색은 유지) */
+.sim-card-head .sim-led-btn:not(.on),
+.sim-card-head .sim-traffic-btn:not(.on),
+.sim-card-head .sim-launch-btn:not(.on),
+.sim-card-head .sim-launch-led-btn:not(.on) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #eef3fb;
+}
+
+.sim-stage {
+    position: relative; width: 100%;
+    flex: 1 1 0; min-height: 240px;
+    overflow: hidden;        /* 3D 메시가 시뮬레이션 창 밖으로 그려지지 않도록 클립 */
+    isolation: isolate;      /* 캔버스(replaced)가 stage 컨텍스트를 벗어나 로그 위로 칠해지지 않도록 격리 */
+    background: #85888e;     /* 사용자 모드 — 회색 배경 */
+}
+/* 개발자 모드(Ctrl+E) — 짙은 회색 배경 + 화면 테두리 굵은 노랑.
+   테두리는 ::after 오버레이로 캔버스(z1) 위에 그려 3D 장면에 가려지지 않게 한다. */
+.sim-stage.sim-devmode { background: #2b2d31; }
+.sim-stage.sim-devmode::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 4;
+    pointer-events: none;
+    border: 5px solid #f5c400;
+}
+/* 캔버스를 창에 절대 배치로 꽉 채운다. (플렉스 높이 모호성으로 캔버스가 창을 넘어
+   아래 버튼을 덮어 클릭이 막히던 문제 방지)
+   z-index:1 — 그라디언트 배경 위, 로그(z:3)·컨트롤 오버레이(z:4~5) 아래. */
+.sim-stage canvas {
+    position: absolute; inset: 0; z-index: 1;
+    display: block; width: 100% !important; height: 100% !important; cursor: grab;
+    touch-action: none;
+}
+.sim-stage canvas:active { cursor: grabbing; }
+/* 개발자 모드 전용 UI 게이트 — hidden 속성이 author display 규칙(flex)에 지지 않도록 강제.
+   (UA 의 [hidden]{display:none} 은 author display:flex 에 덮여 시각적으로 노출되는 버그 방지) */
+.sim-editor-toolbar[hidden],
+.sim-editor-hierarchy[hidden],
+.sim-editor-inspector[hidden],
+.sim-devbar[hidden] {
+    display: none !important;
+}
+
+/* 컴포넌트 인스펙터 — 선택 객체의 직렬화 필드값(JSON)을 씬 드롭박스 아래에서 편집(개발자 모드) */
+.sim-editor-inspector {
+    position: absolute; left: 10px; top: 220px; z-index: 5;
+    width: 158px; max-width: calc(100% - 20px);
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 6px;
+    background: rgba(12, 13, 42, 0.62);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.sim-editor-inspector-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+}
+.sim-editor-inspector-title {
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    color: #ffd24a; font-size: 0.6em; font-weight: 800;
+}
+.sim-editor-inspector-head button {
+    flex: 0 0 auto;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.58em; font-weight: 700;
+    color: #1f2430; background: #FFC400; border: 1px solid #FFB300; border-radius: 5px;
+    padding: 2px 7px; cursor: pointer;
+}
+.sim-editor-inspector-tf {
+    display: grid;
+    grid-template-columns: 27px repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    align-items: center;
+}
+.sim-editor-inspector-tf span {
+    color: rgba(238, 243, 251, 0.7);
+    font-size: 0.55em; font-weight: 700;
+}
+.sim-editor-inspector-tf input {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
+/* 색상 편집(기본색·발광색 r,g,b,a) — 색상 지원 객체(박스·구)에서만 노출 */
+.sim-editor-inspector-colors {
+    display: grid;
+    grid-template-columns: 27px repeat(4, minmax(0, 1fr));
+    gap: 2px;
+    align-items: center;
+}
+.sim-editor-inspector-colors[hidden] { display: none !important; }
+.sim-editor-inspector-colors span {
+    color: rgba(238, 243, 251, 0.7);
+    font-size: 0.55em; font-weight: 700;
+}
+.sim-editor-inspector-colors input {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
+/* 컴포넌트 필드 섹션 — 트랜스폼과 동일한 행 그리드로 필드값을 직접 편집 */
+.sim-editor-inspector-comps {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 38vh; overflow: auto;
+}
+.sim-insp-comp {
+    padding: 3px 4px;
+    background: rgba(4, 6, 18, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px;
+}
+.sim-insp-comp-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    margin-bottom: 2px;
+}
+.sim-insp-comp-head b {
+    color: #9fd0ff; font-size: 0.56em; font-weight: 800; letter-spacing: .03em;
+}
+.sim-insp-comp-head button {
+    width: 14px; height: 14px; padding: 0; line-height: 1;
+    color: #ffb0a8; background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    font-size: 10px; cursor: pointer;
+}
+.sim-insp-comp-none { color: rgba(238, 243, 251, 0.4); font-size: 0.52em; }
+.sim-insp-row {
+    display: grid;
+    /* 선두 12px = 사용 여부 체크박스(선택 벡터 필드) 또는 정렬용 스페이서 */
+    grid-template-columns: 12px 40px repeat(3, minmax(0, 1fr));
+    gap: 2px; align-items: center; margin: 1px 0;
+}
+.sim-insp-row span {
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    color: rgba(238, 243, 251, 0.66); font-size: 0.52em; font-weight: 700;
+}
+.sim-insp-row input, .sim-insp-row select {
+    width: 100%; min-width: 0; box-sizing: border-box;
+    color: #d9e6ff; background: rgba(4, 6, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px;
+    padding: 2px 3px; font: 9px/1.3 'D2Coding', Menlo, monospace;
+}
+/* 사용 여부 체크박스 — 체크 해제 = 해당 벡터 사용하지 않음 */
+.sim-insp-row .sim-insp-use {
+    width: 10px; height: 10px; padding: 0; margin: 0;
+    justify-self: start; cursor: pointer; accent-color: #f5c400;
+}
+.sim-insp-row input:disabled { opacity: 0.35; }
+.sim-insp-row select { grid-column: 3 / span 3; }
+.sim-insp-row input:only-of-type { grid-column: 3 / span 1; }
+.sim-editor-inspector-status {
+    color: #9fe3b4; font-size: 0.55em; white-space: pre-wrap;
+}
+.sim-editor-inspector-status.error { color: #ff9d94; }
+
+/* 편집 툴바(Move·Rotate·Scale) — 씬 도구·Hierarchy 와 동일한 작은 폰트로 통일(개발자 모드 전용) */
+.sim-editor-toolbar {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    display: flex; align-items: center; gap: 4px;
+    max-width: calc(100% - 188px);
+    padding: 4px 5px;
+    background: rgba(12, 13, 42, 0.58);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+}
+.sim-editor-toolbar button,
+.sim-editor-axisbar button {
+    flex: 0 0 auto;
+    min-width: 40px;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.6em;
+    font-weight: 700;
+    color: #eef3fb;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 5px;
+    padding: 3px 6px;
+    cursor: pointer;
+}
+.sim-editor-toolbar button[aria-pressed="true"],
+.sim-editor-axisbar button[aria-pressed="true"] {
+    color: #1f2430;
+    background: #FFC400;
+    border-color: #FFB300;
+}
+/* 회전축/스핀축/선회축 선택 바 — 시뮬레이션 화면 하단 중앙(개발자 모드, 회전 컴포넌트 선택 시) */
+.sim-editor-axisbar {
+    position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 5;
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 6px;
+    background: rgba(12, 13, 42, 0.58);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+}
+.sim-editor-axisbar[hidden] { display: none !important; }
+.sim-editor-selection {
+    min-width: 70px;
+    max-width: 130px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: rgba(238, 243, 251, 0.78);
+    font-size: 0.58em;
+    font-weight: 600;
+}
+.sim-editor-context-menu {
+    position: absolute;
+    z-index: 6;
+    width: 172px;
+    max-height: min(360px, calc(100% - 16px));
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: auto;
+    background: rgba(11, 13, 35, 0.92);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+    user-select: none;
+}
+.sim-editor-context-menu[hidden] {
+    display: none;
+}
+.sim-editor-context-title {
+    padding: 5px 7px 4px;
+    color: rgba(238, 243, 251, 0.62);
+    font-size: 0.68em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.sim-editor-context-menu button {
+    width: 100%;
+    padding: 8px 9px;
+    color: #eef3fb;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.76em;
+    font-weight: 700;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.sim-editor-context-menu button:hover:not(:disabled),
+.sim-editor-context-menu button:focus-visible:not(:disabled) {
+    color: #1f2430;
+    background: #FFC400;
+    border-color: #FFB300;
+    outline: none;
+}
+.sim-editor-context-menu button:disabled {
+    color: rgba(238, 243, 251, 0.34);
+    cursor: default;
+}
+.sim-editor-hierarchy {
+    position: absolute;
+    top: 58px;
+    right: 10px;
+    z-index: 5;
+    width: 210px;
+    /* 폰트·행높이 축소와 함께 최대 높이를 늘려 많은 항목이 보이게 한다 */
+    max-height: min(62vh, 460px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(11, 13, 35, 0.72);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+    user-select: none;
+}
+.sim-editor-hierarchy-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 4px 5px 4px 7px;
+    color: rgba(238, 243, 251, 0.86);
+    font-size: 0.6em;
+    font-weight: 800;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sim-editor-hierarchy-head button {
+    width: 15px;
+    height: 15px;
+    padding: 0;
+    font-size: 10px;
+    line-height: 1;
+    color: #eef3fb;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+    cursor: pointer;
+}
+.sim-editor-hierarchy-list {
+    overflow: auto;
+    padding: 3px;
+}
+.sim-editor-hierarchy.collapsed .sim-editor-hierarchy-list {
+    display: none;
+}
+/* 많은 항목이 보이도록 행 높이·폰트를 최소화한 밀집 목록 */
+.sim-editor-hierarchy-item {
+    width: 100%;
+    min-height: 16px;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 4px;
+    align-items: center;
+    margin: 1px 0;
+    padding: 1px 5px 1px calc(5px + (var(--depth, 0) * 9px));
+    color: #eef3fb;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.sim-editor-hierarchy-item:hover,
+.sim-editor-hierarchy-item[aria-pressed="true"] {
+    color: #1f2430;
+    background: #FFC400;
+    border-color: #FFB300;
+}
+.sim-editor-hierarchy-type {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: inherit;
+    opacity: 0.72;
+    font-size: 0.52em;
+    font-weight: 800;
+}
+.sim-editor-hierarchy-label {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.58em;
+    font-weight: 700;
+}
+.sim-editor-hierarchy-empty {
+    padding: 7px 6px;
+    color: rgba(238, 243, 251, 0.48);
+    font-size: 0.58em;
+    text-align: center;
+}
+@media (max-width: 760px) {
+    .sim-editor-toolbar {
+        top: auto; right: 10px; bottom: 86px; left: 10px;
+        max-width: none;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .sim-editor-selection {
+        flex: 1 1 100%;
+        max-width: none;
+        text-align: center;
+    }
+    .sim-editor-hierarchy {
+        top: 10px;
+        right: 10px;
+        width: min(236px, calc(100% - 20px));
+        max-height: 32vh;
+    }
+}
+.sim-loading {
+    position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center;
+    color: #9aa6bf; font-size: 0.85em; pointer-events: none; text-align: center; padding: 12px;
+}
+
+/* 블록 명령 시뮬레이션 실행/로그 — 렌더링 창(.sim-stage) 안 하단 오버레이로 띄운다.
+   (캔버스 위에 z-index 로 올려 어떤 상황에서도 버튼이 가려지지 않고 눌리도록) */
+.sim-runbar {
+    position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 5;
+    display: flex; gap: 8px; padding: 0;
+}
+.sim-runbar button {
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.8em; font-weight: 600;
+    border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+/* 눈에 잘 띄는 노란색 — 어두운 텍스트로 대비, 은은한 발광 그림자 */
+#simRun {
+    flex: 1 1 auto; font-weight: 700;
+    background: #FFC400; color: #1f2430; border-color: #FFB300;
+    box-shadow: 0 2px 10px rgba(255, 196, 0, 0.45);
+}
+#simRun:hover:not(:disabled) { background: #FFD23F; border-color: #FFC400; }
+#simRun:disabled { opacity: 0.6; cursor: not-allowed; }
+/* 실행 중에는 '시뮬레이션 중지'(비상 정지) 버튼으로 변신 — 붉은색 */
+#simRun.running { background: #b3261e; border-color: #b3261e; color: #fff;
+    box-shadow: 0 2px 10px rgba(179, 38, 30, 0.45); }
+#simRun.running:hover { background: #c8342b; }
+#simLogClear { background: var(--background-secondary); color: var(--text-secondary); }
+/* 개발자 모드(Ctrl+E) 씬 도구 — 씬 드롭다운 패널 오른쪽 옆에 분리된 박스.
+   편집 툴바·Hierarchy 와 동일한 작은 폰트(0.6em)로 통일. 개발자 모드에서만 표시. */
+.sim-devbar {
+    position: absolute; top: 10px; left: 176px; z-index: 5;
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 7px;
+    background: rgba(12, 13, 42, 0.58);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 210, 74, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    user-select: none;
+}
+.sim-devbar-tag {
+    font: 700 8px/1 'Inter Tight', sans-serif; letter-spacing: .06em;
+    color: #ffd24a; padding-right: 1px;
+}
+/* 씬 도구(새 씬·씬 저장·씬 열기·서비스 등록/제거)는 드롭다운 메뉴 하나로 제공 */
+.sim-devbar select {
+    flex: 0 0 auto;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif; font-size: 0.6em; font-weight: 600;
+    background: rgba(255, 255, 255, 0.1); color: #eef3fb;
+    border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 5px;
+    padding: 3px 7px; cursor: pointer; white-space: nowrap;
+    appearance: none; -webkit-appearance: none;
+}
+.sim-devbar select:hover { background: rgba(255, 255, 255, 0.2); }
+.sim-devbar select option { background: #14162c; color: #eef3fb; }
+/* 통신 로그 — 캔버스(z:1) 위(z:3) 에 흐릿하게 겹쳐 띄운다. 불투명한 바닥이 깔려도
+   명령 글자가 늘 바닥을 이기고 보이도록 캔버스 위 레이어로 올렸다(컨트롤 z:4~5 아래).
+   반투명(opacity)·포인터 이벤트 통과라 로봇 드래그/버튼 클릭은 방해하지 않는다. 최신 줄이 아래. */
+.sim-log {
+    position: absolute; inset: 0; z-index: 3;
+    margin: 0; padding: 16px; overflow: hidden;
+    background: transparent; border: none; border-radius: 0;
+    font-family: 'D2Coding', Menlo, monospace; font-size: 11px; line-height: 1.5;
+    color: #cfe0f5; opacity: 0.34; pointer-events: none;
+    display: flex; flex-direction: column; justify-content: flex-end;
+}
+.sim-log-line { white-space: pre-wrap; word-break: break-all; }
+.sim-log-line.tx-ack { color: #ffd089; }   /* Ack 명령 송신 */
+.sim-log-line.tx     { color: #9fd0ff; }   /* 비Ack 명령 송신 */
+.sim-log-line.rx     { color: #8af0a8; }   /* 회신 */
+.sim-log-line.sys    { color: #9aa6bf; }
+.sim-log-line.err    { color: #ff8a8a; }
+
+#missionView .mission-panel {
+    background: transparent;
+    padding: 16px 20px 16px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: none;
+}
+
+.mission-panel-head h3 {
+    margin: 6px 0 4px;
+    font-size: 1.08em;
+    line-height: 1.3;
+}
+
+.mission-meta {
+    margin: 0 0 12px;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+}
+
+.mission-story {
+    background: transparent;
+    border-radius: 0;
+    padding: 10px 0;
+    margin-bottom: 14px;
+    border: none;
+}
+
+.story-line {
+    font-size: 0.85em;
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+.story-line:last-child { margin-bottom: 0; }
+
+.story-avatar { margin-right: 4px; }
+
+.story-name {
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-right: 4px;
+}
+
+.story-albi .story-name { color: #1F6FAE; }
+
+.story-text {
+    color: var(--text-secondary);
+}
+
+.mission-section {
+    margin-bottom: 14px;
+}
+
+.mission-section h4 {
+    margin: 0 0 6px;
+    font-size: 0.92em;
+    font-weight: 700;
+}
+
+#missionGoals {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.85em;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+#missionGoals li {
+    margin-bottom: 4px;
+}
+
+details.mission-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9em;
+    padding: 6px 0;
+    user-select: none;
+}
+
+.sample-code {
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 0;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 0.78em;
+    line-height: 1.45;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.mission-prev-next {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-btn-small {
+    flex: 1;
+    height: 32px;
+    font-size: 0.8em;
+    padding: 0 8px;
+    background: var(--background-white);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.nav-btn-small:hover:not(:disabled) {
+    background: var(--background-secondary);
+}
+
+#missionView .mission-workspace {
+    overflow: hidden;
+}
+
+#missionView #blocklyDiv {
+    width: 100%;
+    height: 100%;
+}
+
+/* ----- 반응형: 모바일에서 missionNav 폼 요소 줄바꿈 ----- */
+@media (max-width: 900px) {
+    #missionNav select {
+        min-width: 150px;
+        flex: 1;
+    }
+    #breadcrumb {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 4px;
+    }
+}
+
+@media (max-width: 600px) {
+    #overviewView,
+    #lessonView {
+        padding: 14px 16px;
+    }
+    .overview-hero h2 {
+        font-size: 1.3em;
+    }
+    .mission-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   모바일: 페이지 전체 세로 스크롤 + 블록코딩 툴박스를 아이콘만 표시
+   - 데스크톱(>=769px) 은 기존 고정-뷰포트 레이아웃 유지
+   - 모바일에서는 한 화면에 모두 욱여넣지 않고 자연스러운 스크롤 흐름
+   ============================================================ */
+@media (max-width: 768px) {
+    body {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+        overflow-x: hidden !important;
+        align-items: stretch;
+        padding: 0 0 calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom)) 0;
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+    .container {
+        height: auto;
+        max-height: none;
+        min-height: 100dvh;
+        max-width: 100%;
+        width: 100%;
+        padding: 0;
+        /* extra 8px cushion so fixed bottom nav never overlaps content */
+        padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom) + 8px);
+        margin: 0;
+        overflow: visible;
+        overflow-x: hidden !important;
+        box-sizing: border-box;
+    }
+    /* 코딩·시뮬 모드는 스크롤되는 문서가 아니라 고정 캔버스이므로, body/컨테이너를
+       뷰포트 높이로 고정해 캔버스(blocklyDiv)가 하단 네비 아래로 넘치지 않게 한다.
+       (이래야 블록이 넘칠 때 Blockly 플라이아웃이 스크롤된다) */
+    body[data-content-mode="coding"],
+    body[data-content-mode="simulation"] {
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+    body[data-content-mode="coding"] .container,
+    body[data-content-mode="simulation"] .container {
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+    .header {
+        position: static;
+        top: auto;
+        z-index: 120;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        background: var(--background-main);
+    }
+    .header-main {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding: 4px 4px;
+        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
+        overflow-x: hidden !important;
+        gap: 4px !important;
+    }
+    .header-main h1 {
+        font-size: 0.95em;
+        flex-shrink: 0;
+    }
+    .main-content {
+        overflow: visible;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        width: 100%;
+        border-radius: 0;
+        border: none;
+        background: transparent; /* 모바일에서 박스 스타일 제거 */
+        box-shadow: none;
+    }
+    #overviewView,
+    #lessonView {
+        overflow-y: visible;
+        padding: 16px;
+        margin: 0;
+    }
+
+    /* 미션 뷰: 절대 위치 풀-페인을 일반 흐름 + 모드별 충분한 높이로 전환 */
+    #missionView {
+        overflow: visible;
+    }
+    #missionView > .mission-panel,
+    #missionView > .mission-workspace,
+    #missionView > .sim-card {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: auto;
+    }
+    /* 미션 설명: 콘텐츠 자연 높이로 흐른다(페이지 스크롤로 본다) */
+    #missionView[data-mode="description"] > .mission-panel {
+        overflow: visible;
+    }
+    /* 블럭코딩: 고정 뷰포트 높이로 작업 공간 확보 */
+    #missionView[data-mode="coding"] > .mission-workspace {
+        /* 배너 아래부터 missionView(뷰포트에 맞춰짐) 바닥까지만 차지해서 캔버스가
+           하단 네비 위에서 끝나게 한다. (예전 min-height:480px 는 뷰포트를 넘겨
+           캔버스가 네비 아래로 잠기고 플라이아웃 스크롤이 안 됐다) */
+        top: var(--coding-banner-h) !important;
+        height: calc(100% - var(--coding-banner-h)) !important;
+        min-height: 0 !important;
+    }
+    /* 시뮬레이션: 카드 전체가 하나의 렌더링 영역. 코딩 모드와 동일하게 배너 아래부터
+       missionView 바닥(하단 네비 위)까지 남김없이 채운다.
+       (예전 62dvh 고정 높이는 뷰포트에 따라 카드 아래 ~100px 이 빈 공간으로 남았다) */
+    #missionView[data-mode="simulation"] > .sim-card {
+        top: var(--coding-banner-h) !important;
+        height: calc(100% - var(--coding-banner-h)) !important;
+        min-height: 0;
+    }
+    #missionView[data-mode="simulation"] .sim-stage {
+        flex: 1 1 auto;
+        height: 100%;
+        min-height: 0;
+    }
+
+    /* 네비 버튼/셀렉트(코드확인·블록코딩·시뮬레이션·예제·AI 도움): 모바일에서
+       글자가 두 줄로 넘치지 않도록 폰트를 기존의 80% 로 줄이고 줄바꿈을 막는다. */
+    #missionNav {
+        margin: 0;
+        padding: 6px 0;
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 0;
+        border: none;
+        background: transparent;
+    }
+    #missionNav .nav-btn { font-size: 0.68em; }   /* 0.85 × 0.8 */
+    #missionNav select   { font-size: 0.70em; }   /* 0.88 × 0.8 */
+    #missionNav .nav-btn,
+    #missionNav select {
+        white-space: nowrap;
+        padding: 0 8px;
+        height: 30px;
+    }
+
+    /* 블록 코딩 모드: 남는 4개(미션 설명·시뮬레이션·예제·AI 도움)를 한 줄에 배치.
+       버튼은 내용 너비로, '예제' 셀렉트가 남는 폭을 채우며 줄어들어 줄바꿈을 막는다. */
+    body[data-content-mode="coding"] #missionNav,
+    body[data-content-mode="simulation"] #missionNav {
+        /* 코딩·시뮬 모드에선 상단 nav 컨트롤이 전부 하단 네비로 대체돼 비어 있으므로
+           빈 띠를 없애 헤더(제목)와 차시 배너가 바로 붙게 한다 */
+        display: none;
+    }
+    body[data-content-mode="coding"] #missionNav > #contentToggleBtn,
+    body[data-content-mode="coding"] #missionNav > #simToggle,
+    body[data-content-mode="coding"] #missionNav > #aiHelpButton {
+        flex: 0 0 auto;
+        padding: 0 7px;
+    }
+    body[data-content-mode="coding"] #missionNav > #exampleSelect {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+     /* 로그 컨테이너: 페이지 스크롤로 끝부분에서 보이도록 */
+      #logContainer {
+          max-height: none;
+          height: auto;
+          min-height: 140px;
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          width: 100%;
+      }
+            #logContainer {
+                margin: 0;
+                height: 120px;
+                min-height: 100px;
+                max-height: 120px;
+                background: transparent; /* 박스 제거 */
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+                box-shadow: none;
+                overflow: hidden;
+                border: none;
+            }
+    .blocklyTreeRow,
+    .blocklyTreeSelected {
+        width: 30px !important;
+        max-width: 30px !important;
+        padding: 5px 0 !important;
+        text-align: center;
+        box-sizing: border-box;
+    }
+    .blocklyTreeLabel {
+        font-size: 0.85em !important;
+        line-height: 1 !important;
+        display: inline-block !important;
+        white-space: nowrap !important;
+        vertical-align: middle;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    .blocklyTreeIcon {
+        display: none !important;
+    }
+
+    .mobile-bottom-nav {
+        display: grid;
+    }
+}
+
+/* ============================================================
+   2026 모바일 목업 공통 셸 — 미션 목록 1차 적용
+   ============================================================ */
+:root {
+    --mockup-red: #e65448;
+    --mockup-green: #12b76a;      /* 연결됨(go) 상태 — 완료 미션 배지와 동일 팔레트 */
+    --mockup-gold:  #E6AD00;      /* 코딩 모드 '실행' */
+    --mockup-blue:  #3F78A8;      /* 시뮬레이션 모드 '모의실행' */
+    --mockup-stop:  #B94A45;      /* 실행 중 정지(비상정지·실험중단) */
+    --mockup-ink: #272526;
+    --mockup-line: #d7d7d9;
+    --mockup-panel: #e7e7e9;
+    --mobile-bottom-nav-height: 70px;
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.header-main {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 74px;
+    padding: 9px clamp(18px, 6.25vw, 45px) 8px;
+    background: #fff;
+    border-bottom: 1px solid var(--mockup-line);
+}
+
+.ares-brand {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--mockup-ink);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.ares-brand img {
+    display: block;
+    width: 112px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.header-settings {
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    color: #aeb1b5;
+    font-family: sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.header-settings:hover,
+.header-settings:active {
+    background: #f2f2f3;
+    color: #85898d;
+    transform: none;
+    box-shadow: none;
+}
+
+.header-settings-icon,
+.mobile-nav-icon,
+.mobile-connect-icon {
+    display: block;
+    background: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+.header-settings-icon {
+    width: 34px;
+    height: 34px;
+    margin: auto;
+    mask-image: url('data:image/png;base64,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');
+    -webkit-mask-image: url('data:image/png;base64,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');
+}
+
+#controls.utility-controls {
+    display: none !important;
+}
+
+#missionNav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 30%);
+    gap: 10px;
+    padding: 10px 16px;
+    background: #f3f3f4;
+    border-bottom: 1px solid var(--mockup-line);
+}
+
+#missionNav select {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+    margin: 0;
+    border: 1px solid #c9c9cc;
+    border-radius: 20px;
+    background: #fff;
+    color: #5c5c60;
+    font-size: .92rem;
+    padding: 0 48px 0 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M2 2l5 5 5-5' fill='none' stroke='%235c5c60' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    background-size: 14px 9px;
+}
+
+#missionNav > :not(#lessonSelect):not(#missionSelect) {
+    display: none !important;
+}
+
+#overviewView {
+    padding: 12px 16px 28px;
+    background: #fff;
+}
+
+#overviewContent {
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+#logContainer:not(.expanded) {
+    display: none;
+}
+
+.overview-flow {
+    gap: 10px;
+    margin: 0;
+}
+
+.lesson-accordion-item {
+    border: 0;
+    border-radius: 3px;
+    background: var(--mockup-panel);
+}
+
+.flow-step-btn {
+    grid-template-columns: 30px minmax(0, 1fr) 18px;
+    min-height: 54px;
+    gap: 9px;
+    padding: 9px 14px;
+    background: var(--mockup-panel);
+}
+
+.flow-step-btn:hover,
+.flow-step-btn:active,
+.flow-step-btn[aria-expanded="true"] {
+    background: #dddddf;
+}
+
+.flow-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #8a8b8f;
+    color: #fff;
+    font-family: 'VITRO Inspire', 'Noto Sans KR', sans-serif;
+    font-size: .74rem;
+    font-weight: 700;
+}
+
+/* 정규 차시의 원형 숫자에만 VITRO INSPIRE를 사용한다. */
+.lesson-accordion-item:not(.bonus) .flow-num {
+    font-family: 'VITRO Inspire', 'Noto Sans KR', sans-serif !important;
+}
+
+.flow-step-btn strong {
+    margin: 0;
+    color: #454549;
+    font-size: .92rem;
+    font-weight: 700;
+}
+
+.flow-step-btn small,
+.flow-count {
+    display: none;
+}
+
+.flow-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    position: relative;
+    left: -14px;
+    color: #65666a;
+    font-size: .72rem;
+    line-height: 1;
+    transform: rotate(0deg);
+    transform-origin: 50% 50%;
+    transition: transform .18s ease;
+}
+
+.lesson-panel,
+.inline-mission-list,
+.inline-mission-btn {
+    background: #f6f6f7;
+}
+
+.mobile-bottom-nav {
+    --connect-size: clamp(74px, 15.5vw, 88px);
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 1fr)
+        var(--connect-size)
+        minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    justify-items: stretch;
+    column-gap: 0;
+    height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+    padding: 2px 4px calc(2px + env(safe-area-inset-bottom));
+    overflow: visible;
+    background: #dddde0;
+    border-top: 1px solid #d2d2d4;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* 중앙 연결 버튼 자리의 흰 원형 홈. 회색 바의 양 끝이 둥글게 버튼을 감싼다. */
+.mobile-bottom-nav::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: calc(var(--connect-size) + 9px);
+    height: calc(var(--connect-size) + 9px);
+    border-radius: 50%;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    pointer-events: none;
+    display: none;
+}
+
+.mobile-bottom-nav [data-mobile-action="mission"] { grid-column: 1; }
+.mobile-bottom-nav [data-mobile-action="coding"] {
+    grid-column: 2;
+    border-top-right-radius: 0 !important;
+}
+.mobile-bottom-nav [data-mobile-action="simulation"] {
+    grid-column: 4;
+    border-top-left-radius: 0 !important;
+}
+.mobile-bottom-nav [data-mobile-action="ai"] { grid-column: 5; }
+
+.mobile-bottom-nav .mobile-nav-btn {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    min-height: 50px;
+    padding: 5px 2px 3px;
+    border-radius: 0;
+    color: #444448;
+    font-size: .78rem;
+    display: grid;
+    grid-template-rows: 29px 14px;
+    place-items: center;
+    align-content: center;
+    gap: 1px;
+}
+
+.mobile-bottom-nav .mobile-nav-btn.active {
+    background: transparent;
+    color: var(--mockup-red);
+}
+
+.mobile-bottom-nav .mobile-nav-icon {
+    flex: 0 0 auto;
+    width: 31px;
+    height: 31px;
+}
+
+.mobile-nav-icon-mission {
+    mask-image: url('data:image/png;base64,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');
+    -webkit-mask-image: url('data:image/png;base64,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');
+}
+
+.mobile-nav-icon-coding {
+    mask-image: url('data:image/png;base64,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');
+    -webkit-mask-image: url('data:image/png;base64,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');
+}
+
+.mobile-nav-icon-simulation {
+    mask-image: url('data:image/png;base64,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');
+    -webkit-mask-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPQAAADoCAYAAADYO8keAAAO40lEQVR42u2dO6wdxRmAvyUhDShyFHBhSzgFJBIEQmEXWAogxS4wDlaECx4BF3bBQ7iwEQQku8BSMAhTYAEpoHCCIEpACi9TmCIGBRd2wUOmAAqMZAocC4igASmbYs8VN+bce2fOzuzOnvN90i3A57Fnz37nn535/3+quq4RkengLE+BiEKLiEKLiEKLiEKLKLSIKLSIKLSIKLSIKLSIQouIQouIQouIQouIQosotIgotIgotIgotIhCi4hCi4hCi4hCi4hCiyi0iCi0iCi0iCi0iCi0iEKLiEKLiEKLiEKLKLSIKLSIKLSIKLSIKLSIQouIQouIQouIQouIQosotIgotIgotIgotIhCi4hCi4hCi4hCi4hCiyi0iCi0iCi0iCi0iCi0iEKLiEKLiEKLiEKLKLSIKLSIKLSIKLSIKLSIQouIQouIQsvguQk4BJwA6gX+vgEOANd6uvJS1XXtWZBQ1o3kTcluYI+nVqGlW7q6UC4B3vd0O+SW4csMcHz0frd52o3QMnyhz+R1YL1fgRFapue+vQae8lQYoWX4Efp716xfhxFa2nF/YT8uB/1KjNDSjlWjYe9qYNmYf/8EOAq8BRyjWZdeAVwEXDj6+yVwqdFaoWU6uQb4O3BOi9e4CPjIU6nQUhbnA59N+Nz1NLPh3kN7CqQQTo2G0NVo+B7DIVy3NkIL0za7vh/YboQWKTTgABsiHn8XTbGIEVpkiqL18tEQ3ggtEsnzi5RNzv/7nGbpq020DpX0M4zQg+dl4AfAm8CDelZ09thp4LwJn/sIsNN16umM0C/PiwAbadY1/zj677t0Lhvftnz+T+d9b7sin3s3sI/w2W8j9AC4giYjaSn2Avfp3yByu2MTREIj9UrgU4UuOypvjHj808A2HRxMsUbMMPkAcKtD7+EOud+OlBlgKybzp+bmzD8WFwc+dkvg43ZhhC6OD0bDskl5B7hcF5PxF+D3GV9/D02/sVQjhkqhy+EEcAFp0guX62JSrgS+HJ3buXvVC4FfAL8bjZAm5RXgt4mkfo4ZSDoZgtCfM75cz7K7YXHtSNBYXgI2BTzuWeDGWf/ezxrA8siyiF/zIXbgmBVenVd8EcN1NJNfBPQHX4odRmgGler3AHETIEbq/rgQ+DDi8WuBIwles1LoYeXt7iA88UCpKSJ19PqE31U9y9/3WVOYhP8ocevODr/7ZXPAvW/Md7VmiX9/wwhdpsxL/dLeQDOzaaQeBqtpepKRIFFoZqN0SULXGeS7DnhRqQfDCuBkgu/p+tFQfubKK0sRus4oXewGa0rdL3cBjyX4nmYySpcgdN2BbKHFHEpdBt8AZys0g5sUqzuS7AhxaZ9Dmih7YEwzgSsGfl3+KOAxTy7x7zsDWggboQcoMy3WPku+1wrJvOoyCu0a/biQqNotZJLMKF2I0HWPw9/QiRcKbuT+bMRST1VAXfqkx1IrdPlD7rrne9lPIws0PiS8nK80mXPePtSRMs8959qIx69s+dlmprFBX0I/1YPMK8a876nI1z9eyH3p+ZEy55L6JO0qqFZH/Pi2YUvAteGQu4PonOueuWp5sW+kKTIYaqeQqqCOJVXLe/MUw+7DwNVG6GHIvHrMBFjd8v1eIazlTQ5+VYiIWxN9nicJb3TAEkkkk3KVETrvxVQlLLo/HPk+MSdiJ03O+FD7eP2MpmlE38dRJXjPL4CfODFWXnFGlXA55/AEF0jM++9bYhhYOh9H3MeWwGuL/NsypEihjyd4jRsm7IoxidS7iJvko2WJIQHJMzEcpcl1J3I/5z7Yo6rDHHK3idS3RdyXVQmHlTF9r7q4XTlEk78eyp3AEz3NlleJzkHVot7aIXeP90sLcV9CmWO/5I2BZX9dsZ64LVUfBx4ibPlviOxl6clThS5oAugRmu1vUkeEKnJG/WRBF+1+li70n889NBsYkGntuU+OzdJadB+pnykzxQ5ELCNVHc3qVj206KkSHf+HwM8Zv0fUup4nQutMt1AOuVtySeSXuNAWpAc7kDlH/jETLMF1Jc1FY45/VSaZNyR6nf1I78UZbTs+Ho249+krO6oqbP1+0uOvC1mmrDN9diN0Aj6iSW4I5S2aWWxoEiJW9zD8rQra0G0+70Uc/38ijz/XZ1iT6PxfEpEIxCwsh/XdsWRFxsmWqpCMrSrz+8UsO8WObnKwveUwuZ73o3Cs5Xm0fJL0pYwrByTz3Gt/XVCk/u8E0fGFnr7v5Qnueed23zg2wfNeB07TdK+xBVFGqZcn3DqnShyNxwl5LvBJIVJ/y2S9sPeRNpOrCvg7VcAa/Xk0O5Gi0PlIsSvkp4T1oppEwnFCroq8MErrU3Z3QN8tAlYsKsK3fZUZSiw51SK6vpd46F4H/r/LR8M4EuZkd8mjTNYwYW74/L4KKXTq+9/DwGUdTXp9vsAwLvSedJLa3S8yn++/jj5DDG9Oa6N6he5f6r91OIO9jPFN+zfTdLfMwQsBVV9teT2yzfGvVUehc0n9OGnKGOuWtbnbSDvRND+CLsaqRO/zDnG5AW7y5zp0VtEWykNO+R7bAiJx2x5YJXTdqN1lRKGH2vo39LVvDIiWLLFHda4CkWoK2y3LlA25c1TlcEZL3NDHboqQGb6/R/XpzBf91oGcczFCZ4kaMcUh64lbmhp6g8U253y5s99G6K6jxsURMq/NLPMVYzaaG/c3lHP+Gekm6WQGhJ5E6ovPEOh4RM7zkYyf4xDxW8ksxgeFnPOPC9s6yCH3FA6/N9HkPB8kPKXx/Z73Py6tKCX2nK+ZoIBCZljoXJMxuXebzHnC7wceLOicr808ypEpEzq1ICvJu2NhPaANC1J9jg0s3ihfZvweOtcFvHwKZO7yR+N04GMP0m7/KZkxoVNInbtWt26xHer8euLQljnXdXDOzyO8/dHz5FkrlykccrcVpyrsmJZa964Ly946SPgWOX1s8meEnqFIXZLMf5rXJqevHUiYsB3v0xGb/N2hdgqdS9JvCpF5D3B7xOOfLkzqbYTXhD+O69QOuTMK9R5pGyRMIvPuKSmeeBe41IIOI3SfkfpSlt7XKZdoe1v04yqxeOIywpsW/kr9FDrXRb+RNJ0/YsR5mGbXTFoutZUmdWijxrfVT6FzSv0A7fZwihFmH3AvaRorboo8xremJLlFZlTomAvsEJNVC9WRm6vdnfCzvURc4/y5Cq9rM5/zterlpBiFTJRVGWXeXljySo4iituAJ43kCj20ZgGx68y3F5722TaXfd0CXVEV2iF38fd3deS68e0D+Gwn5zVVODoanhOwNfDcc5TZCN0bC62Zpt5r+c80OdlDLytNyWuk2/BdFJoz10PfjqiF/go4J/C1nwFumaJacWfBC+eHngLeibjAXoyQ+bkeZZ6T5gRwgTJ7Dy3f5w7CyxJfAG4q4JhX0UzGlcARZXbIXQoraCaMQmXezPS3aqKgTjBihCZ29jeEVwqUuc9h7obReyuzEXpw0e00TRePoX2OiiZr7JWE72XDfSN0kawmriVPyexeRPRXz2h1VBFXOLLvjOcqsxF65jbJ65qLWXiTgXeI2x9ajNBTzRAKEf7B4mvx6/wajdBG6OGsrdauERuhZ52dU/I5/ulXaYSW6YhsB4BbAx73Ok0LYTFCY+JJmTwWKDPzZL5rXvXUU361Ruhp4zhhbWdLi9IPkKZP2tM0bXpFoZ0c64kdNGvDqVBqhXY9uie2ZhoqK7X30FPDewMphLghUuaXCvihEIXunN8MoLrpOpoabCJ6nG0ajSiWK7VDbofc5Qy/Y5vz7WN8K+Ha4bcRWpn7jdTXRMq8Z5G+4JWRWqGVuT+pb6DZn5mIiqvdiUYVSq3QMydzTqlvi7xn3jmKzgxgRl0UuviWPSlf8w+E7Uwxx53Ao5mOU6mx6+c0rTnXka/ddqLsIeAe4jZjz71B/NZ57yUKPegEki6lPhCRmw1wM/BsRyMIpVboonixxXJUF1IfpJnRDmUz4btS1gnvqZUa16GnJV+7zrROfZS4/mabCM8Cq00TNULP7A9ghnvqpbbf+RL4MXGtc1/L9CNWG6lxlntK2BBx8X8S8bofLiDK1tH/j5F5fUaZYzPfnP12yF38kHs9TWcPAtv+XEW3jQqPdHR78W3E6M7htxG6WA4RPjF1Nc1Wsl2wpkOZAc4mfDcMI7VC98LlEbPNoZvWbSF9dta44z7WQ6OGlYSXlW6l6aAiCk2X28puiFjiuj7wsVdkPOZLRsfdV9eVy4DDgY/d5SXmPXQfXBlxkW5ZYlj9LnBppuMM2Zy+qxZKz0f8wNn72wjdKW8QvhPGgXlLNGfy74wyr8wg88oWx7OZ8PRSMULT10Z1Rwkvfniio5LJKkOyTEy0p2WeuRHaCN0Lx0b3qCE8TtNpM6fMazLJvCaRzAD30qyrL8ZNXloK3Rfvj6IXgW196ohkkvnbr65lfELIc6OhcBUxkx0j84bI1yWg4cJS5+tfXlYOufvmwoDIQ8t+XiRqR3QwQyVWqMzPOSmm0Axou5uTLV/jfuBBut37mQW6lzzag8wK7ZC7GD4lvN3tOLZnkHn1aHgdI/PDymyElu84H/gs8jkbgVfpv6XRM8AtymyElu84FXlxXp5B5rl74BgO9yjzci8brIceQG10HXAhn8r0/s8Cy2iWzEK4uyeZL8p4DsQI3UmSx1wUz30hPwHcR3jXk+s7lnkt6da4RaE7k3ob8AVNZVXV8RBz7+iPwJzrHR3JfCPhJZ3ipJicwZM0zffJ1HQgRuYtHdaCi0JPLTFVT0ciilBiZN5moYZCC0m7qqwLfOzXwLkJZb6dZptaUWhJSGzb3yqBzNuB/Z56hZY8nAAuaCF1jMypU0lFoWUMXwHnTCB1jMy58tMFl63k/zmX+HTSrREy71FmI7QwFdvj7iU8qUWM0NJT2yICK7aU2QgtUxCp99PMaIsRWgYeqXcrM1ZbyeCqxHCdWaFleqU2N1uhZUqkjtk8XryHlp6lXqxA4ypldpZbGPS+XutoJr9EoUXEIbeIKLSIKLSIQouIQouIQouIQosotIgotIgotIgotIgotIhCi4hCi4hCi4hCi4hCiyi0iCi0iCi0iEzK/wB/qL/gtChW+AAAAABJRU5ErkJggg==');
+}
+
+.mobile-nav-icon-ai {
+    mask-image: url('data:image/png;base64,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');
+    -webkit-mask-image: url('data:image/png;base64,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');
+}
+
+.mobile-bottom-nav .mobile-nav-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1em;
+    width: 100%;
+    font-size: clamp(.68rem, 1.95vw, .82rem);
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+}
+
+.mobile-bottom-nav .mobile-connect-btn {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--mobile-bottom-nav-height) - clamp(37px, 7.75vw, 44px) + 9px);
+    width: var(--connect-size);
+    min-width: var(--connect-size);
+    height: var(--connect-size);
+    min-height: var(--connect-size);
+    margin: 0;
+    padding: 12px 6px 9px;
+    border-radius: 50%;
+    background: var(--mockup-red) !important;
+    color: #fff !important;
+    border: 3px solid #fff;
+    z-index: 2;
+    transform: translateX(-50%) !important;
+    box-shadow: 0 0 0 5px #fff, 0 2px 5px rgba(0, 0, 0, .08) !important;
+}
+
+.mobile-bottom-nav .mobile-connect-btn:hover,
+.mobile-bottom-nav .mobile-connect-btn:active {
+    transform: translateX(-50%) !important;
+}
+
+.mobile-bottom-nav .mobile-connect-btn.connected {
+    background: var(--mockup-green) !important;   /* 연결됨: 붉은색 → 팔레트 초록 */
+}
+
+/* go 상태(실행·모의실행): 재생(삼각형) 아이콘 + 모드별 배경색.
+   코딩 '실행'=골드(#E6AD00), 시뮬 '모의실행'=블루(#3F78A8). */
+body[data-content-mode="coding"] .mobile-bottom-nav .mobile-connect-btn.coding-run {
+    background: var(--mockup-gold) !important;
+}
+body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.coding-run {
+    background: var(--mockup-blue) !important;
+}
+.mobile-connect-btn.coding-run .mobile-connect-icon {
+    width: 0;
+    height: 0;
+    background: transparent;
+    mask-image: none;
+    -webkit-mask-image: none;
+    border-top: 13px solid transparent;
+    border-bottom: 13px solid transparent;
+    border-left: 21px solid #fff;
+}
+
+/* 실행 중 정지 상태(비상정지·실험중단): #B94A45 + 정지(사각형) 아이콘. 재클릭 시 중지.
+   .connected/.coding-run 보다 뒤에 와서 우선한다. */
+.mobile-bottom-nav .mobile-connect-btn.run-stop {
+    background: var(--mockup-stop) !important;
+}
+.mobile-connect-btn.run-stop .mobile-connect-icon {
+    width: 15px;
+    height: 15px;
+    background: #fff;
+    border: 0;
+    border-radius: 2px;
+    mask-image: none;
+    -webkit-mask-image: none;
+}
+
+.mobile-connect-icon {
+    width: 30px;
+    height: 30px;
+    mask-image: url('data:image/png;base64,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');
+    -webkit-mask-image: url('data:image/png;base64,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');
+}
+
+/* AI·로그 팝업은 연결 원보다 앞에 표시한다(PDF 6·7페이지). */
+.mobile-bottom-nav { z-index: 900; }
+.ai-panel,
+#logContainer.expanded {
+    z-index: 1000;
+}
+#logContainer.expanded {
+    position: relative;
+}
+
+@media (max-width: 768px) {
+    .header-main {
+        min-height: 72px;
+        padding: 8px clamp(18px, 6.25vw, 45px);
+    }
+
+    #missionNav {
+        display: grid;
+        padding: 8px 14px;
+        gap: 8px;
+    }
+
+    #missionNav select {
+        height: 36px;
+        padding: 0 44px 0 14px;
+        font-size: .82rem;
+    }
+
+    #overviewView {
+        padding: 12px 14px 24px;
+    }
+
+    .flow-step-btn {
+        min-height: 52px;
+        padding: 8px 12px;
+    }
+
+    .flow-step-btn strong {
+        font-size: .86rem;
+    }
+}
+
+/* ===== 🤖 AI 도움 채팅 패널 ===== */
+.ai-panel {
+    position: fixed;
+    right: 20px;
+    /* 하단 고정 내비 위로 띄운다 (내비 높이 + 여백) */
+    bottom: calc(20px + var(--mobile-bottom-nav-height));
+    width: 340px;
+    max-width: calc(100% - 32px);
+    max-height: 70vh;
+    /* 전체 폰트를 0.8배로 — 하위 em 글자들이 모두 비례 축소되어 여백이 생긴다 */
+    font-size: 0.8em;
+    background: var(--background-white);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000;
+}
+.ai-panel[hidden] { display: none; }
+
+.ai-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--accent-color);
+    color: #fff;
+    font-weight: 700;
+}
+.ai-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.1em;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+.ai-close:hover { background: rgba(255, 255, 255, 0.2); }
+
+.ai-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 120px;
+}
+.ai-msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 0.9em;
+    line-height: 1.45;
+    word-break: break-word;
+}
+.ai-msg-user {
+    align-self: flex-end;
+    background: var(--accent-color);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.ai-msg-bot {
+    align-self: flex-start;
+    background: var(--background-secondary);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+.ai-msg em { color: var(--accent-color); font-style: normal; font-weight: 600; }
+.ai-msg .ai-warn { color: var(--error-color); font-size: 0.92em; }
+.ai-suggest {
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: var(--background-white);
+    border: 1px dashed var(--accent-color);
+    border-radius: 10px;
+    font-size: 0.9em;
+}
+.ai-suggest b { color: var(--accent-color); }
+.ai-suggest .ai-hint { color: var(--text-muted); font-size: 0.9em; }
+
+.ai-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 12px 8px;
+}
+.ai-chip {
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 0.8em;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+.ai-chip:hover { background: var(--accent-color); color: #fff; }
+
+.ai-form {
+    display: flex;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border-color);
+}
+.ai-form input {
+    flex: 1;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.9em;
+}
+.ai-form input:focus { outline: none; border-color: var(--accent-color); }
+.ai-form button {
+    height: 38px;
+    padding: 0 14px;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.ai-form button:hover { filter: brightness(1.08); }
+
+@media (max-width: 768px) {
+    .ai-panel {
+        right: 16px;
+        left: 16px;
+        bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom));
+        width: auto;
+        max-height: calc(75vh - var(--mobile-bottom-nav-height));
+        box-shadow: none;
+    }
+}
+
+/* ============================================================
+   PDF 3페이지 — 차시를 펼쳤을 때의 미션 목록
+   ============================================================ */
+.lesson-accordion-item:has(.lesson-panel:not([hidden])) {
+    background: #e3e4e6;
+}
+
+.flow-step-btn[aria-expanded="true"] {
+    padding-bottom: 5px;
+    background: #e3e4e6;
+    border-bottom: 0;
+}
+
+.flow-step-btn[aria-expanded="true"] .flow-arrow {
+    transform: rotate(-90deg);
+}
+
+/* 보너스 착륙 안내 박스는 제목·설명·실행 버튼을 모두 중앙 정렬한다. */
+.lesson-panel .bonus-teaser {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.lesson-panel .bonus-teaser .inline-lesson-info-title,
+.lesson-panel .bonus-teaser p {
+    width: 100%;
+    text-align: center;
+}
+.lesson-panel .bonus-teaser .landing-start-btn {
+    margin: 12px auto 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1;
+}
+
+.lesson-panel {
+    position: relative;
+    padding: 0 12px 10px;
+    border-left: 0;
+    background: #e3e4e6;
+}
+
+.lesson-panel::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 0;
+    bottom: 17px;
+    width: 1px;
+    background: #a6a7aa;
+}
+
+.inline-mission-list,
+.inline-mission-item,
+.inline-mission-btn,
+.inline-mission-btn.completed {
+    background: transparent;
+}
+
+.inline-mission-item {
+    border: 0;
+}
+
+.inline-mission-btn {
+    grid-template-columns: 24px minmax(0, 1fr) 18px;
+    gap: 10px;
+    min-height: 39px;
+    padding: 4px 0;
+    border: 0;
+    color: #5d5e62;
+}
+
+.inline-mission-btn:hover,
+.inline-mission-btn:active,
+.inline-mission-btn.completed:hover,
+.inline-mission-btn.completed:active {
+    background: rgba(255, 255, 255, .38);
+}
+
+.inline-mission-marker {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    background: #e3e4e6;
+    color: #696a6e;
+    font-size: .6rem;
+}
+
+.inline-mission-main strong {
+    margin: 0;
+    color: inherit;
+    /* 차시 제목(.flow-step-btn strong, .92rem)보다 항상 작게 — vw 로 키우면 차시를 추월해 위계가 뒤집힌다 */
+    font-size: .8rem;
+    font-weight: 500;
+}
+
+.inline-mission-check {
+    color: #e65448;
+    text-align: center;
+}
+
+/* ============================================================
+   PDF 4페이지 — 미션 상세 대화 화면
+   ============================================================ */
+#missionView .mission-panel {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 34px 34px calc(var(--mobile-bottom-nav-height) + 34px);
+    background: #fff;
+}
+
+.mission-panel-head .lesson-tag {
+    display: none;
+}
+
+.mission-panel-head h3 {
+    margin: 0 0 4px;
+    color: #28282b;
+    font-size: clamp(1.08rem, 3.2vw, 1.34rem);
+    line-height: 1.35;
+}
+
+.mission-meta {
+    margin: 0 0 26px;
+    color: #65666a;
+    font-size: clamp(.8rem, 2.1vw, .94rem);
+}
+
+.mission-story {
+    padding: 0;
+    margin: 0;
+}
+
+.mission-story .story-line,
+.mission-goal-dialog .story-line {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: start;
+    margin: 0 0 22px;
+    font-size: 1rem;
+}
+
+.story-avatar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: block;
+    width: 58px;
+    height: 58px;
+    margin: 0;
+}
+
+.story-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.story-name {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0 0 4px;
+    color: #e65448;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.story-text {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    max-width: min(100%, 330px);
+    padding: 8px 12px;
+    border: 1px solid #c7c9cc;
+    border-radius: 7px;
+    background: #f3f4f5;
+    color: #45464a;
+    font-size: clamp(.8rem, 2.15vw, .96rem);
+    line-height: 1.4;
+}
+
+.story-line.story-albi {
+    grid-template-columns: minmax(0, 1fr) 58px;
+}
+
+.story-albi .story-avatar {
+    grid-column: 2;
+}
+
+.story-albi .story-name {
+    grid-column: 1;
+    justify-self: end;
+    color: #4680a6;
+}
+
+.story-albi .story-text {
+    grid-column: 1;
+    justify-self: end;
+    background: #e6e6e6;
+    border-color: #e6e6e6;
+}
+
+.story-goal-question {
+    margin-top: 4px !important;
+}
+
+.mission-goal-dialog {
+    margin: 0 0 30px;
+}
+
+.mission-goal-dialog .story-goals {
+    margin-bottom: 0;
+}
+
+.goal-bubble {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
+    width: min(100%, 390px);
+    padding: 14px 18px;
+    border-radius: 7px;
+    background: #e6e6e6;
+    color: #343539;
+}
+
+.goal-bubble h4 {
+    margin: 0 0 8px;
+    font-size: .88rem;
+    font-weight: 500;
+}
+
+#missionGoals {
+    margin: 0;
+    padding-left: 18px;
+    color: #343539;
+    font-size: clamp(.76rem, 2vw, .9rem);
+    line-height: 1.55;
+}
+
+#missionGoals li {
+    margin: 0;
+}
+
+.mission-sample {
+    margin: 0;
+    padding: 0 16px 16px;
+    border: 1px solid #c9cbce;
+    border-radius: 12px;
+    background: #fff;
+}
+
+details.mission-sample summary {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 16px 0 12px;
+    padding-right: 32px;
+    border-bottom: 1px solid #c9cbce;
+    color: #292a2d;
+    font-size: clamp(.92rem, 2.5vw, 1.08rem);
+    font-weight: 800;
+    list-style: none;
+    cursor: pointer;
+}
+
+details.mission-sample summary::-webkit-details-marker { display: none; }
+details.mission-sample summary::after {
+    content: '◀';
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    color: #65666a;
+    font-size: .82rem;
+    line-height: 1;
+    transform: translateY(-50%) rotate(0deg);
+    transform-origin: center;
+    transition: transform .18s ease;
+}
+details.mission-sample[open] summary::after {
+    transform: translateY(-50%) rotate(-90deg);
+}
+
+.mission-sample .sample-code {
+    margin: 12px 0 0;
+    color: #617e9c;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: clamp(.74rem, 1.9vw, .86rem);
+    line-height: 1.8;
+}
+
+.mission-prev-next {
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.mission-prev-next .nav-btn-small {
+    height: 50px;
+    margin: 0;
+    border-radius: 9px;
+    font-size: clamp(.84rem, 2.2vw, 1rem);
+}
+
+#nextMissionBtn {
+    background: #272324;
+    color: #fff;
+    border-color: #272324;
+}
+
+@media (max-width: 520px) {
+    #missionView .mission-panel {
+        padding: 26px 20px calc(var(--mobile-bottom-nav-height) + 28px);
+    }
+
+    .mission-story .story-line,
+    .mission-goal-dialog .story-line {
+        grid-template-columns: 50px minmax(0, 1fr);
+        column-gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .story-line.story-albi {
+        grid-template-columns: minmax(0, 1fr) 50px;
+    }
+
+    .story-avatar {
+        width: 50px;
+        height: 50px;
+    }
+
+    .goal-bubble {
+        padding: 12px 14px;
+    }
+}
+
+/* ============================================================
+   이미지형 툴박스 카테고리 메뉴
+   (동작·출력·발사·감지·제어·변수·수학·함수 — XML 카테고리 순서와 동일)
+   104×560(2x) 웹 스프라이트(assets/design/toolbox-menu-active-web.png)를 8칸으로 슬라이스해
+   각 Blockly 카테고리 배경으로 깐다. 기본 라벨/아이콘/색상바는 숨긴다.
+   마우스 호버 시 setupToolboxHover() 가 해당 카테고리 플라이아웃을 연다.
+   (미디어쿼리 밖 + 파일 맨 끝 + !important 로 모바일 규칙보다 우선.)
+   ============================================================ */
+:root {
+    --tb-rail: 52px;                               /* 펼침(전체 아이콘+라벨) 폭 */
+    --tb-rail-col: 30px;                           /* 접힘(라벨만) 폭 */
+    --tb-cell: 35px;
+    --tb-gap: 8px;
+    --tb-top-gap: 2px;
+    --tb-w: var(--tb-rail);                        /* 현재 보이는 폭(기본=펼침) */
+    --tb-bg-x: 0px;                                /* 스프라이트 X 이동(기본=펼침) */
+}
+/* 접힘 상태: 라벨 부분만 보이도록 폭을 줄이고 스프라이트를 좌로 이동 */
+body.toolbox-collapsed {
+    --tb-w: var(--tb-rail-col);
+    --tb-bg-x: -22px;
+}
+.blocklyToolboxDiv {
+    width: var(--tb-w) !important;
+    max-width: var(--tb-w) !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    background: #ffffff !important;
+}
+.blocklyToolboxContents { padding: var(--tb-top-gap) 0 0 !important; }
+
+.blocklyToolboxCategory {
+    position: relative;
+    width: var(--tb-w) !important;
+    min-width: var(--tb-w) !important;
+    max-width: var(--tb-w) !important;
+    height: var(--tb-cell) !important;
+    padding: 0 !important;
+    margin: 0 0 var(--tb-gap) 0 !important;
+    box-sizing: border-box !important;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGgAAAIwCAYAAABqXi4SAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAACX0SURBVHhe7Z2Hc9xGmrf13311dXV133e1d1t3tfttsNdhfc57llf2SnJUsCxblmRlWTlZiQqMEnPOWRTFnHMcZkp99WsaQ8zbmBlgBhj2a/VT9StbnO7GgA8BNBoNYNvtf/o/4mUKN7bRFfi1hxtGkOYYQZpjBGmOEaQ5RpDmGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDnaC7rzL/8s6q5fE2VHjyifJRJuaC8o7bf/IdZWVsT6+rqovnBB+dxruMFC0NL8vPyyz58/F23Z2UoZL+EGK0EWvVVVctdHy7oJN1gKAsNPnoi0f/+NUj5euMFWEBjv6hL3//B7pU6scEN7QcjS3Bz93mEm+/pEzsfblTrRwg3Xgh788Q/i0Sc7xKO/f5yyZP/P30TRgW/EyuIi/d4RhKamRPF3B5Xv7BRuuBLUmpEhFqan5S9qZWEhZVkOhWQX2w2rS0ui8uwZ5bvTcCOuoKKD34rn6+u0npbMjY0p35+GG3EFVZw6Setoy8LMtPL9abgRVxB6UUOtrbSelrSmpyvfn4YbcQXJ/PM/ieoL5+WxaCPpKQtGDuIdhzDC0JSWpn5vh3DDnaAtTqxuNjouNZcuKnWihRvaC4p1ooqeZfH33yt1YoUbbAVNDw6KzHfeVsrHCzdYCprs7RUP/vxHpaybcIOdoJGnT8X93/9OKec23NBe0L3//G24F9dXW5PQCLY93NBe0J1//RfRXVEunuXnK58lEm5oL8jvcMMI0hxfBOFSRMnhH5Sf6xhuJC3o3u/+S0z09Ij1tTWR9cH7yue6hRtJCcrdvUtMDwyEG2u65248bCvDjYQFYSIhHSNrefBAKadbuJGQIIxsO40wN9+/r5TVLdzwLKj+xnU5y9MJI8h/PAlqfnCf1o/A7TWZrQw3XAm6+2//T3RXVNC6Ci3pD8Xd//uvKQ9GG+h3jhZuxBX08JU/ywFKN+Di2eLMTMoTmpyUd0DQ7+4UbsQV1FlSTOtoS+mRw8r3p+FGXEEzw8O0jrbUXr6sfH8absQVVHvlinjx4gWtpx3YveZ/9aXy/Wm4EVcQ0nDrlpw5E4+hlhbRcPPnLUnBnj3K93YKN1wJQjBzxunk1A5+UbSebuGGa0EIhncWZ2dpG2HMiar/eBKE5H3+mZjq76ftSIwg//EsCMFEDtw8RTGC/CchQQgkjbS1RTSGkQRaTrdwI2FByN3f/Jvor68PN1Z79YpSRrdwIylBVrpKS8X00GDCkwlTGW74IohTuGEEaY4RpDlGkOYYQZpjBGmOEaQ5RpDmGEGaYwRpjhGkOUaQ5hhBmmMEac62x1//KF6mcMMI0hwjSHOMIM0xgjTHCNIcI0hzjCDNMYI0xwjSHCNIc4wgzTGCNGdLBDVn5Iqxrl4x0Nwmio5eUD4PMtxIuaDyn25EvKxjuK1DKRNkuJFyQU0PH0d8gfmJKZG797hSLqhwI+WCWrIKIr7A3PikyNt/QikXVLix5YKwBRlB0UlaUNnZ66Itr0TU3UpXPnNKU3puxBfAFuR2F4dl4BhGf+4l3EhKEH5Zywsb75fD00i6q+qVMjRlp6+J1eXl8Bfoq29WytAUfH9WTPRs3Fm+urwimtNzlTJuw42kBD0rUh9R1l3doJSjqb52T4x19kih8XZvkDM9NBKxjNnRcaWc23AjKUF1tzNoe5KOkiqlbCLJ++akmBpUH+Y02T+klHUbbiQlCOmpbqBtitWlZVH4wzmlrNd0ltfSpsXK0pLcAmlZt+FG0oKQnprGiEZxXCr47kxEmZLjl8TT/DK5awtNzYjF2TkZ7K56a5tEw90spd2BpicR7a4sLomaJOQg3PBFENJZVi3F4JeOk1Hr59hNQSB+ufGYHhwRtT8/CNctPXlFLEzPyJGHhZnZpOUg3PBNEFJ0+Jw8qFv/Lj/3s9xCvIDHntk7GtgSKy/cEoWHflKWl0i44asge8rPXhdL8yG6PNf0Nz5R2vQj3AhEELrOXrccJ1qzC5S2kw03AhHUVVFHl5MQOKYV/3hRaT+ZcMN3QUVHzrvqELilt65JWUYy4YbvgtpyS+gykgK9N7djdW7CDU+CcK7yrLhSBqMFGJkuOhJ5RXSkXX3QXzKgV0e71+h+V168LSov3pL/xb/pd40WbrgTtOeYcjJqgfOekuOXw+Vw+cBvnjwqku1jS8LIhX2wFawsLYvOshpXWxo3XAkq/OEnOXwTDezWUA6/oGS61tFoLyiT7Vdduk0/iqDkxC9/KDHCDVeCMBoQq9tsXQvK3XtMLM6pr3VOlvbCctm+ERQjOPHEOBpGl+3BJQfs2qxyM8OjdBlJ05KVL9vGFopxO2trfvHLw9axi8Oli5d2F+cluADnJ2srq0onABf9qq+mieord+V/S09dVb5HtHDDd0HRrhElCrZSuoxkwg3fBeE4FOt45RVMcqTLSCbc8F0QUnvzoauXccRjsm8w4vjmR7gRiCAEB+1kWAotKMceP8KNwAQho509dHmuWFtdFbU3Ni/c+RluBCoIwzCJ7OomegeUtvwKNwIVlP/t6fC8OS+4mV+XaLgRqCBktKObLjMuVZfvKO34FW4ELggjzqGpabpcR9bX1kR/UzCXuq1wI3BBCMbyGu9li5bMPDlt1yn4DCMDtK7f4UZKBOkUbqRMUP2dTDHe3ScnwTsFuzY62TGIcCMlgjCnzc1lCEw2oXX9DjdSIij/wClX43OtOYVKXb/DjZQIQnBZ/GlBmbxk3VVZFw7OeRDsAmmdIMKNlAnSJdxIuSDcOoKhHEwuQXCFFLtAWi6ocCOlgnA+ND+pnrS2F1YoZYMKN1IqKP/bU2J+Up2WhXl2tGxQ4UZKBSG4/we7uNDktOzZ9dW3iPyDp5VyQYUbKRdkBbs7N7Nw/A43tkzQVoUbRpDmGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGnOtsqMV8TLFG4YQZpjBGmOEaQ5RpDmGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZqjraCanA9EXd4noqv5rhgfbBQTQ82OGeuvE80l34rKjFeVNpzCDe0EtddcEIOdhWJpYUqsr63Q7+vI8/U10d/+SGnLKdzQQ1Dma6Kj/pqYm+oXz59vvmPVC8uLM6I65121bRJubLkgbDEQkyzY2mofb1fap+HGlgrCbinRLYaytrokah9/pCyDhhtbIqg+f7eYmfD7CfXror32vLIsGm6kXFBT8X6xOD9Bv4cvdDXdUZZHw42UCmoq2id7Z0Gwvr4qWsoOKcuk4UbKBDUUfC4W5+M/bWRmvEsMdhSI7pY0MdJbKeZnBmkRR3AMqsl5X1kuDTdSIqgq66+uftF9T7OVuuiCjw2orwKlrK0um15cohnuLqXLVRjoyFfq2TM1+pRWiWB5aVbU5Lyn1KPhRuCCsFXEY3VlQdTlfarUtae99mLMB9RiOIjWcQo3AhXUkP+Z3PXEY3K4Ne5YWnXWW2IhxjGsp/WhUscp3AhMUHX2O2J+Ov5xB4wN1Cv1aWpzPxZLC+pjZMDKckg0Fu1R6jiFG4EJwl+0W/ALxskrbcMejNVFY3ayRykfLdxIWBDOOTDUPzfVJ2Yne0Vb5cnwZ80lB1yPRFuM9tcqy7CCQdBY43XP6q8qdaKFGwkJGnLolS2GJsIH+qmRNvpxXF68eCF7e9XZb0csqz5/l5gee0aLhwnNDrs6/7HCDc+C0B2OBracpuJvkhoAXZgbE71tmfJEdbCzSKwsx37WaUfDDeU7xgo3PAnCL+PFC+euLn6xVVlvJrT1JMrc9IDyHeOFG64FoZuLY000ulvuybG2VIEty23PzR5uuBaEIZdoZ/O4mokykyncerAbVL6ji3DDvaCMV2RvyX4ugjN7DIDiqiiOPV57boky3F2mfDe34YYnQQiuWuKcBLJwgQzHHfwcV0dTwWhftfKdvIQbngU5Bd3cpVAw13nsDPdUKMv2Gm74Iqgud4e8YBYkmIpFl5tIuOGLoNpHf5MXzIIAI909rQ+UZSYabvgiCMHVT78JzY6IxqK9yrKSCTd8EYQtCP/FVFw/wExRdAYw/ZcuK9lwI2lBmBeN6zToxWEcLVlJGJFor72gLMevcCMpQRh7s86LFuZGw1NvJ0da6XLisrw0tyE56y1lOX6GGwkLaio5IEcQACaENBZ+JabHOsJzC3AJ2g3oXOD4VZ+3U1lGEOFGQoKaS7+Xf/EAA5b1+TulHLCyNB8uF0sS5PY8SZcX6nAeRS8zBBVueBYk5fyy5WzI2SVmxjvlv5cXZ+XnECO3pMzX5NaBcyQMCyGzU72y21yV+brsBKDc6sqiWAxNis7Gn5Xl+R1ueBLUXHIwcsvJ2xmWs7I0J6f1jvbVyH/jmhDKo15D4Zdy5BmpynxDHmfQmVhdDkV8GUwwqXn0obJcP8MN14JwPmL9QnGZG7s1awI85qThUoNdTlfTLaUNK5gk4oTbW0iSCTdcC3pSeUJW2JCzS8xObLzpHrs7yMH8BIBzGAym0vpWcFtjtNk5G5MP3V++TiTccC0IuyWMXmNLsi7cQQ7+bU3NXYechutKXXsaCr6QHQkn3Ey/SjbccC0IQU8Lxx6wIWdPeHeF3Vo8OQi64xhfo2AOHbYuWt7vcMO1IBxzMIMGQE7LL701gC3nWd0VpY5TcDKLnpwdbJFBH3uscMOVIPTWQjMbcmRvrWif3HqAFzlW2qrOyHluuIaEazxBjx7Yw424gnBfT2h2VBaWckoOyJ/jPAbnMwmPm2W+lpJdGg034gqyus7YrWHsjX7OLdyIK6it+ow8qbROOrmHG3EF/drCDSNIc4wgzTGCNMcI0hwjSHOMIM0xgjTHCNIcI0hzjCDNMYI0xwjSnG27zv1RvEzhhhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGmOEaQ5RpDmGEGaYwRpzpYI+uLia6K5o1aMTg6HU9lSKG7mnhHfXPtAKe9nuLElgr68+IaYnHV+ivzU7ISoeVIqfrj5qVLPj3DDF0HYIujP4uVS5mFRUJspKpoLxMjEoFhcjrzrLrQ4L/KqHyr1kg03khZ0+NY/xPDEgMgoval85jafnX9F7Lvyrmyjdzjy1Wl9w13iyK2dSp1Ew42kBXUPtsuGVlZXxL2iK8rnieRuwQV5XLKYmBkTP975TCmXSLiRlKCqlqKIxqSkwstKuUTy1aU3xZPuzUfJTM6Mi0M/71DKeQ03EhZ06t5esb6uPmEektJcSMIu7WLmDzIn0r5WPrdS+6Qs3HbPUIfyuddwIyFBu8//KeKvm7K6tiLuFlxU6tnT2rX5tJHllSXR0f9EXH90UimHPO3ZfAbd46r7yudewo2EBJ2+v0/e3R2L5ZVlkVZ4SalrpawxV6ytrcqXatiBOHQa7GX3X31fjE9v3Mi8uBQS3934WGnPbbiRkKDGZ9W0HUcgKdaWhGPKlexjoulZtZhfmA3Xw64MW6m97J38C+HP0TWnbbkNNzwLwknm6OQQbScqG7u7C0o7NEdu7xKdA5uvHsCWRCUNjvXJz9CrwzGMtuEm3PAs6HLWUbHu8fUzbiUh3YOb7wq6lnM84rPcqgfhXeJV8pnbcMOzIPyiEwG7u9v555T2aHC+g1EEgC3K/hmOPehQgOL6HKWum3DDs6Di+sTf0YBf7u3880qbNPVPN57BvbAUijhBxS4PuzcwPN6v1HMTbngWFKt77YYNSbG3JIxIWO9MpV1vdCgAenW0nptww7Mg60CdDPEkHbj2Yfg4RwUV1mbJn2PUm9ZzE254FtQ7vPGM0mSJJQnnQdWtJfKaEe2tXX90So7TtXTWK/XchBueBTW0+/eOBki6mXtWWUaQ4YZnQbgk4CdLy4splcQNz4Lwy/SbVErihmdBJ9K+EotL6jNHkyVVkrjhWRDSP7LxSGa/2ZB0Rlmen+FGQoJwFh8UkHTj8WllmX6FGwkJOnj9o/BwTBBAErrTdLl+hBsJCUJKGhIf8nEDjnNBSOJGwoL2XX1PzIY23oISFLg457ckbiQsCMFFNGvMLCj83pK4kZQgJL8mnbbpOxuSnOcreA03khaE+Dn8Ew3MX7iQcUhZttdwwxdBn194VVS1FtO2fQUX747e3q0s22u44YsgK9jdYV6c39S3VyrLSjTc8FUQcvbBAd9GGnD19H7RVWUZyYQbvgnCVN3CuqzwbgjXeiBqLc78OSfGpkbkBBF05elykg03fBOE+W0A5y5ljXlysiF+ji0Ks0FxJXZ6blKOQOCAjxdCQR5uO8HPIQX1gh4w5YZvglo6N95hZwFR+BnmXdvnt3196a/i3MOD4lrOCXEp84hvdy24DTd8EYTpUHNRRhUwwX5+YU40tFfJLQTHlKDunnMTbvgiCHczeAFz5EKLczKYd4BuOm0zqHDDF0HWTVyJgJmix+5+obQZVLiRtCDcJ5TsuQ92fbTdoMKNpAX5cfFuZHJI7Ln8ttJ2EOFGUoLk7fQzzrfTe+Vc+ndK+0GEG0kJwqRCnNP4AbrctP0gwo2kBOH5CAOjkS+tTQTcnpKqjgI3khKEfHv9b/JGX0zHxbEED6VwG9R51tcqT1xpu0GFG0kL4hZuGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGmOEaQ5RpDmbPv7bx6KlyncMII0xwjSHCNIc4wgzTGCNMcI0hwjSHOMIM0xgjTHCNIcI0hzjCDN0UbQl69ni0uHy0VTdb9oqRsQXU9HRc+zcdFaPyD//fPpalmG1vMabmy5oM9fyRKFmU/F1ESIfjeFibE58ePuQqUNL+HGlgo68WWRGB/ZfC2NG3LvtyrteAk3tkzQia+KRGhu40UZdkaHZ8Wz1hFR+viZWF6KvPdoZmpBfLc9V2nLS7ixJYKOf1Ek5omcgZ5Jcf1kVbhMVVGXWF/ffBbd3MyiOLW3WGnLa7iRckE7/uOhGBve3K3hLm/IwM+tMnVlkc/6mZ1eFCe/Tl4Owo2UC8p7+CTiC1QUdEZ8nns/8nPs1rDF0XasHP40X+z6Q6by82jhRkoF7fx9htxVWfR1TURsOQiOPxarq2sxtxxsaUuLK2JidF7se+eR8rlTuJFSQWkXN5/ng+PL6b0lSpmH1xrCZVZW1sT+d51/8XXlkbvBksfPlDJO4UZKBdmPLYN9U8rnyDfvPRILoeVwufyMNqUMjlmUwd4psfN3GUpZGm6kTBB2ZVMTmw9DL85pV8pYse/mxkfnxJl9JeFdIU5qncAW+cOOfKUtGm6kTNAnv02POP4UZKpbhpX7lzffUgyerz8XQ/1TcsiH/tx6LDT+Hx0G2hYNN1IqaHZ6860p6K3RMlb2vJUjpidjD/3MTC+I7NvN4ZNZuQV9YgQlHLkFzW5uQYVZT5Uy9hzdWSCaa/sjpFqE5pfFsc8LZQ/v+fON96piSzJbUBLBMWRkcPOhf5WFkec/0YLB1Dvna0V787AcUB0dmhHnvyuTn+HnFmtr6+L7j/OU+jTcSJkgpCCjLbzg6YmQPC+iZWIF5e3nTW2Nm6+sRi/uH/+VrtSh4UbKBOFEcnhgOrzgleU18dmf3I8A0OB4gzYsirJj7zKtcCMlgnCyaR9/Ax1PRuRxiZZ1E2xFXe0bbyQGOKE1IwkJBieeY+SaT2/nuPji1SylrNvUlHRHtFeW26GUiRZuBCoomhwc+GlZN/nyL1miuTbyXGhyfF7s/qP7XSU3AhMEOfRqaW/nRMwtB5ezD3z4OGJ0Ggf+r97IFo/SWqQMO/OzSzFHup3CjUAEffP+Y0c52AJoWSsY+sGxBKPTuMSAYxS61pCyuKA+tDbeZYho4YbvgqJtOfHkeAHy3IwaOIUbvgqSxxzSW8M1n1hySh65k4OtCFOxcHJK2/ASbvgmCF1pTPiwE08O3XIgoSi7Xc7csSfzZpOUT+snEm74IkjKGYp8d0N/d+wOgZOcKz9WKuX8DjeSFoQTRLrl6CoH4UZSgva+naNsOditxTrPwS7MTirlINxIWFBiciKvhkLO5SMVSrkgw42EBPkhB+c7qZaDcMOzIHnMcZAT65hD5WDLwZ0MtFwqwg1PghKTox5zLv6wNXIQbrgW5HSeg95arHt2dJODcMOVID/kYK7bVu3W7OFGXEGf/me6vPPATn/3ZEw59DwHcrZ6y7HCjbiCMMxip78nthynLUcXOQg3YgrCJWnsyizQQcC1GVrOiu5yEG7EFHTwf3IjJmbEGkmmXWkd5SDciCno0N/zxPraerhwtCEZLnIQbsQUhLsF7JMN25qGlDKYIWpHZzkIN2IKQmiPrLmmX95Lev1ElaivjHx/HeRcOKSvHIQbcQVhIrt9TnU0cBJ64fuNKbk6hxtxBSG4Ew4zaKKBm3yt+dK6hxuuBCGYmI5dGm6fx60eyML8smio7JVTpWh5XcMN14KsYMAUM2oQv+YJpDLc8CyIe7hhBGmOEaQ5RpDmGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOZs+/2OM+JlCjeMIM0xgjTHCNIcI0hzjCDNMYI0xwjSHCNIc4wgzTGCNMcI0hwjSHOMIM0xgjTHCNIcI0hzjCDN8SzowOn7orW9V7R3DTjmXk6FeHXnOaWe17y2+7woq3mitG+loq5NvL/3slIvXrjhSdD2A9fE9Gzks6udOHE1W6nrNfUtnbRZBQik9eKFG54EHTz7gNZ3BFsRres1M7OxX/AEBkcmxF+/uKDUjRVueBL0zal7tL7Cyuqq2H/qnlLXa/JKG2nTCmMTM+Ldry8pdWOFG0kJwntOC8qbRHpudTiHL2Qo9RLN9QfFEW3j2GNnZGxKvP2VERQOFTQfWlTKBBnsOu0YQSRUUGhhUbz5ubdjQDLJyK+JWL4RROIkyOtBOpkYQXHiRdCf/vGTeOOz8zJuzotQxiqPuvRzxAiKE7eCzt3MFcNjk/IYhUxMzYoHjyuVclYePK6SZazyw6OT4qebuUo5IyhO3Aj66JtrYm5effcpQK+MtnnjQTEtJpmZC4kP912JKGsExYkbQV/9eEd2v53A1rHn+N1w2T3H0+TPnFhZWRVfHL0d0bYRFCf45dtxEoSUVrdGlLPTMzAaLtc7MEo/DoM2aLtUEHaFb31xUSkXK9zwJOinn3MjKkcThGA0AXnWPRhRBzwqrhePiyNfqA5Q1qpH20OyCjbfPAymZ+Y9d/O54VrQlbRCEVqIfCTZ4tJy3L9gDLBGOybZmZ1bkMcvWt+ejLxqWk109Q6Lb8/cV8pGCzfiCsJfaFWD82vMMBbmpgsNuXh8WTTwGcrQejQ4fq2uqcc3bMlOvT6ncCOuoJKqFlpHMj45I45ezFTKR0thRTNtIgw+o+Wj5XZmmWPHAi9b/+F8ulKehhtxBXX3jdA6Yv25u794e3ABzulaEo4jf9kVfyu0p7I+8kG2FkWV8UVzI66gokrnLQjHjDM3Hivlo+XrY3fF4uIybUYsLC7L3iEtHy3Yop268dj1HTr3Em5BGHrBlUtsNRRcVMOWQevQoKcXq0uNz6L1Bu3B5XanYxk6Iehh0vJO4UZcQVbO38pTrnLirz9eLw6pqHPeJdnBHANaj4Z2s0FbR7/4/EjkCW2scMO1IOT45eyIyrHOg6zgL3ttffPp9WB2LiR3kXZQ5mycXWYmOVGdnJ5ztQXbww1PgnAcsRNN0O7Dt+SBHKHnTjhWYG7D9z89lD0vOyhr1UMbtF0zkhAnbsbi/vvLi2JoZPONKZSSqs0hnFhDQpgQQn/5VJAZiyNxI2jfyTTHXhbo7BmKuNaD/+/sHaLFJJh8Yh9YRYygOHEjCOc0GH6h4LiD0WvaJoQ6DQWhDXp+ZATFiRtByAf7rojc0ga5C0NwLoXjFy1nBVsKdn1WedRFG7ScERQnbgUFFSMoTpwEeR3uTyZGUJw4CaJlgoyZFxcnVBDOaTASbZ/9ecSnmaX//5Ozcr6CmVnqsBLRQgU5ge4xytG6XoMpxfEwc7NJzN0NqceTIHl/0Ix6TYeCMTta12vqmjtoswrm/iCH4MSy5Wn0O+zSssvFn3c6zwz1ElxKx7kRbd9KeW2beG+PucPuVxduGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGmOEaQ5RpDmGEGaYwRpjhGkOUaQ5mx7mP5QvEzhhhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGmOEaQ5RpDmRBWU8yhHPHr8iGXw3en6/OoEYUUf5z5WVl73WN+Zrs+vUhDn0PUxgjQLXR8jSLPQ9TGCfgkO0H6HLsNN6Pq89ILwi8zKzpIH6dzcXH+Slxtuly4vXuj6vNSCrL/ygYEBEQqFxMLCgggthJIO2pmbmxP1DfWeJdH1eakFZWZmito69XGVfjE7Oyuyc7I97e7o+rzUgvDXXVJSIlZWVmj7voCtCLtOIyhBQQi2opraGrFGngw/Nj4md1EtrS2itbXVVZqamsTw8OYz52bnZuUyjKAkBFm/lLr6ughJ2Kqw+8Nn6RnproKyT548CbdhBDmErrDboG5jY6NYtz3pF//f0Njgul1Ian+2+b6I+fl5s4ujoSvsJaiP3dRz28PQIQm7OjdtZ2ZlitrazU7HyMiI6cXR0BX2GrTR0tIiXrx4EV4Ydn34xWMLoeVp0GvDltjR0SEKCgvkv2mZWKHrYwQ5BO3gWGKXtLq6Kqprql1JQscD5bzKQej6GEFRgraePo18NQA6DpVVla4kJRq6PkZQlODAjvbsB32wvLwsyivKA5NE18cIihFIgojOzs6IhS8tLYmy8rJAJNH1MYLixJLU1d0V8QUWFxdFSWmJyMjMUOokE7o+RpCLWJJ6ensivgQGRYuLixPqDEQLXR8jyGWsY9LQUOQ7G/r6+nzd1dH1MYJcBrsy7NIwOmAHY3B+7ubo+hhBLgIBxSXF8rhjp7unW44e0PLJhK6PERQnkFNUXCQv6Nnp7euVuzYv42xuQtfHCIoRjAhguGY+FLlb6+/vl5/5LQeh62MERQl2XfkF+coxZ3BwUH4Wr+eWqDy6PkaQQyAgLz9PXrK2g4txGJ2OJQdiUB/lvI5kI3R9jCAS/FIxK2d6ejpigdalg3hyMKsHu8CJiQlRXV3tWRJdHyPIFuuXOTU1FbGwsbExKSaWHAQdiuaWzXd/Q7KZNOKTIMjBLxJ/+Xbwb/zczZYAQe3tm4OrZtKIQ+gKu4m16xofH49YyMTkhhzrXAf/HyvodtsvUZg5CQ6hKxwv1q4LuzE7k5OT8heLrQL/tcrFCpbf9rQt3IYR5BC6wrFi/eXbp0pZYIbozMyM7GbPzc+5CsriUoSFEeQQusKxYs2JCwoIw3KMoAQF4dhTWlYqVlaDmVlqndTS5cYKXZ+XWhCCY0dFRYV42v50I0+TD3pymBlk3eVAlxkrdH1eekEItiT7DFG/4lUOQtfHCNIsdH2MIM1C18cI0ix0fYwgzULXxwjSLHR9jCDNQtfHCNIsdH2MIM1C1+dXKcg8TGnriSookbN3XYLvTtfnVyfo1xpuGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGnOtldefUW8TOGGEaQ5RpDmGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGmOloLe/OubYv/+/aKwqFA+ed6enJwcsfuz3Uodt+GGdoJu3rwpH6Jkf+8DBU9sxMOWaF034YY2gj766CPR1rb5dBE31NfXi1f/8qrSVqxwQwtBe/bsUZ4C7JarV68q7cUKN7Zc0I4dO5Tn+1jgmJOWliaDZ5s60dvbq7QZK9zYUkHoDHR2Rb4uwALvxLOX/fQfnzq+Iw+7OdpurHBjSwXduXuHfh8JXl9DyyJ3796NeIIj3gWxa/cupVyscGPLBL313285Hnfw8D50GGh5K9iSzp0/J06cOKF85ibc2DJBx44fo99FgueT0rJ+hhtbJqihoYF+F/kKtUS3DLfhxpYIevudt+WTGCl4iB8+o+X9DDe2RNClS5ciXuNp0d3dLd548w2lvJ/hxpYIwjCNExhno2X9Dje2RJDTiSneFIlxOFrW73AjcEHvvveuHH3+5NNPxPsfvC/27tsrXzBIwfHn6I9HxXvvvye74LQdv8KNwAQdP3FcPtYSrwLAuxvwFPrR0VF5nuMERq9xEooyOD/q6ekRrU9axb79+5S2kwk3AhH0/aHvlZc4JQpkxTpx9Rpu+C7o9Tdel1uOX6A7/vHfP1aWk2i44bug115/Tb5o3S8wkk2XkUy44bsg5IMPPxD37t0T6enpMnjmdWlpqRgYGKDLl2B3iJewl5WVyZdBWfVu3LihtJ1suBGIoGgpLCyky5d0dHYoZYMKN1IqKNqxKRUnqFa4kTJBOB9yevkG8LsrHSvcSJkgnBc5zdTBa6JxjYeWDyrcSJkgDJA60djYqJQNMtxImSCn6z8AL1mnZYMMN1ImiL42DayuroqTp04qZYMMN1IiCAOl9F2qAMefoK//0HAjJYIwG8eJrq4uzzNDkw03UiII5zlO4NEstGzQ4UbggrALw6VsCi7QXb58WSkfdLgRuCBcgLO/0dECo9T4jJYPOtwIXNChHw7J6VQU3GJCy6Yi3AhcEEaxncjOzlbKpiLcCFwQJrc7cezYMaVsKsKNQAVt3749YrK7BWb1bP94u1I+FeFGQoJwR0F5ebkcHWhtbRUf/u1DpQxy8uRJujxJZWWlUjZV4YZnQTs+2SFn6NiJdrsILsRR0GHYs3ePUjZV4YZnQdFGBW78vHl5GvPaIM2J8opypc1UhhueBUWbtou739Azw5yCmZkZ+rEEtzEGOSnRTbjhWdDB7w7SNlyBCYk7d+1U2kt1uOFZEOa9oYPghWfPnomdO7deDsINz4Ks3LlzR0xMTND2wuDyNmaF+j2vLdlwI2FBCKbknj59Wl62th7V0t7eLkevDxw4IN559x2lzlaHG0kJ4hhuGEGaYwRpjhGkOUaQ5hhBmmMEaY4RpDlGkOYYQZpjBGmOEaQ5RpDm/C/ifEwZlVt4rQAAAABJRU5ErkJggg==');
+    background-repeat: no-repeat;
+    background-size: var(--tb-rail) calc(var(--tb-cell) * 8);
+    background-position-x: var(--tb-bg-x);     /* 접힘 시 라벨 부분만 보이도록 좌로 이동 */
+    cursor: pointer;
+    transition: background-position-x 0.18s ease;
+}
+
+.blocklyToolboxCategory::after {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.blocklyToolboxCategory:nth-child(1) { background-position-y: top; }
+.blocklyToolboxCategory:nth-child(2) { background-position-y: calc(var(--tb-cell) * -1); }
+.blocklyToolboxCategory:nth-child(3) { background-position-y: calc(var(--tb-cell) * -2); }
+.blocklyToolboxCategory:nth-child(4) { background-position-y: calc(var(--tb-cell) * -3); }
+.blocklyToolboxCategory:nth-child(5) { background-position-y: calc(var(--tb-cell) * -4); }
+.blocklyToolboxCategory:nth-child(6) { background-position-y: calc(var(--tb-cell) * -5); }
+.blocklyToolboxCategory:nth-child(7) { background-position-y: calc(var(--tb-cell) * -6); }
+.blocklyToolboxCategory:nth-child(8) { background-position-y: calc(var(--tb-cell) * -7); }
+
+/* Blockly 기본 행/라벨/아이콘/색상바 제거 (이미지가 전부 담고 있음) */
+.blocklyToolboxCategory .blocklyTreeRow {
+    position: relative;
+    z-index: 1;
+    width: var(--tb-w) !important;
+    max-width: var(--tb-w) !important;
+    height: var(--tb-cell) !important;
+    min-height: var(--tb-cell) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-sizing: border-box !important;
+}
+
+.blocklyToolboxCategory .blocklyTreeLabel {
+    display: block !important;
+    position: absolute;
+    left: 34px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #3f4542 !important;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    line-height: 1.05 !important;
+    letter-spacing: 0 !important;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    white-space: nowrap;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.blocklyToolboxCategory .blocklyTreeIcon { display: none !important; }
+
+/* 호버/선택 강조 */
+.blocklyToolboxCategory:hover,
+.blocklyToolboxCategory[aria-selected="true"] {
+    filter: none;
+}
+
+.blocklyToolboxCategory[aria-selected="true"]::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(0, 0, 0, 0.38);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.blocklyToolboxCategory.ares-muted-category {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAEYCAYAAAATYdUSAAAEQElEQVR4nO3dbWrjMBRG4bcHb8Ld/9rqZcwQaCAEN/GHgq6P/cD8mGIJ31xJTqRI+fr5+fmXTr6/v79a10lkiAyRITJEhsgQGSJDZGhd4TiO0WVo7BjU8Kmbu5WbpinlMjR1uKmPZmhtUPeM9noh+ESlPbNK6wp7N1EiQ84a0Nj5gdk0oKMEs/rBuiYw1bBdOkPTNHV/WDbP0BECWd3kjhIUkSEyRIbIEBkiQ2SIDJEhMkSGyBAZIkNkiAyRYU/hitNbRIbW2eidNdZc/HyzzxMnvYPZNetzu/n7v1fXlc7Q9Huzz0FUmohkbYG/mlWF5nbOUW6c6SefKNMKOePqw6lXwXuj1atfYchWZmjYUqhKNuZcGbp7fM5UytiwtWClIB5dn1irZ4nIEBkiQ2SIDJEhMkSGyBAZIkNkiAyRITJEhsgMLSqZm5g/7FaBsci6UNNJkls2qswvsLXg3DJkhaD4RKWHWU4Zf7Py156iCv1paLFzuEIgm7+n8O7me/cjWlbWO5imAVUIpsmSZKVn0OZBoVIAuwaFuQGh0gi3+vtyc5mpli2WXljtxk/zeYjIEBkiQ2SIDJEhMkSGyBAZIkNkiAyRITJEhsjQopKeu1Ga7sF7npurEBR7Vh6e/19hIoW9FTxnpneW2FJobmdklY2FbC1Ybbvn3fXN+me9+8zHnkO6ue2xSFC0rKxCUKy5+F2WKox0w9oCjzdd5dnTbHN7tfXV1Rmaez9XLSAMA0HTQaFahoa1BaoF8Oz6CF4dkSEyRIbIEBkiQ2SIDJEhMkSGyBAZIjO0qKTSxD17K6g2lcWewhV3ebG3gsdtOBXOPaVVRVWWJmld4X2Jv1fTG1pW1rv/KJ9DbC34rlmV/fnSIwWzqQ8tGZ579qWhRTAVBoMmJ6JXC2bXckq1daHVP455hLWhxcdTV+83iwM6WjCbvtFYOZjFTe4owbwN6NVnnVOdiN4TkSEyRIbIEBkiQ2SIDJEhMkSGyBAZIkNkiAyRITJEhpa7iSvsOMa2f4jIsKXQq+3ThwxoevhOQrVJSJZcNHfT96D++nsvRIYlF8296q+OIzjc18vG35teen7woX56cSo0IJy3D929aloV3vasanJHeNtzc+4mdwREhsgQGSJDZIgMkSEyRIbIEBkiQ2SIDJEhMkSGyAxLL1wzo3OI7TbTgrNMK0xjERnWXPxuLrvCAXqsLVBxgr7JCl7VoNhasGpQ7Cncu7/MuQ4/rnowxN3V5CoOBE1Oop1rahVW8WjZbyr0p2HphRWO5zjlm9Nh6YUVmtMpM0RkiAyRITJEhsgQGSJDZIgMkSEyRIbIEBkiQ2RoVVGFKayP/Gxc76CGvRX03l7z7OpDj3o3r1NkaNhS6K/taxX60rClUOVz54gMpgHh5srQo2r95+bKUHUc8Q1o858vrdp/bq4lyeqIDJEhMkSGyBAZet9Aa/8BrxSS//M2Pv0AAAAASUVORK5CYII=') !important;
+    background-color: transparent !important;
+    filter: none;
+}
+
+.blocklyToolboxCategory.ares-muted-category .blocklyTreeLabel {
+    color: #9a9a9a !important;
+}
+
+.blocklyToolboxCategory.ares-muted-category:hover,
+.blocklyToolboxCategory.ares-muted-category[aria-selected="true"] {
+    filter: none;
+}
+
+.blocklyToolboxCategory.ares-cat-category_math:not(.ares-muted-category) {
+    background-color: #CACACB !important;
+    background-blend-mode: luminosity;
+}
+
+/* 카테고리를 클릭해 관련 블록(플라이아웃)이 열릴 때 0.5초 부드럽게 나타난다 */
+@keyframes aresFlyoutIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.blocklyFlyout {
+    animation: aresFlyoutIn 0.5s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+    .blocklyFlyout { animation: none; }
+}
+
+/* 툴박스 이미지 메뉴 아래 도구 버튼(미션전송·저장·읽기) — 코딩 모드에서만 노출
+   (mission-workspace 는 data-mode="coding" 일 때만 표시되므로 자연히 코딩 전용) */
+/* 차시·미션 표시 + 예제 선택 배너 — 코딩·시뮬레이션 모드 공유 상단 바.
+   missionView 자식으로 두고, 두 모드 패널을 배너 높이만큼 아래로 내린다. */
+#missionView { --coding-banner-h: 34px; }
+/* 설명 모드에선 배너를 숨기고(설명 패널이 자체 제목 보유), 코딩·시뮬에서만 표시 */
+#missionView[data-mode="description"] > #codingMissionBanner { display: none; }
+/* 배너가 보이는 모드에선 해당 패널을 배너 높이만큼 아래에서 시작 */
+#missionView[data-mode="coding"] > .mission-workspace,
+#missionView[data-mode="simulation"] > .sim-card { top: var(--coding-banner-h); }
+#codingMissionBanner {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: var(--coding-banner-h);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    background: #f2f2f3;
+    border-bottom: 1px solid #e4e4e6;
+    z-index: 6;
+}
+#codingMissionLabel {
+    flex: 1 1 auto;
+    min-width: 0;                 /* ellipsis 가 동작하도록 */
+    color: #3f4147;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#codingMissionSelect,
+#codingExampleSelect {
+    flex: 0 0 auto;
+    height: 22px;
+    padding: 0 4px;
+    border: 1px solid #d0d0d3;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #3f4147;
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+#codingMissionSelect {
+    max-width: 34%;
+}
+#codingExampleSelect {
+    max-width: 28%;
+}
+/* mission-workspace 가 이미 배너 아래에서 시작하므로 캔버스는 이를 꽉 채운다 */
+.mission-workspace > #blocklyDiv {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+}
+
+/* PDF 5페이지: 블록이 하나도 없을 때만 보이는 작업공간 안내 카드 */
+.workspace-empty-hint {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 20;
+    width: min(240px, 52vw);
+    min-height: 220px;
+    padding: 26px 18px;
+    border: 2px solid #d1d1d3;
+    border-radius: 20px;
+    background: rgba(250, 250, 251, .96);
+    color: #858589;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    font-size: clamp(.9rem, 2.5vw, 1.08rem);
+    font-weight: 500;
+    line-height: 1.45;
+    text-align: center;
+    transform: translate(-50%, -50%);
+    transition: top .25s ease;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+.workspace-empty-hint[hidden] { display: none !important; }
+body.toolbox-flyout-open .workspace-empty-hint {
+    display: none !important;
+}
+.workspace-empty-icon {
+    font-size: 5.2rem;
+    line-height: 1;
+    filter: grayscale(1);
+    opacity: .28;
+}
+
+/* AI 패널이 열리면 안내 카드를 위로 옮겨 패널 뒤에 가리지 않게 한다. */
+body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
+    top: 30%;
+}
+
+#toolboxActions {
+    position: absolute;
+    left: 0;
+    /* 카테고리 8칸 바로 아래 (workspace 가 이미 배너 아래에서 시작) */
+    top: calc(var(--tb-top-gap) + (var(--tb-cell) * 8) + (var(--tb-gap) * 7) + 8px);
+    width: var(--tb-w);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px 4px 8px;
+    box-sizing: border-box;
+    /* Blockly 툴박스 div 가 전체 높이로 이 영역을 덮으므로 그 위로 올린다
+       (점검 오버레이 z:10000 보다는 낮게 유지) */
+    z-index: 900;
+}
+.tbx-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    padding: 6px 2px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;          /* 색 없음 — 배경 채우지 않음 */
+    color: #454549;                   /* 중립 다크 텍스트 */
+    font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1.05;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+/* 저장·읽기 아이콘 — assets/design 의 Save/Load 이미지 사용 */
+.tbx-action .tbx-ico {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+}
+.tbx-action .tbx-ico img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+.tbx-action .tbx-lbl { display: block !important; white-space: nowrap; }
+/* 이전 접힘 상태가 남아 있어도 도구 이름은 계속 표시한다. */
+body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
+/* 호버/클릭은 색이 아닌 은은한 중립 음영으로만 표시 */
+.tbx-action:hover { background: rgba(0, 0, 0, 0.06); }
+.tbx-action:active { background: rgba(0, 0, 0, 0.12); }
+.tbx-action:disabled { opacity: 0.4; cursor: default; background: transparent; }

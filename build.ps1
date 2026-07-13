@@ -77,6 +77,8 @@ Copy-Item 'Web\mobile-preview.js'  'Build\mobile-preview.js'  -Force
 # UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크). main.html/styles.css 가
 # assets/design/*.png 를 <img>/CSS url() 로 참조 — file:// 에서도 그대로 로드된다.
 Copy-Item 'Web\assets' 'Build\assets' -Recurse -Force
+# 임시작업\ 등 배포와 무관한 작업용 폴더는 산출물에서 제외(추적 대상 Build\ 오염 방지)
+if (Test-Path 'Build\assets\임시작업') { Remove-Item 'Build\assets\임시작업' -Recurse -Force }
 # 로컬 서브셋 폰트(fonts/fonts.css + *.woff2). index/main/dashboard 가 링크한다.
 # 오프라인에서는 Google Fonts 대신 이 로컬 폰트가 시각 일관성을 보장한다.
 Copy-Item 'Web\fonts' 'Build\fonts' -Recurse -Force
