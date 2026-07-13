@@ -147,6 +147,15 @@ $landing = $landing -replace 'Mesh/AlbiRobot/AlbiRobot\.embed\.js', 'AlbiRobot.e
 $landing = $landing -replace 'Mesh/AlbiRobot/AlbiRobot\.min\.glb',  'AlbiRobot.min.glb'
 $landing = $landing -replace 'Mesh/ares_robot\.embed\.js', 'ares_robot.embed.js'
 $landing = $landing -replace 'Mesh/ares_robot\.glb',       'ares_robot.glb'
+# file://(origin null)는 CSS mask·WebGL 텍스처 이미지 fetch 를 CORS 로 막는다. 인라인 <style>
+# 의 mask url() 과 컷씬 배경 텍스처(planet_approach)를 data URI 로 치환해야 아이콘·화성 배경이 보인다.
+$landing = [regex]::Replace($landing, "url\('(assets/[^'?]+)(\?[^']*)?'\)", $cssEval)
+$bgSrc = 'Web\assets\background\planet_approach.png'
+if (Test-Path $bgSrc) {
+    $bgB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Resolve-Path $bgSrc).Path))
+    $landing = $landing.Replace("'assets/background/planet_approach.png'", "'data:image/png;base64,$bgB64'")
+    Write-Host '        + index.html: cutscene bg + mask icons -> data URI (file:// CORS)'
+}
 Write-Utf8 'Build\index.html' $landing
 Write-Host ''
 

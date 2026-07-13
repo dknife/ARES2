@@ -85,6 +85,21 @@ landing = landing.replace('Mesh/AlbiRobot/AlbiRobot.embed.js', 'AlbiRobot.embed.
 landing = landing.replace('Mesh/AlbiRobot/AlbiRobot.min.glb', 'AlbiRobot.min.glb')
 landing = landing.replace('Mesh/ares_robot.embed.js', 'ares_robot.embed.js')
 landing = landing.replace('Mesh/ares_robot.glb', 'ares_robot.glb')
+# file://(origin null)는 <img crossOrigin>·CSS mask·WebGL 텍스처의 이미지 fetch 를 CORS 로
+# 막는다(원격 GLB 와 동일한 이유). 인라인 <style> 의 mask url() 과 컷씬 배경 텍스처
+# (planet_approach)를 data URI 로 치환해야 file:// 에서 아이콘·화성 배경이 보인다.
+def _asset_datauri(rel):
+    p = 'Web/' + rel
+    if not os.path.exists(p): return None
+    ext = os.path.splitext(p)[1].lstrip('.').lower()
+    mime = 'image/svg+xml' if ext == 'svg' else 'image/' + ('jpeg' if ext == 'jpg' else ext)
+    return 'data:%s;base64,%s' % (mime, base64.b64encode(Rb(p)).decode())
+landing = re.sub(r"url\('(assets/[^'?]+)(\?[^']*)?'\)",
+                 lambda m: "url('%s')" % (_asset_datauri(m.group(1)) or m.group(1)), landing)
+_bg = _asset_datauri('assets/background/planet_approach.png')
+if _bg:
+    landing = landing.replace("'assets/background/planet_approach.png'", "'%s'" % _bg)
+    print('        inlined cutscene bg + mask icons to data URI (file:// CORS)')
 W('Build/index.html', landing)
 
 # ---- 5.5) GLB 소스 열거 → GLB 1개당 vendor/bin_<stem>.js 1개 (build.ps1 §5.5/§7a 동일) ----
