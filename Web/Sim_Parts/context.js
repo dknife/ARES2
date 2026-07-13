@@ -261,8 +261,8 @@ export class Context {
     const c = document.createElement('canvas');
     c.width = c.height = size;
     const g = c.getContext('2d');
-    g.fillStyle = '#7d8794'; g.fillRect(0, 0, size, size);            // 밝은 칸(어둡게)
-    g.fillStyle = '#4a535e';                                         // 어두운 칸(2x2 체커 한 셀)
+    g.fillStyle = '#565e69'; g.fillRect(0, 0, size, size);            // 밝은 칸(한 단계 더 어둡게, 2026-07-13)
+    g.fillStyle = '#31373f';                                         // 어두운 칸(2x2 체커 한 셀)
     g.fillRect(0, 0, size / 2, size / 2);
     g.fillRect(size / 2, size / 2, size / 2, size / 2);
     const tex = new THREE.CanvasTexture(c);

@@ -6630,6 +6630,10 @@
       this.enabled = !!this.TransformControls;
       this.selectables = [];
       this.selected = null;
+      this.multiSelection = [];
+      this._multiOffsets = null;
+      this.multiHelpers = [];
+      this.multiPivot = null;
       this.mode = "translate";
       this.lastSpawnPoint = new this.THREE.Vector3();
       this.hierarchyVersion = -1;
@@ -6662,6 +6666,7 @@
       this.onDocumentPointerDown = this.onDocumentPointerDown.bind(this);
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onDraggingChanged = this.onDraggingChanged.bind(this);
+      this.onMultiPivotChange = this.onMultiPivotChange.bind(this);
       if (this.enabled) {
         this.transform = new this.TransformControls(this.camera, this.dom);
         this.transform.setMode(this.mode);
@@ -6669,7 +6674,11 @@
         this.transform.setSize(0.85);
         this.transform.visible = false;
         this.transform.addEventListener("dragging-changed", this.onDraggingChanged);
+        this.transform.addEventListener("objectChange", this.onMultiPivotChange);
         this.ctx.scene.add(this.transform);
+        this.multiPivot = new this.THREE.Group();
+        this.multiPivot.visible = false;
+        this.ctx.scene.add(this.multiPivot);
       } else {
         console.warn("ARES editor controls disabled: TransformControls is not available in window.ARES3.");
       }
@@ -7121,10 +7130,16 @@
     }
     unregister(object) {
       this.selectables = this.selectables.filter((entry) => entry.object !== object);
+      if (this.multiSelection.includes(object)) {
+        const rest = this.multiSelection.filter((o) => o !== object);
+        if (rest.length >= 2) this.applyMultiSelection(rest);
+        else this.select(rest[0] || null);
+      }
       if (this.selected === object) this.select(null);
     }
     setMode(mode) {
       if (!MODES.includes(mode)) return;
+      if (this.isMultiActive() && mode !== "translate") return;
       this.stopAxisEdit();
       this.mode = mode;
       if (this.transform) this.transform.setMode(mode);
@@ -7135,8 +7150,10 @@
     select(object) {
       var _a, _b;
       this.stopAxisEdit();
+      this.clearMultiSelection();
       this.selected = object || null;
       if (this.selected && this.transform) {
+        this.transform.setMode(this.mode);
         this.transform.attach(this.selected);
         this.transform.visible = true;
       } else if (this.transform) {
@@ -7152,6 +7169,88 @@
       this.updateAxisButtons(simObject);
       this.updateHierarchy(true);
       this.updateInspector();
+    }
+    // ==== 다중 선택 (Ctrl+클릭, 2026-07-13) ====
+    // 2개 이상 선택되면 활성. 기즈모는 선택 객체들의 중점(multiPivot)에 붙고
+    // 이동(translate)만 허용한다. Ctrl+V 는 선택 전체를 복제한다.
+    isMultiActive() {
+      return this.multiSelection.length >= 2;
+    }
+    isSelectedRoot(root) {
+      return this.selected === root || this.multiSelection.includes(root);
+    }
+    toggleMultiSelect(root) {
+      if (!root) return;
+      let list = this.multiSelection.slice();
+      if (!list.length && this.selected && this.selected !== root) list = [this.selected];
+      const idx = list.indexOf(root);
+      if (idx >= 0) list.splice(idx, 1);
+      else list.push(root);
+      if (list.length >= 2) this.applyMultiSelection(list);
+      else this.select(list[0] || null);
+    }
+    applyMultiSelection(list) {
+      const THREE = this.THREE;
+      this.stopAxisEdit();
+      this.clearMultiSelection();
+      this.selected = null;
+      this.multiSelection = list;
+      const centroid = new THREE.Vector3();
+      const box = new THREE.Box3();
+      const center = new THREE.Vector3();
+      list.forEach((root) => {
+        box.setFromObject(root);
+        if (box.isEmpty()) root.getWorldPosition(center);
+        else box.getCenter(center);
+        centroid.add(center);
+        const helper = new THREE.BoxHelper(root, 16765514);
+        helper.renderOrder = 999;
+        this.ctx.scene.add(helper);
+        this.multiHelpers.push(helper);
+      });
+      centroid.divideScalar(list.length);
+      this._multiOffsets = list.map((root) => {
+        const p = new THREE.Vector3();
+        root.getWorldPosition(p);
+        return p.sub(centroid);
+      });
+      if (this.multiPivot && this.transform) {
+        this.multiPivot.position.copy(centroid);
+        this.transform.setMode("translate");
+        this.transform.attach(this.multiPivot);
+        this.transform.visible = true;
+      }
+      this.boxHelper.visible = false;
+      const text = this.toolbar.querySelector(".sim-editor-selection");
+      if (text) text.textContent = `\uB2E4\uC911 \uC120\uD0DD ${list.length}\uAC1C \u2014 \uC774\uB3D9\uB9CC \uAC00\uB2A5`;
+      this.updateAxisButtons(null);
+      this.updateHierarchy(true);
+      this.updateInspector();
+    }
+    clearMultiSelection() {
+      if (this.transform && this.multiPivot && this.transform.object === this.multiPivot) {
+        this.transform.detach();
+        this.transform.visible = false;
+      }
+      this.multiSelection = [];
+      this._multiOffsets = null;
+      this.multiHelpers.forEach((h) => {
+        var _a, _b, _c, _d;
+        this.ctx.scene.remove(h);
+        (_b = (_a = h.geometry) == null ? void 0 : _a.dispose) == null ? void 0 : _b.call(_a);
+        (_d = (_c = h.material) == null ? void 0 : _c.dispose) == null ? void 0 : _d.call(_c);
+      });
+      this.multiHelpers = [];
+    }
+    onMultiPivotChange() {
+      if (!this.isMultiActive() || !this._multiOffsets) return;
+      if (!this.transform || this.transform.object !== this.multiPivot) return;
+      const target = new this.THREE.Vector3();
+      this.multiSelection.forEach((root, i) => {
+        target.copy(this.multiPivot.position).add(this._multiOffsets[i]);
+        if (root.parent) root.parent.worldToLocal(target);
+        root.position.copy(target);
+      });
     }
     // ==== 회전축 편집 (2026-07-09) — 회전 특성 컴포넌트를 가진 객체 선택 시 하단 바에
     // 축 버튼이 나타나고, 핸들을 끌어 옮긴 위치가 회전기준(rotation_offset)·
@@ -7401,7 +7500,7 @@
       this.updateHierarchy(true);
     }
     // Ctrl+V — 선택 객체를 복제해 원본과 같은 부모의 형제(sibling)로 만든다.
-    // 라벨은 `원본_dup`, 위치는 부모 좌표계 기준 x축 +1. 하위 객체·컴포넌트도 함께 복제.
+    // 라벨은 `원본_dup`, 위치는 원본 바운딩 박스의 x 폭만큼 +x 이동. 하위 객체·컴포넌트도 함께 복제.
     async duplicateSelected() {
       const source = this.getSelectedSimObject();
       if (!(source == null ? void 0 : source.spawned)) return;
@@ -7411,8 +7510,53 @@
       this.select(clone.root);
       this.updateHierarchy(true);
     }
+    // 다중 선택 Ctrl+V — 선택된 모든 객체를 각각 개별 복제와 같은 규약(라벨 `_dup`,
+    // 동일 부모의 sibling, 바운딩 박스 x 폭 오프셋)으로 복제한다.
+    async duplicateMultiSelected() {
+      const roots = new Set(this.multiSelection);
+      const sources = this.multiSelection.map((root) => {
+        var _a;
+        return (_a = this.ctx.objects) == null ? void 0 : _a.getByRoot(root);
+      }).filter((s) => s == null ? void 0 : s.spawned).filter((s) => {
+        let p = s.root.parent;
+        while (p) {
+          if (roots.has(p)) return false;
+          p = p.parent;
+        }
+        return true;
+      });
+      if (!sources.length) return;
+      const clones = [];
+      for (const source of sources) {
+        const parent = source.root.parent || this.getSpawnParent();
+        const clone = await this.cloneObjectTree(source, parent, true);
+        if (clone) clones.push(clone.root);
+      }
+      if (clones.length >= 2) this.applyMultiSelection(clones);
+      else if (clones.length === 1) this.select(clones[0]);
+      this.updateHierarchy(true);
+    }
+    // 복제 위치 오프셋 — 고정 +1 이 아니라 원본 바운딩 박스의 x 폭만큼 이동한다.
+    // Box3 는 월드 기준이므로 부모의 월드 스케일로 나눠 부모 좌표계 단위로 환산.
+    getCloneOffsetX(source) {
+      const THREE = this.THREE;
+      try {
+        const box = new THREE.Box3().setFromObject(source.root);
+        if (!box.isEmpty()) {
+          let width = box.getSize(new THREE.Vector3()).x;
+          const parent = source.root.parent;
+          if (parent) {
+            const ps = parent.getWorldScale(new THREE.Vector3());
+            if (ps.x > 1e-6) width /= ps.x;
+          }
+          if (Number.isFinite(width) && width > 1e-4) return width;
+        }
+      } catch (e) {
+      }
+      return 1;
+    }
     // 씬 로드(applyScene)와 같은 방식으로 타입별 재생성 → 트랜스폼·라벨·컴포넌트 복사.
-    // isTop 인 최상위만 _dup 라벨과 x+1 오프셋을 받고, 하위는 원본 그대로 재귀 복제한다.
+    // isTop 인 최상위만 _dup 라벨과 바운딩 박스 x 폭 오프셋을 받고, 하위는 원본 그대로 재귀 복제한다.
     async cloneObjectTree(source, parent, isTop) {
       var _a, _b, _c;
       let sim = null;
@@ -7439,7 +7583,7 @@
       sim.root.position.copy(source.root.position);
       sim.root.quaternion.copy(source.root.quaternion);
       sim.root.scale.copy(source.root.scale);
-      if (isTop) sim.root.position.x += 1;
+      if (isTop) sim.root.position.x += this.getCloneOffsetX(source);
       if (((_b = source.metadata) == null ? void 0 : _b.colors) && ((_c = sim.metadata) == null ? void 0 : _c.colors)) {
         sim.metadata.colors.base = [...source.metadata.colors.base];
         sim.metadata.colors.emissive = [...source.metadata.colors.emissive];
@@ -7463,6 +7607,11 @@
       if (!this.devMode) return;
       if (event.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/i.test(event.target.tagName)) return;
       if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "v") {
+        if (this.isMultiActive()) {
+          event.preventDefault();
+          this.duplicateMultiSelected();
+          return;
+        }
         if ((_a = this.getSelectedSimObject()) == null ? void 0 : _a.spawned) {
           event.preventDefault();
           this.duplicateSelected();
@@ -7560,7 +7709,8 @@
       const picked = this.pick(event);
       if (picked) {
         event.preventDefault();
-        this.select(picked);
+        if (event.ctrlKey || event.metaKey) this.toggleMultiSelect(picked);
+        else this.select(picked);
       } else {
         this.select(null);
       }
@@ -7579,7 +7729,7 @@
       row.className = "sim-editor-hierarchy-item";
       row.dataset.simObjectId = simObject.id;
       row.style.setProperty("--depth", depth);
-      row.setAttribute("aria-pressed", String(this.selected === simObject.root));
+      row.setAttribute("aria-pressed", String(this.isSelectedRoot(simObject.root)));
       const type = document.createElement("span");
       type.className = "sim-editor-hierarchy-type";
       type.textContent = simObject.type;
@@ -7601,9 +7751,13 @@
       };
       row.addEventListener("pointerup", cancelHold);
       row.addEventListener("pointerleave", cancelHold);
-      row.addEventListener("click", () => {
+      row.addEventListener("click", (event) => {
         if (renamed) {
           renamed = false;
+          return;
+        }
+        if (event.ctrlKey || event.metaKey) {
+          this.toggleMultiSelect(simObject.root);
           return;
         }
         this.select(simObject.root);
@@ -7649,11 +7803,12 @@
     update() {
       var _a;
       if (this.selected) this.boxHelper.setFromObject(this.selected);
+      if (this.isMultiActive()) this.multiHelpers.forEach((h) => h.update());
       if (this.axisEdit && !((_a = this.transform) == null ? void 0 : _a.dragging)) this.syncAxisHandle();
       this.updateHierarchy();
     }
     dispose() {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
       this.dom.removeEventListener("pointerdown", this.onPointerDown);
       this.dom.removeEventListener("contextmenu", this.onContextMenu);
       document.removeEventListener("pointerdown", this.onDocumentPointerDown);
@@ -7666,20 +7821,26 @@
       (_f = this.inspector) == null ? void 0 : _f.remove();
       if (this.transform) {
         this.transform.removeEventListener("dragging-changed", this.onDraggingChanged);
+        this.transform.removeEventListener("objectChange", this.onMultiPivotChange);
         this.transform.detach();
         (_h = (_g = this.transform).dispose) == null ? void 0 : _h.call(_g);
         (_i = this.transform.parent) == null ? void 0 : _i.remove(this.transform);
       }
-      (_k = (_j = this.boxHelper.geometry) == null ? void 0 : _j.dispose) == null ? void 0 : _k.call(_j);
-      (_m = (_l = this.boxHelper.material) == null ? void 0 : _l.dispose) == null ? void 0 : _m.call(_l);
-      (_n = this.boxHelper.parent) == null ? void 0 : _n.remove(this.boxHelper);
+      this.clearMultiSelection();
+      if (this.multiPivot) {
+        (_j = this.multiPivot.parent) == null ? void 0 : _j.remove(this.multiPivot);
+        this.multiPivot = null;
+      }
+      (_l = (_k = this.boxHelper.geometry) == null ? void 0 : _k.dispose) == null ? void 0 : _l.call(_k);
+      (_n = (_m = this.boxHelper.material) == null ? void 0 : _m.dispose) == null ? void 0 : _n.call(_m);
+      (_o = this.boxHelper.parent) == null ? void 0 : _o.remove(this.boxHelper);
       if (this.axisHandle) {
         this.axisHandle.traverse((node) => {
           var _a2, _b2, _c2, _d2;
           (_b2 = (_a2 = node.geometry) == null ? void 0 : _a2.dispose) == null ? void 0 : _b2.call(_a2);
           (_d2 = (_c2 = node.material) == null ? void 0 : _c2.dispose) == null ? void 0 : _d2.call(_c2);
         });
-        (_o = this.axisHandle.parent) == null ? void 0 : _o.remove(this.axisHandle);
+        (_p = this.axisHandle.parent) == null ? void 0 : _p.remove(this.axisHandle);
         this.axisHandle = null;
       }
       if (this.devGrids) {
@@ -7688,7 +7849,7 @@
           (_b2 = (_a2 = node.geometry) == null ? void 0 : _a2.dispose) == null ? void 0 : _b2.call(_a2);
           (_d2 = (_c2 = node.material) == null ? void 0 : _c2.dispose) == null ? void 0 : _d2.call(_c2);
         });
-        (_p = this.devGrids.parent) == null ? void 0 : _p.remove(this.devGrids);
+        (_q = this.devGrids.parent) == null ? void 0 : _q.remove(this.devGrids);
         this.devGrids = null;
       }
     }
@@ -7900,9 +8061,9 @@
       const c = document.createElement("canvas");
       c.width = c.height = size;
       const g = c.getContext("2d");
-      g.fillStyle = "#7d8794";
+      g.fillStyle = "#565e69";
       g.fillRect(0, 0, size, size);
-      g.fillStyle = "#4a535e";
+      g.fillStyle = "#31373f";
       g.fillRect(0, 0, size / 2, size / 2);
       g.fillRect(size / 2, size / 2, size / 2, size / 2);
       const tex = new THREE.CanvasTexture(c);
