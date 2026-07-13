@@ -7970,6 +7970,7 @@
         const len = dir.length();
         if (len > 1e-3) dir.divideScalar(len);
         else dir.set(0, 0, -1);
+        dir.applyAxisAngle(new this.THREE.Vector3(0, 1, 0), -this.THREE.MathUtils.degToRad(30));
         this._keyDir = dir;
       }
       const BACK = 10, HEIGHT = 6;

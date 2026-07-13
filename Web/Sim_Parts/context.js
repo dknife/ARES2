@@ -157,6 +157,8 @@ export class Context {
       dir.y = 0;
       const len = dir.length();
       if (len > 1e-3) dir.divideScalar(len); else dir.set(0, 0, -1);
+      // 그림자가 정면(직각)이 아니라 -x 쪽으로 비스듬히 드리우도록 광원을 +x 로 30° 틀어 둔다
+      dir.applyAxisAngle(new this.THREE.Vector3(0, 1, 0), -this.THREE.MathUtils.degToRad(30));
       this._keyDir = dir;
     }
     const BACK = 10, HEIGHT = 6;   // 낮은 고도(~31°)의 역광 — 긴 그림자로 드라마틱하게
