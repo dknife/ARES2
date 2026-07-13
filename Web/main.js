@@ -2313,6 +2313,10 @@ function main() {
       const wasSimulation = _contentMode === 'simulation';
       _contentMode = mode;
       if (wasSimulation && mode !== 'simulation' && simController) {
+        // 시뮬레이션 진행 중 다른 모드로 전환하면 비상정지시킨다(실제 중단은 close() 내부).
+        if (simController.isSimRunning?.()) {
+          Logger.add('[비상정지] 모드 전환 — 진행 중이던 시뮬레이션을 중단합니다', 'error');
+        }
         simController.close();
       }
       // 시뮬레이션으로 돌아오면 예제 코드 위젯을 현재 워크스페이스(수정분 포함)로 갱신

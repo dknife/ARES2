@@ -188,6 +188,15 @@ export class Simulation_Main {
     let closing = false;
     const close = () => {
       if (card.hidden || closing) return;
+      // 진행 중이던 모의실행은 다른 모드로 전환할 때 비상정지시킨다.
+      // simAborted 로 실행 루프를 끊으면 toggleSimRun 의 finally 가 STOP_ALL·LED OFF·
+      // 서보/로켓 원복 등 하드웨어-시뮬 상태 정리를 수행한다.
+      if (simRunning) {
+        simAborted = true;
+        state.isExecuting = false;
+        if (sim) sim.cancelActiveWait();
+        logLine('──── 비상 정지 (모드 전환) ────', 'sys');
+      }
       if (sim && sim.hasRocket && !sim.rocketAtRest) {
         closing = true;
         sim.setRocketLaunch(false);
