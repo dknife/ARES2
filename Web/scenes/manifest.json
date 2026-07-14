@@ -14,6 +14,11 @@
       "id": "newalbo_01",
       "file": "scenes/newalbo_01.json",
       "label": "알비 기본 모델"
+    },
+    {
+      "id": "dice_arrow",
+      "file": "scenes/dice_arrow.json",
+      "label": "주사위놀이"
     }
   ]
 }

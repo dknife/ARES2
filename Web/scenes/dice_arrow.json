@@ -1,0 +1,960 @@
+{
+  "version": 1,
+  "name": "주사위놀이",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "glb-1",
+      "type": "glb",
+      "label": "DiceDisk.min",
+      "parent": null,
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "components": [],
+      "url": "Mesh/Dice/DiceDisk.min.glb"
+    },
+    {
+      "id": "glb-2",
+      "type": "glb",
+      "label": "DiceArrow.min",
+      "parent": null,
+      "position": [
+        -0.0009401766803384913,
+        0.21380950081829236,
+        0.04170830624762743
+      ],
+      "quaternion": [
+        0,
+        0.9550886395241925,
+        0,
+        0.29632025015485813
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.52
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              0,
+              1,
+              0
+            ],
+            "rotation_offset": [
+              0.006,
+              0,
+              0.021
+            ]
+          }
+        }
+      ],
+      "url": "Mesh/Dice/DiceArrow.min.glb"
+    },
+    {
+      "id": "box-3",
+      "type": "box",
+      "label": "border",
+      "parent": null,
+      "position": [
+        0,
+        0.132,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        2.657,
+        0.2,
+        0.03
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-6",
+      "type": "box",
+      "label": "border_dup",
+      "parent": null,
+      "position": [
+        0,
+        0.132,
+        0
+      ],
+      "quaternion": [
+        0,
+        0.49999999999999994,
+        0,
+        0.8660254037844387
+      ],
+      "scale": [
+        2.657,
+        0.2,
+        0.03
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-7",
+      "type": "box",
+      "label": "border_dup_dup",
+      "parent": null,
+      "position": [
+        0,
+        0.132,
+        0
+      ],
+      "quaternion": [
+        0,
+        0.8660254037844386,
+        0,
+        0.5000000000000001
+      ],
+      "scale": [
+        2.657,
+        0.2,
+        0.03
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-8",
+      "type": "sphere",
+      "label": "Sphere 8",
+      "parent": null,
+      "position": [
+        -0.608035694979432,
+        0.18035359673674844,
+        -0.38814351510799905
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-9",
+      "type": "sphere",
+      "label": "Sphere 8_dup",
+      "parent": null,
+      "position": [
+        0.5850857708449522,
+        0.18035359673674844,
+        -0.38814351510799905
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-10",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup",
+      "parent": null,
+      "position": [
+        0.6822510715643401,
+        0.18035359673674844,
+        -0.26362321078796075
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-11",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.1102532994956806,
+        0.170896656934286,
+        0.6703119828804663
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-12",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup",
+      "parent": null,
+      "position": [
+        -0.08102013277333753,
+        0.18035359673674844,
+        0.6678055364489487
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-13",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.10119819206359837,
+        0.170896656934286,
+        0.8082081952455565
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-14",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.09007524020541977,
+        0.18035359673674844,
+        0.8057017488140389
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-15",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.18025329830358772,
+        0.170896656934286,
+        -0.7320320728159707
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-16",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.011020133965430418,
+        0.18035359673674844,
+        -0.7679558212911909
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-18",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.21945848555821423,
+        0.18035359673674844,
+        -0.7539503287846779
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-19",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.7681331507834169,
+        0.170896656934286,
+        0.24492140876872082
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-20",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.5523442727649697,
+        0.18035359673674844,
+        0.3390483193820233
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-21",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.6720211889424055,
+        0.170896656934286,
+        0.4144668978244149
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-22",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.5678046110823166,
+        0.18191541293947844,
+        0.5501806431083256
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-23",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.45005662459301043,
+        0.18035359673674844,
+        0.4427592143168245
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-24",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        0.6223442715728769,
+        0.18035359673674844,
+        0.2094730137975035
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-25",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.5873145988104759,
+        0.18191541293947844,
+        0.5752155460249402
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-26",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.6738072715486594,
+        0.170896656934286,
+        0.4144668978244149
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-27",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.5776953097076479,
+        0.170896656934286,
+        0.24492140876872082
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-28",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.7685900083712034,
+        0.18191541293947844,
+        0.21321003437479136
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-29",
+      "type": "sphere",
+      "label": "Sphere 8_dup_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.5076953108997407,
+        0.170896656934286,
+        0.4128939773798952
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.76,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ]
+}
