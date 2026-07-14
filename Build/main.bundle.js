@@ -5400,11 +5400,16 @@
             saved.set(m, {
               emissive: m.emissive.clone(),
               intensity: (_i = m.emissiveIntensity) != null ? _i : 1,
-              emissiveMap: (_j = m.emissiveMap) != null ? _j : null
+              emissiveMap: (_j = m.emissiveMap) != null ? _j : null,
+              color: m.color ? m.color.clone() : null
+              // 점등 직전 확산색(기본색 틴트 포함)
             });
           }
           if (intensity > 0) {
             const glow = multiply && (colors == null ? void 0 : colors.emissive) ? colors.emissive : null;
+            if (multiply && m.userData._aresOrig && m.color) {
+              m.color.copy(m.userData._aresOrig.color);
+            }
             if (m.map) {
               m.emissiveMap = m.map;
               if (glow) m.emissive.setRGB((_k = glow[0]) != null ? _k : 1, (_l = glow[1]) != null ? _l : 1, (_m = glow[2]) != null ? _m : 1, "srgb");
@@ -5425,6 +5430,7 @@
             m.emissive.copy(orig.emissive);
             m.emissiveIntensity = orig.intensity;
             m.emissiveMap = orig.emissiveMap;
+            if (orig.color && m.color) m.color.copy(orig.color);
           }
           m.needsUpdate = true;
         });

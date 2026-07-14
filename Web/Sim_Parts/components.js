@@ -97,11 +97,17 @@ function createLedComponent(ctx, fields = {}) {
             emissive: m.emissive.clone(),
             intensity: m.emissiveIntensity ?? 1,
             emissiveMap: m.emissiveMap ?? null,
+            color: m.color ? m.color.clone() : null,   // 점등 직전 확산색(기본색 틴트 포함)
           });
         }
         if (intensity > 0) {
           // 곱셈 모드(GLB)의 발광색 틴트 — (1,1,1) 이면 종전과 동일(원래 색 그대로 발광)
           const glow = (multiply && colors?.emissive) ? colors.emissive : null;
+          // 발광 중에는 기본색 곱을 완전히 배제한다 — 확산색을 원본 메시색으로 되돌려
+          // 겉보기 색이 '메시 색 × 발광색' 만으로 나게 한다(소등 시 기본색 틴트 복원).
+          if (multiply && m.userData._aresOrig && m.color) {
+            m.color.copy(m.userData._aresOrig.color);
+          }
           if (m.map) {
             // GLB 등 텍스처 재질: 자기 텍스처 색 그대로 발광 — emissive 색이 텍셀에
             // 곱해지므로 발광색 틴트가 있으면 '원래 메시 색 × 발광색' 이 된다
@@ -109,7 +115,7 @@ function createLedComponent(ctx, fields = {}) {
             if (glow) m.emissive.setRGB(glow[0] ?? 1, glow[1] ?? 1, glow[2] ?? 1, 'srgb');
             else m.emissive.set(0xffffff);
           } else {
-            // 단색 재질: 고유색 계열로 발광(순검정이면 LED 느낌의 앰버로)
+            // 단색 재질: 원본 메시색으로 발광(순검정이면 LED 느낌의 앰버로) — 기본색 미포함
             const orig = m.userData._aresOrig?.color || m.color;
             const base = orig && (orig.r + orig.g + orig.b) > 0.05 ? orig : null;
             if (base) m.emissive.copy(base); else m.emissive.set(0xffbb33);
@@ -124,6 +130,7 @@ function createLedComponent(ctx, fields = {}) {
           m.emissive.copy(orig.emissive);
           m.emissiveIntensity = orig.intensity;
           m.emissiveMap = orig.emissiveMap;
+          if (orig.color && m.color) m.color.copy(orig.color);   // 기본색 틴트 복원
         }
         m.needsUpdate = true;   // emissiveMap 변경은 셰이더 재컴파일 필요
       });
