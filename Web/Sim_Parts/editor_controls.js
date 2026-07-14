@@ -37,6 +37,7 @@ const MODES = ['translate', 'rotate', 'scale'];
 const SPAWN_MENU = [
   { type: 'box', label: 'Box' },
   { type: 'sphere', label: 'Sphere' },
+  { type: 'cylinder', label: 'Cylinder' },
   { type: 'marker', label: 'Marker' },
   { type: 'oled', label: 'OLED Panel' },
   { type: 'glb', label: 'GLB 모델…' },

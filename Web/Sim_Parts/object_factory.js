@@ -22,8 +22,9 @@ function movementBoxComponent() {
 // base 는 기존 고정색과 동일. emissive 는 LED 밝기 t 로 보간될 목표색(디폴트 흰색,
 // 평상시 t=0 에서는 적용되지 않는다). 보간은 components.js 의 LED setEmit 이 담당.
 const DEFAULT_COLORS = {
-  box:    { base: [1, 0.48, 0.35, 1], emissive: [1, 1, 1, 1] },
-  sphere: { base: [0.31, 0.76, 1, 1], emissive: [1, 1, 1, 1] },
+  box:      { base: [1, 0.48, 0.35, 1], emissive: [1, 1, 1, 1] },
+  sphere:   { base: [0.31, 0.76, 1, 1], emissive: [1, 1, 1, 1] },
+  cylinder: { base: [0.47, 0.82, 0.55, 1], emissive: [1, 1, 1, 1] },
 };
 const defaultColors = (type) => ({
   base: [...DEFAULT_COLORS[type].base],
@@ -67,6 +68,28 @@ export function createPrimitiveObject(ctx, type) {
       root,
       spawned: true,
       metadata: { groundOffset: 0.35, colors: defaultColors('sphere') },
+    });
+    applyObjectColors(sim);
+    return sim;
+  }
+
+  if (type === 'cylinder') {
+    // 원기둥 — 박스·구와 같은 색상 시스템(기본색/발광색, LED 밝기 보간) 지원.
+    // 주의: createPrimitiveObject 의 마지막 폴백이 미지 타입을 box 로 만들므로
+    // 이 분기는 반드시 폴백보다 앞에 있어야 씬 로드(scene_store)에서도 복원된다.
+    const root = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.35, 0.7, 24),
+      new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.05 }),
+    );
+    root.castShadow = true;
+    root.receiveShadow = true;
+    const sim = new SimulationObject({
+      id,
+      type,
+      label: `Cylinder ${id.split('-').pop()}`,
+      root,
+      spawned: true,
+      metadata: { groundOffset: 0.35, colors: defaultColors('cylinder') },
     });
     applyObjectColors(sim);
     return sim;

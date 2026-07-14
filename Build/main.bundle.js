@@ -6273,7 +6273,8 @@
   }
   var DEFAULT_COLORS = {
     box: { base: [1, 0.48, 0.35, 1], emissive: [1, 1, 1, 1] },
-    sphere: { base: [0.31, 0.76, 1, 1], emissive: [1, 1, 1, 1] }
+    sphere: { base: [0.31, 0.76, 1, 1], emissive: [1, 1, 1, 1] },
+    cylinder: { base: [0.47, 0.82, 0.55, 1], emissive: [1, 1, 1, 1] }
   };
   var defaultColors = (type) => ({
     base: [...DEFAULT_COLORS[type].base],
@@ -6312,6 +6313,24 @@
         root: root2,
         spawned: true,
         metadata: { groundOffset: 0.35, colors: defaultColors("sphere") }
+      });
+      applyObjectColors(sim2);
+      return sim2;
+    }
+    if (type === "cylinder") {
+      const root2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.35, 0.35, 0.7, 24),
+        new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.05 })
+      );
+      root2.castShadow = true;
+      root2.receiveShadow = true;
+      const sim2 = new SimulationObject({
+        id,
+        type,
+        label: `Cylinder ${id.split("-").pop()}`,
+        root: root2,
+        spawned: true,
+        metadata: { groundOffset: 0.35, colors: defaultColors("cylinder") }
       });
       applyObjectColors(sim2);
       return sim2;
@@ -6654,6 +6673,7 @@
   var SPAWN_MENU = [
     { type: "box", label: "Box" },
     { type: "sphere", label: "Sphere" },
+    { type: "cylinder", label: "Cylinder" },
     { type: "marker", label: "Marker" },
     { type: "oled", label: "OLED Panel" },
     { type: "glb", label: "GLB \uBAA8\uB378\u2026" }
