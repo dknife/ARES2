@@ -5,44 +5,20 @@
   "topic": "empty",
   "objects": [
     {
-      "id": "glb-1",
-      "type": "glb",
-      "label": "DiceDisk.min",
-      "parent": null,
-      "position": [
-        0,
-        0,
-        0
-      ],
-      "quaternion": [
-        0,
-        0,
-        0,
-        1
-      ],
-      "scale": [
-        1,
-        1,
-        1
-      ],
-      "components": [],
-      "url": "Mesh/Dice/DiceDisk.min.glb"
-    },
-    {
       "id": "glb-2",
       "type": "glb",
       "label": "DiceArrow.min",
       "parent": null,
       "position": [
-        -0.0009401766803384913,
+        0.02589029292818259,
         0.21380950081829236,
-        0.04170830624762743
+        0.030020878406873168
       ],
       "quaternion": [
         0,
-        0.9550886395241925,
+        0.9075621064467866,
         0,
-        0.29632025015485813
+        -0.4199178764257245
       ],
       "scale": [
         0.3,
@@ -106,7 +82,7 @@
       }
     },
     {
-      "id": "box-6",
+      "id": "box-4",
       "type": "box",
       "label": "border_dup",
       "parent": null,
@@ -143,7 +119,7 @@
       }
     },
     {
-      "id": "box-7",
+      "id": "box-5",
       "type": "box",
       "label": "border_dup_dup",
       "parent": null,
@@ -180,7 +156,7 @@
       }
     },
     {
-      "id": "sphere-8",
+      "id": "sphere-6",
       "type": "sphere",
       "label": "Sphere 8",
       "parent": null,
@@ -217,7 +193,7 @@
       }
     },
     {
-      "id": "sphere-9",
+      "id": "sphere-7",
       "type": "sphere",
       "label": "Sphere 8_dup",
       "parent": null,
@@ -254,7 +230,7 @@
       }
     },
     {
-      "id": "sphere-10",
+      "id": "sphere-8",
       "type": "sphere",
       "label": "Sphere 8_dup_dup",
       "parent": null,
@@ -291,7 +267,7 @@
       }
     },
     {
-      "id": "sphere-11",
+      "id": "sphere-9",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup",
       "parent": null,
@@ -328,7 +304,7 @@
       }
     },
     {
-      "id": "sphere-12",
+      "id": "sphere-10",
       "type": "sphere",
       "label": "Sphere 8_dup_dup",
       "parent": null,
@@ -365,7 +341,7 @@
       }
     },
     {
-      "id": "sphere-13",
+      "id": "sphere-11",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -402,7 +378,7 @@
       }
     },
     {
-      "id": "sphere-14",
+      "id": "sphere-12",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup",
       "parent": null,
@@ -439,7 +415,7 @@
       }
     },
     {
-      "id": "sphere-15",
+      "id": "sphere-13",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -476,7 +452,7 @@
       }
     },
     {
-      "id": "sphere-16",
+      "id": "sphere-14",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup",
       "parent": null,
@@ -513,7 +489,7 @@
       }
     },
     {
-      "id": "sphere-18",
+      "id": "sphere-15",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -550,7 +526,7 @@
       }
     },
     {
-      "id": "sphere-19",
+      "id": "sphere-16",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -587,7 +563,7 @@
       }
     },
     {
-      "id": "sphere-20",
+      "id": "sphere-17",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup",
       "parent": null,
@@ -624,7 +600,7 @@
       }
     },
     {
-      "id": "sphere-21",
+      "id": "sphere-18",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup_dup",
       "parent": null,
@@ -661,7 +637,7 @@
       }
     },
     {
-      "id": "sphere-22",
+      "id": "sphere-19",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -698,7 +674,7 @@
       }
     },
     {
-      "id": "sphere-23",
+      "id": "sphere-20",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -735,7 +711,7 @@
       }
     },
     {
-      "id": "sphere-24",
+      "id": "sphere-21",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup",
       "parent": null,
@@ -772,7 +748,7 @@
       }
     },
     {
-      "id": "sphere-25",
+      "id": "sphere-22",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup_dup",
       "parent": null,
@@ -809,7 +785,7 @@
       }
     },
     {
-      "id": "sphere-26",
+      "id": "sphere-23",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup_dup_dup",
       "parent": null,
@@ -846,7 +822,7 @@
       }
     },
     {
-      "id": "sphere-27",
+      "id": "sphere-24",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup_dup",
       "parent": null,
@@ -883,7 +859,7 @@
       }
     },
     {
-      "id": "sphere-28",
+      "id": "sphere-25",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup_dup_dup",
       "parent": null,
@@ -920,7 +896,7 @@
       }
     },
     {
-      "id": "sphere-29",
+      "id": "sphere-26",
       "type": "sphere",
       "label": "Sphere 8_dup_dup_dup_dup_dup_dup",
       "parent": null,
@@ -946,6 +922,43 @@
           1,
           0.76,
           0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-27",
+      "type": "cylinder",
+      "label": "Cylinder 27",
+      "parent": null,
+      "position": [
+        0,
+        0.09794072966349582,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        3,
+        0.2,
+        3
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          0.55,
           1
         ],
         "emissive": [
