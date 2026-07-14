@@ -34,6 +34,9 @@ export class Simulation_Main {
   // Factory method to initialize Context and build the matching Simulation subclass instance
   static buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
     const ctx = new Context(THREE, A, stage, loadingEl, cfg, options);
+    // WebGL 초기화 실패(저사양/미지원 기기): Context 가 안내 화면을 이미 띄웠으므로
+    // null 을 돌려 호출부(open)가 이후 sim.* 호출을 건너뛰게 한다.
+    if (ctx.failed) return null;
     let sim;
     if (cfg.parts) {
       sim = new Simulation_Rover(ctx);
@@ -167,6 +170,12 @@ export class Simulation_Main {
           build('empty');                  // 먼저 빈 씬을 띄우고, 씬 로드가 재빌드한다
           loadSavedScene(t.slice(6));
         } else build(t);
+      }
+      // WebGL 초기화 실패 시 build()가 sim 을 만들지 못한다 — 안내 화면만 두고 안전 종료.
+      if (!sim) {
+        btn.textContent = '시뮬레이션';
+        btn.setAttribute('aria-pressed', 'false');
+        return;
       }
       sim.resize();
       cancelAnimationFrame(raf); loop();

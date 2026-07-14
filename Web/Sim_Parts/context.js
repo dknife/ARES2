@@ -36,15 +36,27 @@ export class Context {
     this.state = options.state;
     this.audioCtx = null;
     this.disposed = false;
+    this.failed = false;
 
-    // WebGL setup
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    // WebGL setup — 저사양 기기 대응(2026-07-14): 가드된 렌더러 생성으로 antialias·pixelRatio·
+    // shadowMap 을 티어에 맞춘다. WebGL 초기화가 실패하면 예외로 시뮬 전체가 죽는 대신
+    // null 을 받아 안내 화면을 띄우고 생성을 안전하게 중단한다.
+    const perf = (typeof window !== 'undefined' && window.AresPerf) || null;
+    this.perf = perf;
+    this.renderer = perf
+      ? perf.createRenderer(THREE, { alpha: true })
+      : new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    if (!this.renderer) {
+      this.failed = true;
+      if (perf) perf.showFallback(this.stage, '이 기기에서는 3D 시뮬레이션을 표시할 수 없어요.');
+      if (this.loadingEl) this.loadingEl.classList.add('hidden');
+      return;   // renderer 없이 이하 초기화를 진행하면 참조 오류 → 여기서 안전 중단
+    }
+    if (!perf) this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    if (!perf) { this.renderer.shadowMap.enabled = true; this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
     this.stage.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
@@ -87,7 +99,8 @@ export class Context {
     const key = new THREE.DirectionalLight(0xffddb0, 2.6);
     key.position.set(0, 6, -10);   // 초기값 — 매 프레임 updateKeyLight() 가 카메라 반대편(역광)으로 갱신
     key.castShadow = true;
-    key.shadow.mapSize.set(4096, 4096);
+    const keyShadow = this.perf ? this.perf.shadowSize(4096) : 4096;
+    key.shadow.mapSize.set(keyShadow, keyShadow);
     key.shadow.bias = -0.0003;
     // 그림자 프러스텀은 좁게 유지해야 객체 사이 그림자가 선명하다(±55 였을 때는
     // 텍셀이 ~2.7cm 라 작은 객체 그림자가 뭉개졌다). 좁힌 대신 매 프레임
