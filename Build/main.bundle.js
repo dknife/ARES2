@@ -5382,7 +5382,7 @@
       forOwnMeshes(simObject.root, (mesh) => {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         mats.forEach((m) => {
-          var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+          var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
           if (!m || m.emissive === void 0) return;
           if (colors && !multiply) {
             const t = Math.max(0, Math.min(1, intensity));
@@ -5401,26 +5401,32 @@
               emissive: m.emissive.clone(),
               intensity: (_i = m.emissiveIntensity) != null ? _i : 1,
               emissiveMap: (_j = m.emissiveMap) != null ? _j : null,
-              color: m.color ? m.color.clone() : null
+              color: m.color ? m.color.clone() : null,
               // 점등 직전 확산색(기본색 틴트 포함)
+              opacity: (_k = m.opacity) != null ? _k : 1,
+              // 점등 직전 불투명도(기본색 A 포함)
+              transparent: !!m.transparent
             });
           }
           if (intensity > 0) {
             const glow = multiply && (colors == null ? void 0 : colors.emissive) ? colors.emissive : null;
             if (multiply && m.userData._aresOrig && m.color) {
-              m.color.copy(m.userData._aresOrig.color);
+              const o = m.userData._aresOrig;
+              m.color.copy(o.color);
+              m.opacity = (_l = o.opacity) != null ? _l : 1;
+              m.transparent = o.transparent || m.opacity < 1;
             }
             if (m.map) {
               m.emissiveMap = m.map;
-              if (glow) m.emissive.setRGB((_k = glow[0]) != null ? _k : 1, (_l = glow[1]) != null ? _l : 1, (_m = glow[2]) != null ? _m : 1, "srgb");
+              if (glow) m.emissive.setRGB((_m = glow[0]) != null ? _m : 1, (_n = glow[1]) != null ? _n : 1, (_o = glow[2]) != null ? _o : 1, "srgb");
               else m.emissive.set(16777215);
             } else {
-              const orig = ((_n = m.userData._aresOrig) == null ? void 0 : _n.color) || m.color;
+              const orig = ((_p = m.userData._aresOrig) == null ? void 0 : _p.color) || m.color;
               const base = orig && orig.r + orig.g + orig.b > 0.05 ? orig : null;
               if (base) m.emissive.copy(base);
               else m.emissive.set(16759603);
               if (glow) {
-                const tint = m.emissive.clone().set(16777215).setRGB((_o = glow[0]) != null ? _o : 1, (_p = glow[1]) != null ? _p : 1, (_q = glow[2]) != null ? _q : 1, "srgb");
+                const tint = m.emissive.clone().set(16777215).setRGB((_q = glow[0]) != null ? _q : 1, (_r = glow[1]) != null ? _r : 1, (_s = glow[2]) != null ? _s : 1, "srgb");
                 m.emissive.multiply(tint);
               }
             }
@@ -5431,6 +5437,10 @@
             m.emissiveIntensity = orig.intensity;
             m.emissiveMap = orig.emissiveMap;
             if (orig.color && m.color) m.color.copy(orig.color);
+            if (orig.opacity !== void 0) {
+              m.opacity = orig.opacity;
+              m.transparent = orig.transparent || m.opacity < 1;
+            }
           }
           m.needsUpdate = true;
         });

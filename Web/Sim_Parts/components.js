@@ -98,6 +98,8 @@ function createLedComponent(ctx, fields = {}) {
             intensity: m.emissiveIntensity ?? 1,
             emissiveMap: m.emissiveMap ?? null,
             color: m.color ? m.color.clone() : null,   // 점등 직전 확산색(기본색 틴트 포함)
+            opacity: m.opacity ?? 1,                   // 점등 직전 불투명도(기본색 A 포함)
+            transparent: !!m.transparent,
           });
         }
         if (intensity > 0) {
@@ -106,7 +108,11 @@ function createLedComponent(ctx, fields = {}) {
           // 발광 중에는 기본색 곱을 완전히 배제한다 — 확산색을 원본 메시색으로 되돌려
           // 겉보기 색이 '메시 색 × 발광색' 만으로 나게 한다(소등 시 기본색 틴트 복원).
           if (multiply && m.userData._aresOrig && m.color) {
-            m.color.copy(m.userData._aresOrig.color);
+            const o = m.userData._aresOrig;
+            m.color.copy(o.color);
+            // 불투명도도 기본색 A 를 배제하고 원본으로 — 발광은 온전히 메시 원형 기준
+            m.opacity = o.opacity ?? 1;
+            m.transparent = o.transparent || m.opacity < 1;
           }
           if (m.map) {
             // GLB 등 텍스처 재질: 자기 텍스처 색 그대로 발광 — emissive 색이 텍셀에
@@ -131,6 +137,7 @@ function createLedComponent(ctx, fields = {}) {
           m.emissiveIntensity = orig.intensity;
           m.emissiveMap = orig.emissiveMap;
           if (orig.color && m.color) m.color.copy(orig.color);   // 기본색 틴트 복원
+          if (orig.opacity !== undefined) { m.opacity = orig.opacity; m.transparent = orig.transparent || m.opacity < 1; }
         }
         m.needsUpdate = true;   // emissiveMap 변경은 셰이더 재컴파일 필요
       });
