@@ -5691,7 +5691,7 @@
         return field === "rotation_offset" ? rotOffset : null;
       },
       onCommand(cmd) {
-        if (cmd === "STOP_ALL" || cmd === "DC_STOP" || cmd.startsWith("DC_STOP,")) {
+        if (cmd === "STOP_ALL" || cmd === "SIM_END" || cmd === "DC_STOP" || cmd.startsWith("DC_STOP,")) {
           stop();
           return null;
         }
@@ -5755,7 +5755,7 @@
         return null;
       },
       onCommand(cmd) {
-        if (cmd === "STOP_ALL" || cmd === "SERVO_STOP" || cmd.startsWith("SERVO_STOP,")) {
+        if (cmd === "STOP_ALL" || cmd === "SIM_END" || cmd === "SERVO_STOP" || cmd.startsWith("SERVO_STOP,")) {
           stop();
           return null;
         }

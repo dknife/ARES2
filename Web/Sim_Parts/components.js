@@ -398,7 +398,10 @@ function createDcComponent(ctx, fields = {}) {
     // 편집기 표시용 — 회전축이 지나는 점(객체 로컬 기준점). null 이면 원점 통과
     getPivotLocal(field) { return field === 'rotation_offset' ? rotOffset : null; },
     onCommand(cmd) {
-      if (cmd === 'STOP_ALL' || cmd === 'DC_STOP' || cmd.startsWith('DC_STOP,')) { stop(); return null; }
+      // SIM_END: 모의실행 종료(자연/중단 공통) — 연속 명령(DC_FORWARD)으로 켜진 회전을
+      // 정지한다. 종전에는 중단 때의 STOP_ALL 만 멈춰서, '계속 전진' 프로그램이 즉시
+      // 끝나면 모터가 영원히 돌고 멈출 방법이 없었다.
+      if (cmd === 'STOP_ALL' || cmd === 'SIM_END' || cmd === 'DC_STOP' || cmd.startsWith('DC_STOP,')) { stop(); return null; }
       if (cmd.startsWith('DC_tFORWARD,') || cmd.startsWith('DC_tBACKWARD,')) {
         dir = cmd.startsWith('DC_tFORWARD,') ? 1 : -1;
         // DC_t방향,초,속도 — 3번째 인자가 속도다. 펌웨어(_handle_timed_dcmotor_new)는
@@ -460,7 +463,7 @@ function createServoComponent(ctx, fields = {}) {
       return null;
     },
     onCommand(cmd) {
-      if (cmd === 'STOP_ALL' || cmd === 'SERVO_STOP' || cmd.startsWith('SERVO_STOP,')) { stop(); return null; }
+      if (cmd === 'STOP_ALL' || cmd === 'SIM_END' || cmd === 'SERVO_STOP' || cmd.startsWith('SERVO_STOP,')) { stop(); return null; }   // SIM_END: 종료 시 연속 주행 정지
       const is = (p) => cmd.startsWith(p);
       if (is('SERVO_tFORWARD,'))  { move = 1;  turn = 0; return stop; }
       if (is('SERVO_tBACKWARD,')) { move = -1; turn = 0; return stop; }
