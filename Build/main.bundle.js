@@ -836,6 +836,8 @@
         state.connectFailed = false;
         this.updateConnectionStatus(true);
         Logger.add(`[\uC5F0\uACB0] ${state.bluetoothDevice.name || "Unknown"} \uC5F0\uACB0 \uC644\uB8CC`, "success");
+        this.playConnectGreeting().catch(() => {
+        });
       } catch (error) {
         console.error("BLE \uC5F0\uACB0 \uC624\uB958:", error);
         Logger.add(`[\uC624\uB958] \uC5F0\uACB0 \uC2E4\uD328: ${error.message}`, "error");
@@ -844,6 +846,44 @@
         state.connectFailed = true;
         this.updateConnectionStatus(false);
       }
+    },
+    // ==== 연결 인사 (2026-07-14) ====
+    // 블루투스 연결이 이루어지면 저장된 요원 코드(ares-agent-code)를
+    // (1) 부저 멜로디로 연주 — A~G 는 라~솔(A=라, B=시, C=도, D=레, E=미, F=파, G=솔),
+    //     그 외 알파벳·숫자는 7음계를 순환 매핑해 어떤 코드든 소리가 나게 한다.
+    // (2) OLED 에 "Connected: CODE" 를 표시한다.
+    // 모듈이 없는 기기는 펌웨어가 해당 명령을 조용히 무시하므로(return 0) 안전하다.
+    async playConnectGreeting() {
+      let code = "";
+      try {
+        code = (localStorage.getItem("ares-agent-code") || "").replace(/[^A-Za-z0-9]/g, "");
+      } catch (_) {
+      }
+      const label = code || "READY";
+      try {
+        await this.sendData(`MSG,Connected: ${label}`);
+      } catch (error) {
+        Logger.add(`[\uC5F0\uACB0 \uC778\uC0AC] OLED \uD45C\uC2DC \uC2E4\uD328: ${error.message}`, "warning");
+        return;
+      }
+      const NOTE_FREQ = [440, 494, 523, 587, 659, 698, 784];
+      const NOTE_SEC = 0.22;
+      const NOTE_GAP_MS = 280;
+      const chars = label.slice(0, 10).split("");
+      for (const ch of chars) {
+        let idx;
+        if (/[A-Za-z]/.test(ch)) idx = (ch.toUpperCase().charCodeAt(0) - 65) % 7;
+        else idx = (ch.charCodeAt(0) - 48) % 7;
+        try {
+          await this.sendData(`BUZZER_ON,${NOTE_FREQ[idx]},${NOTE_SEC}`);
+        } catch (error) {
+          Logger.add(`[\uC5F0\uACB0 \uC778\uC0AC] \uBA5C\uB85C\uB514 \uC911\uB2E8: ${error.message}`, "warning");
+          return;
+        }
+        await this.delay(NOTE_GAP_MS);
+        if (!state.bluetoothDevice || !state.bluetoothDevice.gatt.connected) return;
+      }
+      Logger.add(`[\uC5F0\uACB0 \uC778\uC0AC] \uC694\uC6D0 \uCF54\uB4DC '${label}' \uBA5C\uB85C\uB514 \xB7 OLED \uD45C\uC2DC \uC644\uB8CC`, "info");
     },
     // 연결 해제 (알림 중지/리스너 제거는 cleanup이 담당)
     async disconnect() {

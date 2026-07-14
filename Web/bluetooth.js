@@ -88,6 +88,8 @@ export const BluetoothManager = {
             state.connectFailed = false;
             this.updateConnectionStatus(true);
             Logger.add(`[연결] ${state.bluetoothDevice.name || 'Unknown'} 연결 완료`, 'success');
+            // 연결 인사 — 요원 코드를 부저 멜로디로 연주 + OLED 표시 (연결 흐름은 막지 않음)
+            this.playConnectGreeting().catch(() => {});
         } catch (error) {
             console.error('BLE 연결 오류:', error);
             Logger.add(`[오류] 연결 실패: ${error.message}`, 'error');
@@ -96,6 +98,50 @@ export const BluetoothManager = {
             state.connectFailed = true;
             this.updateConnectionStatus(false);
         }
+    },
+
+    // ==== 연결 인사 (2026-07-14) ====
+    // 블루투스 연결이 이루어지면 저장된 요원 코드(ares-agent-code)를
+    // (1) 부저 멜로디로 연주 — A~G 는 라~솔(A=라, B=시, C=도, D=레, E=미, F=파, G=솔),
+    //     그 외 알파벳·숫자는 7음계를 순환 매핑해 어떤 코드든 소리가 나게 한다.
+    // (2) OLED 에 "Connected: CODE" 를 표시한다.
+    // 모듈이 없는 기기는 펌웨어가 해당 명령을 조용히 무시하므로(return 0) 안전하다.
+    async playConnectGreeting() {
+        let code = '';
+        try {
+            code = (localStorage.getItem('ares-agent-code') || '').replace(/[^A-Za-z0-9]/g, '');
+        } catch (_) { /* localStorage 불가 환경 */ }
+        const label = code || 'READY';
+
+        // OLED: Connected: CODE
+        try {
+            await this.sendData(`MSG,Connected: ${label}`);
+        } catch (error) {
+            Logger.add(`[연결 인사] OLED 표시 실패: ${error.message}`, 'warning');
+            return;
+        }
+
+        // 부저 멜로디 — 문자당 한 음. A(라)=440, B(시)=494, C(도)=523, D(레)=587,
+        // E(미)=659, F(파)=698, G(솔)=784 (알파벳 순 = 상행 음계).
+        const NOTE_FREQ = [440, 494, 523, 587, 659, 698, 784];
+        const NOTE_SEC = 0.22;     // 음 길이(초) — BUZZER_ON 은 논블로킹이라 웹이 페이싱한다
+        const NOTE_GAP_MS = 280;   // 음 사이 간격(재생 220ms + 여유)
+        const chars = label.slice(0, 10).split('');   // 과도한 연주 방지(최대 10음)
+        for (const ch of chars) {
+            let idx;
+            if (/[A-Za-z]/.test(ch)) idx = (ch.toUpperCase().charCodeAt(0) - 65) % 7;
+            else idx = (ch.charCodeAt(0) - 48) % 7;   // 숫자 0~9 → 7음 순환
+            try {
+                await this.sendData(`BUZZER_ON,${NOTE_FREQ[idx]},${NOTE_SEC}`);
+            } catch (error) {
+                Logger.add(`[연결 인사] 멜로디 중단: ${error.message}`, 'warning');
+                return;
+            }
+            await this.delay(NOTE_GAP_MS);
+            // 연주 도중 연결이 끊기면 중단
+            if (!state.bluetoothDevice || !state.bluetoothDevice.gatt.connected) return;
+        }
+        Logger.add(`[연결 인사] 요원 코드 '${label}' 멜로디 · OLED 표시 완료`, 'info');
     },
 
     // 연결 해제 (알림 중지/리스너 제거는 cleanup이 담당)
