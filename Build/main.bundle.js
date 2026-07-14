@@ -5412,7 +5412,7 @@
             const glow = multiply && (colors == null ? void 0 : colors.emissive) ? colors.emissive : null;
             if (multiply && m.userData._aresOrig && m.color) {
               const o = m.userData._aresOrig;
-              m.color.copy(o.color);
+              m.color.copy(o.color).multiplyScalar(1 - 0.6 * intensity);
               m.opacity = (_l = o.opacity) != null ? _l : 1;
               m.transparent = o.transparent || m.opacity < 1;
             }
@@ -5430,7 +5430,7 @@
                 m.emissive.multiply(tint);
               }
             }
-            m.emissiveIntensity = 0.4 + intensity * 1.6;
+            m.emissiveIntensity = multiply ? 0.35 + intensity * 0.75 : 0.4 + intensity * 1.6;
           } else {
             const orig = saved.get(m);
             m.emissive.copy(orig.emissive);

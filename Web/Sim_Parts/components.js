@@ -109,7 +109,9 @@ function createLedComponent(ctx, fields = {}) {
           // 겉보기 색이 '메시 색 × 발광색' 만으로 나게 한다(소등 시 기본색 틴트 복원).
           if (multiply && m.userData._aresOrig && m.color) {
             const o = m.userData._aresOrig;
-            m.color.copy(o.color);
+            // 점등 중 확산(diffuse)을 밝기에 비례해 감쇠 — 확산+발광 합산이 클리핑되며
+            // 발광색이 흰색으로 씻겨 보이던 문제 완화(프리미티브 보간 모드와 같은 원리)
+            m.color.copy(o.color).multiplyScalar(1 - 0.6 * intensity);
             // 불투명도도 기본색 A 를 배제하고 원본으로 — 발광은 온전히 메시 원형 기준
             m.opacity = o.opacity ?? 1;
             m.transparent = o.transparent || m.opacity < 1;
@@ -130,7 +132,9 @@ function createLedComponent(ctx, fields = {}) {
               m.emissive.multiply(tint);   // 원래 메시 색 × 발광색
             }
           }
-          m.emissiveIntensity = 0.4 + intensity * 1.6;
+          // 곱셈 모드는 강도를 낮게(≤1.1) — ACES 톤매핑이 밝은 채도색을 흰색으로
+          // 말아 올리는(백화) 지점 아래에 머물러 발광색이 그대로 느껴진다.
+          m.emissiveIntensity = multiply ? (0.35 + intensity * 0.75) : (0.4 + intensity * 1.6);
         } else {
           const orig = saved.get(m);
           m.emissive.copy(orig.emissive);
