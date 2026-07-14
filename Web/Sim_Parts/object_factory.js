@@ -31,15 +31,52 @@ const defaultColors = (type) => ({
   emissive: [...DEFAULT_COLORS[type].emissive],
 });
 
-// metadata.colors 를 재질에 반영한다(색상 지원 객체 전용 — 박스·구).
-// 평상시는 **기본색으로만** 렌더링한다. 발광색은 여기서 적용하지 않고,
-// LED 켜기 명령이 왔을 때 LED 컴포넌트(components.js)가 점등 색으로 사용한다.
+// 객체 자신의 메시만 순회(중첩된 자식 simObject 경계에서 멈춤 — components.js 와 동일 규칙)
+function forOwnMeshes(root, fn) {
+  const stack = [root];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node !== root && node.userData?.simObject) continue;
+    if (node.isMesh) fn(node);
+    for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]);
+  }
+}
+
+// metadata.colors 를 재질에 반영한다.
+// - 박스·구·원기둥(단색 프리미티브): 기본색을 재질색으로 **직접** 지정(종전 동작).
+// - GLB(colorMode==='multiply'): 기본색을 **원본 재질색에 곱해** 틴트한다 —
+//   base=(1,1,1,1) 이면 원래 색 그대로. 원본 색은 최초 1회 스냅샷해 멱등 재적용.
+// 발광색은 여기서 적용하지 않고 LED 컴포넌트(components.js)가 점등 시 사용한다.
 // 'srgb' 인자는 색 관리가 켜진 three 버전에서 헥스 상수와 같은 해석을 보장한다(구버전은 무시).
 export function applyObjectColors(simObject) {
   const colors = simObject?.metadata?.colors;
-  const mat = simObject?.root?.material;
-  if (!colors || !mat || !mat.color) return;
+  if (!colors) return;
   const [br = 1, bg = 1, bb = 1, ba = 1] = colors.base || [];
+
+  // GLB — 곱셈(multiplicative) 모드
+  if (simObject.metadata?.colorMode === 'multiply') {
+    forOwnMeshes(simObject.root, (mesh) => {
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((m) => {
+        if (!m || !m.color) return;
+        if (!m.userData._aresOrig) {
+          m.userData._aresOrig = { color: m.color.clone(), opacity: m.opacity ?? 1, transparent: !!m.transparent };
+        }
+        const orig = m.userData._aresOrig;
+        // 원본색 × 기본색 (srgb 해석) — Color 생성은 THREE 의존 없이 기존 인스턴스로부터
+        const tint = orig.color.clone().set(0xffffff).setRGB(br, bg, bb, 'srgb');
+        m.color.copy(orig.color).multiply(tint);
+        m.opacity = Math.max(0, Math.min(1, orig.opacity * ba));
+        m.transparent = orig.transparent || m.opacity < 1;
+        m.needsUpdate = true;
+      });
+    });
+    return;
+  }
+
+  // 프리미티브 — 직접 지정(종전 동작)
+  const mat = simObject?.root?.material;
+  if (!mat || !mat.color) return;
   mat.color.setRGB(br, bg, bb, 'srgb');
   mat.opacity = Math.max(0, Math.min(1, ba));
   mat.transparent = mat.opacity < 1;
@@ -182,14 +219,22 @@ export function createGlbObject(ctx, url, label) {
       const holder = new THREE.Group();
       holder.add(model);
       const id = ctx.objects?.makeId('glb') || `glb-${Date.now()}`;
-      resolve(new SimulationObject({
+      // GLB 도 기본색/발광색을 갖는다(2026-07-15). 곱셈(multiplicative) 모드 —
+      // (1,1,1,1) 이 항등값이라 기존 씬의 GLB 는 원래 색 그대로 보인다.
+      const sim = new SimulationObject({
         id,
         type: 'glb',
         label: label || url.split('/').pop().replace(/\.glb$/i, ''),
         root: holder,
         spawned: true,
-        metadata: { glbUrl: url },
-      }));
+        metadata: {
+          glbUrl: url,
+          colorMode: 'multiply',
+          colors: { base: [1, 1, 1, 1], emissive: [1, 1, 1, 1] },
+        },
+      });
+      applyObjectColors(sim);   // 원본 재질색 스냅샷 겸 항등 적용
+      resolve(sim);
     }, reject);
   });
 }

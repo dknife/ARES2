@@ -89,7 +89,7 @@ export async function applyScene(ctx, json) {
     if (entry.position) sim.root.position.fromArray(entry.position);
     if (entry.quaternion) sim.root.quaternion.fromArray(entry.quaternion);
     if (entry.scale) sim.root.scale.fromArray(entry.scale);
-    // 색상 복원 — 색상을 지원하는 객체(박스·구)만 metadata.colors 를 갖는다
+    // 색상 복원 — 색상 지원 객체(박스·구·원기둥·GLB)가 metadata.colors 를 갖는다
     if (entry.colors && sim.metadata?.colors) {
       if (Array.isArray(entry.colors.base)) sim.metadata.colors.base = [...entry.colors.base];
       if (Array.isArray(entry.colors.emissive)) sim.metadata.colors.emissive = [...entry.colors.emissive];

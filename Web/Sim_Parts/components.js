@@ -71,12 +71,15 @@ function createLedComponent(ctx, fields = {}) {
     setLight(simObject, Math.max(0, Math.min(1, intensity)));
     // 색상 지원 객체(박스·구): 밝기 t(0~1)로 기본색↔발광색을 보간한다.
     // t=0 → 기본색 그대로, t=1 → 발광색만 보임(확산색은 (1-t) 로 감쇠, 발광은 t 비율).
+    // GLB(colorMode==='multiply')는 보간이 아니라 **원래 메시 색 × 발광색** 으로 빛난다
+    // — 아래 saved 경로에서 발광색 틴트를 곱해 처리한다.
     const colors = simObject.metadata?.colors;
+    const multiply = simObject.metadata?.colorMode === 'multiply';
     forOwnMeshes(simObject.root, (mesh) => {
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       mats.forEach((m) => {
         if (!m || m.emissive === undefined) return;   // Basic 계열 등 emissive 없는 재질은 무시
-        if (colors) {
+        if (colors && !multiply) {
           const t = Math.max(0, Math.min(1, intensity));
           const base = colors.base || [1, 1, 1, 1];
           const glow = colors.emissive || [1, 1, 1, 1];
@@ -97,14 +100,23 @@ function createLedComponent(ctx, fields = {}) {
           });
         }
         if (intensity > 0) {
+          // 곱셈 모드(GLB)의 발광색 틴트 — (1,1,1) 이면 종전과 동일(원래 색 그대로 발광)
+          const glow = (multiply && colors?.emissive) ? colors.emissive : null;
           if (m.map) {
-            // GLB 등 텍스처 재질: 자기 텍스처 색 그대로 발광시켜 메시 전체가 밝게 빛나게 한다
+            // GLB 등 텍스처 재질: 자기 텍스처 색 그대로 발광 — emissive 색이 텍셀에
+            // 곱해지므로 발광색 틴트가 있으면 '원래 메시 색 × 발광색' 이 된다
             m.emissiveMap = m.map;
-            m.emissive.set(0xffffff);
+            if (glow) m.emissive.setRGB(glow[0] ?? 1, glow[1] ?? 1, glow[2] ?? 1, 'srgb');
+            else m.emissive.set(0xffffff);
           } else {
             // 단색 재질: 고유색 계열로 발광(순검정이면 LED 느낌의 앰버로)
-            const base = m.color && (m.color.r + m.color.g + m.color.b) > 0.05 ? m.color : null;
+            const orig = m.userData._aresOrig?.color || m.color;
+            const base = orig && (orig.r + orig.g + orig.b) > 0.05 ? orig : null;
             if (base) m.emissive.copy(base); else m.emissive.set(0xffbb33);
+            if (glow) {
+              const tint = m.emissive.clone().set(0xffffff).setRGB(glow[0] ?? 1, glow[1] ?? 1, glow[2] ?? 1, 'srgb');
+              m.emissive.multiply(tint);   // 원래 메시 색 × 발광색
+            }
           }
           m.emissiveIntensity = 0.4 + intensity * 1.6;
         } else {

@@ -5375,19 +5375,20 @@
       }
     };
     const setEmit = (simObject, intensity) => {
-      var _a;
+      var _a, _b;
       setLight(simObject, Math.max(0, Math.min(1, intensity)));
       const colors = (_a = simObject.metadata) == null ? void 0 : _a.colors;
+      const multiply = ((_b = simObject.metadata) == null ? void 0 : _b.colorMode) === "multiply";
       forOwnMeshes(simObject.root, (mesh) => {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         mats.forEach((m) => {
-          var _a2, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+          var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
           if (!m || m.emissive === void 0) return;
-          if (colors) {
+          if (colors && !multiply) {
             const t = Math.max(0, Math.min(1, intensity));
             const base = colors.base || [1, 1, 1, 1];
             const glow = colors.emissive || [1, 1, 1, 1];
-            m.color.setRGB(((_a2 = base[0]) != null ? _a2 : 1) * (1 - t), ((_b = base[1]) != null ? _b : 1) * (1 - t), ((_c = base[2]) != null ? _c : 1) * (1 - t), "srgb");
+            m.color.setRGB(((_a2 = base[0]) != null ? _a2 : 1) * (1 - t), ((_b2 = base[1]) != null ? _b2 : 1) * (1 - t), ((_c = base[2]) != null ? _c : 1) * (1 - t), "srgb");
             m.emissive.setRGB((_d = glow[0]) != null ? _d : 0, (_e = glow[1]) != null ? _e : 0, (_f = glow[2]) != null ? _f : 0, "srgb");
             m.emissiveIntensity = t;
             m.opacity = Math.max(0, Math.min(1, ((_g = base[3]) != null ? _g : 1) * (1 - t) + ((_h = glow[3]) != null ? _h : 1) * t));
@@ -5403,13 +5404,20 @@
             });
           }
           if (intensity > 0) {
+            const glow = multiply && (colors == null ? void 0 : colors.emissive) ? colors.emissive : null;
             if (m.map) {
               m.emissiveMap = m.map;
-              m.emissive.set(16777215);
+              if (glow) m.emissive.setRGB((_k = glow[0]) != null ? _k : 1, (_l = glow[1]) != null ? _l : 1, (_m = glow[2]) != null ? _m : 1, "srgb");
+              else m.emissive.set(16777215);
             } else {
-              const base = m.color && m.color.r + m.color.g + m.color.b > 0.05 ? m.color : null;
+              const orig = ((_n = m.userData._aresOrig) == null ? void 0 : _n.color) || m.color;
+              const base = orig && orig.r + orig.g + orig.b > 0.05 ? orig : null;
               if (base) m.emissive.copy(base);
               else m.emissive.set(16759603);
+              if (glow) {
+                const tint = m.emissive.clone().set(16777215).setRGB((_o = glow[0]) != null ? _o : 1, (_p = glow[1]) != null ? _p : 1, (_q = glow[2]) != null ? _q : 1, "srgb");
+                m.emissive.multiply(tint);
+              }
             }
             m.emissiveIntensity = 0.4 + intensity * 1.6;
           } else {
@@ -6280,12 +6288,42 @@
     base: [...DEFAULT_COLORS[type].base],
     emissive: [...DEFAULT_COLORS[type].emissive]
   });
+  function forOwnMeshes2(root, fn) {
+    var _a;
+    const stack = [root];
+    while (stack.length > 0) {
+      const node = stack.pop();
+      if (node !== root && ((_a = node.userData) == null ? void 0 : _a.simObject)) continue;
+      if (node.isMesh) fn(node);
+      for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]);
+    }
+  }
   function applyObjectColors(simObject) {
-    var _a, _b;
+    var _a, _b, _c;
     const colors = (_a = simObject == null ? void 0 : simObject.metadata) == null ? void 0 : _a.colors;
-    const mat = (_b = simObject == null ? void 0 : simObject.root) == null ? void 0 : _b.material;
-    if (!colors || !mat || !mat.color) return;
+    if (!colors) return;
     const [br = 1, bg = 1, bb = 1, ba = 1] = colors.base || [];
+    if (((_b = simObject.metadata) == null ? void 0 : _b.colorMode) === "multiply") {
+      forOwnMeshes2(simObject.root, (mesh) => {
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((m) => {
+          var _a2;
+          if (!m || !m.color) return;
+          if (!m.userData._aresOrig) {
+            m.userData._aresOrig = { color: m.color.clone(), opacity: (_a2 = m.opacity) != null ? _a2 : 1, transparent: !!m.transparent };
+          }
+          const orig = m.userData._aresOrig;
+          const tint = orig.color.clone().set(16777215).setRGB(br, bg, bb, "srgb");
+          m.color.copy(orig.color).multiply(tint);
+          m.opacity = Math.max(0, Math.min(1, orig.opacity * ba));
+          m.transparent = orig.transparent || m.opacity < 1;
+          m.needsUpdate = true;
+        });
+      });
+      return;
+    }
+    const mat = (_c = simObject == null ? void 0 : simObject.root) == null ? void 0 : _c.material;
+    if (!mat || !mat.color) return;
     mat.color.setRGB(br, bg, bb, "srgb");
     mat.opacity = Math.max(0, Math.min(1, ba));
     mat.transparent = mat.opacity < 1;
@@ -6410,14 +6448,20 @@
         const holder = new THREE.Group();
         holder.add(model);
         const id = ((_a = ctx.objects) == null ? void 0 : _a.makeId("glb")) || `glb-${Date.now()}`;
-        resolve(new SimulationObject({
+        const sim = new SimulationObject({
           id,
           type: "glb",
           label: label || url.split("/").pop().replace(/\.glb$/i, ""),
           root: holder,
           spawned: true,
-          metadata: { glbUrl: url }
-        }));
+          metadata: {
+            glbUrl: url,
+            colorMode: "multiply",
+            colors: { base: [1, 1, 1, 1], emissive: [1, 1, 1, 1] }
+          }
+        });
+        applyObjectColors(sim);
+        resolve(sim);
       }, reject);
     });
   }
