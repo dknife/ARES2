@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "name": "가위바위보",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "box-1",
+      "type": "box",
+      "label": "Box 1",
+      "parent": null,
+      "position": [
+        0,
+        0.333,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        2.5,
+        1,
+        0.3
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0.3,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-2",
+      "type": "box",
+      "label": "Box 1_dup",
+      "parent": null,
+      "position": [
+        0,
+        0.049,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        2.8,
+        0.2,
+        0.4
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.2,
+          0.2,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "glb-3",
+      "type": "glb",
+      "label": "LampHand1",
+      "parent": null,
+      "position": [
+        -0.667,
+        0.656,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.3,
+        0.272,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ],
+      "url": "Mesh/LampHand1.glb",
+      "colors": {
+        "base": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "emissive": [
+          0.7,
+          0.5,
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "glb-4",
+      "type": "glb",
+      "label": "LampHand2",
+      "parent": null,
+      "position": [
+        0,
+        0.656,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.252,
+        0.24,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ],
+      "url": "Mesh/LampHand2.glb",
+      "colors": {
+        "base": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "emissive": [
+          0.7,
+          0.5,
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "glb-5",
+      "type": "glb",
+      "label": "LampHand3",
+      "parent": null,
+      "position": [
+        0.667,
+        0.656,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.271,
+        0.27,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 3
+          }
+        }
+      ],
+      "url": "Mesh/LampHand3.glb",
+      "colors": {
+        "base": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "emissive": [
+          0.7,
+          0.5,
+          0.5,
+          0.5
+        ]
+      }
+    }
+  ]
+}

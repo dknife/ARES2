@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "name": "신호등",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "box-1",
+      "type": "box",
+      "label": "Box 1",
+      "parent": null,
+      "position": [
+        0,
+        0.333,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        2.5,
+        1,
+        0.3
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0.3,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "glb-2",
+      "type": "glb",
+      "label": "LampGeneral",
+      "parent": null,
+      "position": [
+        -0.667,
+        0.9223569523792031,
+        0
+      ],
+      "quaternion": [
+        0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ],
+      "url": "Mesh/LampGeneral.glb",
+      "colors": {
+        "base": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "emissive": [
+          1,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "glb-3",
+      "type": "glb",
+      "label": "LampGeneral_dup",
+      "parent": null,
+      "position": [
+        0,
+        0.922,
+        0
+      ],
+      "quaternion": [
+        0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ],
+      "url": "Mesh/LampGeneral.glb",
+      "colors": {
+        "base": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "emissive": [
+          0.7,
+          0.7,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "glb-4",
+      "type": "glb",
+      "label": "LampGeneral_dup_dup",
+      "parent": null,
+      "position": [
+        0.667,
+        0.922,
+        0
+      ],
+      "quaternion": [
+        0.7071067811865475,
+        0,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 3
+          }
+        }
+      ],
+      "url": "Mesh/LampGeneral.glb",
+      "colors": {
+        "base": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "emissive": [
+          0,
+          0.5,
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-5",
+      "type": "box",
+      "label": "Box 1_dup",
+      "parent": null,
+      "position": [
+        0,
+        0.049,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        2.8,
+        0.2,
+        0.4
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.2,
+          0.2,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ]
+}

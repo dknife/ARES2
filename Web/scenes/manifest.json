@@ -2,7 +2,8 @@
   "hiddenTopics": [
     "albi",
     "rover",
-    "launchpad"
+    "launchpad",
+    "traffic"
   ],
   "scenes": [
     {
@@ -19,6 +20,16 @@
       "id": "dice_arrow",
       "file": "scenes/dice_arrow.json",
       "label": "주사위놀이"
+    },
+    {
+      "id": "signals",
+      "file": "scenes/signals.json",
+      "label": "신호등"
+    },
+    {
+      "id": "rockscissors",
+      "file": "scenes/rockscissors.json",
+      "label": "가위바위보"
     }
   ]
 }
