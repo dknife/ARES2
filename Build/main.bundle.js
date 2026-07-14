@@ -5697,7 +5697,7 @@
         }
         if (cmd.startsWith("DC_tFORWARD,") || cmd.startsWith("DC_tBACKWARD,")) {
           dir = cmd.startsWith("DC_tFORWARD,") ? 1 : -1;
-          speed = 1;
+          speed = normSpeed(cmd.split(",")[2]);
           return stop;
         }
         if (cmd === "DC_FORWARD" || cmd.startsWith("DC_FORWARD,")) {

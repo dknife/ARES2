@@ -401,7 +401,10 @@ function createDcComponent(ctx, fields = {}) {
       if (cmd === 'STOP_ALL' || cmd === 'DC_STOP' || cmd.startsWith('DC_STOP,')) { stop(); return null; }
       if (cmd.startsWith('DC_tFORWARD,') || cmd.startsWith('DC_tBACKWARD,')) {
         dir = cmd.startsWith('DC_tFORWARD,') ? 1 : -1;
-        speed = 1;
+        // DC_t방향,초,속도 — 3번째 인자가 속도다. 펌웨어(_handle_timed_dcmotor_new)는
+        // 이를 PWM 에 반영하므로 시뮬도 동일하게 반영한다(종전에는 1 고정이라
+        // 랜덤 속도 블록을 써도 시뮬에서는 항상 같은 속도로 돌던 패리티 버그).
+        speed = normSpeed(cmd.split(',')[2]);
         return stop;                                   // 시간지정: hold 종료 시 정지
       }
       if (cmd === 'DC_FORWARD' || cmd.startsWith('DC_FORWARD,')) { dir = 1; speed = normSpeed(cmd.split(',')[1]); return null; }
