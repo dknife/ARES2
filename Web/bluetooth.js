@@ -104,7 +104,7 @@ export const BluetoothManager = {
     // 블루투스 연결이 이루어지면 저장된 요원 코드(ares-agent-code)를
     // (1) 부저 멜로디로 연주 — A~G 는 라~솔(A=라, B=시, C=도, D=레, E=미, F=파, G=솔),
     //     그 외 알파벳·숫자는 7음계를 순환 매핑해 어떤 코드든 소리가 나게 한다.
-    // (2) OLED 에 "Connected: CODE" 를 표시한다.
+    // (2) OLED 에 "Connect:CODE" 를 표시한다(16자 한 줄에 맞춘 축약형).
     // 모듈이 없는 기기는 펌웨어가 해당 명령을 조용히 무시하므로(return 0) 안전하다.
     async playConnectGreeting() {
         let code = '';
@@ -113,9 +113,9 @@ export const BluetoothManager = {
         } catch (_) { /* localStorage 불가 환경 */ }
         const label = code || 'READY';
 
-        // OLED: Connected: CODE
+        // OLED: Connect:CODE
         try {
-            await this.sendData(`MSG,Connected: ${label}`);
+            await this.sendData(`MSG,Connect:${label}`);
         } catch (error) {
             Logger.add(`[연결 인사] OLED 표시 실패: ${error.message}`, 'warning');
             return;
