@@ -54,6 +54,10 @@
     background: #fafafa; color: #555; font-size: 0.85em;
   }
   .imgslot b { color: #1a45c2; }
+  .imgrow { display: flex; gap: 6px; margin-top: 6px; }
+  .imgrow figure { flex: 1; margin: 0; text-align: center; }
+  .imgrow img { width: 100%; height: 96px; object-fit: cover; border: 1px solid #bbb; border-radius: 4px; display: block; }
+  .imgrow figcaption { font-size: 0.78em; color: #555; margin-top: 2px; }
   .kv { color: #1a45c2; font-weight: 700; }
   .note { color: #c22525; font-size: 0.85em; }
   .sign { margin-top: 26px; text-align: center; font-weight: 700; }
@@ -168,7 +172,11 @@
           <li>동남권 대학의 게임·SW 기술로 지역 기업의 제품을 디지털테크로 고도화하는
             <b>지산학연 공동연구</b>로 착수</li>
         </ul>
-        <div class="imgslot">📎 별첨 <b>ARES_개발배경_1</b> — 코리아사이언스 생산 공장 견학·부품 공정 사진</div>
+        <div class="imgslot">📎 별첨 <b>ARES_개발배경_1</b> — 코리아사이언스 생산 공장 견학·부품 공정 사진
+          <div class="imgrow">
+            <figure><img src="첨부이미지/ARES_개발배경_1.jpg" alt="공장 견학"><figcaption>ARES_개발배경_1 — 레이저 커팅 공정 견학</figcaption></figure>
+          </div>
+        </div>
 
         <h4>2) 개발과정 — 대학과 기업이 한 팀으로, 3주 집중 제품개발학기</h4>
         <ul>
@@ -179,7 +187,13 @@
             블록코딩 관제 서비스를 개발, 실물 로버·발사대와 블루투스(BLE) 연동</li>
           <li>인터넷 없는 교실을 위한 <b>오프라인 배포판</b>(USB, 더블클릭 실행)까지 구축</li>
         </ul>
-        <div class="imgslot">📎 별첨 <b>ARES_개발과정_1~3</b> — 컴퓨터실 공동개발 전경 · 교구 시제품 팀 조립 · 통합 점검 현장</div>
+        <div class="imgslot">📎 별첨 <b>ARES_개발과정_1~3</b> — 컴퓨터실 공동개발 전경 · 교구 시제품 팀 조립 · 통합 점검 현장
+          <div class="imgrow">
+            <figure><img src="첨부이미지/ARES_개발과정_1.jpg" alt="공동개발 전경"><figcaption>_1 공동개발 전경</figcaption></figure>
+            <figure><img src="첨부이미지/ARES_개발과정_2.jpg" alt="시제품 팀 조립"><figcaption>_2 시제품 팀 조립</figcaption></figure>
+            <figure><img src="첨부이미지/ARES_개발과정_3.jpg" alt="통합 점검"><figcaption>_3 통합 점검 현장</figcaption></figure>
+          </div>
+        </div>
 
         <h4>3) 성과소개 — 브라우저만 열면 시작되는 화성 탐사</h4>
         <ul>
@@ -192,7 +206,14 @@
           <li><b>실물 교구 시제품</b>: 화성발사대 「MARS EXPLORATION ARES LAUNCHER」와
             조립형 로버 — 코리아사이언스 생산 공정으로 제작</li>
         </ul>
-        <div class="imgslot">📎 별첨 <b>ARES_성과소개_1~4</b> — 서비스 미션 화면 · 3D 시뮬레이터(발사대_제작 씬) · 화성발사대 시제품 · 진입 컷씬</div>
+        <div class="imgslot">📎 별첨 <b>ARES_성과소개_1~4</b> — 서비스 미션 화면 · 3D 시뮬레이터(발사대_제작 씬) · 화성발사대 시제품 · 진입 컷씬
+          <div class="imgrow">
+            <figure><img src="첨부이미지/ARES_성과소개_1.png" alt="블록코딩 화면"><figcaption>_1 블록코딩 미션</figcaption></figure>
+            <figure><img src="첨부이미지/ARES_성과소개_2.png" alt="3D 시뮬레이터"><figcaption>_2 3D 시뮬레이터</figcaption></figure>
+            <figure><img src="첨부이미지/ARES_성과소개_3.jpg" alt="발사대 시제품"><figcaption>_3 발사대 시제품</figcaption></figure>
+            <figure><img src="첨부이미지/ARES_성과소개_4.png" alt="진입 컷씬"><figcaption>_4 진입 컷씬</figcaption></figure>
+          </div>
+        </div>
 
         <h4>4) 기대효과 — 지역 기업의 디지털 전환, 교실의 문턱 제거</h4>
         <ul>
@@ -209,11 +230,9 @@
     <tr>
       <td class="rowhead">관련 소스<small>이미지·사진 자료</small></td>
       <td style="font-size:0.9em;">
-        원고별 사진은 <b>2MB 이상 원본</b>으로 별도 제출 (파일명: <b>ARES_항목_번호</b>)<br>
-        <span class="kv">후보 원본 소스</span> — 프로젝트 저장소 <code>Document/진행보고/img/</code>:
-        공장 견학(2일차), 조립·통합점검(13일차), 출품작·작업 전경(14일차),
-        서비스·시뮬레이터 캡처(15일차·사용 매뉴얼 캡처)
-        <span class="note">※ 화면 캡처는 고해상도 재캡처 후 제출 권장</span>
+        첨부 세트 구성 완료 — <code>Document/Expo/첨부이미지/</code> (파일명 규칙 <b>ARES_항목_번호</b> 적용, 8장)<br>
+        <span class="note todo">※ 현재 세트는 웹 변환본(1600px, 장당 0.1~0.3MB)입니다. 양식 요구(2MB 이상 원본)에 맞추려면
+        제출 전 원본 사진(원본 일차 폴더 보관 기기)으로 교체하고, 화면 캡처(성과소개_1·2·4)는 고해상도로 재캡처하세요.</span>
       </td>
     </tr>
   </table>
