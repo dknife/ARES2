@@ -125,7 +125,11 @@ class KSGun:
         return (not self._busy) and self.cooldown_remaining(cooldown_ms) == 0
 
     # ---- 발사 ----
-    def fire_once(self, power=50000, spin_time_ms=220, cooldown_ms=250,
+    # 기본값 근거(2026-07-14): 이 완구는 원래 배터리 직결(=100% duty) 설계라 최대
+    # duty 가 설계 토크다. 76%(50000)는 배터리 전압이 처지면 스프링 압축에서 스톨
+    # ('삑', 13일차 전원 출력 부족 증상)할 수 있다. 캠 접점이 기구 밖으로 나오지 않아
+    # (+/- 모터선만 인출) 캠 모드는 불가 — 시간 폴백에서 실측 검증된 65535 x 330ms 사용.
+    def fire_once(self, power=65535, spin_time_ms=330, cooldown_ms=250,
                   max_cycle_ms=1500, wait_cooldown=True):
         """한 발 발사.
 
