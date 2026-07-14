@@ -14,6 +14,8 @@
     <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
     <script src="vendor/three-bundle.min.js"></script>
     <script src="vendor/meshopt_decoder.js"></script>
+    <!-- 저사양 기기 감지 + 품질 티어링 + WebGL 가드 → window.AresPerf (모듈 실행 전에 로드) -->
+    <script src="perf_tier.js"></script>
     <script type="module" src="main.js?v=20260709f"></script>
     <style>
         /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
