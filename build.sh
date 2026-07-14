@@ -37,6 +37,8 @@ cp Web/dashboard.html Build/dashboard.html
 cp Web/styles.css     Build/styles.css
 cp Web/index.css      Build/index.css
 cp Web/mobile-preview.js Build/mobile-preview.js
+# 기기 사양 감지·품질 티어링(window.AresPerf) — index/main.html 이 클래식 스크립트로 로드
+cp Web/perf_tier.js      Build/perf_tier.js
 # UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크) + 로컬 서브셋 폰트
 cp -R Web/assets Build/assets
 cp -R Web/fonts  Build/fonts

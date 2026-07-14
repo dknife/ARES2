@@ -198,6 +198,8 @@
     <script src="vendor/bin_AlbiRobot.min.js"></script>
     <script src="vendor/bin_Rocket.min.js"></script>
     <script src="vendor/inline_assets.js"></script>
+    <!-- 저사양 기기 감지 + 품질 티어링 + WebGL 가드 → window.AresPerf -->
+    <script src="perf_tier.js"></script>
     <script>
     'use strict';
     (function () {
@@ -234,15 +236,27 @@
         return { w: stage.clientWidth, h: stage.clientHeight };
       }
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      // 저사양 기기 대응: 가드된 렌더러 생성(antialias·pixelRatio·shadowMap 티어 적용).
+      // WebGL 초기화 실패 시 null 을 돌려주므로, 예외로 스크립트가 죽는 대신 안내 화면을 띄운다.
+      const renderer = window.AresPerf
+        ? window.AresPerf.createRenderer(THREE, { alpha: true })
+        : new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      if (!renderer) {
+        if (window.AresPerf) window.AresPerf.showFallback(stage, '이 기기에서는 3D 화면을 표시할 수 없어요.');
+        if (loadingEl) loadingEl.classList.add('hidden');
+        return;   // 3D 초기화 불가 — 이하 렌더링 파이프라인을 건너뛴다
+      }
       const { w, h } = size();
       renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.1;
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      // AresPerf 가 없을 때(방어적 폴백)만 기존 기본값을 직접 적용 — 있으면 createRenderer 가 처리
+      if (!window.AresPerf) {
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      }
       stage.appendChild(renderer.domElement);
 
       const scene = new THREE.Scene();
@@ -298,7 +312,8 @@
       const key = new THREE.DirectionalLight(0xfff4e6, 2.2);
       key.position.set(3, 6, 5);
       key.castShadow = true;
-      key.shadow.mapSize.set(1024, 1024);
+      const heroShadow = window.AresPerf ? window.AresPerf.shadowSize(1024) : 1024;
+      key.shadow.mapSize.set(heroShadow, heroShadow);
       key.shadow.bias = -0.0003;
       scene.add(key);
       const fill = new THREE.DirectionalLight(0xbcd2f0, 0.6);
@@ -668,8 +683,12 @@
         const THREE = window.THREE, A = window.ARES3;
         const canvas = document.getElementById('cutscene-canvas');
         if (!THREE || !canvas) return;
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        // 저사양/미지원 기기 가드: 실패 시 null → 컷씬 WebGL 만 건너뛰고 코드 입력·이동 흐름은 유지
+        const renderer = window.AresPerf
+          ? window.AresPerf.createRenderer(THREE, { canvas, shadows: false })
+          : new THREE.WebGLRenderer({ canvas, antialias: true });
+        if (!renderer) return;
+        if (!window.AresPerf) renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.autoClear = false;
 

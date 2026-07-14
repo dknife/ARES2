@@ -74,6 +74,8 @@ Copy-Item 'Web\index.css'          'Build\index.css'          -Force
 # index.html / main.html 의 <head> 최상단에서 클래식 스크립트로 로드되므로
 # Build\ 루트에도 그대로 복사해야 ?mobile=true 미리보기가 동작한다.
 Copy-Item 'Web\mobile-preview.js'  'Build\mobile-preview.js'  -Force
+# 기기 사양 감지·품질 티어링(window.AresPerf) — index/main.html 이 클래식 스크립트로 로드
+Copy-Item 'Web\perf_tier.js'       'Build\perf_tier.js'       -Force
 # UI 이미지(로고·아바타·툴박스 아이콘·nav 마스크). main.html/styles.css 가
 # assets/design/*.png 를 <img>/CSS url() 로 참조 — file:// 에서도 그대로 로드된다.
 Copy-Item 'Web\assets' 'Build\assets' -Recurse -Force

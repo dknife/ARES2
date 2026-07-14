@@ -464,6 +464,7 @@ export class Simulation_Main {
         const json = await res.json();
         // 씬의 기반 주제(topic 필드) 위에 빌드 — devLoadScene(파일 열기)과 동일한 규약
         build(`scene:${id}`, TOPICS[json.topic] || TOPICS.empty);
+        if (!sim) return;   // WebGL 초기화 실패 기기: buildSim 이 null — 안내 화면만 유지
         applyDevMode();
         sim.resize();
         cancelAnimationFrame(raf); loop();
@@ -492,6 +493,7 @@ export class Simulation_Main {
       const v = sel.value;
       if (v.startsWith('scene:')) { loadSavedScene(v.slice(6)); return; }
       build(v);
+      if (!sim) return;   // WebGL 초기화 실패 기기: buildSim 이 null — 안내 화면만 유지
       applyDevMode();   // 새 Context 의 editor 에 개발자 모드 상태 재적용
       sim.resize();
       cancelAnimationFrame(raf); loop();

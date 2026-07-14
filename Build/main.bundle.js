@@ -7919,13 +7919,24 @@
       this.state = options.state;
       this.audioCtx = null;
       this.disposed = false;
-      this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      this.failed = false;
+      const perf = typeof window !== "undefined" && window.AresPerf || null;
+      this.perf = perf;
+      this.renderer = perf ? perf.createRenderer(THREE, { alpha: true }) : new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      if (!this.renderer) {
+        this.failed = true;
+        if (perf) perf.showFallback(this.stage, "\uC774 \uAE30\uAE30\uC5D0\uC11C\uB294 3D \uC2DC\uBBAC\uB808\uC774\uC158\uC744 \uD45C\uC2DC\uD560 \uC218 \uC5C6\uC5B4\uC694.");
+        if (this.loadingEl) this.loadingEl.classList.add("hidden");
+        return;
+      }
+      if (!perf) this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
       this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
       this.renderer.toneMappingExposure = 1.05;
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if (!perf) {
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      }
       this.stage.appendChild(this.renderer.domElement);
       this.scene = new THREE.Scene();
       this.pmrem = new THREE.PMREMGenerator(this.renderer);
@@ -7955,7 +7966,8 @@
       const key = new THREE.DirectionalLight(16768432, 2.6);
       key.position.set(0, 6, -10);
       key.castShadow = true;
-      key.shadow.mapSize.set(4096, 4096);
+      const keyShadow = this.perf ? this.perf.shadowSize(4096) : 4096;
+      key.shadow.mapSize.set(keyShadow, keyShadow);
       key.shadow.bias = -3e-4;
       key.shadow.camera.left = -20;
       key.shadow.camera.right = 20;
@@ -8808,6 +8820,7 @@
     // Factory method to initialize Context and build the matching Simulation subclass instance
     static buildSim(THREE, A, stage, loadingEl, cfg, options = {}) {
       const ctx = new Context(THREE, A, stage, loadingEl, cfg, options);
+      if (ctx.failed) return null;
       let sim;
       if (cfg.parts) {
         sim = new Simulation_Rover(ctx);
@@ -8945,6 +8958,11 @@
             build("empty");
             loadSavedScene(t.slice(6));
           } else build(t);
+        }
+        if (!sim) {
+          btn.textContent = "\uC2DC\uBBAC\uB808\uC774\uC158";
+          btn.setAttribute("aria-pressed", "false");
+          return;
         }
         sim.resize();
         cancelAnimationFrame(raf);
@@ -9228,6 +9246,7 @@
           const res = await fetch(entry.file, { cache: "no-store" });
           const json = await res.json();
           build(`scene:${id}`, TOPICS[json.topic] || TOPICS.empty);
+          if (!sim) return;
           applyDevMode();
           sim.resize();
           cancelAnimationFrame(raf);
@@ -9256,6 +9275,7 @@
           return;
         }
         build(v);
+        if (!sim) return;
         applyDevMode();
         sim.resize();
         cancelAnimationFrame(raf);
