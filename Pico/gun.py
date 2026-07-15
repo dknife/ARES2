@@ -33,9 +33,12 @@ class KSGun:
         self.gun.duty_u16(0)
 
     # ==========================
-    # [고급 제어]
+    # [동작 메서드]
     # ==========================
-    def soft_start(self, target_power, duration_ms=150):
+    # spin_time 근거(2026-07-15 실측, Jihun): 0.33s 는 캠 한 사이클을 넘겨
+    # 한 번 호출에 2발이 격발됨 → 0.1s(100ms) 로 낮춰 50연발 무오작동 확인.
+    # power 는 완구 원설계(배터리 직결=100% duty)에 맞춘 최대 duty 유지.
+    def fire_once(self, power=65535, spin_time=0.1, cooldown_ms=250):
         """
         안전하게 목표 출력까지 램프업.
         """
