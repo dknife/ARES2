@@ -11758,13 +11758,15 @@
     }
     const aresName = agentCode ? `\uC544\uB808\uC2A4 ${escapeHtml2(agentCode)}` : "\uC544\uB808\uC2A4";
     const nameFor = (sp) => sp === "ares" ? aresName : "\uC54C\uBE44";
+    const padded = String(_storyCtx.n).padStart(2, "0");
     const devbar = dialogueDevMode ? `
     <div class="story-devbar">
-      <span class="story-devbar-title">\u270F\uFE0F \uB300\uD654 \uD3B8\uC9D1 \uBAA8\uB4DC <small>(Ctrl+E \uC885\uB8CC)</small></span>
+      <span class="story-devbar-title">\u270F\uFE0F \uB300\uD654 \uD3B8\uC9D1 \uBAA8\uB4DC <small>(Ctrl+E \uC885\uB8CC)</small><br>
+        <small class="story-devbar-target">\uC800\uC7A5 \uB300\uC0C1: <b>Web/Lesson${padded}/lesson.json</b> (${_storyCtx.n}\uCC28\uC2DC \uC804\uCCB4 \u2014 \uC9C0\uAE08 \uD3B8\uC9D1: \uBBF8\uC158 ${currentMission != null ? currentMission : "?"})</small></span>
       <span class="story-devbar-btns">
         <button type="button" data-story-act="add" data-speaker="ares">\uFF0B \uC544\uB808\uC2A4 \uB300\uC0AC</button>
         <button type="button" data-story-act="add" data-speaker="albi">\uFF0B \uC54C\uBE44 \uB300\uC0AC</button>
-        <button type="button" data-story-act="save">\u{1F4BE} lesson.json \uC800\uC7A5</button>
+        <button type="button" data-story-act="save">\u{1F4BE} Lesson${padded}/lesson.json \uC800\uC7A5</button>
         <button type="button" data-story-act="download">\u2B07 \uB0B4\uB824\uBC1B\uAE30</button>
       </span>
     </div>` : "";
@@ -11874,10 +11876,10 @@
     const blob = new Blob([lessonJsonText()], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `lesson.json`;
+    a.download = `Lesson${padded}_lesson.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Lesson${padded}/lesson.json \uB0B4\uB824\uBC1B\uAE30 \u2014 Web/Lesson${padded}/ \uC5D0 \uB36E\uC5B4\uC4F0\uC138\uC694`, "info");
+    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Lesson${padded}_lesson.json \uB0B4\uB824\uBC1B\uAE30 \u2014 Web/Lesson${padded}/ \uC5D0 'lesson.json' \uC73C\uB85C \uB123\uC73C\uC138\uC694`, "info");
   }
   function _lessonDirKv(mode, fn) {
     return new Promise((resolve) => {
@@ -11923,7 +11925,7 @@
       const w = await fh.createWritable();
       await w.write(lessonJsonText());
       await w.close();
-      Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Web/Lesson${padded}/lesson.json \uC800\uC7A5 \uC644\uB8CC \u2014 git push \uB85C \uBC30\uD3EC\uC5D0 \uBC18\uC601\uD558\uC138\uC694`, "info");
+      Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Web/Lesson${padded}/lesson.json \uC800\uC7A5 \uC644\uB8CC (${_storyCtx.n}\uCC28\uC2DC \uC804\uCCB4 \uBBF8\uC158 \uD3EC\uD568) \u2014 git push \uB85C \uBC30\uD3EC\uC5D0 \uBC18\uC601\uD558\uC138\uC694`, "info");
     } catch (e) {
       if (e && e.name === "AbortError") return;
       Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uD3F4\uB354 \uC800\uC7A5 \uC2E4\uD328(${(e == null ? void 0 : e.message) || e}) \u2014 \uB2E4\uC6B4\uB85C\uB4DC\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4`, "error");

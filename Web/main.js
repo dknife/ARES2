@@ -1703,13 +1703,15 @@ function renderMissionStory() {
   const aresName = agentCode ? `아레스 ${escapeHtml(agentCode)}` : '아레스';
   const nameFor = (sp) => (sp === 'ares' ? aresName : '알비');
 
+  const padded = String(_storyCtx.n).padStart(2, '0');
   const devbar = dialogueDevMode ? `
     <div class="story-devbar">
-      <span class="story-devbar-title">✏️ 대화 편집 모드 <small>(Ctrl+E 종료)</small></span>
+      <span class="story-devbar-title">✏️ 대화 편집 모드 <small>(Ctrl+E 종료)</small><br>
+        <small class="story-devbar-target">저장 대상: <b>Web/Lesson${padded}/lesson.json</b> (${_storyCtx.n}차시 전체 — 지금 편집: 미션 ${currentMission ?? '?'})</small></span>
       <span class="story-devbar-btns">
         <button type="button" data-story-act="add" data-speaker="ares">＋ 아레스 대사</button>
         <button type="button" data-story-act="add" data-speaker="albi">＋ 알비 대사</button>
-        <button type="button" data-story-act="save">💾 lesson.json 저장</button>
+        <button type="button" data-story-act="save">💾 Lesson${padded}/lesson.json 저장</button>
         <button type="button" data-story-act="download">⬇ 내려받기</button>
       </span>
     </div>` : '';
@@ -1813,10 +1815,12 @@ function downloadLessonJson() {
   const blob = new Blob([lessonJsonText()], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `lesson.json`;
+  // 파일명에 차시를 명시 — 12차시 x 4미션 환경에서 엉뚱한 폴더에 덮어쓰는 사고 방지.
+  // 사용처: Web/LessonNN/ 에 넣을 때 'lesson.json' 으로 이름을 바꾼다.
+  a.download = `Lesson${padded}_lesson.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-  Logger.add(`[대화 편집] Lesson${padded}/lesson.json 내려받기 — Web/Lesson${padded}/ 에 덮어쓰세요`, 'info');
+  Logger.add(`[대화 편집] Lesson${padded}_lesson.json 내려받기 — Web/Lesson${padded}/ 에 'lesson.json' 으로 넣으세요`, 'info');
 }
 
 // File System Access — Web 폴더 핸들을 IndexedDB 에 저장해 재사용(씬 등록 체계와 동일 UX)
@@ -1860,7 +1864,7 @@ async function saveLessonToDisk() {
     const w = await fh.createWritable();
     await w.write(lessonJsonText());
     await w.close();
-    Logger.add(`[대화 편집] Web/Lesson${padded}/lesson.json 저장 완료 — git push 로 배포에 반영하세요`, 'info');
+    Logger.add(`[대화 편집] Web/Lesson${padded}/lesson.json 저장 완료 (${_storyCtx.n}차시 전체 미션 포함) — git push 로 배포에 반영하세요`, 'info');
   } catch (e) {
     if (e && e.name === 'AbortError') return;   // 사용자가 폴더 선택 취소
     Logger.add(`[대화 편집] 폴더 저장 실패(${e?.message || e}) — 다운로드로 대체합니다`, 'error');
