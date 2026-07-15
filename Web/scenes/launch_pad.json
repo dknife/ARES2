@@ -42,61 +42,7 @@
       }
     },
     {
-      "id": "sphere-3",
-      "type": "sphere",
-      "label": "Sphere 3",
-      "parent": null,
-      "position": [
-        0.101,
-        0.689,
-        -0.057
-      ],
-      "quaternion": [
-        0,
-        0,
-        0,
-        1
-      ],
-      "scale": [
-        0.8,
-        0.188,
-        0.7
-      ],
-      "components": [
-        {
-          "type": "LED",
-          "fields": {
-            "led_no": 0
-          }
-        },
-        {
-          "type": "Gun",
-          "fields": {
-            "explosion": [
-              0,
-              0,
-              0
-            ]
-          }
-        }
-      ],
-      "colors": {
-        "base": [
-          0.31,
-          0.76,
-          1,
-          0.7
-        ],
-        "emissive": [
-          1,
-          1,
-          1,
-          1
-        ]
-      }
-    },
-    {
-      "id": "box-4",
+      "id": "box-3",
       "type": "box",
       "label": "Box 2_dup",
       "parent": null,
@@ -138,7 +84,7 @@
       }
     },
     {
-      "id": "sphere-8",
+      "id": "sphere-4",
       "type": "sphere",
       "label": "Lamp",
       "parent": null,
@@ -182,7 +128,7 @@
       }
     },
     {
-      "id": "glb-13",
+      "id": "glb-5",
       "type": "glb",
       "label": "Rocket.min",
       "parent": null,
@@ -214,10 +160,24 @@
           }
         }
       ],
-      "url": "Mesh/RocketAndLauncher/Rocket.min.glb"
+      "url": "Mesh/RocketAndLauncher/Rocket.min.glb",
+      "colors": {
+        "base": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
     },
     {
-      "id": "glb-14",
+      "id": "glb-6",
       "type": "glb",
       "label": "LaunchStand.min",
       "parent": null,
@@ -238,23 +198,37 @@
         0.5
       ],
       "components": [],
-      "url": "Mesh/RocketAndLauncher/LaunchStand.min.glb"
+      "url": "Mesh/RocketAndLauncher/LaunchStand.min.glb",
+      "colors": {
+        "base": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
     },
     {
-      "id": "glb-15",
+      "id": "glb-7",
       "type": "glb",
       "label": "RadaDish.min",
       "parent": null,
       "position": [
-        0.28046602677520643,
+        0.31467003477163824,
         0.873,
-        0.21317104525578695
+        0.1912422874474758
       ],
       "quaternion": [
         0,
-        0.793667132096067,
+        0.7657813834084916,
         0,
-        -0.6083522691915234
+        0.6431009818255917
       ],
       "scale": [
         0.1,
@@ -278,10 +252,24 @@
           }
         }
       ],
-      "url": "Mesh/RocketAndLauncher/RadaDish.min.glb"
+      "url": "Mesh/RocketAndLauncher/RadaDish.min.glb",
+      "colors": {
+        "base": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
     },
     {
-      "id": "glb-16",
+      "id": "glb-8",
       "type": "glb",
       "label": "RadarBody.min",
       "parent": null,
@@ -302,10 +290,24 @@
         0.1
       ],
       "components": [],
-      "url": "Mesh/RocketAndLauncher/RadarBody.min.glb"
+      "url": "Mesh/RocketAndLauncher/RadarBody.min.glb",
+      "colors": {
+        "base": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
     },
     {
-      "id": "sphere-17",
+      "id": "sphere-9",
       "type": "sphere",
       "label": "Lamp_dup",
       "parent": null,
@@ -349,7 +351,7 @@
       }
     },
     {
-      "id": "sphere-18",
+      "id": "sphere-10",
       "type": "sphere",
       "label": "Lamp_dup_dup",
       "parent": null,
@@ -393,7 +395,7 @@
       }
     },
     {
-      "id": "sphere-19",
+      "id": "sphere-11",
       "type": "sphere",
       "label": "Lamp_dup_dup_dup",
       "parent": null,
@@ -437,7 +439,7 @@
       }
     },
     {
-      "id": "sphere-20",
+      "id": "sphere-12",
       "type": "sphere",
       "label": "Lamp_dup_dup_dup_dup",
       "parent": null,
@@ -474,6 +476,60 @@
         ],
         "emissive": [
           0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-13",
+      "type": "cylinder",
+      "label": "Cylinder 13",
+      "parent": null,
+      "position": [
+        0.108,
+        0.689,
+        -0.027
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.5,
+        0.1,
+        0.5
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 0
+          }
+        },
+        {
+          "type": "Gun",
+          "fields": {
+            "explosion": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
           1,
           1,
           1
