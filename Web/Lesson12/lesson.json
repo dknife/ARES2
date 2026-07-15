@@ -12,8 +12,14 @@
       "tag": "LAUNCH",
       "hardware": "LED 5개, 부저, DC모터",
       "story": [
-        {"speaker": "ares", "text": "알비! 발사 전에 모든 시스템이 정상인지 최종 점검해야 해. LED, 부저, 모터 전부 확인하자!"},
-        {"speaker": "albi", "text": "삐릿- 실제 우주선도 발사 전에 꼭 시스템 점검을 해요! 순서대로 각 장치를 확인하는 점검 코드를 만들어봐요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 발사 전에 모든 시스템이 정상인지 최종 점검해야 해. LED, 부저, 모터 전부 확인하자!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 실제 우주선도 발사 전에 꼭 시스템 점검을 해요! 순서대로 각 장치를 확인하는 점검 코드를 만들어봐요!"
+        }
       ],
       "goals": [
         "LED 5개 순서대로 켜고 끄며 점등 확인",
@@ -21,7 +27,7 @@
         "DC모터 1초 짧게 회전 후 정지",
         "모든 점검 완료 시 LED 전체 3번 깜빡 (점검 완료)"
       ],
-      "sampleCode": "# 최종 점검 시스템\nprint(\"=== 시스템 점검 시작 ===\")\nfor i in range(1,6):\n    led_on(i,1.0); time.sleep(0.3); led_off(i)\nprint(\"LED OK\")\nbuzzer_on(500, 0.3)\nprint(\"부저 OK\")\nmotor_forward(1); motor_stop()\nprint(\"모터 OK\")\n# 점검 완료 신호\nfor j in range(3):\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.3)\n    for i in range(1,6): led_off(i)\n    time.sleep(0.3)\nprint(\"=== 모든 시스템 정상 ===\")\nprint(\"발사 준비 완료!\")"
+      "sampleCode": "# 최종 점검 시스템\n출력: === 시스템 점검 시작 ===\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n    0.3초 기다리기\n    LED i번 끄기\n출력: LED OK\n부저 500Hz 0.3초\n출력: 부저 OK\nDC 모터 전진 1초\nDC 모터 정지\n출력: 모터 OK\n# 점검 완료 신호\n3번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.3초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.3초 기다리기\n출력: === 모든 시스템 정상 ===\n출력: 발사 준비 완료!"
     },
     {
       "id": 2,
@@ -29,15 +35,21 @@
       "tag": "LAUNCH",
       "hardware": "LED 5개, 부저",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 발사 시퀀스 프로그래밍은 정확한 순서와 타이밍이에요!"},
-        {"speaker": "ares", "text": "좋아! 경고음이 울리고, 불빛이 켜지고, 마지막으로 발사! '3, 2, 1 ... 발사!'"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 발사 시퀀스 프로그래밍은 정확한 순서와 타이밍이에요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "좋아! 경고음이 울리고, 불빛이 켜지고, 마지막으로 발사! '3, 2, 1 ... 발사!'"
+        }
       ],
       "goals": [
         "경고음(부저): 삐빅-삐빅-삐빅 3번 준비 알림",
         "카운트다운: LED 5개 하나씩 꺼지며 5→4→3→2→1",
         "각 숫자마다 부저 음 점점 높아지며 긴장감 고조"
       ],
-      "sampleCode": "# 로켓 발사 카운트다운\n# 경고음 3번\nfor i in range(3):\n    buzzer_on(600, 0.2); time.sleep(0.3)\n# 카운트다운 5→1\nfor i in range(1,6): led_on(i,1.0)\nfor step,freq in enumerate([400,500,600,700,800]):\n    led_off(5-step)\n    buzzer_on(freq, 0.4)\n    time.sleep(0.6)"
+      "sampleCode": "# 로켓 발사 카운트다운\n# 경고음 3번\n3번 반복하기\n    부저 600Hz 0.2초\n    0.3초 기다리기\n# 카운트다운 5→1\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n반복: step,freq in enumerate([400,500,600,700,800])\n    LED 5-step번 끄기\n    부저 freqHz 0.4초\n    0.6초 기다리기"
     },
     {
       "id": 3,
@@ -45,8 +57,14 @@
       "tag": "LAUNCH",
       "hardware": "LED 5개, 부저, DC모터",
       "story": [
-        {"speaker": "ares", "text": "알비!! 0이 됐어! 지금이야, 발사!!!"},
-        {"speaker": "albi", "text": "삐릿!!!!!!!! 발사!!!! 아레스, 우리가 해냈어요!!!"}
+        {
+          "speaker": "ares",
+          "text": "알비!! 0이 됐어! 지금이야, 발사!!!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿!!!!!!!! 발사!!!! 아레스, 우리가 해냈어요!!!"
+        }
       ],
       "goals": [
         "경고음 사이렌 울리기",
@@ -54,7 +72,7 @@
         "LED 5개 시퀀스: 순서대로 점등 → 전체 빠른 깜빡임",
         "발사용 건: 발사 신호 출력 → 로켓 발사!"
       ],
-      "sampleCode": "# 최종 발사 시퀀스!\nprint(\"발사 사이렌!\")\nbuzzer_on(400, 0.5); buzzer_on(800, 0.5)  # 사이렌\nprint(\"발사 장치 작동!\")\nmotor_forward(2)    # DC모터 발사 장치\nprint(\"LED 점화!\")\nfor i in range(1,6): led_on(i,1.0); time.sleep(0.1)\nfor j in range(8):\n    for i in range(1,6): led_off(i)\n    time.sleep(0.1)\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.1)\nprint(\"발사 성공!!!\")"
+      "sampleCode": "# 최종 발사 시퀀스!\n출력: 발사 사이렌!\n부저 400Hz 0.5초   # 사이렌\n부저 800Hz 0.5초\n출력: 발사 장치 작동!\nDC 모터 전진 2초   # DC모터 발사 장치\n출력: LED 점화!\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n    0.1초 기다리기\n8번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.1초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.1초 기다리기\n출력: 발사 성공!!!"
     },
     {
       "id": 4,
@@ -62,8 +80,14 @@
       "tag": "LAUNCH",
       "hardware": "LED, 부저, DC모터",
       "story": [
-        {"speaker": "ares", "text": "알비! 1분기 동안 정말 많은 걸 배웠어. 이제 이걸 전부 써서 내가 원하는 걸 만들 수 있겠어!"},
-        {"speaker": "albi", "text": "삐릿♪ 맞아요! 이제 아레스는 진짜 탐험가 코더예요! 자유롭게 조합해서 나만의 시스템을 만들어봐요! ★ 화성 탐사 훈련생 칭호 수여! ★"}
+        {
+          "speaker": "ares",
+          "text": "알비! 1분기 동안 정말 많은 걸 배웠어. 이제 이걸 전부 써서 내가 원하는 걸 만들 수 있겠어!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪ 맞아요! 이제 아레스는 진짜 탐험가 코더예요! 자유롭게 조합해서 나만의 시스템을 만들어봐요! ★ 화성 탐사 훈련생 칭호 수여! ★"
+        }
       ],
       "goals": [
         "LED, 부저, DC모터 중 자유롭게 선택",
@@ -71,7 +95,7 @@
         "완성한 작품 친구들 앞에서 시연 + 발표",
         "어떤 기능을 왜 만들었는지 설명하기"
       ],
-      "sampleCode": "# 나만의 1분기 자유 창작!\n# 이 부분을 직접 채워봐요!\n\n# 예시 1: 경보 시스템\nwhile True:\n    buzzer_on(800, 0.1)\n    led_on(1,1.0); led_on(3,1.0)\n    time.sleep(0.1)\n    led_off(1); led_off(3)\n    time.sleep(0.1)\n\n# 예시 2: 자동 주행 로봇\nmotor_forward(3)\nmotor_stop()\nmotor_backward(1)\nmotor_stop()"
+      "sampleCode": "# 나만의 1분기 자유 창작!\n# 이 부분을 직접 채워봐요!\n\n# 예시 1: 경보 시스템\n계속 반복하기\n    부저 800Hz 0.1초\n    LED 1번 켜기 (밝기 100%)\n    LED 3번 켜기 (밝기 100%)\n    0.1초 기다리기\n    LED 1번 끄기\n    LED 3번 끄기\n    0.1초 기다리기\n\n# 예시 2: 자동 주행 로봇\nDC 모터 전진 3초\nDC 모터 정지\nDC 모터 후진 1초\nDC 모터 정지"
     }
   ],
   "summary": {

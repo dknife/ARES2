@@ -12,8 +12,14 @@
       "tag": "TRAFFIC",
       "hardware": "LED 3개",
       "story": [
-        {"speaker": "ares", "text": "알비! 신호등 판에 LED 3개를 꽂고 각각 켜지는지 먼저 확인해봐야 해!"},
-        {"speaker": "albi", "text": "삐릿- 맞아요! 빨강, 노랑, 초록을 각각 켜보며 정상 작동하는지 확인해봐요."}
+        {
+          "speaker": "ares",
+          "text": "알비! 신호등 판에 LED 3개를 꽂고 각각 켜지는지 먼저 확인해봐야 해!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 맞아요! 빨강, 노랑, 초록을 각각 켜보며 정상 작동하는지 확인해봐요."
+        }
       ],
       "goals": [
         "빨강 LED(3번) → 2초 켜기 → 끄기",
@@ -21,7 +27,7 @@
         "초록 LED(1번) → 2초 켜기 → 끄기",
         "순서대로 점등해 정상 작동 확인"
       ],
-      "sampleCode": "# 신호등 LED 점검\nled_on(3, 1.0)   # 빨강\ntime.sleep(2)\nled_off(3)\nled_on(2, 1.0)   # 노랑\ntime.sleep(2)\nled_off(2)\nled_on(1, 1.0)   # 초록\ntime.sleep(2)\nled_off(1)"
+      "sampleCode": "# 신호등 LED 점검\nLED 3번 켜기 (밝기 100%)   # 빨강\n2초 기다리기\nLED 3번 끄기\nLED 2번 켜기 (밝기 100%)   # 노랑\n2초 기다리기\nLED 2번 끄기\nLED 1번 켜기 (밝기 100%)   # 초록\n2초 기다리기\nLED 1번 끄기"
     },
     {
       "id": 2,
@@ -29,8 +35,14 @@
       "tag": "TRAFFIC",
       "hardware": "LED 3개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 탐사 로봇들을 안전하게 시험 주행하려면 신호등 시스템이 필요해요!"},
-        {"speaker": "ares", "text": "초록→노랑→빨강 순서로 켜지는 화성 교통 신호등을 만들어보자!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 탐사 로봇들을 안전하게 시험 주행하려면 신호등 시스템이 필요해요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "초록→노랑→빨강 순서로 켜지는 화성 교통 신호등을 만들어보자!"
+        }
       ],
       "goals": [
         "초록 LED 켜기 → 3초 → 끄기 (출발 신호)",
@@ -38,7 +50,7 @@
         "빨강 LED 켜기 → 3초 → 끄기 (정지 신호)",
         "3단계를 무한 반복하는 완전한 신호등"
       ],
-      "sampleCode": "# 화성 신호등\nwhile True:\n    led_on(1, 1.0)   # 초록 출발\n    time.sleep(3)\n    led_off(1)\n    led_on(2, 1.0)   # 노랑 주의\n    time.sleep(1)\n    led_off(2)\n    led_on(3, 1.0)   # 빨강 정지\n    time.sleep(3)\n    led_off(3)"
+      "sampleCode": "# 화성 신호등\n계속 반복하기\n    LED 1번 켜기 (밝기 100%)   # 초록 출발\n    3초 기다리기\n    LED 1번 끄기\n    LED 2번 켜기 (밝기 100%)   # 노랑 주의\n    1초 기다리기\n    LED 2번 끄기\n    LED 3번 켜기 (밝기 100%)   # 빨강 정지\n    3초 기다리기\n    LED 3번 끄기"
     },
     {
       "id": 3,
@@ -46,15 +58,21 @@
       "tag": "TRAFFIC",
       "hardware": "LED 3개",
       "story": [
-        {"speaker": "ares", "text": "알비, 화성에서 밤이 되면 신호등이 달라져야 하지 않을까?"},
-        {"speaker": "albi", "text": "삐릿- 좋은 관찰이에요! 밤 모드로 노랑 LED만 계속 깜빡이는 점멸 신호등을 만들어봐요!"}
+        {
+          "speaker": "ares",
+          "text": "알비, 화성에서 밤이 되면 신호등이 달라져야 하지 않을까?"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 좋은 관찰이에요! 밤 모드로 노랑 LED만 계속 깜빡이는 점멸 신호등을 만들어봐요!"
+        }
       ],
       "goals": [
         "노랑 LED(2번)만 0.5초 간격으로 깜빡이기",
         "빨강·초록은 꺼진 상태 유지",
         "밤 모드 점멸 신호 무한 반복"
       ],
-      "sampleCode": "# 밤 신호등 점멸\nled_off(1); led_off(3)   # 빨강·초록 끄기\nwhile True:\n    led_on(2, 1.0)   # 노랑 켜기\n    time.sleep(0.5)\n    led_off(2)       # 노랑 끄기\n    time.sleep(0.5)"
+      "sampleCode": "# 밤 신호등 점멸\nLED 1번 끄기   # 빨강·초록 끄기\nLED 3번 끄기\n계속 반복하기\n    LED 2번 켜기 (밝기 100%)   # 노랑 켜기\n    0.5초 기다리기\n    LED 2번 끄기   # 노랑 끄기\n    0.5초 기다리기"
     },
     {
       "id": 4,
@@ -62,8 +80,14 @@
       "tag": "TRAFFIC",
       "hardware": "LED 3개",
       "story": [
-        {"speaker": "ares", "text": "알비! 모래 폭풍이 오고 있어! 탐사 로봇들을 전부 기지로 빠르게 집합시켜야 해!"},
-        {"speaker": "albi", "text": "삐릿- 화성 긴급 집합 신호를 보내요! 초록→노랑→빨강 3번씩 빠르게 3회 반복이에요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 모래 폭풍이 오고 있어! 탐사 로봇들을 전부 기지로 빠르게 집합시켜야 해!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 화성 긴급 집합 신호를 보내요! 초록→노랑→빨강 3번씩 빠르게 3회 반복이에요!"
+        }
       ],
       "goals": [
         "초록 LED 0.2초 × 3번 빠르게 (집합!)",
@@ -71,7 +95,7 @@
         "빨강 LED 0.2초 × 3번 빠르게 (위험!)",
         "3색 패턴 3회 반복 → 화성 긴급 집합 신호 완성!"
       ],
-      "sampleCode": "# 화성 긴급 집합 신호\nfor i in range(3):       # 3회 반복\n    for j in range(3):   # 초록 ×3\n        led_on(1, 1.0); time.sleep(0.2); led_off(1); time.sleep(0.1)\n    for j in range(3):   # 노랑 ×3\n        led_on(2, 1.0); time.sleep(0.2); led_off(2); time.sleep(0.1)\n    for j in range(3):   # 빨강 ×3\n        led_on(3, 1.0); time.sleep(0.2); led_off(3); time.sleep(0.1)\n    time.sleep(0.4)"
+      "sampleCode": "# 화성 긴급 집합 신호\n3번 반복하기   # 3회 반복\n    3번 반복하기   # 초록 ×3\n        LED 1번 켜기 (밝기 100%)\n        0.2초 기다리기\n        LED 1번 끄기\n        0.1초 기다리기\n    3번 반복하기   # 노랑 ×3\n        LED 2번 켜기 (밝기 100%)\n        0.2초 기다리기\n        LED 2번 끄기\n        0.1초 기다리기\n    3번 반복하기   # 빨강 ×3\n        LED 3번 켜기 (밝기 100%)\n        0.2초 기다리기\n        LED 3번 끄기\n        0.1초 기다리기\n    0.4초 기다리기"
     }
   ],
   "summary": {

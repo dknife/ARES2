@@ -12,15 +12,21 @@
       "tag": "WINK",
       "hardware": "LED 2개",
       "story": [
-        {"speaker": "ares", "text": "일어나, 알비! 반짝반짝 깜빡이게 만들어볼까?"},
-        {"speaker": "albi", "text": "삐릿- 안녕하세요! 양쪽 눈이 동시에 깜빡이면 살아있는 것처럼 보여요!"}
+        {
+          "speaker": "ares",
+          "text": "일어나, 알비! 반짝반짝 깜빡이게 만들어볼까?"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 안녕하세요! 양쪽 눈이 동시에 깜빡이면 살아있는 것처럼 보여요!"
+        }
       ],
       "goals": [
         "LED 1번, 2번 동시에 켜기",
         "1초 대기 후 동시에 끄기",
         "무한 반복으로 계속 깜빡이게 구현"
       ],
-      "sampleCode": "# 양쪽 눈 동시 깜빡이기\nwhile True:\n    led_on(1, 1.0)  # 왼쪽 눈\n    led_on(2, 1.0)  # 오른쪽 눈\n    time.sleep(1)\n    led_off(1)\n    led_off(2)\n    time.sleep(1)"
+      "sampleCode": "# 양쪽 눈 동시 깜빡이기\n계속 반복하기\n    LED 1번 켜기 (밝기 100%)   # 왼쪽 눈\n    LED 2번 켜기 (밝기 100%)   # 오른쪽 눈\n    1초 기다리기\n    LED 1번 끄기\n    LED 2번 끄기\n    1초 기다리기"
     },
     {
       "id": 2,
@@ -28,15 +34,21 @@
       "tag": "WINK",
       "hardware": "LED 2개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 아레스, 이번엔 왼쪽 눈, 오른쪽 눈을 번갈아 깜빡여볼게요!"},
-        {"speaker": "ares", "text": "왼쪽 깜빡, 오른쪽 깜빡, 번갈아가면서 5번 해보자!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 아레스, 이번엔 왼쪽 눈, 오른쪽 눈을 번갈아 깜빡여볼게요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "왼쪽 깜빡, 오른쪽 깜빡, 번갈아가면서 5번 해보자!"
+        }
       ],
       "goals": [
         "왼쪽 눈(LED1) 켜기 → 0.5초 → 끄기",
         "오른쪽 눈(LED2) 켜기 → 0.5초 → 끄기",
         "이 동작을 5번 반복하기"
       ],
-      "sampleCode": "# 눈 번갈아 깜빡이기 (5회)\nfor i in range(5):\n    led_on(1, 1.0)   # 왼쪽 눈\n    time.sleep(0.5)\n    led_off(1)\n    led_on(2, 1.0)   # 오른쪽 눈\n    time.sleep(0.5)\n    led_off(2)"
+      "sampleCode": "# 눈 번갈아 깜빡이기 (5회)\n5번 반복하기\n    LED 1번 켜기 (밝기 100%)   # 왼쪽 눈\n    0.5초 기다리기\n    LED 1번 끄기\n    LED 2번 켜기 (밝기 100%)   # 오른쪽 눈\n    0.5초 기다리기\n    LED 2번 끄기"
     },
     {
       "id": 3,
@@ -44,15 +56,21 @@
       "tag": "WINK",
       "hardware": "LED 2개",
       "story": [
-        {"speaker": "ares", "text": "알비! 갑자기 운석이 날아오면 어떻게 돼?"},
-        {"speaker": "albi", "text": "삐릿!! 깜짝 놀라죠! 놀라면 두 눈이 막 빠르게 깜빡이잖아요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 갑자기 운석이 날아오면 어떻게 돼?"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿!! 깜짝 놀라죠! 놀라면 두 눈이 막 빠르게 깜빡이잖아요!"
+        }
       ],
       "goals": [
         "두 눈 동시에 0.1초 간격 빠른 깜빡이기",
         "10번 빠르게 깜빡인 후 잠깐 멈추기",
         "반복문으로 놀람 표현 완성"
       ],
-      "sampleCode": "# 운석 경보! 빠른 깜빡임\nwhile True:\n    for i in range(10):\n        led_on(1, 1.0)\n        led_on(2, 1.0)\n        time.sleep(0.1)\n        led_off(1)\n        led_off(2)\n        time.sleep(0.1)\n    time.sleep(0.5)  # 잠깐 멈춤"
+      "sampleCode": "# 운석 경보! 빠른 깜빡임\n계속 반복하기\n    10번 반복하기\n        LED 1번 켜기 (밝기 100%)\n        LED 2번 켜기 (밝기 100%)\n        0.1초 기다리기\n        LED 1번 끄기\n        LED 2번 끄기\n        0.1초 기다리기\n    0.5초 기다리기   # 잠깐 멈춤"
     },
     {
       "id": 4,
@@ -60,8 +78,14 @@
       "tag": "WINK",
       "hardware": "LED 2개",
       "story": [
-        {"speaker": "ares", "text": "알비! 왼쪽 눈을 두 번 깜빡이고, 잠깐 쉬었다가 오른쪽 눈도 두 번 깜빡이면 어때?"},
-        {"speaker": "albi", "text": "삐릿♪ 마치 비밀 신호 같아요! 그 윙크 리듬을 5번 반복해봐요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 왼쪽 눈을 두 번 깜빡이고, 잠깐 쉬었다가 오른쪽 눈도 두 번 깜빡이면 어때?"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪ 마치 비밀 신호 같아요! 그 윙크 리듬을 5번 반복해봐요!"
+        }
       ],
       "goals": [
         "왼쪽 눈(LED1) 두 번 깜빡이기 (0.4초 간격)",
@@ -69,7 +93,7 @@
         "오른쪽 눈(LED2) 두 번 깜빡이기",
         "이 윙크 리듬을 5번 반복"
       ],
-      "sampleCode": "# 윙크 리듬: 왼쪽 2번, 쉬고, 오른쪽 2번 (5회 반복)\nfor i in range(5):\n    # 왼쪽 눈 2번\n    led_on(1, 1.0); time.sleep(0.4); led_off(1); time.sleep(0.2)\n    led_on(1, 1.0); time.sleep(0.4); led_off(1)\n    time.sleep(0.8)  # 쉬기\n    # 오른쪽 눈 2번\n    led_on(2, 1.0); time.sleep(0.4); led_off(2); time.sleep(0.2)\n    led_on(2, 1.0); time.sleep(0.4); led_off(2)"
+      "sampleCode": "# 윙크 리듬: 왼쪽 2번, 쉬고, 오른쪽 2번 (5회 반복)\n5번 반복하기\n    # 왼쪽 눈 2번\n    LED 1번 켜기 (밝기 100%)\n    0.4초 기다리기\n    LED 1번 끄기\n    0.2초 기다리기\n    LED 1번 켜기 (밝기 100%)\n    0.4초 기다리기\n    LED 1번 끄기\n    0.8초 기다리기   # 쉬기\n    # 오른쪽 눈 2번\n    LED 2번 켜기 (밝기 100%)\n    0.4초 기다리기\n    LED 2번 끄기\n    0.2초 기다리기\n    LED 2번 켜기 (밝기 100%)\n    0.4초 기다리기\n    LED 2번 끄기"
     }
   ],
   "summary": {

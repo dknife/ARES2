@@ -12,15 +12,21 @@
       "tag": "MOTOR",
       "hardware": "DC모터, 바퀴 2개",
       "story": [
-        {"speaker": "ares", "text": "알비! 바퀴를 달면 앞으로 달릴 수 있어?"},
-        {"speaker": "albi", "text": "삐릿- 물론이에요! DC모터가 정방향으로 돌면 바퀴가 구르면서 앞으로 나아가요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 바퀴를 달면 앞으로 달릴 수 있어?"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 물론이에요! DC모터가 정방향으로 돌면 바퀴가 구르면서 앞으로 나아가요!"
+        }
       ],
       "goals": [
         "DC모터 정방향으로 회전 → 전진",
         "3초 전진 후 정지",
         "알비 카트가 앞으로 달리는 것 확인"
       ],
-      "sampleCode": "# 알비 카트 전진!\nmotor_forward(3)   # 3초 전진\nmotor_stop()"
+      "sampleCode": "# 알비 카트 전진!\nDC 모터 전진 3초   # 3초 전진\nDC 모터 정지"
     },
     {
       "id": 2,
@@ -28,15 +34,21 @@
       "tag": "MOTOR",
       "hardware": "DC모터, 바퀴 2개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 아레스, 이번엔 뒤로도 달려봐요! DC모터 방향을 반대로 바꾸면 후진!"},
-        {"speaker": "ares", "text": "앞으로 갔다가 뒤로 오면 왕복 주행이 되겠네! 해보자!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 아레스, 이번엔 뒤로도 달려봐요! DC모터 방향을 반대로 바꾸면 후진!"
+        },
+        {
+          "speaker": "ares",
+          "text": "앞으로 갔다가 뒤로 오면 왕복 주행이 되겠네! 해보자!"
+        }
       ],
       "goals": [
         "DC모터 역방향 회전 → 후진",
         "전진(3초) → 정지(1초) → 후진(3초) → 정지",
         "왕복 주행 완성"
       ],
-      "sampleCode": "# 왕복 주행\nmotor_forward(3)    # 전진\nmotor_stop()\ntime.sleep(1)\nmotor_backward(3)   # 후진\nmotor_stop()"
+      "sampleCode": "# 왕복 주행\nDC 모터 전진 3초   # 전진\nDC 모터 정지\n1초 기다리기\nDC 모터 후진 3초   # 후진\nDC 모터 정지"
     },
     {
       "id": 3,
@@ -44,8 +56,14 @@
       "tag": "MOTOR",
       "hardware": "DC모터, 바퀴 2개",
       "story": [
-        {"speaker": "ares", "text": "알비, 항상 같은 속도로만 달리면 재미없어. 천천히 출발해서 점점 빨라지다가 멈추는 건?"},
-        {"speaker": "albi", "text": "삐릿- 좋아요! PWM으로 속도를 조절하면 부드럽게 달릴 수 있어요!"}
+        {
+          "speaker": "ares",
+          "text": "알비, 항상 같은 속도로만 달리면 재미없어. 천천히 출발해서 점점 빨라지다가 멈추는 건?"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 좋아요! PWM으로 속도를 조절하면 부드럽게 달릴 수 있어요!"
+        }
       ],
       "goals": [
         "느리게 출발: 30% 속도로 2초",
@@ -53,7 +71,7 @@
         "전속력: 100% 속도로 2초",
         "서서히 감속 70→40→10→정지 부드러운 정차"
       ],
-      "sampleCode": "# 속도 조절 주행\nmotor_forward_pwm(30)\ntime.sleep(2)\nmotor_forward_pwm(60)\ntime.sleep(2)\nmotor_forward_pwm(100)\ntime.sleep(2)\nmotor_forward_pwm(70); time.sleep(0.5)\nmotor_forward_pwm(40); time.sleep(0.5)\nmotor_forward_pwm(10); time.sleep(0.5)\nmotor_stop()"
+      "sampleCode": "# 속도 조절 주행\nDC 모터 전진 30초\n2초 기다리기\nDC 모터 전진 60초\n2초 기다리기\nDC 모터 전진 100초\n2초 기다리기\nDC 모터 전진 70초\n0.5초 기다리기\nDC 모터 전진 40초\n0.5초 기다리기\nDC 모터 전진 10초\n0.5초 기다리기\nDC 모터 정지"
     },
     {
       "id": 4,
@@ -61,15 +79,21 @@
       "tag": "MOTOR",
       "hardware": "DC모터, 바퀴 2개",
       "story": [
-        {"speaker": "ares", "text": "알비! 전진, 후진, 속도 조절 다 알았으니 나만의 주행 코스를 만들어볼게!"},
-        {"speaker": "albi", "text": "삐릿♪ 전진했다가 멈추고 후진하는 나만의 드라이브 코스를 코딩해봐요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 전진, 후진, 속도 조절 다 알았으니 나만의 주행 코스를 만들어볼게!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪ 전진했다가 멈추고 후진하는 나만의 드라이브 코스를 코딩해봐요!"
+        }
       ],
       "goals": [
         "전진(2초) → 정지(0.5초) → 후진(2초) → 정지 반복",
         "속도 변화로 역동적 주행 연출",
         "나만의 알비 카트 코스 완성 + 시연"
       ],
-      "sampleCode": "# 나만의 주행 코스\nfor i in range(3):\n    motor_forward(2)\n    motor_stop()\n    time.sleep(0.5)\n    motor_backward(2)\n    motor_stop()\n    time.sleep(0.5)"
+      "sampleCode": "# 나만의 주행 코스\n3번 반복하기\n    DC 모터 전진 2초\n    DC 모터 정지\n    0.5초 기다리기\n    DC 모터 후진 2초\n    DC 모터 정지\n    0.5초 기다리기"
     }
   ],
   "summary": {

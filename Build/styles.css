@@ -3849,7 +3849,7 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .sample-blocks { padding: 10px 6px; }
 .blk-chip {
     display: block; width: fit-content; max-width: 100%;
-    background: var(--blk, #8b93a3); color: #ffffff;   /* 카테고리 배경색 + 흰 글자 */
+    background: #4a7cc7; color: #ffffff;               /* 푸른색 블록 + 흰 글자 */
     font-weight: 700; font-size: 0.9em; line-height: 1.35;
     padding: 7px 14px 7px 10px; margin: 5px 0;
     border-radius: 6px 10px 10px 6px;
@@ -3862,7 +3862,9 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .blk-note { color: #2e8b3d; font-weight: 600; font-size: 0.84em; font-style: italic; }
 .blk-children {
     margin: 2px 0 6px 14px; padding-left: 12px;
-    border-left: 4px solid #7954B5;            /* 반복/조건 C-블록 레일 */
+    border-left: 4px solid #4a7cc7;            /* 반복/조건 C-블록 레일(푸른색) */
     border-radius: 0 0 0 8px;
 }
 .blk-comment { color: #2e8b3d; font-size: 0.84em; margin: 7px 2px; font-style: italic; font-weight: 600; }
+.sample-hint { font-size: 0.8em; color: #8a6a45; background: #fff7ec; border-radius: 8px; padding: 6px 10px; margin-bottom: 6px; }
+.sample-hint b { color: #2e8b3d; }

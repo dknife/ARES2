@@ -12,15 +12,21 @@
       "tag": "BUZZER",
       "hardware": "부저 1개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 화성은 모래폭풍 등 다양한 위험이 있어요. 부저로 소리를 만들어봐요!"},
-        {"speaker": "ares", "text": "맞아! 위험 상황을 소리로 알릴 수 있게 경고음 시스템을 만들자!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 화성은 모래폭풍 등 다양한 위험이 있어요. 부저로 소리를 만들어봐요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "맞아! 위험 상황을 소리로 알릴 수 있게 경고음 시스템을 만들자!"
+        }
       ],
       "goals": [
         "부저 원리: 전기 신호 → 진동 → 소리",
         "부저 켜기 → 1초 대기 → 끄기 기본 코딩",
         "짧은 삐빅 소리 3번 반복"
       ],
-      "sampleCode": "# 부저 기초 - 삐빅 3번\nfor i in range(3):\n    buzzer_on(500, 0.5)  # 500Hz, 0.5초\n    time.sleep(0.3)"
+      "sampleCode": "# 부저 기초 - 삐빅 3번\n3번 반복하기\n    부저 500Hz 0.5초   # 500Hz, 0.5초\n    0.3초 기다리기"
     },
     {
       "id": 2,
@@ -28,15 +34,21 @@
       "tag": "BUZZER",
       "hardware": "부저 1개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 기지 외부에서 위험한 가스가 발견됐어요. 사이렌이 필요해요!"},
-        {"speaker": "ares", "text": "앰뷸런스처럼 삐용삐용 소리를 만들어보자! 낮은 음과 높은 음을 번갈아!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 기지 외부에서 위험한 가스가 발견됐어요. 사이렌이 필요해요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "앰뷸런스처럼 삐용삐용 소리를 만들어보자! 낮은 음과 높은 음을 번갈아!"
+        }
       ],
       "goals": [
         "낮은 주파수(400Hz)로 0.5초",
         "높은 주파수(800Hz)로 0.5초",
         "두 음을 무한 반복 → 사이렌 완성"
       ],
-      "sampleCode": "# 앰뷸런스 사이렌\nwhile True:\n    buzzer_on(400, 0.5)  # 삐─\n    buzzer_on(800, 0.5)  # 용─"
+      "sampleCode": "# 앰뷸런스 사이렌\n계속 반복하기\n    부저 400Hz 0.5초   # 삐─\n    부저 800Hz 0.5초   # 용─"
     },
     {
       "id": 3,
@@ -44,15 +56,21 @@
       "tag": "BUZZER",
       "hardware": "부저 1개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 거대한 운석이 접근하고 있어요. 즉시 긴급 경보를 울려야 해요!"},
-        {"speaker": "ares", "text": "날카롭고 짧게 반복되는 경보음을 만들자! 긴박감 있게!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 거대한 운석이 접근하고 있어요. 즉시 긴급 경보를 울려야 해요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "날카롭고 짧게 반복되는 경보음을 만들자! 긴박감 있게!"
+        }
       ],
       "goals": [
         "0.1초 켜기 → 0.1초 끄기를 10번 반복",
         "잠깐 멈춤(0.5초) 후 다시 10번 반복",
         "반복문으로 긴박한 연속 경보 완성"
       ],
-      "sampleCode": "# 긴급 경보음\nwhile True:\n    for i in range(10):\n        buzzer_on(1000, 0.1)\n        time.sleep(0.1)\n    time.sleep(0.5)"
+      "sampleCode": "# 긴급 경보음\n계속 반복하기\n    10번 반복하기\n        부저 1000Hz 0.1초\n        0.1초 기다리기\n    0.5초 기다리기"
     },
     {
       "id": 4,
@@ -60,8 +78,14 @@
       "tag": "BUZZER",
       "hardware": "부저 1개",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 지구와의 주 통신이 끊겼어요. 연락할 방법을 찾아야 해요!"},
-        {"speaker": "ares", "text": "괜찮아, 모스 부호로 SOS를 보내면 돼! 짧게 3번, 길게 3번, 짧게 3번!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 지구와의 주 통신이 끊겼어요. 연락할 방법을 찾아야 해요!"
+        },
+        {
+          "speaker": "ares",
+          "text": "괜찮아, 모스 부호로 SOS를 보내면 돼! 짧게 3번, 길게 3번, 짧게 3번!"
+        }
       ],
       "goals": [
         "짧은 소리(0.2초) 3번: ···",
@@ -69,7 +93,7 @@
         "짧은 소리(0.2초) 3번: ···",
         "SOS 패턴 완성 후 반복 발신"
       ],
-      "sampleCode": "# SOS 모스 부호\nwhile True:\n    # ···\n    for i in range(3):\n        buzzer_on(800, 0.2); time.sleep(0.1)\n    time.sleep(0.3)\n    # ───\n    for i in range(3):\n        buzzer_on(800, 0.6); time.sleep(0.1)\n    time.sleep(0.3)\n    # ···\n    for i in range(3):\n        buzzer_on(800, 0.2); time.sleep(0.1)\n    time.sleep(1)"
+      "sampleCode": "# SOS 모스 부호\n계속 반복하기\n    # ···\n    3번 반복하기\n        부저 800Hz 0.2초\n        0.1초 기다리기\n    0.3초 기다리기\n    # ───\n    3번 반복하기\n        부저 800Hz 0.6초\n        0.1초 기다리기\n    0.3초 기다리기\n    # ···\n    3번 반복하기\n        부저 800Hz 0.2초\n        0.1초 기다리기\n    1초 기다리기"
     }
   ],
   "summary": {

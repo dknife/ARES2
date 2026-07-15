@@ -12,15 +12,21 @@
       "tag": "SYNC",
       "hardware": "LED 5개, 부저",
       "story": [
-        {"speaker": "ares", "text": "알비, 빛이랑 소리를 동시에 낼 수 있어? 신호등이 깜빡이면서 동시에 소리도 나면 더 확실하잖아!"},
-        {"speaker": "albi", "text": "삐릿- 물론이에요! LED를 켤 때 부저도 함께 켜면 빛과 소리가 동시에 나요!"}
+        {
+          "speaker": "ares",
+          "text": "알비, 빛이랑 소리를 동시에 낼 수 있어? 신호등이 깜빡이면서 동시에 소리도 나면 더 확실하잖아!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 물론이에요! LED를 켤 때 부저도 함께 켜면 빛과 소리가 동시에 나요!"
+        }
       ],
       "goals": [
         "LED 켜기 + 부저 켜기 동시 실행",
         "0.5초 대기 후 LED 끄기 + 부저 끄기 동시에",
         "빛과 소리가 완벽하게 동기화된 깜빡임 확인"
       ],
-      "sampleCode": "# LED + 부저 동기화\nfor i in range(5):\n    led_on(1, 1.0)\n    buzzer_on(500, 0.5)\n    time.sleep(0.5)\n    led_off(1)"
+      "sampleCode": "# LED + 부저 동기화\n5번 반복하기\n    LED 1번 켜기 (밝기 100%)\n    부저 500Hz 0.5초\n    0.5초 기다리기\n    LED 1번 끄기"
     },
     {
       "id": 2,
@@ -28,8 +34,14 @@
       "tag": "SYNC",
       "hardware": "LED 5개, 부저",
       "story": [
-        {"speaker": "albi", "text": "삐릿! 카운트다운 소리를 만들어보는 건 어떨까요?"},
-        {"speaker": "ares", "text": "좋아! 삐빅 소리가 점점 빨라지면서 출발! 우주 발사 현장을 만들어보자!"}
+        {
+          "speaker": "albi",
+          "text": "삐릿! 카운트다운 소리를 만들어보는 건 어떨까요?"
+        },
+        {
+          "speaker": "ares",
+          "text": "좋아! 삐빅 소리가 점점 빨라지면서 출발! 우주 발사 현장을 만들어보자!"
+        }
       ],
       "goals": [
         "LED 하나씩 꺼지며 카운트다운 (5→1)",
@@ -37,7 +49,7 @@
         "카운트다운이 진행될수록 소리가 점점 빨라짐",
         "0이 되는 순간 LED 전체 깜빡 + 발사음"
       ],
-      "sampleCode": "# 카운트다운 발사!\nfor i in range(1,6): led_on(i,1.0)\nfreqs = [400,500,600,700,800]\nfor step in range(5):\n    led_off(5-step)\n    buzzer_on(freqs[step], 0.3)\n    time.sleep(0.7)\n# 발사!\nbuzzer_on(1200, 1.0)\nfor j in range(5):\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.15)\n    for i in range(1,6): led_off(i)\n    time.sleep(0.15)"
+      "sampleCode": "# 카운트다운 발사!\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\nfreqs = [400,500,600,700,800]\n5번 반복하기\n    LED 5-step번 끄기\n    부저 freqs[step]Hz 0.3초\n    0.7초 기다리기\n# 발사!\n부저 1200Hz 1초\n5번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.15초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.15초 기다리기"
     },
     {
       "id": 3,
@@ -45,15 +57,21 @@
       "tag": "SYNC",
       "hardware": "LED 5개, 부저",
       "story": [
-        {"speaker": "ares", "text": "발사 성공이야!! 알비! 축하 파티를 열어야 해!"},
-        {"speaker": "albi", "text": "삐릿♪♪ 야호!! LED 파티 조명에 부저 축하 멜로디까지! 최고의 세레머니를 만들어봐요!"}
+        {
+          "speaker": "ares",
+          "text": "발사 성공이야!! 알비! 축하 파티를 열어야 해!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪♪ 야호!! LED 파티 조명에 부저 축하 멜로디까지! 최고의 세레머니를 만들어봐요!"
+        }
       ],
       "goals": [
         "LED 5개 신나는 파티 패턴 깜빡이기",
         "부저로 축하 멜로디 연주 (도레미파솔)",
         "LED 파티 조명과 부저 멜로디가 어우러지는 세레머니"
       ],
-      "sampleCode": "# 발사 성공 세레머니!\n# 파티 조명\nfor j in range(8):\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.15)\n    for i in range(1,6): led_off(i)\n    time.sleep(0.15)\n# 축하 멜로디 도레미파솔\nnotes = [262,294,330,349,392]\nfor n in notes:\n    buzzer_on(n, 0.3); time.sleep(0.1)"
+      "sampleCode": "# 발사 성공 세레머니!\n# 파티 조명\n8번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.15초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.15초 기다리기\n# 축하 멜로디 도레미파솔\nnotes = [262,294,330,349,392]\n반복: n in notes\n    부저 nHz 0.3초\n    0.1초 기다리기"
     },
     {
       "id": 4,
@@ -61,8 +79,14 @@
       "tag": "SYNC",
       "hardware": "LED 5개, 부저",
       "story": [
-        {"speaker": "ares", "text": "알비, 지금까지 만든 것들로 완전한 발사 사운드트랙을 만들어보자!"},
-        {"speaker": "albi", "text": "삐릿♪ 준비 → 카운트다운 → 발사 → 축하 순서로 LED와 부저를 함께 사용!"}
+        {
+          "speaker": "ares",
+          "text": "알비, 지금까지 만든 것들로 완전한 발사 사운드트랙을 만들어보자!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪ 준비 → 카운트다운 → 발사 → 축하 순서로 LED와 부저를 함께 사용!"
+        }
       ],
       "goals": [
         "발사 준비: 낮은 음 + LED 순차 점등",
@@ -70,7 +94,7 @@
         "발사!: LED 전체 깜빡 + 강한 발사음",
         "축하: LED 파티 + 부저 멜로디"
       ],
-      "sampleCode": "# 나만의 발사 사운드트랙\nprint(\"STEP1: 발사 준비\")\nfor i in range(1,6): led_on(i,1.0); buzzer_on(300,0.2); time.sleep(0.3)\nprint(\"STEP2: 카운트다운\")\nfor i in range(5,0,-1): led_off(i); buzzer_on(400+i*80,0.3); time.sleep(0.7)\nprint(\"STEP3: 발사!!!\")\nbuzzer_on(1200,1.0)\nfor j in range(6): pass  # LED 전체 깜빡 패턴 자유 작성\nprint(\"STEP4: 축하!\")"
+      "sampleCode": "# 나만의 발사 사운드트랙\n출력: STEP1: 발사 준비\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n    부저 300Hz 0.2초\n    0.3초 기다리기\n출력: STEP2: 카운트다운\ni = 5부터 0,-1까지 반복\n    LED i번 끄기\n    부저 400+i*80Hz 0.3초\n    0.7초 기다리기\n출력: STEP3: 발사!!!\n부저 1200Hz 1초\n6번 반복하기   # LED 전체 깜빡 패턴 자유 작성\n    pass\n출력: STEP4: 축하!"
     }
   ],
   "summary": {

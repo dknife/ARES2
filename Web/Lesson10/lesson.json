@@ -12,15 +12,21 @@
       "tag": "SEQUENCE",
       "hardware": "LED 5개",
       "story": [
-        {"speaker": "ares", "text": "알비! 발사 전에 LED가 하나씩 순서대로 켜지는 발사 준비 표시를 만들어보자!"},
-        {"speaker": "albi", "text": "삐릿- 좋아요! 1번부터 5번까지 순서대로 켜지면 발사 준비 단계가 완료되는 거예요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! 발사 전에 LED가 하나씩 순서대로 켜지는 발사 준비 표시를 만들어보자!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 좋아요! 1번부터 5번까지 순서대로 켜지면 발사 준비 단계가 완료되는 거예요!"
+        }
       ],
       "goals": [
         "LED1→LED2→LED3→LED4→LED5 순서대로 0.5초 간격 켜기",
         "5개 모두 켜진 후 3번 동시 깜빡임",
         "순차 점등으로 발사 준비 카운트다운 완성"
       ],
-      "sampleCode": "# 발사 준비 순차 점등\nfor i in range(1, 6):\n    led_on(i, 1.0)\n    time.sleep(0.5)\n# 준비 완료 신호\nfor j in range(3):\n    for i in range(1,6): led_off(i)\n    time.sleep(0.3)\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.3)"
+      "sampleCode": "# 발사 준비 순차 점등\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n    0.5초 기다리기\n# 준비 완료 신호\n3번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.3초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.3초 기다리기"
     },
     {
       "id": 2,
@@ -28,15 +34,21 @@
       "tag": "SEQUENCE",
       "hardware": "LED 5개",
       "story": [
-        {"speaker": "ares", "text": "발사 성공 후에는 파티 조명을 켜야지! LED 5개가 신나게 깜빡이는 파티 분위기!"},
-        {"speaker": "albi", "text": "삐릿♪ 야호! 발사 성공 파티예요! 화려하게 깜빡이는 파티 조명을 만들어봐요!"}
+        {
+          "speaker": "ares",
+          "text": "발사 성공 후에는 파티 조명을 켜야지! LED 5개가 신나게 깜빡이는 파티 분위기!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪ 야호! 발사 성공 파티예요! 화려하게 깜빡이는 파티 조명을 만들어봐요!"
+        }
       ],
       "goals": [
         "5개 LED 동시에 빠르게 10번 깜빡이기",
         "파도처럼 흐르는 패턴 (1→2→3→4→5→4→3→2→1)",
         "세 가지 패턴 조합한 파티 조명 완성"
       ],
-      "sampleCode": "# 파티 조명!\nfor j in range(10):\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.2)\n    for i in range(1,6): led_off(i)\n    time.sleep(0.2)\n# 파도 패턴\nfor rep in range(3):\n    for i in range(1,6):\n        led_on(i,1.0); time.sleep(0.15); led_off(i)"
+      "sampleCode": "# 파티 조명!\n10번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.2초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.2초 기다리기\n# 파도 패턴\n3번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n        0.15초 기다리기\n        LED i번 끄기"
     },
     {
       "id": 3,
@@ -44,15 +56,21 @@
       "tag": "SEQUENCE",
       "hardware": "LED 5개",
       "story": [
-        {"speaker": "ares", "text": "알비! LED 5개로 숫자 카운트다운을 표현할 수 있어? 5개가 켜진 상태에서 하나씩 꺼지면 5·4·3·2·1이 되잖아!"},
-        {"speaker": "albi", "text": "삐릿- 오, 천재적인 아이디어예요! LED가 하나씩 꺼지면서 발사 카운트다운을 표현하는 거군요!"}
+        {
+          "speaker": "ares",
+          "text": "알비! LED 5개로 숫자 카운트다운을 표현할 수 있어? 5개가 켜진 상태에서 하나씩 꺼지면 5·4·3·2·1이 되잖아!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿- 오, 천재적인 아이디어예요! LED가 하나씩 꺼지면서 발사 카운트다운을 표현하는 거군요!"
+        }
       ],
       "goals": [
         "LED 5개 모두 켜기",
         "1초마다 하나씩 끄기 (5→4→3→2→1→모두 꺼짐)",
         "모두 꺼진 순간 전체 3번 빠르게 깜빡임 (발사!)"
       ],
-      "sampleCode": "# 카운트다운 소등\nfor i in range(1,6): led_on(i,1.0)\nfor i in range(5, 0, -1):\n    led_off(i)\n    time.sleep(1)\n# 발사!\nfor j in range(3):\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.2)\n    for i in range(1,6): led_off(i)\n    time.sleep(0.2)"
+      "sampleCode": "# 카운트다운 소등\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n반복: i in range(5, 0, -1)\n    LED i번 끄기\n    1초 기다리기\n# 발사!\n3번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.2초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.2초 기다리기"
     },
     {
       "id": 4,
@@ -60,15 +78,21 @@
       "tag": "SEQUENCE",
       "hardware": "LED 5개",
       "story": [
-        {"speaker": "ares", "text": "알비, 지금까지 만든 것들을 합쳐서 완전한 발사 조명쇼를 만들어보자!"},
-        {"speaker": "albi", "text": "삐릿♪ 순차 점등 → 카운트다운 → 발사 → 파티 순서로 하나의 이야기처럼 연결!"}
+        {
+          "speaker": "ares",
+          "text": "알비, 지금까지 만든 것들을 합쳐서 완전한 발사 조명쇼를 만들어보자!"
+        },
+        {
+          "speaker": "albi",
+          "text": "삐릿♪ 순차 점등 → 카운트다운 → 발사 → 파티 순서로 하나의 이야기처럼 연결!"
+        }
       ],
       "goals": [
         "순차 점등(발사 준비) → 카운트다운(5→1)",
         "발사 깜빡임 → 파티 조명",
         "전체 흐름이 하나로 이어지는 조명쇼"
       ],
-      "sampleCode": "# 통합 발사 조명쇼\n# 1. 발사 준비\nfor i in range(1,6): led_on(i,1.0); time.sleep(0.3)\n# 2. 카운트다운\nfor i in range(5,0,-1): led_off(i); time.sleep(1)\n# 3. 발사!\nfor j in range(5):\n    for i in range(1,6): led_on(i,1.0)\n    time.sleep(0.15)\n    for i in range(1,6): led_off(i)\n    time.sleep(0.15)\n# 4. 파티!\nfor rep in range(3):\n    for i in range(1,6): led_on(i,1.0); time.sleep(0.1); led_off(i)"
+      "sampleCode": "# 통합 발사 조명쇼\n# 1. 발사 준비\ni = 1부터 5까지 반복\n    LED i번 켜기 (밝기 100%)\n    0.3초 기다리기\n# 2. 카운트다운\ni = 5부터 0,-1까지 반복\n    LED i번 끄기\n    1초 기다리기\n# 3. 발사!\n5번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n    0.15초 기다리기\n    i = 1부터 5까지 반복\n        LED i번 끄기\n    0.15초 기다리기\n# 4. 파티!\n3번 반복하기\n    i = 1부터 5까지 반복\n        LED i번 켜기 (밝기 100%)\n        0.1초 기다리기\n        LED i번 끄기"
     }
   ],
   "summary": {

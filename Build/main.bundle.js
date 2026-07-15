@@ -11884,77 +11884,13 @@
   }
   var _sampleEditing = false;
   var _sampleWired = false;
-  function sampleLineToBlock(raw) {
-    let code = raw;
-    let note = "";
-    const hashAt = code.indexOf("#");
-    if (hashAt >= 0) {
-      note = code.slice(hashAt + 1).trim();
-      code = code.slice(0, hashAt);
-    }
-    code = code.trim();
-    if (!code) return note ? { comment: note } : null;
-    if (/^import\s|^from\s/.test(code)) return null;
-    const num2 = (v) => String(parseFloat(v));
-    let m;
-    if (m = code.match(/^led_on\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)$/))
-      return { icon: "\u{1F4A1}", label: `LED ${m[1]}\uBC88 \uCF1C\uAE30 (\uBC1D\uAE30 ${Math.round(parseFloat(m[2]) * 100) || m[2]}%)`, color: "#d68fa5", note };
-    if (m = code.match(/^led_off\(\s*([^)\s]+)\s*\)$/))
-      return { icon: "\u{1F4A1}", label: `LED ${m[1]}\uBC88 \uB044\uAE30`, color: "#d68fa5", note };
-    if (m = code.match(/^buzzer_on\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)$/))
-      return { icon: "\u{1F50A}", label: `\uBD80\uC800 ${m[1]}Hz \xB7 ${num2(m[2])}\uCD08`, color: "#d68fa5", note };
-    if (m = code.match(/^time\.sleep\(\s*([^)\s]+)\s*\)$/))
-      return { icon: "\u23F1", label: `${num2(m[1])}\uCD08 \uAE30\uB2E4\uB9AC\uAE30`, color: "#7954B5", note };
-    if (m = code.match(/^motor_forward(?:_pwm)?\(\s*([^,)\s]+)\s*(?:,\s*([^)\s]+))?\)$/))
-      return { icon: "\u26A1", label: `DC \uBAA8\uD130 \uC804\uC9C4 ${num2(m[1])}\uCD08${m[2] ? ` (\uC18D\uB3C4 ${m[2]}%)` : ""}`, color: "#cf3d37", note };
-    if (m = code.match(/^motor_backward\(\s*([^,)\s]+)\s*(?:,\s*([^)\s]+))?\)$/))
-      return { icon: "\u26A1", label: `DC \uBAA8\uD130 \uD6C4\uC9C4 ${num2(m[1])}\uCD08${m[2] ? ` (\uC18D\uB3C4 ${m[2]}%)` : ""}`, color: "#cf3d37", note };
-    if (/^motor_stop\(\s*\)$/.test(code))
-      return { icon: "\u26A1", label: "DC \uBAA8\uD130 \uC815\uC9C0", color: "#cf3d37", note };
-    if (/^while\s+True\s*:$/.test(code))
-      return { icon: "\u{1F501}", label: "\uACC4\uC18D \uBC18\uBCF5\uD558\uAE30", color: "#7954B5", note, container: true };
-    if (m = code.match(/^while\s+(.+):$/))
-      return { icon: "\u{1F501}", label: `\uBC18\uBCF5: ${m[1]}`, color: "#7954B5", note, container: true };
-    if (m = code.match(/^for\s+(\w+)\s+in\s+range\(\s*([^,)\s]+)\s*\)\s*:$/))
-      return { icon: "\u{1F501}", label: `${m[2]}\uBC88 \uBC18\uBCF5\uD558\uAE30`, color: "#7954B5", note, container: true };
-    if (m = code.match(/^for\s+(\w+)\s+in\s+range\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)\s*:$/))
-      return { icon: "\u{1F501}", label: `${m[1]} = ${m[2]}\uBD80\uD130 ${parseInt(m[3], 10) - 1}\uAE4C\uC9C0 \uBC18\uBCF5`, color: "#7954B5", note, container: true };
-    if (m = code.match(/^for\s+(.+):$/))
-      return { icon: "\u{1F501}", label: `\uBC18\uBCF5: ${m[1]}`, color: "#7954B5", note, container: true };
-    if (m = code.match(/^(?:el)?if\s+(.+):$/))
-      return { icon: "\u2753", label: `\uB9CC\uC57D ${m[1]}`, color: "#7954B5", note, container: true };
-    if (/^else\s*:$/.test(code))
-      return { icon: "\u2753", label: "\uC544\uB2C8\uBA74", color: "#7954B5", note, container: true };
-    if (m = code.match(/^(\w+)\s*=\s*random\.randint\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)$/))
-      return { icon: "\u{1F3B2}", label: `${m[1]} = \uB79C\uB364 ${m[2]}~${m[3]}`, color: "#5483b5", note };
-    if (m = code.match(/^(\w+)\s*=\s*(.+)$/))
-      return { icon: "\u{1F4E6}", label: `${m[1]} = ${m[2]}`, color: "#5483b5", note };
-    if (m = code.match(/^print\((.*)\)$/))
-      return { icon: "\u{1F5A8}", label: `\uCD9C\uB825: ${m[1].replace(/^["']|["']$/g, "")}`, color: "#8b93a3", note };
-    return { icon: "\u25AB", label: code, color: "#8b93a3", note };
-  }
   function sampleCodeToBlocksHtml(code) {
-    const rows = [];
-    const pushStmt = (indent, text) => {
-      const parts = text.includes(";") && !text.trim().startsWith("#") ? text.split(";") : [text];
-      for (const part of parts) {
-        const blk = sampleLineToBlock(part);
-        if (blk) rows.push({ indent, blk });
-      }
-    };
-    for (const rawLine of String(code || "").split("\n")) {
-      const indent = rawLine.match(/^[\t ]*/)[0].replace(/\t/g, "    ").length / 4 | 0;
-      const inline = rawLine.trim().match(/^((?:for|while|if|elif|else)\b[^:]*:)\s*(\S.*)$/);
-      if (inline && !inline[2].startsWith("#")) {
-        pushStmt(indent, inline[1]);
-        pushStmt(indent + 1, inline[2]);
-        continue;
-      }
-      pushStmt(indent, rawLine);
-    }
     let html = "";
     let level = 0;
-    for (const { indent, blk } of rows) {
+    for (const raw of String(code || "").split("\n")) {
+      const indent = raw.match(/^[\t ]*/)[0].replace(/\t/g, "    ").length / 4 | 0;
+      const t = raw.trim();
+      if (!t) continue;
       while (level > indent) {
         html += "</div>";
         level--;
@@ -11963,11 +11899,14 @@
         html += '<div class="blk-children">';
         level++;
       }
-      if (blk.comment !== void 0) {
-        html += `<div class="blk-comment"># ${escapeHtml2(blk.comment)}</div>`;
+      if (t.startsWith("#")) {
+        html += `<div class="blk-comment"># ${escapeHtml2(t.replace(/^#+\s*/, ""))}</div>`;
         continue;
       }
-      html += `<div class="blk-row"><div class="blk-chip" style="--blk:${blk.color}"><span class="blk-ico">${blk.icon}</span>${escapeHtml2(blk.label)}</div>` + (blk.note ? `<span class="blk-note"># ${escapeHtml2(blk.note)}</span>` : "") + `</div>`;
+      const hashAt = t.indexOf("#");
+      const blockText = (hashAt >= 0 ? t.slice(0, hashAt) : t).trim();
+      const note = hashAt >= 0 ? t.slice(hashAt + 1).trim() : "";
+      html += '<div class="blk-row">' + (blockText ? `<div class="blk-chip">${escapeHtml2(blockText)}</div>` : "") + (note ? `<span class="blk-note"># ${escapeHtml2(note)}</span>` : "") + "</div>";
     }
     while (level > 0) {
       html += "</div>";
@@ -11990,6 +11929,7 @@
       const box = document.createElement("div");
       box.className = "sample-editor";
       box.innerHTML = `
+      <div class="sample-hint">\uD55C \uC904 = \uBE14\uB85D 1\uAC1C \xB7 <b>#</b> \uB85C \uC2DC\uC791\uD558\uBA74 \uC8FC\uC11D(\uB179\uC0C9) \xB7 \uC904 \uC911\uAC04 <b>#</b> \uB4A4\uB294 \uBE14\uB85D \uC606 \uC8FC\uC11D \xB7 \uB4E4\uC5EC\uC4F0\uAE30(\uACF5\uBC31 4\uCE78) = \uBC18\uBCF5/\uC870\uAC74 \uC548\uCABD</div>
       <textarea data-sample-field="code" rows="12" spellcheck="false">${escapeHtml2(mission.sampleCode || "")}</textarea>
       <span class="story-editor-btns">
         <button type="button" data-sample-act="commit">\uD655\uC778</button>
