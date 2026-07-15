@@ -3844,3 +3844,23 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .goal-addrow button:hover, .sample-editbar button:hover { background: #FF6A00; border-color: #FF6A00; color: #fff; }
 .sample-editbar { display: block; margin: 6px 0; }
 .sample-editor { padding: 6px 0; }
+
+/* ==== 샘플 코드 블록 표현 (2026-07-16) ==== */
+.sample-blocks { padding: 10px 6px; }
+.blk-chip {
+    display: block; width: fit-content; max-width: 100%;
+    background: var(--blk, #8b93a3); color: #fff;
+    font-weight: 700; font-size: 0.9em; line-height: 1.35;
+    padding: 7px 14px 7px 10px; margin: 5px 0;
+    border-radius: 6px 10px 10px 6px;
+    border-left: 5px solid rgba(0,0,0,0.22);   /* 블록 왼쪽 탭 느낌 */
+    box-shadow: 0 1.5px 0 rgba(0,0,0,0.25);
+}
+.blk-ico { margin-right: 6px; }
+.blk-note { margin-left: 10px; font-weight: 500; font-size: 0.85em; opacity: 0.85; }
+.blk-children {
+    margin: 2px 0 6px 14px; padding-left: 12px;
+    border-left: 4px solid #7954B5;            /* 반복/조건 C-블록 레일 */
+    border-radius: 0 0 0 8px;
+}
+.blk-comment { color: #8a93a5; font-size: 0.82em; margin: 6px 2px; font-style: italic; }
