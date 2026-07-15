@@ -10,115 +10,180 @@
   html, body { min-height: 100%; }
   body {
     font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
-    background: radial-gradient(ellipse at 50% 20%, #1a2140 0%, #0a0d20 55%, #04050e 100%);
-    color: #e8edf9; line-height: 1.7; overflow-x: hidden;
+    background: #04050e; color: #e8edf9; line-height: 1.75; overflow-x: hidden;
   }
-  /* 별 */
-  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-  .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%;
-    background: #fff; opacity: .7; animation: tw 3s infinite alternate; }
-  @keyframes tw { from { opacity: .15; } to { opacity: .85; } }
+  .serif { font-family: "Apple Myungjo", "Nanum Myeongjo", "Noto Serif KR", "Batang", serif; }
 
-  .wrap { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
-
+  /* ── 히어로: 화성 접근 사진 (프로젝트 자산) ── */
+  .hero {
+    position: relative; min-height: 88vh;
+    background:
+      linear-gradient(rgba(4,5,14,.25) 0%, rgba(4,5,14,.45) 55%, #04050e 100%),
+      url('../../Web/assets/background/planet_approach.png') center 30% / cover no-repeat;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 60px 20px 90px;
+  }
   .classified {
-    display: inline-block; border: 3px solid #e14b4b; color: #e14b4b;
+    display: inline-block; border: 3px solid #e14b4b; color: #ff8d8d;
     font-weight: 900; letter-spacing: 6px; padding: 4px 18px; border-radius: 4px;
-    transform: rotate(-4deg); font-size: .95em; margin-bottom: 22px;
-    text-shadow: 0 0 12px rgba(225,75,75,.4);
+    transform: rotate(-4deg); font-size: .9em; margin-bottom: 30px;
+    background: rgba(20,4,8,.35); text-shadow: 0 0 12px rgba(225,75,75,.5);
   }
-  .eyebrow { color: #ffb37a; font-weight: 700; letter-spacing: 3px; font-size: .8em; }
+  .eyebrow { color: #ffcf9e; font-weight: 700; letter-spacing: 4px; font-size: .8em; text-shadow: 0 1px 8px rgba(0,0,0,.8); }
   h1 {
-    font-size: clamp(1.7em, 6vw, 2.6em); font-weight: 900; line-height: 1.25;
-    margin: 6px 0 4px;
+    font-size: clamp(2em, 8vw, 3.4em); font-weight: 900; line-height: 1.18;
+    margin: 8px 0 10px; text-shadow: 0 4px 30px rgba(0,0,0,.85);
   }
-  h1 .accent { color: #FF6A00; text-shadow: 0 0 24px rgba(255,106,0,.35); }
-  .sub { color: #aab6d4; font-size: .95em; margin-bottom: 30px; }
+  h1 .accent { color: #FF6A00; text-shadow: 0 0 34px rgba(255,106,0,.55); }
+  .hero .invite-line {
+    font-size: clamp(1em, 3.4vw, 1.25em); color: #fff; font-weight: 600;
+    text-shadow: 0 2px 14px rgba(0,0,0,.9); letter-spacing: 1px;
+  }
+  .hero .scroll { position: absolute; bottom: 26px; color: #ffd9b8; font-size: 1.5em; animation: bob 1.6s infinite alternate; }
+  @keyframes bob { from { transform: translateY(0); } to { transform: translateY(8px); } }
+
+  .wrap { position: relative; max-width: 700px; margin: -40px auto 0; padding: 0 18px 80px; }
 
   .card {
-    background: rgba(16, 21, 44, .78); border: 1px solid #2a3358;
-    border-radius: 16px; padding: 24px 22px; margin-bottom: 22px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.35);
-    backdrop-filter: blur(4px);
+    background: rgba(16, 21, 44, .85); border: 1px solid #2a3358;
+    border-radius: 18px; padding: 26px 24px; margin-bottom: 24px;
+    box-shadow: 0 10px 38px rgba(0,0,0,.45); backdrop-filter: blur(5px);
   }
   .card h2 {
-    font-size: 1.02em; color: #ffb37a; letter-spacing: 2px; margin-bottom: 12px;
+    font-size: 1.02em; color: #ffb37a; letter-spacing: 2px; margin-bottom: 14px;
     border-left: 4px solid #FF6A00; padding-left: 10px;
   }
-  .kv { display: grid; grid-template-columns: 92px 1fr; gap: 6px 14px; font-size: .98em; }
-  .kv dt { color: #8fa0c8; font-weight: 700; }
-  .kv dd b { color: #fff; }
-  .big {
-    font-size: clamp(1.2em, 4.5vw, 1.6em); font-weight: 900; color: #fff;
-    letter-spacing: 1px;
-  }
-  .big .hl { color: #FF6A00; }
 
-  /* 카운트다운 */
-  .count { display: flex; gap: 10px; justify-content: center; margin: 14px 0 4px; }
-  .count div {
-    background: #0b0f22; border: 1px solid #33407a; border-radius: 12px;
-    min-width: 74px; padding: 12px 8px; text-align: center;
+  /* ── 모시는 글 (초청장) ── */
+  .invitation {
+    background: linear-gradient(160deg, #fdf8ef 0%, #f4e9d4 100%);
+    color: #2c2417; border: 1px solid #d8c9a8; border-radius: 18px;
+    padding: 36px 30px; margin-bottom: 24px; text-align: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
   }
-  .count b { display: block; font-size: 1.9em; color: #FF6A00; font-variant-numeric: tabular-nums; }
-  .count span { font-size: .72em; color: #8fa0c8; letter-spacing: 2px; }
-  .dday { text-align: center; color: #ffd9b8; font-weight: 800; margin-top: 10px; letter-spacing: 1px; }
+  .invitation .deco { color: #b98a3c; letter-spacing: 8px; font-size: .85em; margin-bottom: 14px; }
+  .invitation h3 { font-size: 1.5em; font-weight: 800; margin-bottom: 18px; color: #1e1811; }
+  .invitation p { font-size: 1.02em; line-height: 2.0; }
+  .invitation b { color: #a4540a; }
+  .invitation .sign { margin-top: 22px; font-size: .92em; color: #6b5b3e; }
+  .invitation hr { border: none; border-top: 1px solid #d8c9a8; margin: 20px auto; width: 60%; }
 
+  /* ── 프로필 ── */
+  .profile { display: flex; gap: 18px; align-items: flex-start; }
+  .avatar {
+    flex: 0 0 96px; width: 96px; height: 96px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #33407a 0%, #131a36 70%);
+    border: 2px solid #FF6A00; display: flex; align-items: center; justify-content: center;
+    font-size: 46px; box-shadow: 0 0 24px rgba(255,106,0,.25);
+  }
+  .avatar-cap { font-size: .7em; color: #8fa0c8; text-align: center; margin-top: 6px; }
   ul.brief { list-style: none; }
-  ul.brief li { padding-left: 26px; position: relative; margin: 7px 0; }
-  ul.brief li::before { content: "▸"; position: absolute; left: 6px; color: #FF6A00; }
+  ul.brief li { padding-left: 24px; position: relative; margin: 6px 0; font-size: .96em; }
+  ul.brief li::before { content: "▸"; position: absolute; left: 4px; color: #FF6A00; }
   .redact {
     background: #3a3f52; color: transparent; border-radius: 3px; padding: 0 6px;
     user-select: none; cursor: help; transition: all .25s;
   }
   .redact:hover { background: transparent; color: #ffd9b8; }
 
+  .big { font-size: clamp(1.2em, 4.5vw, 1.55em); font-weight: 900; color: #fff; letter-spacing: 1px; }
+  .big .hl { color: #FF6A00; }
+
+  .count { display: flex; gap: 10px; justify-content: center; margin: 16px 0 4px; }
+  .count div {
+    background: #0b0f22; border: 1px solid #33407a; border-radius: 12px;
+    min-width: 72px; padding: 12px 6px; text-align: center;
+  }
+  .count b { display: block; font-size: 1.9em; color: #FF6A00; font-variant-numeric: tabular-nums; }
+  .count span { font-size: .7em; color: #8fa0c8; letter-spacing: 2px; }
+  .dday { text-align: center; color: #ffd9b8; font-weight: 800; margin-top: 10px; letter-spacing: 1px; }
+  .note { font-size: .82em; color: #8fa0c8; margin-top: 8px; }
+
+  /* ── 보급품(음식) 그리드 ── */
+  .menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+  .menu div {
+    background: #0b0f22; border: 1px solid #2a3358; border-radius: 14px;
+    text-align: center; padding: 14px 4px 10px;
+  }
+  .menu i { font-style: normal; font-size: 30px; display: block; margin-bottom: 4px; }
+  .menu span { font-size: .8em; color: #cfd9f2; font-weight: 700; }
+  @media (max-width: 460px) { .menu { grid-template-columns: repeat(2, 1fr); } }
+
   .map-btn {
-    display: inline-block; margin-top: 12px; padding: 12px 26px; border-radius: 12px;
+    display: inline-block; margin-top: 14px; padding: 13px 28px; border-radius: 12px;
     background: #FF6A00; color: #fff; font-weight: 800; text-decoration: none;
     letter-spacing: 1px; box-shadow: 0 6px 18px rgba(255,106,0,.3);
   }
   .map-btn:hover { background: #ff7f22; }
-  .note { font-size: .82em; color: #8fa0c8; margin-top: 8px; }
 
   table.rules { width: 100%; border-collapse: collapse; font-size: .93em; }
   table.rules td { padding: 8px 6px; border-bottom: 1px dashed #2a3358; }
-  table.rules td:first-child { color: #ffb37a; font-weight: 800; width: 84px; }
+  table.rules td:first-child { color: #ffb37a; font-weight: 800; width: 80px; }
 
-  footer {
-    text-align: center; color: #5d6c96; font-size: .78em; margin-top: 40px;
-    letter-spacing: 1px;
+  .rsvp {
+    text-align: center; background: rgba(255,106,0,.08); border: 1px dashed #FF6A00;
+    border-radius: 14px; padding: 18px 14px; color: #ffd9b8; font-weight: 700;
   }
+
+  footer { text-align: center; color: #5d6c96; font-size: .78em; margin-top: 40px; letter-spacing: 1px; }
   footer .logo { color: #FF6A00; font-weight: 900; letter-spacing: 4px; }
 </style>
 </head>
 <body>
-<div class="stars" id="stars"></div>
-<div class="wrap">
 
+<!-- ── 히어로: 화성 접근(ARES 프로젝트 자산 사진) ── -->
+<header class="hero">
   <div class="classified">1급 기밀 · TOP SECRET</div>
   <div class="eyebrow">ARES COMMAND · MISSION BRIEFING No.0723</div>
   <h1>OPERATION<br><span class="accent">HOMECOMING</span></h1>
-  <p class="sub">코드네임 <b>YBK</b> — 김영부 박사 귀환 환영 작전</p>
+  <p class="invite-line">귀하를 <b>김영부 박사 귀환 환영 작전</b>에 정중히 초청합니다</p>
+  <div class="scroll">▾</div>
+</header>
 
-  <div class="card">
-    <h2>■ 상황 보고</h2>
+<div class="wrap">
+
+  <!-- ── 모시는 글 ── -->
+  <div class="invitation serif">
+    <div class="deco">✦ &nbsp; 모시는 글 &nbsp; ✦</div>
+    <h3>초청장</h3>
     <p>
-      장장 <b>18개월</b>에 걸친 심우주 단독 임무를 마치고,
-      <b>김영부 박사(코드네임 YBK)</b>가 마침내 지구 — 정확히는
-      <b>부산 대연동 좌표</b>로 귀환한다.
+      장장 열여덟 달의 심우주 임무를 마치고<br>
+      <b>김영부 박사</b>께서 마침내 우리 곁으로 귀환하십니다.<br>
+      먼 궤도에서 부산의 내일을 설계하시던 그분과<br>
+      한 상 가득한 보급품을 앞에 두고<br>
+      웃음과 회포를 나누고자 하오니,<br>
+      부디 오셔서 자리를 빛내 주시기 바랍니다.
     </p>
-    <ul class="brief">
-      <li>임무명: <b>BISTEP 스테이션 제4대 사령관</b> (2025.1 발진 → 2026.7 임무 완수)</li>
-      <li>주요 전과: 부산테크노파크 정책기획 궤도 설계 · 부산시 지산학협력센터 <b>초대 센터장</b></li>
-      <li>최근 기록: 『부산, 노벨상 나오는 도시로』 — 귀환 직전 남긴 <b>혁신 항법 청사진</b></li>
-      <li>특이사항: 원장 임무를 마쳤으니 이제 <span class="redact">양꼬치를 구울 시간</span>이다</li>
-    </ul>
+    <hr>
+    <p style="font-size:1.1em;">
+      <b>2026년 7월 23일 (목) 오후 5시</b><br>
+      중남해 (부경대학교 정문 앞)
+    </p>
+    <p class="sign">— 귀환을 기다려 온 요원 일동 —</p>
   </div>
 
+  <!-- ── 요원 프로필 ── -->
+  <div class="card">
+    <h2>■ 귀환 요원 프로필</h2>
+    <div class="profile">
+      <div>
+        <div class="avatar">👨‍🚀</div>
+        <div class="avatar-cap">※ 보안상 실루엣 처리</div>
+      </div>
+      <ul class="brief">
+        <li>코드네임 <b>YBK</b> — 김영부 박사</li>
+        <li>임무: <b>BISTEP 스테이션 제4대 사령관</b> (2025.1 발진 → 2026.7 임무 완수)</li>
+        <li>전과: 부산테크노파크 정책기획 궤도 설계 · 부산시 지산학협력센터 <b>초대 센터장</b></li>
+        <li>기록: 『부산, 노벨상 나오는 도시로』 — 귀환 직전 남긴 혁신 항법 청사진</li>
+        <li>특이사항: 임무를 마쳤으니 이제 <span class="redact">양꼬치를 구울 시간</span>이다</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── 작전 개시(카운트다운) ── -->
   <div class="card">
     <h2>■ 작전 개시</h2>
-    <p class="big">7월 23일 (목) <span class="hl">오후 5:00</span></p>
+    <p class="big" style="text-align:center;">7월 23일 (목) <span class="hl">오후 5:00</span></p>
     <div class="count">
       <div><b id="d">--</b><span>DAYS</span></div>
       <div><b id="h">--</b><span>HOURS</span></div>
@@ -126,23 +191,26 @@
       <div><b id="s">--</b><span>SEC</span></div>
     </div>
     <p class="dday" id="dday"></p>
-    <p class="note" style="text-align:center;">
-      보급기지 개방 시각(17:00)과 동시에 작전 개시 — 1분의 오차도 낭비다.
-    </p>
+    <p class="note" style="text-align:center;">보급기지 개방 시각(17:00)과 동시에 작전 개시 — 1분의 오차도 낭비다.</p>
   </div>
 
+  <!-- ── 집결 좌표 ── -->
   <div class="card">
     <h2>■ 집결 좌표</h2>
-    <p class="big">중남해 <span style="font-size:.7em; color:#aab6d4;">(中南海)</span></p>
-    <p>부경대학교 <b>정문 앞</b> — 양꼬치 · 훠궈 · 중국 가정식 전문 보급기지.</p>
-    <ul class="brief">
-      <li>본토 분위기의 내부 인테리어 — <b>위장 잠입에 최적</b></li>
-      <li>주력 보급품: 양꼬치, 꿔바로우, 마라탕, 훠궈</li>
-      <li>기지 운영: 17:00 ~ 심야 — 장기전 대응 가능</li>
-    </ul>
-    <a class="map-btn" href="https://map.kakao.com/?q=%EB%B6%80%EA%B2%BD%EB%8C%80%20%EC%A4%91%EB%82%A8%ED%95%B4" target="_blank" rel="noopener">📍 좌표 확인 (카카오맵)</a>
+    <p class="big">중남해 <span style="font-size:.65em; color:#aab6d4;">(中南海)</span></p>
+    <p>부경대학교 <b>정문 앞</b> — 양꼬치 · 훠궈 · 중국 가정식 전문 <b>보급기지</b>. 본토 분위기 인테리어라 위장 잠입에 최적.</p>
+    <div class="menu">
+      <div><i>🍢</i><span>양꼬치</span></div>
+      <div><i>🥟</i><span>꿔바로우</span></div>
+      <div><i>🌶️</i><span>마라탕</span></div>
+      <div><i>🍲</i><span>훠궈</span></div>
+    </div>
+    <div style="text-align:center;">
+      <a class="map-btn" href="https://map.kakao.com/?q=%EB%B6%80%EA%B2%BD%EB%8C%80%20%EC%A4%91%EB%82%A8%ED%95%B4" target="_blank" rel="noopener">📍 좌표 확인 (카카오맵)</a>
+    </div>
   </div>
 
+  <!-- ── 작전 수칙 ── -->
   <div class="card">
     <h2>■ 작전 수칙</h2>
     <table class="rules">
@@ -154,6 +222,10 @@
     </table>
   </div>
 
+  <div class="rsvp">
+    참석 회신은 따로 받지 않는다 — 이 문서를 읽은 순간, 귀관은 이미 명단에 있다. 🚀
+  </div>
+
   <footer>
     <div class="logo">A R E S</div>
     MISSION BRIEFING · 본 문서는 읽은 후에도 자동 소멸되지 않으니 각자 기억에서 삭제할 것<br>
@@ -162,18 +234,6 @@
 </div>
 
 <script>
-  // 별 흩뿌리기
-  (function () {
-    var box = document.getElementById('stars');
-    for (var i = 0; i < 90; i++) {
-      var s = document.createElement('i');
-      s.style.left = (Math.random() * 100) + 'vw';
-      s.style.top = (Math.random() * 100) + 'vh';
-      s.style.animationDelay = (Math.random() * 3) + 's';
-      s.style.transform = 'scale(' + (0.5 + Math.random() * 1.4) + ')';
-      box.appendChild(s);
-    }
-  })();
   // 카운트다운 — 2026-07-23 17:00 KST
   (function () {
     var T = new Date('2026-07-23T17:00:00+09:00').getTime();
