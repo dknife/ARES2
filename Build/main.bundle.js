@@ -12065,37 +12065,75 @@
       };
     });
   }
+  async function _resolveLessonDir(dir, padded) {
+    const name = `Lesson${padded}`;
+    if (dir.name === name) return dir;
+    try {
+      return await dir.getDirectoryHandle(name);
+    } catch (_) {
+    }
+    try {
+      const web = await dir.getDirectoryHandle("Web");
+      return await web.getDirectoryHandle(name);
+    } catch (_) {
+    }
+    return null;
+  }
   async function saveLessonToDisk() {
     if (!(_storyCtx == null ? void 0 : _storyCtx.data)) return;
     const padded = String(_storyCtx.n).padStart(2, "0");
     if (!window.showDirectoryPicker) {
-      Logger.add("[\uB300\uD654 \uD3B8\uC9D1] \uC774 \uBE0C\uB77C\uC6B0\uC800\uB294 \uD3F4\uB354 \uC800\uC7A5 \uBBF8\uC9C0\uC6D0 \u2014 \uB2E4\uC6B4\uB85C\uB4DC\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4", "info");
+      Logger.add("[\uB300\uD654 \uD3B8\uC9D1] \uC774 \uBE0C\uB77C\uC6B0\uC800\uB294 \uD3F4\uB354 \uC9C1\uC811 \uC800\uC7A5\uC744 \uC9C0\uC6D0\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4(\uD06C\uB86C/\uC5E3\uC9C0 \uD544\uC694) \u2014 \uB2E4\uC6B4\uB85C\uB4DC\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4", "info");
       downloadLessonJson();
       return;
     }
-    try {
-      let dir = await _lessonDirKv("readonly", (st) => st.get("webdir"));
-      if (dir) {
+    let dir = await _lessonDirKv("readonly", (st) => st.get("webdir"));
+    if (dir) {
+      try {
         let perm = await dir.queryPermission({ mode: "readwrite" });
         if (perm !== "granted") perm = await dir.requestPermission({ mode: "readwrite" });
         if (perm !== "granted") dir = null;
+      } catch (_) {
+        dir = null;
       }
-      if (!dir) {
-        Logger.add("[\uB300\uD654 \uD3B8\uC9D1] Web \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694 (\uCD5C\uCD08 1\uD68C)", "info");
-        dir = await window.showDirectoryPicker({ id: "ares-web", mode: "readwrite" });
-        await _lessonDirKv("readwrite", (st) => st.put(dir, "webdir"));
-      }
-      const lessonDir = await dir.getDirectoryHandle(`Lesson${padded}`);
-      const fh = await lessonDir.getFileHandle("lesson.json", { create: true });
-      const w = await fh.createWritable();
-      await w.write(lessonJsonText());
-      await w.close();
-      Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Web/Lesson${padded}/lesson.json \uC800\uC7A5 \uC644\uB8CC (${_storyCtx.n}\uCC28\uC2DC \uC804\uCCB4 \uBBF8\uC158 \uD3EC\uD568) \u2014 git push \uB85C \uBC30\uD3EC\uC5D0 \uBC18\uC601\uD558\uC138\uC694`, "info");
-    } catch (e) {
-      if (e && e.name === "AbortError") return;
-      Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uD3F4\uB354 \uC800\uC7A5 \uC2E4\uD328(${(e == null ? void 0 : e.message) || e}) \u2014 \uB2E4\uC6B4\uB85C\uB4DC\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4`, "error");
-      downloadLessonJson();
     }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (!dir) {
+        if (attempt === 0) Logger.add("[\uB300\uD654 \uD3B8\uC9D1] \uB85C\uCEEC \uC800\uC7A5\uC18C \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694 \u2014 Web \uD3F4\uB354(\uB610\uB294 \uC800\uC7A5\uC18C \uB8E8\uD2B8 ARES2, \uB610\uB294 \uC774 \uCC28\uC2DC\uC758 LessonNN \uD3F4\uB354)", "info");
+        try {
+          dir = await window.showDirectoryPicker({ id: "ares-web", mode: "readwrite" });
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+          Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uD3F4\uB354 \uC120\uD0DD \uC624\uB958: ${(e == null ? void 0 : e.message) || e}`, "error");
+          return;
+        }
+      }
+      let lessonDir = null;
+      try {
+        lessonDir = await _resolveLessonDir(dir, padded);
+      } catch (_) {
+      }
+      if (!lessonDir) {
+        Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uC120\uD0DD\uD55C \uD3F4\uB354("${dir.name}")\uC5D0\uC11C Lesson${padded} \uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. Web \uD3F4\uB354\uB098 \uC800\uC7A5\uC18C \uB8E8\uD2B8\uB97C \uC120\uD0DD\uD558\uC138\uC694.`, "error");
+        dir = null;
+        continue;
+      }
+      try {
+        const fh = await lessonDir.getFileHandle("lesson.json", { create: true });
+        const w = await fh.createWritable();
+        await w.write(lessonJsonText());
+        await w.close();
+        await _lessonDirKv("readwrite", (st) => st.put(dir, "webdir"));
+        Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Lesson${padded}/lesson.json \uC800\uC7A5 \uC644\uB8CC (${_storyCtx.n}\uCC28\uC2DC \uC804\uCCB4 \uBBF8\uC158 \uD3EC\uD568) \u2014 git push \uB85C \uBC30\uD3EC\uC5D0 \uBC18\uC601\uD558\uC138\uC694`, "info");
+        return;
+      } catch (e) {
+        Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uD30C\uC77C \uC4F0\uAE30 \uC2E4\uD328(${(e == null ? void 0 : e.message) || e})`, "error");
+        dir = null;
+        continue;
+      }
+    }
+    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uD3F4\uB354 \uC800\uC7A5 \uC2E4\uD328 \u2014 \uB0B4\uB824\uBC1B\uAE30\uB85C \uC800\uC7A5 \uD6C4 Web/Lesson${padded}/ \uC5D0 \uB123\uC73C\uC138\uC694`, "error");
+    downloadLessonJson();
   }
   window.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey || e.metaKey) || (e.key || "").toLowerCase() !== "e") return;

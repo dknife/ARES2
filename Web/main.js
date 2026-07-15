@@ -1996,38 +1996,73 @@ function _lessonDirKv(mode, fn) {
   });
 }
 
+// 사용자가 어떤 상위 폴더를 골라도 LessonNN 폴더 핸들을 찾아낸다.
+//  선택 폴더가 ① LessonNN 자체 ② LessonNN 을 가진 Web/ ③ Web/ 을 가진 저장소 루트
+//  중 무엇이든 대응. 못 찾으면 null.
+async function _resolveLessonDir(dir, padded) {
+  const name = `Lesson${padded}`;
+  if (dir.name === name) return dir;                                  // ① LessonNN 자체
+  try { return await dir.getDirectoryHandle(name); } catch (_) {}     // ② …/LessonNN
+  try {                                                              // ③ 저장소 루트/Web/LessonNN
+    const web = await dir.getDirectoryHandle('Web');
+    return await web.getDirectoryHandle(name);
+  } catch (_) {}
+  return null;
+}
+
 async function saveLessonToDisk() {
   if (!_storyCtx?.data) return;
   const padded = String(_storyCtx.n).padStart(2, '0');
   if (!window.showDirectoryPicker) {
-    Logger.add('[대화 편집] 이 브라우저는 폴더 저장 미지원 — 다운로드로 대체합니다', 'info');
+    Logger.add('[대화 편집] 이 브라우저는 폴더 직접 저장을 지원하지 않습니다(크롬/엣지 필요) — 다운로드로 대체합니다', 'info');
     downloadLessonJson();
     return;
   }
-  try {
-    let dir = await _lessonDirKv('readonly', (st) => st.get('webdir'));
-    if (dir) {
+
+  // 캐시된 폴더 핸들을 우선 시도(권한 재확인). 잘못된 선택은 캐시하지 않고 다시 고르게 한다.
+  let dir = await _lessonDirKv('readonly', (st) => st.get('webdir'));
+  if (dir) {
+    try {
       let perm = await dir.queryPermission({ mode: 'readwrite' });
       if (perm !== 'granted') perm = await dir.requestPermission({ mode: 'readwrite' });
       if (perm !== 'granted') dir = null;
-    }
-    if (!dir) {
-      Logger.add('[대화 편집] Web 폴더를 선택하세요 (최초 1회)', 'info');
-      dir = await window.showDirectoryPicker({ id: 'ares-web', mode: 'readwrite' });
-      await _lessonDirKv('readwrite', (st) => st.put(dir, 'webdir'));
-    }
-    // 선택된 폴더가 Web/ 인지 LessonNN 하위 폴더 존재로 검증
-    const lessonDir = await dir.getDirectoryHandle(`Lesson${padded}`);
-    const fh = await lessonDir.getFileHandle('lesson.json', { create: true });
-    const w = await fh.createWritable();
-    await w.write(lessonJsonText());
-    await w.close();
-    Logger.add(`[대화 편집] Web/Lesson${padded}/lesson.json 저장 완료 (${_storyCtx.n}차시 전체 미션 포함) — git push 로 배포에 반영하세요`, 'info');
-  } catch (e) {
-    if (e && e.name === 'AbortError') return;   // 사용자가 폴더 선택 취소
-    Logger.add(`[대화 편집] 폴더 저장 실패(${e?.message || e}) — 다운로드로 대체합니다`, 'error');
-    downloadLessonJson();
+    } catch (_) { dir = null; }
   }
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (!dir) {
+      if (attempt === 0) Logger.add('[대화 편집] 로컬 저장소 폴더를 선택하세요 — Web 폴더(또는 저장소 루트 ARES2, 또는 이 차시의 LessonNN 폴더)', 'info');
+      try {
+        dir = await window.showDirectoryPicker({ id: 'ares-web', mode: 'readwrite' });
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;   // 선택 취소 — 다운로드하지 않음
+        Logger.add(`[대화 편집] 폴더 선택 오류: ${e?.message || e}`, 'error');
+        return;
+      }
+    }
+    let lessonDir = null;
+    try { lessonDir = await _resolveLessonDir(dir, padded); } catch (_) {}
+    if (!lessonDir) {
+      Logger.add(`[대화 편집] 선택한 폴더("${dir.name}")에서 Lesson${padded} 를 찾지 못했습니다. Web 폴더나 저장소 루트를 선택하세요.`, 'error');
+      dir = null;   // 다시 선택
+      continue;
+    }
+    try {
+      const fh = await lessonDir.getFileHandle('lesson.json', { create: true });
+      const w = await fh.createWritable();
+      await w.write(lessonJsonText());
+      await w.close();
+      await _lessonDirKv('readwrite', (st) => st.put(dir, 'webdir'));   // 검증된 핸들만 캐시
+      Logger.add(`[대화 편집] Lesson${padded}/lesson.json 저장 완료 (${_storyCtx.n}차시 전체 미션 포함) — git push 로 배포에 반영하세요`, 'info');
+      return;
+    } catch (e) {
+      Logger.add(`[대화 편집] 파일 쓰기 실패(${e?.message || e})`, 'error');
+      dir = null;
+      continue;
+    }
+  }
+  Logger.add(`[대화 편집] 폴더 저장 실패 — 내려받기로 저장 후 Web/Lesson${padded}/ 에 넣으세요`, 'error');
+  downloadLessonJson();
 }
 
 // Ctrl+E — 미션 설명 화면에서 대화 편집 모드 토글.
