@@ -1914,8 +1914,9 @@ function sampleCodeToBlocksHtml(code) {
       html += `<div class="blk-comment"># ${escapeHtml(blk.comment)}</div>`;
       continue;
     }
-    html += `<div class="blk-chip" style="--blk:${blk.color}">` +
-      `<span class="blk-ico">${blk.icon}</span>${escapeHtml(blk.label)}` +
+    html += `<div class="blk-row">` +
+      `<div class="blk-chip" style="--blk:${blk.color}">` +
+      `<span class="blk-ico">${blk.icon}</span>${escapeHtml(blk.label)}</div>` +
       (blk.note ? `<span class="blk-note"># ${escapeHtml(blk.note)}</span>` : '') +
       `</div>`;
   }

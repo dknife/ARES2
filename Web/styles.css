@@ -3849,7 +3849,7 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .sample-blocks { padding: 10px 6px; }
 .blk-chip {
     display: block; width: fit-content; max-width: 100%;
-    background: var(--blk, #8b93a3); color: #fff;
+    background: var(--blk, #8b93a3); color: #ffffff;   /* 카테고리 배경색 + 흰 글자 */
     font-weight: 700; font-size: 0.9em; line-height: 1.35;
     padding: 7px 14px 7px 10px; margin: 5px 0;
     border-radius: 6px 10px 10px 6px;
@@ -3857,10 +3857,12 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
     box-shadow: 0 1.5px 0 rgba(0,0,0,0.25);
 }
 .blk-ico { margin-right: 6px; }
-.blk-note { margin-left: 10px; font-weight: 500; font-size: 0.85em; opacity: 0.85; }
+.blk-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 5px 0; }
+.blk-row .blk-chip { margin: 0; }
+.blk-note { color: #2e8b3d; font-weight: 600; font-size: 0.84em; font-style: italic; }
 .blk-children {
     margin: 2px 0 6px 14px; padding-left: 12px;
     border-left: 4px solid #7954B5;            /* 반복/조건 C-블록 레일 */
     border-radius: 0 0 0 8px;
 }
-.blk-comment { color: #8a93a5; font-size: 0.82em; margin: 6px 2px; font-style: italic; }
+.blk-comment { color: #2e8b3d; font-size: 0.84em; margin: 7px 2px; font-style: italic; font-weight: 600; }

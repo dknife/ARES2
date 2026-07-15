@@ -11967,7 +11967,7 @@
         html += `<div class="blk-comment"># ${escapeHtml2(blk.comment)}</div>`;
         continue;
       }
-      html += `<div class="blk-chip" style="--blk:${blk.color}"><span class="blk-ico">${blk.icon}</span>${escapeHtml2(blk.label)}` + (blk.note ? `<span class="blk-note"># ${escapeHtml2(blk.note)}</span>` : "") + `</div>`;
+      html += `<div class="blk-row"><div class="blk-chip" style="--blk:${blk.color}"><span class="blk-ico">${blk.icon}</span>${escapeHtml2(blk.label)}</div>` + (blk.note ? `<span class="blk-note"># ${escapeHtml2(blk.note)}</span>` : "") + `</div>`;
     }
     while (level > 0) {
       html += "</div>";
