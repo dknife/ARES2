@@ -1831,94 +1831,32 @@ function renderMissionGoals() {
 let _sampleEditing = false;
 let _sampleWired = false;
 
-// 파이썬풍 샘플 코드 한 줄 → 블록 칩 정보 { icon, label, color, note } 또는
-// { comment } / null(무시). 색은 블록 코딩 툴박스 카테고리 팔레트와 동일하다
-// (동작 #cf3d37 · 출력 #d68fa5 · 제어 #7954B5 · 변수 #5483b5 · 기타 회색).
-function sampleLineToBlock(raw) {
-  let code = raw;
-  let note = '';
-  const hashAt = code.indexOf('#');
-  if (hashAt >= 0) { note = code.slice(hashAt + 1).trim(); code = code.slice(0, hashAt); }
-  code = code.trim();
-  if (!code) return note ? { comment: note } : null;
-  if (/^import\s|^from\s/.test(code)) return null;
-
-  const num = (v) => String(parseFloat(v));
-  let m;
-  if ((m = code.match(/^led_on\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)$/)))
-    return { icon: '💡', label: `LED ${m[1]}번 켜기 (밝기 ${Math.round(parseFloat(m[2]) * 100) || m[2]}%)`, color: '#d68fa5', note };
-  if ((m = code.match(/^led_off\(\s*([^)\s]+)\s*\)$/)))
-    return { icon: '💡', label: `LED ${m[1]}번 끄기`, color: '#d68fa5', note };
-  if ((m = code.match(/^buzzer_on\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)$/)))
-    return { icon: '🔊', label: `부저 ${m[1]}Hz · ${num(m[2])}초`, color: '#d68fa5', note };
-  if ((m = code.match(/^time\.sleep\(\s*([^)\s]+)\s*\)$/)))
-    return { icon: '⏱', label: `${num(m[1])}초 기다리기`, color: '#7954B5', note };
-  if ((m = code.match(/^motor_forward(?:_pwm)?\(\s*([^,)\s]+)\s*(?:,\s*([^)\s]+))?\)$/)))
-    return { icon: '⚡', label: `DC 모터 전진 ${num(m[1])}초${m[2] ? ` (속도 ${m[2]}%)` : ''}`, color: '#cf3d37', note };
-  if ((m = code.match(/^motor_backward\(\s*([^,)\s]+)\s*(?:,\s*([^)\s]+))?\)$/)))
-    return { icon: '⚡', label: `DC 모터 후진 ${num(m[1])}초${m[2] ? ` (속도 ${m[2]}%)` : ''}`, color: '#cf3d37', note };
-  if (/^motor_stop\(\s*\)$/.test(code))
-    return { icon: '⚡', label: 'DC 모터 정지', color: '#cf3d37', note };
-  if (/^while\s+True\s*:$/.test(code))
-    return { icon: '🔁', label: '계속 반복하기', color: '#7954B5', note, container: true };
-  if ((m = code.match(/^while\s+(.+):$/)))
-    return { icon: '🔁', label: `반복: ${m[1]}`, color: '#7954B5', note, container: true };
-  if ((m = code.match(/^for\s+(\w+)\s+in\s+range\(\s*([^,)\s]+)\s*\)\s*:$/)))
-    return { icon: '🔁', label: `${m[2]}번 반복하기`, color: '#7954B5', note, container: true };
-  if ((m = code.match(/^for\s+(\w+)\s+in\s+range\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)\s*:$/)))
-    return { icon: '🔁', label: `${m[1]} = ${m[2]}부터 ${parseInt(m[3], 10) - 1}까지 반복`, color: '#7954B5', note, container: true };
-  if ((m = code.match(/^for\s+(.+):$/)))
-    return { icon: '🔁', label: `반복: ${m[1]}`, color: '#7954B5', note, container: true };
-  if ((m = code.match(/^(?:el)?if\s+(.+):$/)))
-    return { icon: '❓', label: `만약 ${m[1]}`, color: '#7954B5', note, container: true };
-  if (/^else\s*:$/.test(code))
-    return { icon: '❓', label: '아니면', color: '#7954B5', note, container: true };
-  if ((m = code.match(/^(\w+)\s*=\s*random\.randint\(\s*([^,\s]+)\s*,\s*([^)\s]+)\s*\)$/)))
-    return { icon: '🎲', label: `${m[1]} = 랜덤 ${m[2]}~${m[3]}`, color: '#5483b5', note };
-  if ((m = code.match(/^(\w+)\s*=\s*(.+)$/)))
-    return { icon: '📦', label: `${m[1]} = ${m[2]}`, color: '#5483b5', note };
-  if ((m = code.match(/^print\((.*)\)$/)))
-    return { icon: '🖨', label: `출력: ${m[1].replace(/^["']|["']$/g, '')}`, color: '#8b93a3', note };
-  return { icon: '▫', label: code, color: '#8b93a3', note };
-}
-
-// 샘플 코드 전체 → 블록 스택 HTML. 들여쓰기(4칸/탭)를 중첩으로 표현하고,
-// 반복/조건 컨테이너 아래 자식들은 보라색 레일로 묶는다.
+// 샘플 코드 → 블록 스택 HTML (2026-07-16 단순 규칙).
+// 샘플 코드는 이제 "블록에 표시되는 문자 그대로" 저장·편집한다.
+//   · '#' 로 시작하는 줄  → 녹색 주석
+//   · 그 외 줄            → 블록(푸른색 배경 + 흰 글자)
+//   · 줄 중간의 '#'       → 앞부분은 블록, 뒷부분은 칩 밖 녹색 주석
+//   · 들여쓰기(4칸/탭)    → 반복·조건 아래 중첩(레일)으로 표현
 function sampleCodeToBlocksHtml(code) {
-  const rows = [];
-  const pushStmt = (indent, text) => {
-    // 'a(); b()' 한 줄 다중문 → 개별 칩
-    const parts = text.includes(';') && !text.trim().startsWith('#') ? text.split(';') : [text];
-    for (const part of parts) {
-      const blk = sampleLineToBlock(part);
-      if (blk) rows.push({ indent, blk });
-    }
-  };
-  for (const rawLine of String(code || '').split('\n')) {
-    const indent = (rawLine.match(/^[\t ]*/)[0].replace(/\t/g, '    ').length / 4) | 0;
-    // 'for ...: 문장' 한 줄 축약형 → 헤더 칩 + 본문(들여쓰기 한 단계)으로 분리
-    const inline = rawLine.trim().match(/^((?:for|while|if|elif|else)\b[^:]*:)\s*(\S.*)$/);
-    if (inline && !inline[2].startsWith('#')) {
-      pushStmt(indent, inline[1]);
-      pushStmt(indent + 1, inline[2]);
-      continue;
-    }
-    pushStmt(indent, rawLine);
-  }
   let html = '';
   let level = 0;
-  for (const { indent, blk } of rows) {
+  for (const raw of String(code || '').split('\n')) {
+    const indent = (raw.match(/^[\t ]*/)[0].replace(/\t/g, '    ').length / 4) | 0;
+    const t = raw.trim();
+    if (!t) continue;
     while (level > indent) { html += '</div>'; level--; }
     while (level < indent) { html += '<div class="blk-children">'; level++; }
-    if (blk.comment !== undefined) {
-      html += `<div class="blk-comment"># ${escapeHtml(blk.comment)}</div>`;
+    if (t.startsWith('#')) {
+      html += `<div class="blk-comment"># ${escapeHtml(t.replace(/^#+\s*/, ''))}</div>`;
       continue;
     }
-    html += `<div class="blk-row">` +
-      `<div class="blk-chip" style="--blk:${blk.color}">` +
-      `<span class="blk-ico">${blk.icon}</span>${escapeHtml(blk.label)}</div>` +
-      (blk.note ? `<span class="blk-note"># ${escapeHtml(blk.note)}</span>` : '') +
-      `</div>`;
+    const hashAt = t.indexOf('#');
+    const blockText = (hashAt >= 0 ? t.slice(0, hashAt) : t).trim();
+    const note = hashAt >= 0 ? t.slice(hashAt + 1).trim() : '';
+    html += '<div class="blk-row">'
+      + (blockText ? `<div class="blk-chip">${escapeHtml(blockText)}</div>` : '')
+      + (note ? `<span class="blk-note"># ${escapeHtml(note)}</span>` : '')
+      + '</div>';
   }
   while (level > 0) { html += '</div>'; level--; }
   return html || '<div class="blk-comment">(샘플 코드 없음)</div>';
@@ -1941,6 +1879,7 @@ function renderMissionSample() {
     const box = document.createElement('div');
     box.className = 'sample-editor';
     box.innerHTML = `
+      <div class="sample-hint">한 줄 = 블록 1개 · <b>#</b> 로 시작하면 주석(녹색) · 줄 중간 <b>#</b> 뒤는 블록 옆 주석 · 들여쓰기(공백 4칸) = 반복/조건 안쪽</div>
       <textarea data-sample-field="code" rows="12" spellcheck="false">${escapeHtml(mission.sampleCode || '')}</textarea>
       <span class="story-editor-btns">
         <button type="button" data-sample-act="commit">확인</button>
