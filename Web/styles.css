@@ -3829,3 +3829,18 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .story-editor-btns button:first-child { background: #FF6A00; border-color: #FF6A00; color: #fff; }
 .story-devbar-target { color: #8a6a45; font-weight: 500; }
 .story-devbar-target b { color: #b34a00; }
+.goal-editing { list-style: none; }
+.goal-editing textarea, .sample-editor textarea {
+    width: 100%; border: 1.5px solid #FF6A00; border-radius: 10px;
+    padding: 9px 11px; font-size: 0.92em; line-height: 1.5; resize: vertical;
+    background: #fffdf9; margin-bottom: 6px;
+}
+.sample-editor textarea { font-family: ui-monospace, 'D2Coding', Consolas, monospace; }
+.goal-addrow { list-style: none; margin-top: 6px; }
+.goal-addrow button, .sample-editbar button {
+    border: 1px dashed #e0a06a; background: #fff7ec; color: #b34a00; border-radius: 8px;
+    padding: 5px 12px; font-size: 0.86em; font-weight: 700; cursor: pointer;
+}
+.goal-addrow button:hover, .sample-editbar button:hover { background: #FF6A00; border-color: #FF6A00; color: #fff; }
+.sample-editbar { display: block; margin: 6px 0; }
+.sample-editor { padding: 6px 0; }

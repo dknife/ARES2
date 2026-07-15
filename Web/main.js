@@ -1615,15 +1615,14 @@ async function enterMission(n, m) {
 
   // 스토리 — 렌더는 renderMissionStory 가 담당(대화 편집 모드 Ctrl+E 와 공유)
   _storyCtx = { n, data, mission };
-  _storyEditIdx = null;
+  _storyEditIdx = null; _goalEditIdx = null; _sampleEditing = false;
   renderMissionStory();
 
   // 학습 목표
-  const goalsEl = document.getElementById('missionGoals');
-  goalsEl.innerHTML = (mission.goals || []).map(g => `<li>${escapeHtml(g)}</li>`).join('');
+  renderMissionGoals();
 
-  // 샘플 코드
-  document.getElementById('missionSampleCode').textContent = mission.sampleCode || '';
+  // 샘플 코드 — 렌더는 renderMissionSample 이 담당(대화 편집 모드와 공유)
+  renderMissionSample();
 
   // 이전/다음 미션 버튼
   const prev = document.getElementById('prevMissionBtn');
@@ -1761,6 +1760,128 @@ function renderMissionStory() {
   }
 }
 
+// ---- 학습 목표 편집 ----
+let _goalEditIdx = null;
+let _goalsWired = false;
+
+function renderMissionGoals() {
+  const goalsEl = document.getElementById('missionGoals');
+  if (!goalsEl || !_storyCtx?.mission) return;
+  const mission = _storyCtx.mission;
+  if (!Array.isArray(mission.goals)) mission.goals = [];
+
+  const li = (g, i) => {
+    if (dialogueDevMode && _goalEditIdx === i) {
+      return `<li class="goal-editing">
+        <textarea data-goal-field="text" rows="2">${escapeHtml(g || '')}</textarea>
+        <span class="story-editor-btns">
+          <button type="button" data-goal-act="commit" data-idx="${i}">확인</button>
+          <button type="button" data-goal-act="cancel" data-idx="${i}">취소</button>
+        </span></li>`;
+    }
+    const tools = dialogueDevMode ? `
+      <span class="story-tools">
+        <button type="button" data-goal-act="edit" data-idx="${i}" title="이 목표 수정">✏️</button>
+        <button type="button" data-goal-act="del" data-idx="${i}" title="이 목표 삭제">🗑</button>
+      </span>` : '';
+    return `<li>${escapeHtml(g)}${tools}</li>`;
+  };
+  const addBtn = dialogueDevMode
+    ? `<li class="goal-addrow"><button type="button" data-goal-act="add">＋ 학습 목표 추가</button></li>` : '';
+  goalsEl.innerHTML = mission.goals.map(li).join('') + addBtn;
+
+  if (!_goalsWired) {
+    _goalsWired = true;
+    goalsEl.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-goal-act]');
+      if (!btn || !dialogueDevMode || !_storyCtx?.mission) return;
+      const goals = _storyCtx.mission.goals;
+      const act = btn.dataset.goalAct;
+      const idx = parseInt(btn.dataset.idx ?? '-1', 10);
+      if (act === 'edit') { _goalEditIdx = idx; renderMissionGoals(); return; }
+      if (act === 'del') {
+        if (idx >= 0 && idx < goals.length && confirm(`이 학습 목표를 삭제할까요?\n"${goals[idx]}"`)) {
+          goals.splice(idx, 1); _goalEditIdx = null; renderMissionGoals();
+        }
+        return;
+      }
+      if (act === 'add') {
+        goals.push('');
+        _goalEditIdx = goals.length - 1;
+        renderMissionGoals();
+        document.querySelector('#missionGoals .goal-editing textarea')?.focus();
+        return;
+      }
+      if (act === 'commit' || act === 'cancel') {
+        const row = btn.closest('.goal-editing');
+        if (act === 'commit' && row) {
+          const text = row.querySelector('[data-goal-field="text"]')?.value?.trim() ?? '';
+          if (text) goals[idx] = text;
+          else goals.splice(idx, 1);          // 빈 목표는 폐기
+        } else if (act === 'cancel' && goals[idx] === '') {
+          goals.splice(idx, 1);               // 새로 추가한 빈 목표 취소 = 제거
+        }
+        _goalEditIdx = null; renderMissionGoals();
+      }
+    });
+  }
+}
+
+// ---- 샘플 코드 편집 ----
+let _sampleEditing = false;
+let _sampleWired = false;
+
+function renderMissionSample() {
+  const pre = document.getElementById('missionSampleCode');
+  if (!pre || !_storyCtx?.mission) return;
+  const details = pre.closest('details');
+  const mission = _storyCtx.mission;
+
+  // 이전 편집 UI 제거
+  details?.querySelector('.sample-editbar')?.remove();
+  details?.querySelector('.sample-editor')?.remove();
+
+  if (dialogueDevMode && _sampleEditing) {
+    pre.hidden = true;
+    if (details) details.open = true;
+    const box = document.createElement('div');
+    box.className = 'sample-editor';
+    box.innerHTML = `
+      <textarea data-sample-field="code" rows="12" spellcheck="false">${escapeHtml(mission.sampleCode || '')}</textarea>
+      <span class="story-editor-btns">
+        <button type="button" data-sample-act="commit">확인</button>
+        <button type="button" data-sample-act="cancel">취소</button>
+      </span>`;
+    pre.after(box);
+  } else {
+    pre.hidden = false;
+    pre.textContent = mission.sampleCode || '';
+    if (dialogueDevMode && details) {
+      const bar = document.createElement('div');
+      bar.className = 'sample-editbar story-tools';
+      bar.innerHTML = `<button type="button" data-sample-act="edit" title="샘플 코드 수정">✏️ 샘플 코드 수정</button>`;
+      details.open = true;
+      pre.before(bar);
+    }
+  }
+
+  if (!_sampleWired && details) {
+    _sampleWired = true;
+    details.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-sample-act]');
+      if (!btn || !dialogueDevMode || !_storyCtx?.mission) return;
+      const act = btn.dataset.sampleAct;
+      if (act === 'edit') { _sampleEditing = true; renderMissionSample(); return; }
+      if (act === 'commit') {
+        const v = details.querySelector('[data-sample-field="code"]')?.value ?? '';
+        _storyCtx.mission.sampleCode = v;
+        _sampleEditing = false; renderMissionSample(); return;
+      }
+      if (act === 'cancel') { _sampleEditing = false; renderMissionSample(); }
+    });
+  }
+}
+
 function onStoryEditorClick(event) {
   const btn = event.target.closest('[data-story-act]');
   if (!btn || !dialogueDevMode || !_storyCtx?.mission) return;
@@ -1882,9 +2003,11 @@ window.addEventListener('keydown', (e) => {
   if (!_storyCtx?.mission) return;
   e.preventDefault();
   dialogueDevMode = !dialogueDevMode;
-  _storyEditIdx = null;
+  _storyEditIdx = null; _goalEditIdx = null; _sampleEditing = false;
   renderMissionStory();
-  Logger.add(`[대화 편집] ${dialogueDevMode ? 'ON — 대사를 수정·추가할 수 있습니다' : 'OFF'}`, 'info');
+  renderMissionGoals();
+  renderMissionSample();
+  Logger.add(`[대화 편집] ${dialogueDevMode ? 'ON — 대사·학습목표·샘플코드를 수정할 수 있습니다' : 'OFF'}`, 'info');
 });
 
 // ============================================================

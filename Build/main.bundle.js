@@ -11689,10 +11689,11 @@
     document.getElementById("missionHardware").textContent = mission.hardware;
     _storyCtx = { n, data, mission };
     _storyEditIdx = null;
+    _goalEditIdx = null;
+    _sampleEditing = false;
     renderMissionStory();
-    const goalsEl = document.getElementById("missionGoals");
-    goalsEl.innerHTML = (mission.goals || []).map((g) => `<li>${escapeHtml2(g)}</li>`).join("");
-    document.getElementById("missionSampleCode").textContent = mission.sampleCode || "";
+    renderMissionGoals();
+    renderMissionSample();
     const prev = document.getElementById("prevMissionBtn");
     const next = document.getElementById("nextMissionBtn");
     prev.disabled = m <= 1 && n <= 1;
@@ -11809,6 +11810,135 @@
     if (!_storyWired) {
       _storyWired = true;
       storyEl.addEventListener("click", onStoryEditorClick);
+    }
+  }
+  var _goalEditIdx = null;
+  var _goalsWired = false;
+  function renderMissionGoals() {
+    const goalsEl = document.getElementById("missionGoals");
+    if (!goalsEl || !(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+    const mission = _storyCtx.mission;
+    if (!Array.isArray(mission.goals)) mission.goals = [];
+    const li = (g, i) => {
+      if (dialogueDevMode && _goalEditIdx === i) {
+        return `<li class="goal-editing">
+        <textarea data-goal-field="text" rows="2">${escapeHtml2(g || "")}</textarea>
+        <span class="story-editor-btns">
+          <button type="button" data-goal-act="commit" data-idx="${i}">\uD655\uC778</button>
+          <button type="button" data-goal-act="cancel" data-idx="${i}">\uCDE8\uC18C</button>
+        </span></li>`;
+      }
+      const tools = dialogueDevMode ? `
+      <span class="story-tools">
+        <button type="button" data-goal-act="edit" data-idx="${i}" title="\uC774 \uBAA9\uD45C \uC218\uC815">\u270F\uFE0F</button>
+        <button type="button" data-goal-act="del" data-idx="${i}" title="\uC774 \uBAA9\uD45C \uC0AD\uC81C">\u{1F5D1}</button>
+      </span>` : "";
+      return `<li>${escapeHtml2(g)}${tools}</li>`;
+    };
+    const addBtn = dialogueDevMode ? `<li class="goal-addrow"><button type="button" data-goal-act="add">\uFF0B \uD559\uC2B5 \uBAA9\uD45C \uCD94\uAC00</button></li>` : "";
+    goalsEl.innerHTML = mission.goals.map(li).join("") + addBtn;
+    if (!_goalsWired) {
+      _goalsWired = true;
+      goalsEl.addEventListener("click", (event) => {
+        var _a, _b, _c, _d, _e;
+        const btn = event.target.closest("[data-goal-act]");
+        if (!btn || !dialogueDevMode || !(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+        const goals = _storyCtx.mission.goals;
+        const act = btn.dataset.goalAct;
+        const idx = parseInt((_a = btn.dataset.idx) != null ? _a : "-1", 10);
+        if (act === "edit") {
+          _goalEditIdx = idx;
+          renderMissionGoals();
+          return;
+        }
+        if (act === "del") {
+          if (idx >= 0 && idx < goals.length && confirm(`\uC774 \uD559\uC2B5 \uBAA9\uD45C\uB97C \uC0AD\uC81C\uD560\uAE4C\uC694?
+"${goals[idx]}"`)) {
+            goals.splice(idx, 1);
+            _goalEditIdx = null;
+            renderMissionGoals();
+          }
+          return;
+        }
+        if (act === "add") {
+          goals.push("");
+          _goalEditIdx = goals.length - 1;
+          renderMissionGoals();
+          (_b = document.querySelector("#missionGoals .goal-editing textarea")) == null ? void 0 : _b.focus();
+          return;
+        }
+        if (act === "commit" || act === "cancel") {
+          const row = btn.closest(".goal-editing");
+          if (act === "commit" && row) {
+            const text = (_e = (_d = (_c = row.querySelector('[data-goal-field="text"]')) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) != null ? _e : "";
+            if (text) goals[idx] = text;
+            else goals.splice(idx, 1);
+          } else if (act === "cancel" && goals[idx] === "") {
+            goals.splice(idx, 1);
+          }
+          _goalEditIdx = null;
+          renderMissionGoals();
+        }
+      });
+    }
+  }
+  var _sampleEditing = false;
+  var _sampleWired = false;
+  function renderMissionSample() {
+    var _a, _b;
+    const pre = document.getElementById("missionSampleCode");
+    if (!pre || !(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+    const details = pre.closest("details");
+    const mission = _storyCtx.mission;
+    (_a = details == null ? void 0 : details.querySelector(".sample-editbar")) == null ? void 0 : _a.remove();
+    (_b = details == null ? void 0 : details.querySelector(".sample-editor")) == null ? void 0 : _b.remove();
+    if (dialogueDevMode && _sampleEditing) {
+      pre.hidden = true;
+      if (details) details.open = true;
+      const box = document.createElement("div");
+      box.className = "sample-editor";
+      box.innerHTML = `
+      <textarea data-sample-field="code" rows="12" spellcheck="false">${escapeHtml2(mission.sampleCode || "")}</textarea>
+      <span class="story-editor-btns">
+        <button type="button" data-sample-act="commit">\uD655\uC778</button>
+        <button type="button" data-sample-act="cancel">\uCDE8\uC18C</button>
+      </span>`;
+      pre.after(box);
+    } else {
+      pre.hidden = false;
+      pre.textContent = mission.sampleCode || "";
+      if (dialogueDevMode && details) {
+        const bar = document.createElement("div");
+        bar.className = "sample-editbar story-tools";
+        bar.innerHTML = `<button type="button" data-sample-act="edit" title="\uC0D8\uD50C \uCF54\uB4DC \uC218\uC815">\u270F\uFE0F \uC0D8\uD50C \uCF54\uB4DC \uC218\uC815</button>`;
+        details.open = true;
+        pre.before(bar);
+      }
+    }
+    if (!_sampleWired && details) {
+      _sampleWired = true;
+      details.addEventListener("click", (event) => {
+        var _a2, _b2;
+        const btn = event.target.closest("[data-sample-act]");
+        if (!btn || !dialogueDevMode || !(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+        const act = btn.dataset.sampleAct;
+        if (act === "edit") {
+          _sampleEditing = true;
+          renderMissionSample();
+          return;
+        }
+        if (act === "commit") {
+          const v = (_b2 = (_a2 = details.querySelector('[data-sample-field="code"]')) == null ? void 0 : _a2.value) != null ? _b2 : "";
+          _storyCtx.mission.sampleCode = v;
+          _sampleEditing = false;
+          renderMissionSample();
+          return;
+        }
+        if (act === "cancel") {
+          _sampleEditing = false;
+          renderMissionSample();
+        }
+      });
     }
   }
   function onStoryEditorClick(event) {
@@ -11941,8 +12071,12 @@
     e.preventDefault();
     dialogueDevMode = !dialogueDevMode;
     _storyEditIdx = null;
+    _goalEditIdx = null;
+    _sampleEditing = false;
     renderMissionStory();
-    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] ${dialogueDevMode ? "ON \u2014 \uB300\uC0AC\uB97C \uC218\uC815\xB7\uCD94\uAC00\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4" : "OFF"}`, "info");
+    renderMissionGoals();
+    renderMissionSample();
+    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] ${dialogueDevMode ? "ON \u2014 \uB300\uC0AC\xB7\uD559\uC2B5\uBAA9\uD45C\xB7\uC0D8\uD50C\uCF54\uB4DC\uB97C \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4" : "OFF"}`, "info");
   });
   function buildLessonSelect() {
     const sel = document.getElementById("lessonSelect");
