@@ -11687,26 +11687,9 @@
     document.getElementById("missionTagBadge").textContent = mission.tag;
     document.getElementById("missionTagBadge").className = `lesson-tag tag-${mission.tag}`;
     document.getElementById("missionHardware").textContent = mission.hardware;
-    let agentCode = "";
-    try {
-      agentCode = (localStorage.getItem("ares-agent-code") || "").replace(/[^A-Za-z0-9]/g, "");
-    } catch (_) {
-    }
-    const aresName = agentCode ? `\uC544\uB808\uC2A4 ${escapeHtml2(agentCode)}` : "\uC544\uB808\uC2A4";
-    const storyEl = document.getElementById("missionStory");
-    const storyLines = (mission.story || []).map((line) => `
-    <div class="story-line story-${line.speaker}">
-      <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${line.speaker === "ares" ? "\uC544\uB808\uC2A4" : "\uC54C\uBE44"}"></span>
-      <span class="story-name">${line.speaker === "ares" ? aresName : "\uC54C\uBE44"}</span>
-      <span class="story-text">${escapeHtml2(line.text)}</span>
-    </div>
-  `).join("");
-    storyEl.innerHTML = `${storyLines}
-    <div class="story-line story-ares story-goal-question">
-      <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="\uC544\uB808\uC2A4"></span>
-      <span class="story-name">${aresName}</span>
-      <span class="story-text">\uC6B0\uC640! \uADF8\uB7EC\uBA74 \uC624\uB298 \uD559\uC2B5\uBAA9\uD45C\uB294 \uBB50\uC57C?</span>
-    </div>`;
+    _storyCtx = { n, data, mission };
+    _storyEditIdx = null;
+    renderMissionStory();
     const goalsEl = document.getElementById("missionGoals");
     goalsEl.innerHTML = (mission.goals || []).map((g) => `<li>${escapeHtml2(g)}</li>`).join("");
     document.getElementById("missionSampleCode").textContent = mission.sampleCode || "";
@@ -11759,6 +11742,206 @@
       return null;
     }
   }
+  var dialogueDevMode = false;
+  var _storyCtx = null;
+  var _storyEditIdx = null;
+  var _storyWired = false;
+  function renderMissionStory() {
+    const storyEl = document.getElementById("missionStory");
+    if (!storyEl || !(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+    const mission = _storyCtx.mission;
+    if (!Array.isArray(mission.story)) mission.story = [];
+    let agentCode = "";
+    try {
+      agentCode = (localStorage.getItem("ares-agent-code") || "").replace(/[^A-Za-z0-9]/g, "");
+    } catch (_) {
+    }
+    const aresName = agentCode ? `\uC544\uB808\uC2A4 ${escapeHtml2(agentCode)}` : "\uC544\uB808\uC2A4";
+    const nameFor = (sp) => sp === "ares" ? aresName : "\uC54C\uBE44";
+    const devbar = dialogueDevMode ? `
+    <div class="story-devbar">
+      <span class="story-devbar-title">\u270F\uFE0F \uB300\uD654 \uD3B8\uC9D1 \uBAA8\uB4DC <small>(Ctrl+E \uC885\uB8CC)</small></span>
+      <span class="story-devbar-btns">
+        <button type="button" data-story-act="add" data-speaker="ares">\uFF0B \uC544\uB808\uC2A4 \uB300\uC0AC</button>
+        <button type="button" data-story-act="add" data-speaker="albi">\uFF0B \uC54C\uBE44 \uB300\uC0AC</button>
+        <button type="button" data-story-act="save">\u{1F4BE} lesson.json \uC800\uC7A5</button>
+        <button type="button" data-story-act="download">\u2B07 \uB0B4\uB824\uBC1B\uAE30</button>
+      </span>
+    </div>` : "";
+    const lineHtml = (line, i) => {
+      if (dialogueDevMode && _storyEditIdx === i) {
+        return `
+    <div class="story-line story-${line.speaker} story-editing">
+      <div class="story-editor">
+        <select data-story-field="speaker">
+          <option value="ares"${line.speaker === "ares" ? " selected" : ""}>\uC544\uB808\uC2A4</option>
+          <option value="albi"${line.speaker === "albi" ? " selected" : ""}>\uC54C\uBE44</option>
+        </select>
+        <textarea data-story-field="text" rows="3">${escapeHtml2(line.text || "")}</textarea>
+        <span class="story-editor-btns">
+          <button type="button" data-story-act="commit" data-idx="${i}">\uD655\uC778</button>
+          <button type="button" data-story-act="cancel" data-idx="${i}">\uCDE8\uC18C</button>
+        </span>
+      </div>
+    </div>`;
+      }
+      const tools = dialogueDevMode ? `
+      <span class="story-tools">
+        <button type="button" data-story-act="edit" data-idx="${i}" title="\uC774 \uB300\uC0AC \uC218\uC815">\u270F\uFE0F</button>
+        <button type="button" data-story-act="del" data-idx="${i}" title="\uC774 \uB300\uC0AC \uC0AD\uC81C">\u{1F5D1}</button>
+      </span>` : "";
+      return `
+    <div class="story-line story-${line.speaker}">
+      <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${nameFor(line.speaker)}"></span>
+      <span class="story-name">${nameFor(line.speaker)}</span>
+      <span class="story-text">${escapeHtml2(line.text)}</span>${tools}
+    </div>`;
+    };
+    storyEl.classList.toggle("story-dev", dialogueDevMode);
+    storyEl.innerHTML = `${devbar}${mission.story.map(lineHtml).join("")}
+    <div class="story-line story-ares story-goal-question">
+      <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="\uC544\uB808\uC2A4"></span>
+      <span class="story-name">${aresName}</span>
+      <span class="story-text">\uC6B0\uC640! \uADF8\uB7EC\uBA74 \uC624\uB298 \uD559\uC2B5\uBAA9\uD45C\uB294 \uBB50\uC57C?</span>
+    </div>`;
+    if (!_storyWired) {
+      _storyWired = true;
+      storyEl.addEventListener("click", onStoryEditorClick);
+    }
+  }
+  function onStoryEditorClick(event) {
+    var _a, _b, _c, _d, _e, _f;
+    const btn = event.target.closest("[data-story-act]");
+    if (!btn || !dialogueDevMode || !(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+    const story = _storyCtx.mission.story;
+    const act = btn.dataset.storyAct;
+    const idx = parseInt((_a = btn.dataset.idx) != null ? _a : "-1", 10);
+    if (act === "edit") {
+      _storyEditIdx = idx;
+      renderMissionStory();
+      return;
+    }
+    if (act === "del") {
+      if (idx >= 0 && idx < story.length && confirm(`\uC774 \uB300\uC0AC\uB97C \uC0AD\uC81C\uD560\uAE4C\uC694?
+"${story[idx].text}"`)) {
+        story.splice(idx, 1);
+        _storyEditIdx = null;
+        renderMissionStory();
+      }
+      return;
+    }
+    if (act === "add") {
+      story.push({ speaker: btn.dataset.speaker === "albi" ? "albi" : "ares", text: "", _new: true });
+      _storyEditIdx = story.length - 1;
+      renderMissionStory();
+      (_b = document.querySelector("#missionStory .story-editor textarea")) == null ? void 0 : _b.focus();
+      return;
+    }
+    if (act === "commit" || act === "cancel") {
+      const editor = btn.closest(".story-editing");
+      const line = story[idx];
+      if (act === "commit" && editor && line) {
+        const text = (_e = (_d = (_c = editor.querySelector('[data-story-field="text"]')) == null ? void 0 : _c.value) == null ? void 0 : _d.trim()) != null ? _e : "";
+        const speaker = ((_f = editor.querySelector('[data-story-field="speaker"]')) == null ? void 0 : _f.value) === "albi" ? "albi" : "ares";
+        if (text) {
+          line.text = text;
+          line.speaker = speaker;
+          delete line._new;
+        } else if (line._new) story.splice(idx, 1);
+      } else if (act === "cancel" && (line == null ? void 0 : line._new)) {
+        story.splice(idx, 1);
+      }
+      _storyEditIdx = null;
+      renderMissionStory();
+      return;
+    }
+    if (act === "download") {
+      downloadLessonJson();
+      return;
+    }
+    if (act === "save") {
+      saveLessonToDisk();
+      return;
+    }
+  }
+  function lessonJsonText() {
+    const clean = JSON.parse(JSON.stringify(_storyCtx.data, (k, v) => k === "_new" ? void 0 : v));
+    return JSON.stringify(clean, null, 2) + "\n";
+  }
+  function downloadLessonJson() {
+    if (!(_storyCtx == null ? void 0 : _storyCtx.data)) return;
+    const padded = String(_storyCtx.n).padStart(2, "0");
+    const blob = new Blob([lessonJsonText()], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `lesson.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Lesson${padded}/lesson.json \uB0B4\uB824\uBC1B\uAE30 \u2014 Web/Lesson${padded}/ \uC5D0 \uB36E\uC5B4\uC4F0\uC138\uC694`, "info");
+  }
+  function _lessonDirKv(mode, fn) {
+    return new Promise((resolve) => {
+      const req = indexedDB.open("ares-mission-dev", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("kv");
+      req.onerror = () => resolve(null);
+      req.onsuccess = () => {
+        const tx = req.result.transaction("kv", mode);
+        const r = fn(tx.objectStore("kv"));
+        tx.oncomplete = () => {
+          resolve(r && "result" in r ? r.result : null);
+          req.result.close();
+        };
+        tx.onerror = () => {
+          resolve(null);
+          req.result.close();
+        };
+      };
+    });
+  }
+  async function saveLessonToDisk() {
+    if (!(_storyCtx == null ? void 0 : _storyCtx.data)) return;
+    const padded = String(_storyCtx.n).padStart(2, "0");
+    if (!window.showDirectoryPicker) {
+      Logger.add("[\uB300\uD654 \uD3B8\uC9D1] \uC774 \uBE0C\uB77C\uC6B0\uC800\uB294 \uD3F4\uB354 \uC800\uC7A5 \uBBF8\uC9C0\uC6D0 \u2014 \uB2E4\uC6B4\uB85C\uB4DC\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4", "info");
+      downloadLessonJson();
+      return;
+    }
+    try {
+      let dir = await _lessonDirKv("readonly", (st) => st.get("webdir"));
+      if (dir) {
+        let perm = await dir.queryPermission({ mode: "readwrite" });
+        if (perm !== "granted") perm = await dir.requestPermission({ mode: "readwrite" });
+        if (perm !== "granted") dir = null;
+      }
+      if (!dir) {
+        Logger.add("[\uB300\uD654 \uD3B8\uC9D1] Web \uD3F4\uB354\uB97C \uC120\uD0DD\uD558\uC138\uC694 (\uCD5C\uCD08 1\uD68C)", "info");
+        dir = await window.showDirectoryPicker({ id: "ares-web", mode: "readwrite" });
+        await _lessonDirKv("readwrite", (st) => st.put(dir, "webdir"));
+      }
+      const lessonDir = await dir.getDirectoryHandle(`Lesson${padded}`);
+      const fh = await lessonDir.getFileHandle("lesson.json", { create: true });
+      const w = await fh.createWritable();
+      await w.write(lessonJsonText());
+      await w.close();
+      Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] Web/Lesson${padded}/lesson.json \uC800\uC7A5 \uC644\uB8CC \u2014 git push \uB85C \uBC30\uD3EC\uC5D0 \uBC18\uC601\uD558\uC138\uC694`, "info");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] \uD3F4\uB354 \uC800\uC7A5 \uC2E4\uD328(${(e == null ? void 0 : e.message) || e}) \u2014 \uB2E4\uC6B4\uB85C\uB4DC\uB85C \uB300\uCCB4\uD569\uB2C8\uB2E4`, "error");
+      downloadLessonJson();
+    }
+  }
+  window.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || (e.key || "").toLowerCase() !== "e") return;
+    const simCard = document.getElementById("simCard");
+    if (simCard && !simCard.hidden) return;
+    if (currentView !== "mission" || _contentMode !== "description") return;
+    if (!(_storyCtx == null ? void 0 : _storyCtx.mission)) return;
+    e.preventDefault();
+    dialogueDevMode = !dialogueDevMode;
+    _storyEditIdx = null;
+    renderMissionStory();
+    Logger.add(`[\uB300\uD654 \uD3B8\uC9D1] ${dialogueDevMode ? "ON \u2014 \uB300\uC0AC\uB97C \uC218\uC815\xB7\uCD94\uAC00\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4" : "OFF"}`, "info");
+  });
   function buildLessonSelect() {
     const sel = document.getElementById("lessonSelect");
     if (!sel) return;

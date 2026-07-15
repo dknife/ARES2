@@ -3795,3 +3795,35 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .tbx-action:hover { background: rgba(0, 0, 0, 0.06); }
 .tbx-action:active { background: rgba(0, 0, 0, 0.12); }
 .tbx-action:disabled { opacity: 0.4; cursor: default; background: transparent; }
+
+/* ==== 미션 대화 편집기 (Ctrl+E, 2026-07-16) ==== */
+.story-devbar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    background: #fff7ec; border: 1.5px dashed #FF6A00; border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 14px; font-size: 0.9em;
+}
+.story-devbar-title { font-weight: 800; color: #b34a00; }
+.story-devbar-title small { font-weight: 500; color: #b98a5c; }
+.story-devbar-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.story-devbar-btns button, .story-tools button, .story-editor-btns button {
+    border: 1px solid #e0c9ae; background: #fff; color: #7a4a1d; border-radius: 8px;
+    padding: 5px 10px; font-size: 0.86em; font-weight: 700; cursor: pointer;
+}
+.story-devbar-btns button:hover, .story-tools button:hover, .story-editor-btns button:hover {
+    background: #FF6A00; border-color: #FF6A00; color: #fff;
+}
+.story-dev .story-line { position: relative; }
+.story-tools { margin-left: 8px; display: inline-flex; gap: 4px; vertical-align: middle; }
+.story-tools button { padding: 2px 7px; }
+.story-editing .story-editor { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.story-editor select {
+    align-self: flex-start; border: 1px solid #d8c4a8; border-radius: 8px;
+    padding: 5px 8px; font-size: 0.9em; background: #fff;
+}
+.story-editor textarea {
+    width: 100%; border: 1.5px solid #FF6A00; border-radius: 10px;
+    padding: 9px 11px; font-size: 0.95em; line-height: 1.55; resize: vertical;
+    font-family: inherit; background: #fffdf9;
+}
+.story-editor-btns { display: flex; gap: 6px; }
+.story-editor-btns button:first-child { background: #FF6A00; border-color: #FF6A00; color: #fff; }

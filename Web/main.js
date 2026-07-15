@@ -1613,24 +1613,10 @@ async function enterMission(n, m) {
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
   document.getElementById('missionHardware').textContent = mission.hardware;
 
-  // 스토리 — 요원 코드가 저장돼 있으면 '아레스' 뒤에 붙여 개인화
-  let agentCode = '';
-  try { agentCode = (localStorage.getItem('ares-agent-code') || '').replace(/[^A-Za-z0-9]/g, ''); } catch (_) {}
-  const aresName = agentCode ? `아레스 ${escapeHtml(agentCode)}` : '아레스';
-  const storyEl = document.getElementById('missionStory');
-  const storyLines = (mission.story || []).map(line => `
-    <div class="story-line story-${line.speaker}">
-      <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${line.speaker === 'ares' ? '아레스' : '알비'}"></span>
-      <span class="story-name">${line.speaker === 'ares' ? aresName : '알비'}</span>
-      <span class="story-text">${escapeHtml(line.text)}</span>
-    </div>
-  `).join('');
-  storyEl.innerHTML = `${storyLines}
-    <div class="story-line story-ares story-goal-question">
-      <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="아레스"></span>
-      <span class="story-name">${aresName}</span>
-      <span class="story-text">우와! 그러면 오늘 학습목표는 뭐야?</span>
-    </div>`;
+  // 스토리 — 렌더는 renderMissionStory 가 담당(대화 편집 모드 Ctrl+E 와 공유)
+  _storyCtx = { n, data, mission };
+  _storyEditIdx = null;
+  renderMissionStory();
 
   // 학습 목표
   const goalsEl = document.getElementById('missionGoals');
@@ -1691,6 +1677,211 @@ async function loadLesson(n) {
     return null;
   }
 }
+
+// ============================================================
+// 미션 대화 편집기 (Ctrl+E) — 2026-07-16
+// 미션 설명 화면에서 Ctrl+E 로 대화 편집 모드를 토글한다. 각 대사를 수정/삭제하고
+// 새 대사를 추가할 수 있으며, 시뮬레이터의 씬 등록 체계와 같은 방식으로
+// File System Access API 로 Web/LessonNN/lesson.json 에 직접 저장한다
+// (미지원 브라우저는 lesson.json 다운로드 폴백). 편집은 lessonCache 의 객체를
+// 직접 수정하므로 저장 전에도 세션 안에서는 화면 이동 후에도 유지된다.
+// ============================================================
+let dialogueDevMode = false;
+let _storyCtx = null;       // { n, data, mission } — 마지막으로 렌더한 미션
+let _storyEditIdx = null;   // 편집 중인 대사 인덱스 (null = 없음)
+let _storyWired = false;    // missionStory 이벤트 위임 1회 부착 가드
+
+function renderMissionStory() {
+  const storyEl = document.getElementById('missionStory');
+  if (!storyEl || !_storyCtx?.mission) return;
+  const mission = _storyCtx.mission;
+  if (!Array.isArray(mission.story)) mission.story = [];
+
+  // 요원 코드 개인화 (기존 동작 유지)
+  let agentCode = '';
+  try { agentCode = (localStorage.getItem('ares-agent-code') || '').replace(/[^A-Za-z0-9]/g, ''); } catch (_) {}
+  const aresName = agentCode ? `아레스 ${escapeHtml(agentCode)}` : '아레스';
+  const nameFor = (sp) => (sp === 'ares' ? aresName : '알비');
+
+  const devbar = dialogueDevMode ? `
+    <div class="story-devbar">
+      <span class="story-devbar-title">✏️ 대화 편집 모드 <small>(Ctrl+E 종료)</small></span>
+      <span class="story-devbar-btns">
+        <button type="button" data-story-act="add" data-speaker="ares">＋ 아레스 대사</button>
+        <button type="button" data-story-act="add" data-speaker="albi">＋ 알비 대사</button>
+        <button type="button" data-story-act="save">💾 lesson.json 저장</button>
+        <button type="button" data-story-act="download">⬇ 내려받기</button>
+      </span>
+    </div>` : '';
+
+  const lineHtml = (line, i) => {
+    if (dialogueDevMode && _storyEditIdx === i) {
+      // 편집 폼 — 화자 선택 + 텍스트
+      return `
+    <div class="story-line story-${line.speaker} story-editing">
+      <div class="story-editor">
+        <select data-story-field="speaker">
+          <option value="ares"${line.speaker === 'ares' ? ' selected' : ''}>아레스</option>
+          <option value="albi"${line.speaker === 'albi' ? ' selected' : ''}>알비</option>
+        </select>
+        <textarea data-story-field="text" rows="3">${escapeHtml(line.text || '')}</textarea>
+        <span class="story-editor-btns">
+          <button type="button" data-story-act="commit" data-idx="${i}">확인</button>
+          <button type="button" data-story-act="cancel" data-idx="${i}">취소</button>
+        </span>
+      </div>
+    </div>`;
+    }
+    const tools = dialogueDevMode ? `
+      <span class="story-tools">
+        <button type="button" data-story-act="edit" data-idx="${i}" title="이 대사 수정">✏️</button>
+        <button type="button" data-story-act="del" data-idx="${i}" title="이 대사 삭제">🗑</button>
+      </span>` : '';
+    return `
+    <div class="story-line story-${line.speaker}">
+      <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${nameFor(line.speaker)}"></span>
+      <span class="story-name">${nameFor(line.speaker)}</span>
+      <span class="story-text">${escapeHtml(line.text)}</span>${tools}
+    </div>`;
+  };
+
+  storyEl.classList.toggle('story-dev', dialogueDevMode);
+  storyEl.innerHTML = `${devbar}${mission.story.map(lineHtml).join('')}
+    <div class="story-line story-ares story-goal-question">
+      <span class="story-avatar"><img src="assets/design/avatar-ares.png" alt="아레스"></span>
+      <span class="story-name">${aresName}</span>
+      <span class="story-text">우와! 그러면 오늘 학습목표는 뭐야?</span>
+    </div>`;
+
+  if (!_storyWired) {
+    _storyWired = true;
+    storyEl.addEventListener('click', onStoryEditorClick);
+  }
+}
+
+function onStoryEditorClick(event) {
+  const btn = event.target.closest('[data-story-act]');
+  if (!btn || !dialogueDevMode || !_storyCtx?.mission) return;
+  const story = _storyCtx.mission.story;
+  const act = btn.dataset.storyAct;
+  const idx = parseInt(btn.dataset.idx ?? '-1', 10);
+
+  if (act === 'edit') { _storyEditIdx = idx; renderMissionStory(); return; }
+  if (act === 'del') {
+    if (idx >= 0 && idx < story.length && confirm(`이 대사를 삭제할까요?\n"${story[idx].text}"`)) {
+      story.splice(idx, 1);
+      _storyEditIdx = null;
+      renderMissionStory();
+    }
+    return;
+  }
+  if (act === 'add') {
+    story.push({ speaker: btn.dataset.speaker === 'albi' ? 'albi' : 'ares', text: '', _new: true });
+    _storyEditIdx = story.length - 1;
+    renderMissionStory();
+    document.querySelector('#missionStory .story-editor textarea')?.focus();
+    return;
+  }
+  if (act === 'commit' || act === 'cancel') {
+    const editor = btn.closest('.story-editing');
+    const line = story[idx];
+    if (act === 'commit' && editor && line) {
+      const text = editor.querySelector('[data-story-field="text"]')?.value?.trim() ?? '';
+      const speaker = editor.querySelector('[data-story-field="speaker"]')?.value === 'albi' ? 'albi' : 'ares';
+      if (text) { line.text = text; line.speaker = speaker; delete line._new; }
+      else if (line._new) story.splice(idx, 1);          // 빈 새 대사는 폐기
+    } else if (act === 'cancel' && line?._new) {
+      story.splice(idx, 1);                               // 새 대사 취소 = 제거
+    }
+    _storyEditIdx = null;
+    renderMissionStory();
+    return;
+  }
+  if (act === 'download') { downloadLessonJson(); return; }
+  if (act === 'save') { saveLessonToDisk(); return; }
+}
+
+function lessonJsonText() {
+  // _new 마커 등 편집 임시 필드 제거 후 직렬화
+  const clean = JSON.parse(JSON.stringify(_storyCtx.data, (k, v) => (k === '_new' ? undefined : v)));
+  return JSON.stringify(clean, null, 2) + '\n';
+}
+
+function downloadLessonJson() {
+  if (!_storyCtx?.data) return;
+  const padded = String(_storyCtx.n).padStart(2, '0');
+  const blob = new Blob([lessonJsonText()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lesson.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  Logger.add(`[대화 편집] Lesson${padded}/lesson.json 내려받기 — Web/Lesson${padded}/ 에 덮어쓰세요`, 'info');
+}
+
+// File System Access — Web 폴더 핸들을 IndexedDB 에 저장해 재사용(씬 등록 체계와 동일 UX)
+function _lessonDirKv(mode, fn) {
+  return new Promise((resolve) => {
+    const req = indexedDB.open('ares-mission-dev', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onerror = () => resolve(null);
+    req.onsuccess = () => {
+      const tx = req.result.transaction('kv', mode);
+      const r = fn(tx.objectStore('kv'));
+      tx.oncomplete = () => { resolve(r && 'result' in r ? r.result : null); req.result.close(); };
+      tx.onerror = () => { resolve(null); req.result.close(); };
+    };
+  });
+}
+
+async function saveLessonToDisk() {
+  if (!_storyCtx?.data) return;
+  const padded = String(_storyCtx.n).padStart(2, '0');
+  if (!window.showDirectoryPicker) {
+    Logger.add('[대화 편집] 이 브라우저는 폴더 저장 미지원 — 다운로드로 대체합니다', 'info');
+    downloadLessonJson();
+    return;
+  }
+  try {
+    let dir = await _lessonDirKv('readonly', (st) => st.get('webdir'));
+    if (dir) {
+      let perm = await dir.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') perm = await dir.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') dir = null;
+    }
+    if (!dir) {
+      Logger.add('[대화 편집] Web 폴더를 선택하세요 (최초 1회)', 'info');
+      dir = await window.showDirectoryPicker({ id: 'ares-web', mode: 'readwrite' });
+      await _lessonDirKv('readwrite', (st) => st.put(dir, 'webdir'));
+    }
+    // 선택된 폴더가 Web/ 인지 LessonNN 하위 폴더 존재로 검증
+    const lessonDir = await dir.getDirectoryHandle(`Lesson${padded}`);
+    const fh = await lessonDir.getFileHandle('lesson.json', { create: true });
+    const w = await fh.createWritable();
+    await w.write(lessonJsonText());
+    await w.close();
+    Logger.add(`[대화 편집] Web/Lesson${padded}/lesson.json 저장 완료 — git push 로 배포에 반영하세요`, 'info');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;   // 사용자가 폴더 선택 취소
+    Logger.add(`[대화 편집] 폴더 저장 실패(${e?.message || e}) — 다운로드로 대체합니다`, 'error');
+    downloadLessonJson();
+  }
+}
+
+// Ctrl+E — 미션 설명 화면에서 대화 편집 모드 토글.
+// 시뮬 카드가 열려 있으면 시뮬 개발자 모드(Simulation_Main)가 우선이므로 양보한다.
+window.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || (e.key || '').toLowerCase() !== 'e') return;
+  const simCard = document.getElementById('simCard');
+  if (simCard && !simCard.hidden) return;                       // 시뮬 개발자 모드 우선
+  if (currentView !== 'mission' || _contentMode !== 'description') return;
+  if (!_storyCtx?.mission) return;
+  e.preventDefault();
+  dialogueDevMode = !dialogueDevMode;
+  _storyEditIdx = null;
+  renderMissionStory();
+  Logger.add(`[대화 편집] ${dialogueDevMode ? 'ON — 대사를 수정·추가할 수 있습니다' : 'OFF'}`, 'info');
+});
 
 // ============================================================
 // 네비게이션 UI
