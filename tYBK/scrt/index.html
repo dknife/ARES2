@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>OPERATION: HOMECOMING — 코드네임 YBK</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    background: radial-gradient(ellipse at 50% 20%, #1a2140 0%, #0a0d20 55%, #04050e 100%);
+    color: #e8edf9; line-height: 1.7; overflow-x: hidden;
+  }
+  /* 별 */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: #fff; opacity: .7; animation: tw 3s infinite alternate; }
+  @keyframes tw { from { opacity: .15; } to { opacity: .85; } }
+
+  .wrap { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .classified {
+    display: inline-block; border: 3px solid #e14b4b; color: #e14b4b;
+    font-weight: 900; letter-spacing: 6px; padding: 4px 18px; border-radius: 4px;
+    transform: rotate(-4deg); font-size: .95em; margin-bottom: 22px;
+    text-shadow: 0 0 12px rgba(225,75,75,.4);
+  }
+  .eyebrow { color: #ffb37a; font-weight: 700; letter-spacing: 3px; font-size: .8em; }
+  h1 {
+    font-size: clamp(1.7em, 6vw, 2.6em); font-weight: 900; line-height: 1.25;
+    margin: 6px 0 4px;
+  }
+  h1 .accent { color: #FF6A00; text-shadow: 0 0 24px rgba(255,106,0,.35); }
+  .sub { color: #aab6d4; font-size: .95em; margin-bottom: 30px; }
+
+  .card {
+    background: rgba(16, 21, 44, .78); border: 1px solid #2a3358;
+    border-radius: 16px; padding: 24px 22px; margin-bottom: 22px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    backdrop-filter: blur(4px);
+  }
+  .card h2 {
+    font-size: 1.02em; color: #ffb37a; letter-spacing: 2px; margin-bottom: 12px;
+    border-left: 4px solid #FF6A00; padding-left: 10px;
+  }
+  .kv { display: grid; grid-template-columns: 92px 1fr; gap: 6px 14px; font-size: .98em; }
+  .kv dt { color: #8fa0c8; font-weight: 700; }
+  .kv dd b { color: #fff; }
+  .big {
+    font-size: clamp(1.2em, 4.5vw, 1.6em); font-weight: 900; color: #fff;
+    letter-spacing: 1px;
+  }
+  .big .hl { color: #FF6A00; }
+
+  /* 카운트다운 */
+  .count { display: flex; gap: 10px; justify-content: center; margin: 14px 0 4px; }
+  .count div {
+    background: #0b0f22; border: 1px solid #33407a; border-radius: 12px;
+    min-width: 74px; padding: 12px 8px; text-align: center;
+  }
+  .count b { display: block; font-size: 1.9em; color: #FF6A00; font-variant-numeric: tabular-nums; }
+  .count span { font-size: .72em; color: #8fa0c8; letter-spacing: 2px; }
+  .dday { text-align: center; color: #ffd9b8; font-weight: 800; margin-top: 10px; letter-spacing: 1px; }
+
+  ul.brief { list-style: none; }
+  ul.brief li { padding-left: 26px; position: relative; margin: 7px 0; }
+  ul.brief li::before { content: "▸"; position: absolute; left: 6px; color: #FF6A00; }
+  .redact {
+    background: #3a3f52; color: transparent; border-radius: 3px; padding: 0 6px;
+    user-select: none; cursor: help; transition: all .25s;
+  }
+  .redact:hover { background: transparent; color: #ffd9b8; }
+
+  .map-btn {
+    display: inline-block; margin-top: 12px; padding: 12px 26px; border-radius: 12px;
+    background: #FF6A00; color: #fff; font-weight: 800; text-decoration: none;
+    letter-spacing: 1px; box-shadow: 0 6px 18px rgba(255,106,0,.3);
+  }
+  .map-btn:hover { background: #ff7f22; }
+  .note { font-size: .82em; color: #8fa0c8; margin-top: 8px; }
+
+  table.rules { width: 100%; border-collapse: collapse; font-size: .93em; }
+  table.rules td { padding: 8px 6px; border-bottom: 1px dashed #2a3358; }
+  table.rules td:first-child { color: #ffb37a; font-weight: 800; width: 84px; }
+
+  footer {
+    text-align: center; color: #5d6c96; font-size: .78em; margin-top: 40px;
+    letter-spacing: 1px;
+  }
+  footer .logo { color: #FF6A00; font-weight: 900; letter-spacing: 4px; }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="wrap">
+
+  <div class="classified">1급 기밀 · TOP SECRET</div>
+  <div class="eyebrow">ARES COMMAND · MISSION BRIEFING No.0723</div>
+  <h1>OPERATION<br><span class="accent">HOMECOMING</span></h1>
+  <p class="sub">코드네임 <b>YBK</b> — 김영부 박사 귀환 환영 작전</p>
+
+  <div class="card">
+    <h2>■ 상황 보고</h2>
+    <p>
+      장장 <b>18개월</b>에 걸친 심우주 단독 임무를 마치고,
+      <b>김영부 박사(코드네임 YBK)</b>가 마침내 지구 — 정확히는
+      <b>부산 대연동 좌표</b>로 귀환한다.
+    </p>
+    <ul class="brief">
+      <li>임무명: <b>BISTEP 스테이션 제4대 사령관</b> (2025.1 발진 → 2026.7 임무 완수)</li>
+      <li>주요 전과: 부산테크노파크 정책기획 궤도 설계 · 부산시 지산학협력센터 <b>초대 센터장</b></li>
+      <li>최근 기록: 『부산, 노벨상 나오는 도시로』 — 귀환 직전 남긴 <b>혁신 항법 청사진</b></li>
+      <li>특이사항: 원장 임무를 마쳤으니 이제 <span class="redact">양꼬치를 구울 시간</span>이다</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>■ 작전 개시</h2>
+    <p class="big">7월 23일 (목) <span class="hl">오후 5:00</span></p>
+    <div class="count">
+      <div><b id="d">--</b><span>DAYS</span></div>
+      <div><b id="h">--</b><span>HOURS</span></div>
+      <div><b id="m">--</b><span>MIN</span></div>
+      <div><b id="s">--</b><span>SEC</span></div>
+    </div>
+    <p class="dday" id="dday"></p>
+    <p class="note" style="text-align:center;">
+      보급기지 개방 시각(17:00)과 동시에 작전 개시 — 1분의 오차도 낭비다.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>■ 집결 좌표</h2>
+    <p class="big">중남해 <span style="font-size:.7em; color:#aab6d4;">(中南海)</span></p>
+    <p>부경대학교 <b>정문 앞</b> — 양꼬치 · 훠궈 · 중국 가정식 전문 보급기지.</p>
+    <ul class="brief">
+      <li>본토 분위기의 내부 인테리어 — <b>위장 잠입에 최적</b></li>
+      <li>주력 보급품: 양꼬치, 꿔바로우, 마라탕, 훠궈</li>
+      <li>기지 운영: 17:00 ~ 심야 — 장기전 대응 가능</li>
+    </ul>
+    <a class="map-btn" href="https://map.kakao.com/?q=%EB%B6%80%EA%B2%BD%EB%8C%80%20%EC%A4%91%EB%82%A8%ED%95%B4" target="_blank" rel="noopener">📍 좌표 확인 (카카오맵)</a>
+  </div>
+
+  <div class="card">
+    <h2>■ 작전 수칙</h2>
+    <table class="rules">
+      <tr><td>수칙 1</td><td>본 문서의 존재를 아는 자만 참석 자격이 있다.</td></tr>
+      <tr><td>수칙 2</td><td>건배 제의 멘트를 <b>최소 1개</b> 휴대할 것.</td></tr>
+      <tr><td>수칙 3</td><td>지각 요원은 양꼬치 <b>1인분 헌납</b>으로 사면된다.</td></tr>
+      <tr><td>수칙 4</td><td>"요즘 뭐 하세요?"라는 질문은 <b>18개월 임무 보고</b>를 각오하고 던질 것.</td></tr>
+      <tr><td>수칙 5</td><td>작전 종료 시각은 정하지 않는다. 끝날 때 끝난다.</td></tr>
+    </table>
+  </div>
+
+  <footer>
+    <div class="logo">A R E S</div>
+    MISSION BRIEFING · 본 문서는 읽은 후에도 자동 소멸되지 않으니 각자 기억에서 삭제할 것<br>
+    Prepared by ARES Command, Busan Sector
+  </footer>
+</div>
+
+<script>
+  // 별 흩뿌리기
+  (function () {
+    var box = document.getElementById('stars');
+    for (var i = 0; i < 90; i++) {
+      var s = document.createElement('i');
+      s.style.left = (Math.random() * 100) + 'vw';
+      s.style.top = (Math.random() * 100) + 'vh';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      s.style.transform = 'scale(' + (0.5 + Math.random() * 1.4) + ')';
+      box.appendChild(s);
+    }
+  })();
+  // 카운트다운 — 2026-07-23 17:00 KST
+  (function () {
+    var T = new Date('2026-07-23T17:00:00+09:00').getTime();
+    var d = document.getElementById('d'), h = document.getElementById('h'),
+        m = document.getElementById('m'), s = document.getElementById('s'),
+        dd = document.getElementById('dday');
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function tick() {
+      var diff = T - Date.now();
+      if (diff <= 0) {
+        d.textContent = h.textContent = m.textContent = s.textContent = '00';
+        dd.textContent = '🚀 작전 개시! 전 요원, 중남해로.';
+        return;
+      }
+      d.textContent = pad(Math.floor(diff / 86400000));
+      h.textContent = pad(Math.floor(diff / 3600000) % 24);
+      m.textContent = pad(Math.floor(diff / 60000) % 60);
+      s.textContent = pad(Math.floor(diff / 1000) % 60);
+      dd.textContent = 'YBK 귀환까지';
+      setTimeout(tick, 1000);
+    }
+    tick();
+  })();
+</script>
+</body>
+</html>
