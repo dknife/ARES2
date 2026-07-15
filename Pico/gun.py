@@ -129,7 +129,9 @@ class KSGun:
     # duty 가 설계 토크다. 76%(50000)는 배터리 전압이 처지면 스프링 압축에서 스톨
     # ('삑', 13일차 전원 출력 부족 증상)할 수 있다. 캠 접점이 기구 밖으로 나오지 않아
     # (+/- 모터선만 인출) 캠 모드는 불가 — 시간 폴백에서 실측 검증된 65535 x 330ms 사용.
-    def fire_once(self, power=65535, spin_time_ms=330, cooldown_ms=250,
+    # (2026-07-15) : 스핀값이 33일 경우 fire_once함수에서 모듈이 2번 실행됨
+    # --> 따라서 spin_time_ms값을 330에서 100으로 변경후 50회 실행 시 오작동이 없는 것을 확인
+    def fire_once(self, power=65535, spin_time_ms=100, cooldown_ms=250,
                   max_cycle_ms=1500, wait_cooldown=True):
         """한 발 발사.
 
