@@ -457,7 +457,8 @@ function createDcComponent(ctx, fields = {}) {
 
 // ============================================================
 // Servo — { wheel: left|right|neutral, axis_rotation?, axis_direction?, axis_turn? }
-//   전진: left=반시계/right=시계 스핀. 좌회전: left=시계/right=반시계 스핀 + 몸체 반시계.
+//   전진: left=반시계/right=시계 스핀(좌우 대칭 메시라 부호 반대).
+//   좌회전(제자리): left 후진·right 전진 → 두 바퀴 모두 같은 부호로 스핀 + 몸체 반시계.
 //   우회전: 반대. (SIMULATOR.md 2장)
 // ============================================================
 function createServoComponent(ctx, fields = {}) {
@@ -522,7 +523,8 @@ function createServoComponent(ctx, fields = {}) {
         if (axisDir) root.position.addScaledVector(_dir.copy(axisDir).applyQuaternion(root.quaternion), move * speed * MOVE * dt);
       }
       if (turn !== 0) {
-        const turnSpin = wheel === 'left' ? -1 : (wheel === 'right' ? 1 : 0);
+        // 제자리 선회는 좌우 바퀴가 같은 부호로 스핀(한쪽 후진·한쪽 전진). 이전엔 right 만 반대로 돌던 버그
+        const turnSpin = (wheel === 'left' || wheel === 'right') ? -1 : 0;
         if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * speed * SPIN * dt, rotOffset);
         if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * speed * TURN * dt, turnOffset);
       }

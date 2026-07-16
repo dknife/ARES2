@@ -5848,7 +5848,7 @@
           if (axisDir) root.position.addScaledVector(_dir.copy(axisDir).applyQuaternion(root.quaternion), move * speed * MOVE * dt);
         }
         if (turn !== 0) {
-          const turnSpin = wheel === "left" ? -1 : wheel === "right" ? 1 : 0;
+          const turnSpin = wheel === "left" || wheel === "right" ? -1 : 0;
           if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * speed * SPIN * dt, rotOffset);
           if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * speed * TURN * dt, turnOffset);
         }
