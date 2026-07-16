@@ -1282,11 +1282,70 @@ export class EditorControls {
       if (event.ctrlKey || event.metaKey) { this.toggleMultiSelect(simObject.root); return; }
       this.select(simObject.root);
     });
+
+    // ── 드래그앤드롭 재부모화(2026-07-16) — 스폰 객체를 다른 객체 위에 놓으면
+    //    그 객체의 자식이 된다(끌려가는 객체의 하위 트리는 함께 이동). ──
+    if (simObject.spawned) {
+      row.draggable = true;
+      row.addEventListener('dragstart', (e) => {
+        cancelHold();                              // 드래그 중 이름변경 타이머 방지
+        this._dragSimId = simObject.id;
+        row.classList.add('is-dragging');
+        try { e.dataTransfer.setData('text/plain', simObject.id); e.dataTransfer.effectAllowed = 'move'; } catch (_) {}
+      });
+      row.addEventListener('dragend', () => {
+        this._dragSimId = null;
+        this.hierarchy?.querySelectorAll('.is-dragging, .drop-target')
+          .forEach((el) => el.classList.remove('is-dragging', 'drop-target'));
+      });
+    }
+    // 모든 행은 드롭 대상이 될 수 있다(자기 자신/후손 위로는 reparent 가 무시).
+    row.addEventListener('dragover', (e) => {
+      if (!this._dragSimId || this._dragSimId === simObject.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      row.classList.add('drop-target');
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('drop-target'));
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();                         // 리스트 배경(루트로 이동)보다 우선
+      row.classList.remove('drop-target');
+      const draggedId = this._dragSimId || e.dataTransfer.getData('text/plain');
+      this.reparentInHierarchy(draggedId, simObject.id);
+    });
+
     list.appendChild(row);
 
     this.ctx.objects.getChildrenOf(simObject).forEach((child) => {
       this.renderHierarchyItem(child, depth + 1, list);
     });
+  }
+
+  // 드래그한 객체(draggedId)를 targetId 의 자식으로 옮긴다. target 이 없으면(빈 공간
+  // 드롭) 최상위로 이동. 월드 트랜스폼을 보존(attach)해 화면상 위치가 튀지 않으며,
+  // 끌려가는 객체의 하위 트리는 씬 그래프상 그 밑에 있으므로 함께 따라온다.
+  reparentInHierarchy(draggedId, targetId) {
+    const reg = this.ctx.objects;
+    const dragged = reg?.items.find((o) => o.id === draggedId);
+    if (!dragged?.spawned) return;
+    const target = targetId ? reg.items.find((o) => o.id === targetId) : null;
+    if (target && target === dragged) return;
+
+    // 순환 방지 — target 이 dragged 의 후손이면 거부(자기 밑으로 자기 이동 불가)
+    for (let p = target; p; p = reg.getParentOf(p)) {
+      if (p === dragged) { this.ctx.logLine?.('그 객체의 하위로는 옮길 수 없어요', 'err'); return; }
+    }
+    // 이미 같은 부모면 no-op
+    if (reg.getParentOf(dragged) === target) return;
+
+    const attachTo = target ? reg.getAttachPointFor(target) : (this.ctx.worldGroup || this.ctx.scene);
+    attachTo.updateWorldMatrix(true, false);
+    attachTo.attach(dragged.root);                 // 월드 트랜스폼 보존 재부모화
+    reg.version += 1;
+    this.select(dragged.root);
+    this.updateHierarchy(true);
+    this.ctx.logLine?.(target ? `'${dragged.label}' → '${target.label}' 자식으로 이동` : `'${dragged.label}' 최상위로 이동`, 'sys');
   }
 
   updateHierarchy(force = false) {
@@ -1297,6 +1356,16 @@ export class EditorControls {
 
     const list = this.hierarchy.querySelector('.sim-editor-hierarchy-list');
     if (!list) return;
+    // 리스트 배경(행이 아닌 곳)에 드롭 = 최상위로 이동. 행 drop 은 stopPropagation 으로 우선.
+    if (!list._dropWired) {
+      list._dropWired = true;
+      list.addEventListener('dragover', (e) => { if (this._dragSimId) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } });
+      list.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const draggedId = this._dragSimId || e.dataTransfer.getData('text/plain');
+        this.reparentInHierarchy(draggedId, null);
+      });
+    }
     list.textContent = '';
 
     const roots = this.ctx.objects?.getRoots?.() || [];

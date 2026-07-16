@@ -7883,10 +7883,67 @@
         }
         this.select(simObject.root);
       });
+      if (simObject.spawned) {
+        row.draggable = true;
+        row.addEventListener("dragstart", (e) => {
+          cancelHold();
+          this._dragSimId = simObject.id;
+          row.classList.add("is-dragging");
+          try {
+            e.dataTransfer.setData("text/plain", simObject.id);
+            e.dataTransfer.effectAllowed = "move";
+          } catch (_) {
+          }
+        });
+        row.addEventListener("dragend", () => {
+          var _a;
+          this._dragSimId = null;
+          (_a = this.hierarchy) == null ? void 0 : _a.querySelectorAll(".is-dragging, .drop-target").forEach((el) => el.classList.remove("is-dragging", "drop-target"));
+        });
+      }
+      row.addEventListener("dragover", (e) => {
+        if (!this._dragSimId || this._dragSimId === simObject.id) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        row.classList.add("drop-target");
+      });
+      row.addEventListener("dragleave", () => row.classList.remove("drop-target"));
+      row.addEventListener("drop", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        row.classList.remove("drop-target");
+        const draggedId = this._dragSimId || e.dataTransfer.getData("text/plain");
+        this.reparentInHierarchy(draggedId, simObject.id);
+      });
       list.appendChild(row);
       this.ctx.objects.getChildrenOf(simObject).forEach((child) => {
         this.renderHierarchyItem(child, depth + 1, list);
       });
+    }
+    // 드래그한 객체(draggedId)를 targetId 의 자식으로 옮긴다. target 이 없으면(빈 공간
+    // 드롭) 최상위로 이동. 월드 트랜스폼을 보존(attach)해 화면상 위치가 튀지 않으며,
+    // 끌려가는 객체의 하위 트리는 씬 그래프상 그 밑에 있으므로 함께 따라온다.
+    reparentInHierarchy(draggedId, targetId) {
+      var _a, _b, _c, _d;
+      const reg = this.ctx.objects;
+      const dragged = reg == null ? void 0 : reg.items.find((o) => o.id === draggedId);
+      if (!(dragged == null ? void 0 : dragged.spawned)) return;
+      const target = targetId ? reg.items.find((o) => o.id === targetId) : null;
+      if (target && target === dragged) return;
+      for (let p = target; p; p = reg.getParentOf(p)) {
+        if (p === dragged) {
+          (_b = (_a = this.ctx).logLine) == null ? void 0 : _b.call(_a, "\uADF8 \uAC1D\uCCB4\uC758 \uD558\uC704\uB85C\uB294 \uC62E\uAE38 \uC218 \uC5C6\uC5B4\uC694", "err");
+          return;
+        }
+      }
+      if (reg.getParentOf(dragged) === target) return;
+      const attachTo = target ? reg.getAttachPointFor(target) : this.ctx.worldGroup || this.ctx.scene;
+      attachTo.updateWorldMatrix(true, false);
+      attachTo.attach(dragged.root);
+      reg.version += 1;
+      this.select(dragged.root);
+      this.updateHierarchy(true);
+      (_d = (_c = this.ctx).logLine) == null ? void 0 : _d.call(_c, target ? `'${dragged.label}' \u2192 '${target.label}' \uC790\uC2DD\uC73C\uB85C \uC774\uB3D9` : `'${dragged.label}' \uCD5C\uC0C1\uC704\uB85C \uC774\uB3D9`, "sys");
     }
     updateHierarchy(force = false) {
       var _a, _b, _c, _d;
@@ -7896,6 +7953,20 @@
       this.hierarchyVersion = version;
       const list = this.hierarchy.querySelector(".sim-editor-hierarchy-list");
       if (!list) return;
+      if (!list._dropWired) {
+        list._dropWired = true;
+        list.addEventListener("dragover", (e) => {
+          if (this._dragSimId) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+          }
+        });
+        list.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const draggedId = this._dragSimId || e.dataTransfer.getData("text/plain");
+          this.reparentInHierarchy(draggedId, null);
+        });
+      }
       list.textContent = "";
       const roots = ((_d = (_c = this.ctx.objects) == null ? void 0 : _c.getRoots) == null ? void 0 : _d.call(_c)) || [];
       if (roots.length === 0) {
@@ -9134,6 +9205,14 @@
             return detachComponent(sim.ctx, id ? sim.ctx.objects.items.find((o) => o.id === id) : (_a2 = sim.ctx.editor) == null ? void 0 : _a2.getSelectedSimObject(), type);
           },
           objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
+          parentOf: (id) => {
+            var _a2, _b2;
+            return (_b2 = (_a2 = sim.ctx.objects.getParentOf(sim.ctx.objects.items.find((o) => o.id === id))) == null ? void 0 : _a2.id) != null ? _b2 : null;
+          },
+          reparent: (draggedId, targetId) => {
+            var _a2;
+            return (_a2 = sim.ctx.editor) == null ? void 0 : _a2.reparentInHierarchy(draggedId, targetId);
+          },
           state: (id) => {
             const o = sim.ctx.objects.items.find((x) => x.id === id);
             if (!o) return null;

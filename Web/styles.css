@@ -3868,3 +3868,11 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 .blk-comment { color: #2e8b3d; font-size: 0.84em; margin: 7px 2px; font-style: italic; font-weight: 600; }
 .sample-hint { font-size: 0.8em; color: #8a6a45; background: #fff7ec; border-radius: 8px; padding: 6px 10px; margin-bottom: 6px; }
 .sample-hint b { color: #2e8b3d; }
+
+/* 계층 뷰어 드래그앤드롭 재부모화 (2026-07-16) */
+.sim-editor-hierarchy-item[draggable="true"] { cursor: grab; }
+.sim-editor-hierarchy-item.is-dragging { opacity: 0.45; }
+.sim-editor-hierarchy-item.drop-target {
+    outline: 2px solid #FF6A00; outline-offset: -2px;
+    background: rgba(255,106,0,0.18);
+}

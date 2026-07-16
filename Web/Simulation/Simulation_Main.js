@@ -271,6 +271,8 @@ export class Simulation_Main {
           ? sim.ctx.objects.items.find((o) => o.id === id)
           : sim.ctx.editor?.getSelectedSimObject(), type),
         objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
+        parentOf: (id) => sim.ctx.objects.getParentOf(sim.ctx.objects.items.find((o) => o.id === id))?.id ?? null,
+        reparent: (draggedId, targetId) => sim.ctx.editor?.reparentInHierarchy(draggedId, targetId),
         state: (id) => {
           const o = sim.ctx.objects.items.find((x) => x.id === id);
           if (!o) return null;
