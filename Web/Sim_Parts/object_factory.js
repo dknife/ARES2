@@ -93,9 +93,15 @@ export function applyObjectColors(simObject) {
   }
 }
 
-// 에지(모서리) 선 표시 토글 — 회전이 잘 안 보이는 원기둥 등에 유용하다.
-// metadata.edges 가 true 면 메시 지오메트리의 모서리를 기본색의 보색 선으로 덧그린다
-// (패싯 세로선까지 포함되어 축 회전도 눈에 보인다). THREE 생성자가 필요해 ctx 를 받는다.
+// 에지(모서리) 표시 토글 — 회전이 잘 안 보이는 원기둥 등에 유용하다.
+// metadata.edges 가 true 면 메시 모서리를 기본색의 보색으로 덧그린다.
+//  · 얇은 사각단면 튜브(단일 병합 메시)로 그려 두께를 확보한다(three 코어에는
+//    fat-line 이 없어 LineBasicMaterial.linewidth 가 대부분 무시되기 때문).
+//  · 원기둥은 옆면 세로선·위/아래 림에 더해 위·아래 캡의 방사형 스포크까지 그려
+//    어느 방향 회전이든 눈에 보인다.
+// THREE 생성자가 필요해 ctx 를 받는다.
+const EDGE_TUBE_R = 0.012;   // 튜브 반경(로컬 단위) — 선 두께감
+
 export function applyObjectEdges(ctx, simObject) {
   const THREE = ctx?.THREE;
   const root = simObject?.root;
@@ -110,14 +116,56 @@ export function applyObjectEdges(ctx, simObject) {
   if (!simObject.metadata?.edges) return;
   const base = simObject.metadata?.colors?.base || [1, 1, 1, 1];
   const comp = new THREE.Color().setRGB(1 - (base[0] ?? 1), 1 - (base[1] ?? 1), 1 - (base[2] ?? 1), 'srgb');
-  const line = new THREE.LineSegments(
-    new THREE.EdgesGeometry(root.geometry),                 // 기본 threshold(1°) → 패싯 세로선 포함
-    new THREE.LineBasicMaterial({ color: comp }),
-  );
-  line.userData.simEdge = true;                             // 픽/직렬화에서 무시할 표식
-  line.renderOrder = 1;
-  root.add(line);
-  root.userData._edgeLines = line;
+
+  // 1) 모서리 세그먼트 수집 — EdgesGeometry(패싯 세로선·림) + 원기둥 캡 스포크
+  const segs = [];
+  const eg = new THREE.EdgesGeometry(root.geometry);
+  const ep = eg.attributes.position.array;
+  for (let i = 0; i < ep.length; i += 6) segs.push([ep[i], ep[i + 1], ep[i + 2], ep[i + 3], ep[i + 4], ep[i + 5]]);
+  eg.dispose();
+  const gp = root.geometry.parameters;
+  if (gp && gp.radiusTop !== undefined && gp.height !== undefined) {   // CylinderGeometry
+    const rs = gp.radialSegments || 24, hHalf = gp.height / 2;
+    for (const cap of [0, 1]) {
+      const y = cap === 0 ? hHalf : -hHalf;
+      const r = cap === 0 ? gp.radiusTop : gp.radiusBottom;
+      for (let i = 0; i < rs; i++) {
+        const th = (i / rs) * Math.PI * 2;                            // 캡 중심 → 림 꼭짓점(방사형)
+        segs.push([0, y, 0, r * Math.sin(th), y, r * Math.cos(th)]);
+      }
+    }
+  }
+
+  // 2) 각 세그먼트를 사각단면 튜브로 만들어 하나의 지오메트리로 병합
+  const r = EDGE_TUBE_R;
+  const positions = [], indices = [];
+  const A = new THREE.Vector3(), B = new THREE.Vector3(), D = new THREE.Vector3();
+  const U = new THREE.Vector3(), V = new THREE.Vector3();
+  const upY = new THREE.Vector3(0, 1, 0), upX = new THREE.Vector3(1, 0, 0);
+  const corners = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+  for (const s of segs) {
+    A.set(s[0], s[1], s[2]); B.set(s[3], s[4], s[5]);
+    D.subVectors(B, A); if (D.lengthSq() < 1e-12) continue; D.normalize();
+    U.crossVectors(D, Math.abs(D.y) > 0.9 ? upX : upY).normalize();
+    V.crossVectors(D, U).normalize();
+    const b0 = positions.length / 3;
+    for (const P of [A, B]) for (const [su, sv] of corners) {
+      positions.push(P.x + U.x * su * r + V.x * sv * r, P.y + U.y * su * r + V.y * sv * r, P.z + U.z * su * r + V.z * sv * r);
+    }
+    for (let k = 0; k < 4; k++) {
+      const a = b0 + k, bb = b0 + (k + 1) % 4, c = b0 + 4 + (k + 1) % 4, d = b0 + 4 + k;
+      indices.push(a, bb, c, a, c, d);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: comp }));   // 무광 → 순수 보색
+  mesh.userData.simEdge = true;         // 픽/직렬화에서 무시할 표식
+  mesh.renderOrder = 1;
+  mesh.castShadow = false; mesh.receiveShadow = false;
+  root.add(mesh);
+  root.userData._edgeLines = mesh;
 }
 
 export function createPrimitiveObject(ctx, type) {

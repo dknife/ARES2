@@ -6353,6 +6353,7 @@
       edgeLine.material.color.setRGB(1 - br, 1 - bg, 1 - bb, "srgb");
     }
   }
+  var EDGE_TUBE_R = 0.012;
   function applyObjectEdges(ctx, simObject) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const THREE = ctx == null ? void 0 : ctx.THREE;
@@ -6368,15 +6369,56 @@
     if (!((_e = simObject.metadata) == null ? void 0 : _e.edges)) return;
     const base = ((_g = (_f = simObject.metadata) == null ? void 0 : _f.colors) == null ? void 0 : _g.base) || [1, 1, 1, 1];
     const comp = new THREE.Color().setRGB(1 - ((_h = base[0]) != null ? _h : 1), 1 - ((_i = base[1]) != null ? _i : 1), 1 - ((_j = base[2]) != null ? _j : 1), "srgb");
-    const line = new THREE.LineSegments(
-      new THREE.EdgesGeometry(root.geometry),
-      // 기본 threshold(1°) → 패싯 세로선 포함
-      new THREE.LineBasicMaterial({ color: comp })
-    );
-    line.userData.simEdge = true;
-    line.renderOrder = 1;
-    root.add(line);
-    root.userData._edgeLines = line;
+    const segs = [];
+    const eg = new THREE.EdgesGeometry(root.geometry);
+    const ep = eg.attributes.position.array;
+    for (let i = 0; i < ep.length; i += 6) segs.push([ep[i], ep[i + 1], ep[i + 2], ep[i + 3], ep[i + 4], ep[i + 5]]);
+    eg.dispose();
+    const gp = root.geometry.parameters;
+    if (gp && gp.radiusTop !== void 0 && gp.height !== void 0) {
+      const rs = gp.radialSegments || 24, hHalf = gp.height / 2;
+      for (const cap of [0, 1]) {
+        const y = cap === 0 ? hHalf : -hHalf;
+        const r2 = cap === 0 ? gp.radiusTop : gp.radiusBottom;
+        for (let i = 0; i < rs; i++) {
+          const th = i / rs * Math.PI * 2;
+          segs.push([0, y, 0, r2 * Math.sin(th), y, r2 * Math.cos(th)]);
+        }
+      }
+    }
+    const r = EDGE_TUBE_R;
+    const positions = [], indices = [];
+    const A = new THREE.Vector3(), B = new THREE.Vector3(), D = new THREE.Vector3();
+    const U = new THREE.Vector3(), V = new THREE.Vector3();
+    const upY = new THREE.Vector3(0, 1, 0), upX = new THREE.Vector3(1, 0, 0);
+    const corners = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+    for (const s of segs) {
+      A.set(s[0], s[1], s[2]);
+      B.set(s[3], s[4], s[5]);
+      D.subVectors(B, A);
+      if (D.lengthSq() < 1e-12) continue;
+      D.normalize();
+      U.crossVectors(D, Math.abs(D.y) > 0.9 ? upX : upY).normalize();
+      V.crossVectors(D, U).normalize();
+      const b0 = positions.length / 3;
+      for (const P of [A, B]) for (const [su, sv] of corners) {
+        positions.push(P.x + U.x * su * r + V.x * sv * r, P.y + U.y * su * r + V.y * sv * r, P.z + U.z * su * r + V.z * sv * r);
+      }
+      for (let k = 0; k < 4; k++) {
+        const a = b0 + k, bb = b0 + (k + 1) % 4, c = b0 + 4 + (k + 1) % 4, d = b0 + 4 + k;
+        indices.push(a, bb, c, a, c, d);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setIndex(indices);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: comp }));
+    mesh.userData.simEdge = true;
+    mesh.renderOrder = 1;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    root.add(mesh);
+    root.userData._edgeLines = mesh;
   }
   function createPrimitiveObject(ctx, type) {
     var _a;

@@ -3877,7 +3877,11 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
     background: rgba(255,106,0,0.18);
 }
 
-/* 인스펙터 에지 표시 토글 (2026-07-16) */
-.sim-editor-edge-toggle { display: flex; align-items: center; gap: 6px; grid-column: 1 / -1; font-size: 0.86em; color: #cfd9f2; margin-top: 4px; cursor: pointer; }
-.sim-editor-edge-toggle small { color: #8fa0c8; }
-.sim-editor-edge-toggle input { width: auto; }
+/* 인스펙터 에지 표시 토글 (2026-07-16) — 다른 인스펙터 라벨과 동일 크기 */
+.sim-editor-edge-toggle {
+    display: flex; align-items: center; gap: 4px; grid-column: 1 / -1;
+    font-size: 0.55em; font-weight: 700; color: rgba(238, 243, 251, 0.7);
+    margin-top: 3px; cursor: pointer;
+}
+.sim-editor-edge-toggle small { color: rgba(238, 243, 251, 0.5); font-weight: 500; }
+.sim-editor-edge-toggle input { width: auto; margin: 0; flex: 0 0 auto; }
