@@ -473,6 +473,7 @@ function createServoComponent(ctx, fields = {}) {
   const MOVE = 0.4;   // 이동 m/s
   const TURN = 1.5;   // 선회 rad/s
   let move = 0, turn = 0, speed = 1;
+  const _dir = new THREE.Vector3();   // 이동 방향 계산용 스크래치(프레임당 할당 방지)
   const stop = () => { move = 0; turn = 0; };
   // 속도 % 파싱(0~100 또는 0~1 허용) — 블록의 서보 전진 속도(%)를 시뮬에 반영
   const spd = (v) => { const n = parseFloat(v); if (!isFinite(n) || n <= 0) return 1; return Math.max(0.05, Math.min(1, n > 1 ? n / 100 : n)); };
@@ -516,8 +517,9 @@ function createServoComponent(ctx, fields = {}) {
       //           선회 시 left=시계/right=반시계 차동, neutral 은 차동 스핀 없음
       if (move !== 0) {
         if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'right' ? -1 : 1) * move * speed * SPIN * dt, rotOffset);
-        // position 은 부모 좌표이므로 부모축 그대로 더한다 — 바퀴가 스핀 중이어도 직진이 유지된다
-        if (axisDir) root.position.addScaledVector(axisDir, move * speed * MOVE * dt);
+        // 이동 방향은 객체 자신의 현재 자세로 변환 — 선회 후에도 '자기 앞쪽'으로 전/후진(2026-07-16)
+        // (axis_direction 을 객체 로컬축으로 해석. root.quaternion 은 부모 기준 회전이므로 결과는 부모 좌표계 방향)
+        if (axisDir) root.position.addScaledVector(_dir.copy(axisDir).applyQuaternion(root.quaternion), move * speed * MOVE * dt);
       }
       if (turn !== 0) {
         const turnSpin = wheel === 'left' ? -1 : (wheel === 'right' ? 1 : 0);

@@ -5758,6 +5758,7 @@
     const MOVE = 0.4;
     const TURN = 1.5;
     let move = 0, turn = 0, speed = 1;
+    const _dir = new THREE.Vector3();
     const stop = () => {
       move = 0;
       turn = 0;
@@ -5844,7 +5845,7 @@
         const root = simObject.root;
         if (move !== 0) {
           if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === "right" ? -1 : 1) * move * speed * SPIN * dt, rotOffset);
-          if (axisDir) root.position.addScaledVector(axisDir, move * speed * MOVE * dt);
+          if (axisDir) root.position.addScaledVector(_dir.copy(axisDir).applyQuaternion(root.quaternion), move * speed * MOVE * dt);
         }
         if (turn !== 0) {
           const turnSpin = wheel === "left" ? -1 : wheel === "right" ? 1 : 0;
