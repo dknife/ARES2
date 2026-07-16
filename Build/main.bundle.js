@@ -5757,10 +5757,15 @@
     const SPIN = 4;
     const MOVE = 0.4;
     const TURN = 1.5;
-    let move = 0, turn = 0;
+    let move = 0, turn = 0, speed = 1;
     const stop = () => {
       move = 0;
       turn = 0;
+    };
+    const spd = (v) => {
+      const n = parseFloat(v);
+      if (!isFinite(n) || n <= 0) return 1;
+      return Math.max(0.05, Math.min(1, n > 1 ? n / 100 : n));
     };
     const outFields = { wheel };
     if (axisRot) outFields.axis_rotation = [...fields.axis_rotation];
@@ -5783,45 +5788,54 @@
           stop();
           return null;
         }
-        const is = (p) => cmd.startsWith(p);
+        const is = (p2) => cmd.startsWith(p2);
+        const p = cmd.split(",");
         if (is("SERVO_tFORWARD,")) {
           move = 1;
           turn = 0;
+          speed = spd(p[2]);
           return stop;
         }
         if (is("SERVO_tBACKWARD,")) {
           move = -1;
           turn = 0;
+          speed = spd(p[2]);
           return stop;
         }
         if (is("SERVO_tLEFT,")) {
           turn = 1;
           move = 0;
+          speed = spd(p[2]);
           return stop;
         }
         if (is("SERVO_tRIGHT,")) {
           turn = -1;
           move = 0;
+          speed = spd(p[2]);
           return stop;
         }
         if (cmd === "SERVO_FORWARD" || is("SERVO_FORWARD,")) {
           move = 1;
           turn = 0;
+          speed = spd(p[1]);
           return null;
         }
         if (cmd === "SERVO_BACKWARD" || is("SERVO_BACKWARD,")) {
           move = -1;
           turn = 0;
+          speed = spd(p[1]);
           return null;
         }
         if (cmd === "SERVO_LEFT" || is("SERVO_LEFT,")) {
           turn = 1;
           move = 0;
+          speed = spd(p[1]);
           return null;
         }
         if (cmd === "SERVO_RIGHT" || is("SERVO_RIGHT,")) {
           turn = -1;
           move = 0;
+          speed = spd(p[1]);
           return null;
         }
         return null;
@@ -5829,13 +5843,13 @@
       update(dt, _c, simObject) {
         const root = simObject.root;
         if (move !== 0) {
-          if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === "right" ? -1 : 1) * move * SPIN * dt, rotOffset);
-          if (axisDir) root.position.addScaledVector(axisDir, move * MOVE * dt);
+          if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === "right" ? -1 : 1) * move * speed * SPIN * dt, rotOffset);
+          if (axisDir) root.position.addScaledVector(axisDir, move * speed * MOVE * dt);
         }
         if (turn !== 0) {
           const turnSpin = wheel === "left" ? -1 : wheel === "right" ? 1 : 0;
-          if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * SPIN * dt, rotOffset);
-          if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * TURN * dt, turnOffset);
+          if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * speed * SPIN * dt, rotOffset);
+          if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * speed * TURN * dt, turnOffset);
         }
       },
       dispose() {

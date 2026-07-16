@@ -472,8 +472,10 @@ function createServoComponent(ctx, fields = {}) {
   const SPIN = 4.0;   // 바퀴 스핀 rad/s (≈38rpm — 레거시 로버 애니메이션과 동일, 과속 방지)
   const MOVE = 0.4;   // 이동 m/s
   const TURN = 1.5;   // 선회 rad/s
-  let move = 0, turn = 0;
+  let move = 0, turn = 0, speed = 1;
   const stop = () => { move = 0; turn = 0; };
+  // 속도 % 파싱(0~100 또는 0~1 허용) — 블록의 서보 전진 속도(%)를 시뮬에 반영
+  const spd = (v) => { const n = parseFloat(v); if (!isFinite(n) || n <= 0) return 1; return Math.max(0.05, Math.min(1, n > 1 ? n / 100 : n)); };
 
   const outFields = { wheel };
   if (axisRot) outFields.axis_rotation = [...fields.axis_rotation];
@@ -495,14 +497,16 @@ function createServoComponent(ctx, fields = {}) {
     onCommand(cmd) {
       if (cmd === 'STOP_ALL' || cmd === 'SIM_END' || cmd === 'SERVO_STOP' || cmd.startsWith('SERVO_STOP,')) { stop(); return null; }   // SIM_END: 종료 시 연속 주행 정지
       const is = (p) => cmd.startsWith(p);
-      if (is('SERVO_tFORWARD,'))  { move = 1;  turn = 0; return stop; }
-      if (is('SERVO_tBACKWARD,')) { move = -1; turn = 0; return stop; }
-      if (is('SERVO_tLEFT,'))     { turn = 1;  move = 0; return stop; }
-      if (is('SERVO_tRIGHT,'))    { turn = -1; move = 0; return stop; }
-      if (cmd === 'SERVO_FORWARD'  || is('SERVO_FORWARD,'))  { move = 1;  turn = 0; return null; }
-      if (cmd === 'SERVO_BACKWARD' || is('SERVO_BACKWARD,')) { move = -1; turn = 0; return null; }
-      if (cmd === 'SERVO_LEFT'     || is('SERVO_LEFT,'))     { turn = 1;  move = 0; return null; }
-      if (cmd === 'SERVO_RIGHT'    || is('SERVO_RIGHT,'))    { turn = -1; move = 0; return null; }
+      const p = cmd.split(',');
+      // 시간지정(SERVO_t*,초,속도): 속도=3번째 인자 / 연속(SERVO_*,속도): 속도=2번째 인자
+      if (is('SERVO_tFORWARD,'))  { move = 1;  turn = 0; speed = spd(p[2]); return stop; }
+      if (is('SERVO_tBACKWARD,')) { move = -1; turn = 0; speed = spd(p[2]); return stop; }
+      if (is('SERVO_tLEFT,'))     { turn = 1;  move = 0; speed = spd(p[2]); return stop; }
+      if (is('SERVO_tRIGHT,'))    { turn = -1; move = 0; speed = spd(p[2]); return stop; }
+      if (cmd === 'SERVO_FORWARD'  || is('SERVO_FORWARD,'))  { move = 1;  turn = 0; speed = spd(p[1]); return null; }
+      if (cmd === 'SERVO_BACKWARD' || is('SERVO_BACKWARD,')) { move = -1; turn = 0; speed = spd(p[1]); return null; }
+      if (cmd === 'SERVO_LEFT'     || is('SERVO_LEFT,'))     { turn = 1;  move = 0; speed = spd(p[1]); return null; }
+      if (cmd === 'SERVO_RIGHT'    || is('SERVO_RIGHT,'))    { turn = -1; move = 0; speed = spd(p[1]); return null; }
       return null;
     },
     update(dt, _c, simObject) {
@@ -511,14 +515,14 @@ function createServoComponent(ctx, fields = {}) {
       // 스핀 부호: 전진 시 left·neutral=반시계(+)/right=시계(−),
       //           선회 시 left=시계/right=반시계 차동, neutral 은 차동 스핀 없음
       if (move !== 0) {
-        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'right' ? -1 : 1) * move * SPIN * dt, rotOffset);
+        if (axisRot) rotateAboutParentAxis(THREE, root, axisRot, (wheel === 'right' ? -1 : 1) * move * speed * SPIN * dt, rotOffset);
         // position 은 부모 좌표이므로 부모축 그대로 더한다 — 바퀴가 스핀 중이어도 직진이 유지된다
-        if (axisDir) root.position.addScaledVector(axisDir, move * MOVE * dt);
+        if (axisDir) root.position.addScaledVector(axisDir, move * speed * MOVE * dt);
       }
       if (turn !== 0) {
         const turnSpin = wheel === 'left' ? -1 : (wheel === 'right' ? 1 : 0);
-        if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * SPIN * dt, rotOffset);
-        if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * TURN * dt, turnOffset);
+        if (axisRot && turnSpin !== 0) rotateAboutParentAxis(THREE, root, axisRot, turnSpin * turn * speed * SPIN * dt, rotOffset);
+        if (axisTurn) rotateAboutParentAxis(THREE, root, axisTurn, turn * speed * TURN * dt, turnOffset);
       }
     },
     dispose() { stop(); },
