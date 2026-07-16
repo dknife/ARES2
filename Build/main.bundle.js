@@ -5858,7 +5858,7 @@
       }
     };
   }
-  var ULTRASONIC_SCALE = 5;
+  var ULTRASONIC_SCALE = 1 / 5;
   function createUltraSonicComponent(ctx, fields = {}) {
     const THREE = ctx.THREE;
     const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);

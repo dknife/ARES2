@@ -537,7 +537,7 @@ function createServoComponent(ctx, fields = {}) {
 // UltraSonic — { detect_direction(로컬축) } : DISTANCE 명령에 ray 를 쏘아
 //   거리(cm, 소수 둘째 자리) 회신. 객체가 회전하면 ray 방향도 함께 돈다.
 // ============================================================
-const ULTRASONIC_SCALE = 5;   // 측정 거리 보정 배율 — 시뮬 스케일 대비 실측감이 짧아 5배로 확대
+const ULTRASONIC_SCALE = 1 / 5;   // 측정 거리 보정 배율 — 실제 반환값이 원측정치의 1/5
 function createUltraSonicComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
