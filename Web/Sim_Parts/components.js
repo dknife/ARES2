@@ -534,6 +534,54 @@ function createServoComponent(ctx, fields = {}) {
 }
 
 // ============================================================
+// 센서 측정 발광 — 센서(초음파·자기장)가 measure 될 때 자기 메시를 잠깐 발광시켰다가
+//   페이드아웃한다. pulse() 를 매 측정마다 호출하면 측정이 이어지는 동안 켜져 있다가
+//   측정이 멈추면 서서히 꺼진다. 컴포넌트의 update(dt) 에서 fade 를 구동한다.
+// ============================================================
+const SENSOR_GLOW_FADE = 0.45;   // 발광 페이드아웃 시간(초)
+function makeSensorGlow(ctx, rgb) {
+  const THREE = ctx.THREE;
+  const glowColor = new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2], 'srgb');
+  const saved = new Map();   // 재질별 원래 emissive 백업
+  let t = 0;                 // 남은 발광 0~1
+  let light = null;
+  const apply = (simObject, intensity) => {
+    forOwnMeshes(simObject.root, (mesh) => {
+      if (mesh.userData?.simEdge) return;   // 에지 튜브 제외
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((m) => {
+        if (!m || m.emissive === undefined) return;
+        if (!saved.has(m)) saved.set(m, { emissive: m.emissive.clone(), intensity: m.emissiveIntensity ?? 1 });
+        if (intensity > 0) {
+          m.emissive.copy(glowColor);
+          m.emissiveIntensity = 0.5 + intensity * 1.8;
+        } else {
+          const o = saved.get(m);
+          if (o) { m.emissive.copy(o.emissive); m.emissiveIntensity = o.intensity; }
+        }
+      });
+    });
+    if (intensity > 0) {
+      if (!light) { light = new THREE.PointLight(glowColor.getHex(), 0, 3, 2); simObject.root.add(light); }
+      light.color.copy(glowColor);
+      light.intensity = 2.5 * intensity;
+    } else if (light) {
+      light.parent?.remove(light); light.dispose?.(); light = null;
+    }
+  };
+  return {
+    pulse(simObject) { t = 1; apply(simObject, 1); },
+    update(dt, simObject) {
+      if (t <= 0) return;
+      t = Math.max(0, t - dt / SENSOR_GLOW_FADE);
+      apply(simObject, t);
+      if (t <= 0) saved.clear();
+    },
+    dispose(simObject) { t = 0; apply(simObject, 0); saved.clear(); },
+  };
+}
+
+// ============================================================
 // UltraSonic — { detect_direction(로컬축) } : DISTANCE 명령에 ray 를 쏘아
 //   거리(cm, 소수 둘째 자리) 회신. 객체가 회전하면 ray 방향도 함께 돈다.
 // ============================================================
@@ -542,12 +590,16 @@ function createUltraSonicComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
   const ray = new THREE.Raycaster();
+  const glow = makeSensorGlow(ctx, [0.2, 0.75, 1.0]);   // 측정 시 청색 발광
   const under = (node, root) => { let n = node; while (n) { if (n === root) return true; n = n.parent; } return false; };
   return {
     declarative: true,
     type: 'UltraSonic',
     fields: { detect_direction: [dirLocal.x, dirLocal.y, dirLocal.z] },
+    update(dt, _cctx, simObject) { glow.update(dt, simObject); },
+    dispose(_cctx, simObject) { glow.dispose(simObject); },
     measure(cctx, simObject) {
+      glow.pulse(simObject);   // 측정할 때 발광(이후 update 에서 페이드아웃)
       cctx.scene.updateMatrixWorld(true);   // 프로그램적 이동 직후에도 정확하도록 강제 갱신
       const origin = simObject.root.getWorldPosition(new THREE.Vector3());
       // 로컬 좌표계 축(detect_direction)을 월드 방향으로 변환 — 회전뿐 아니라 비균일
@@ -580,11 +632,15 @@ function createMagnetComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   const point = fieldVec(THREE, fields.detection_point, { normalize: false }) || new THREE.Vector3();
   const box = new THREE.Box3();
+  const glow = makeSensorGlow(ctx, [0.3, 1.0, 0.4]);   // 측정 시 녹색 발광
   return {
     declarative: true,
     type: 'Magnet',
     fields: { detection_point: [point.x, point.y, point.z] },
+    update(dt, _cctx, simObject) { glow.update(dt, simObject); },
+    dispose(_cctx, simObject) { glow.dispose(simObject); },
     measure(cctx, simObject) {
+      glow.pulse(simObject);   // 측정할 때 발광(이후 update 에서 페이드아웃)
       cctx.scene.updateMatrixWorld(true);
       const sensor = localOffsetToWorld(THREE, simObject.root, point);
       for (const item of cctx.objects?.items || []) {

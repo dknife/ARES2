@@ -5858,11 +5858,72 @@
       }
     };
   }
+  var SENSOR_GLOW_FADE = 0.45;
+  function makeSensorGlow(ctx, rgb) {
+    const THREE = ctx.THREE;
+    const glowColor = new THREE.Color().setRGB(rgb[0], rgb[1], rgb[2], "srgb");
+    const saved = /* @__PURE__ */ new Map();
+    let t = 0;
+    let light = null;
+    const apply = (simObject, intensity) => {
+      var _a, _b;
+      forOwnMeshes(simObject.root, (mesh) => {
+        var _a2;
+        if ((_a2 = mesh.userData) == null ? void 0 : _a2.simEdge) return;
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        mats.forEach((m) => {
+          var _a3;
+          if (!m || m.emissive === void 0) return;
+          if (!saved.has(m)) saved.set(m, { emissive: m.emissive.clone(), intensity: (_a3 = m.emissiveIntensity) != null ? _a3 : 1 });
+          if (intensity > 0) {
+            m.emissive.copy(glowColor);
+            m.emissiveIntensity = 0.5 + intensity * 1.8;
+          } else {
+            const o = saved.get(m);
+            if (o) {
+              m.emissive.copy(o.emissive);
+              m.emissiveIntensity = o.intensity;
+            }
+          }
+        });
+      });
+      if (intensity > 0) {
+        if (!light) {
+          light = new THREE.PointLight(glowColor.getHex(), 0, 3, 2);
+          simObject.root.add(light);
+        }
+        light.color.copy(glowColor);
+        light.intensity = 2.5 * intensity;
+      } else if (light) {
+        (_a = light.parent) == null ? void 0 : _a.remove(light);
+        (_b = light.dispose) == null ? void 0 : _b.call(light);
+        light = null;
+      }
+    };
+    return {
+      pulse(simObject) {
+        t = 1;
+        apply(simObject, 1);
+      },
+      update(dt, simObject) {
+        if (t <= 0) return;
+        t = Math.max(0, t - dt / SENSOR_GLOW_FADE);
+        apply(simObject, t);
+        if (t <= 0) saved.clear();
+      },
+      dispose(simObject) {
+        t = 0;
+        apply(simObject, 0);
+        saved.clear();
+      }
+    };
+  }
   var ULTRASONIC_SCALE = 1 / 5;
   function createUltraSonicComponent(ctx, fields = {}) {
     const THREE = ctx.THREE;
     const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
     const ray = new THREE.Raycaster();
+    const glow = makeSensorGlow(ctx, [0.2, 0.75, 1]);
     const under = (node, root) => {
       let n = node;
       while (n) {
@@ -5875,8 +5936,15 @@
       declarative: true,
       type: "UltraSonic",
       fields: { detect_direction: [dirLocal.x, dirLocal.y, dirLocal.z] },
+      update(dt, _cctx, simObject) {
+        glow.update(dt, simObject);
+      },
+      dispose(_cctx, simObject) {
+        glow.dispose(simObject);
+      },
       measure(cctx, simObject) {
         var _a, _b, _c;
+        glow.pulse(simObject);
         cctx.scene.updateMatrixWorld(true);
         const origin = simObject.root.getWorldPosition(new THREE.Vector3());
         const dir = dirLocal.clone().transformDirection(simObject.root.matrixWorld);
@@ -5900,12 +5968,20 @@
     const THREE = ctx.THREE;
     const point = fieldVec(THREE, fields.detection_point, { normalize: false }) || new THREE.Vector3();
     const box = new THREE.Box3();
+    const glow = makeSensorGlow(ctx, [0.3, 1, 0.4]);
     return {
       declarative: true,
       type: "Magnet",
       fields: { detection_point: [point.x, point.y, point.z] },
+      update(dt, _cctx, simObject) {
+        glow.update(dt, simObject);
+      },
+      dispose(_cctx, simObject) {
+        glow.dispose(simObject);
+      },
       measure(cctx, simObject) {
         var _a, _b;
+        glow.pulse(simObject);
         cctx.scene.updateMatrixWorld(true);
         const sensor = localOffsetToWorld(THREE, simObject.root, point);
         for (const item of ((_a = cctx.objects) == null ? void 0 : _a.items) || []) {
