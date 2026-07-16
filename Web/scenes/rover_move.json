@@ -41,6 +41,10 @@
               0
             ]
           }
+        },
+        {
+          "type": "Buzzer",
+          "fields": {}
         }
       ],
       "colors": {
@@ -264,9 +268,9 @@
       "label": "UltraSonicBody",
       "parent": "box-2",
       "position": [
-        -0.194,
+        -0.2500887934036814,
         0.426,
-        0
+        -0.03205163376380794
       ],
       "quaternion": [
         0,
