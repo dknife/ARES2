@@ -5754,8 +5754,8 @@
     const axisTurn = fieldVec(THREE, fields.axis_turn);
     const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });
     const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });
-    const SPIN = 4;
-    const MOVE = 0.4;
+    const SPIN = 8;
+    const MOVE = 0.8;
     const TURN = 1.5;
     let move = 0, turn = 0, speed = 1;
     const _dir = new THREE.Vector3();
