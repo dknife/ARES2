@@ -19,7 +19,7 @@ const CAMERA_CONTROL = {
   wheelScale: 0.0025,
   smoothRate: 10,
   minDistanceRatio: 0.35,
-  maxDistanceRatio: 3.0,
+  maxDistanceRatio: 10.0,   // 프레이밍 거리의 10배까지 줌아웃 허용(기존 3배는 너무 일찍 막힘)
   minDistanceFloor: 0.2,
   pinchSpeed: 3,   // 핀치 줌 배율(거리 비율의 지수) — 값이 클수록 빠르게 확대/축소
 };
