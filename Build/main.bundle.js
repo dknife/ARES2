@@ -5879,7 +5879,7 @@
         var _a, _b, _c;
         cctx.scene.updateMatrixWorld(true);
         const origin = simObject.root.getWorldPosition(new THREE.Vector3());
-        const dir = dirLocal.clone().applyQuaternion(simObject.root.getWorldQuaternion(new THREE.Quaternion())).normalize();
+        const dir = dirLocal.clone().transformDirection(simObject.root.matrixWorld);
         ray.set(origin, dir);
         ray.far = 50;
         const hits = ray.intersectObjects(cctx.scene.children, true);

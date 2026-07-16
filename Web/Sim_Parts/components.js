@@ -550,9 +550,10 @@ function createUltraSonicComponent(ctx, fields = {}) {
     measure(cctx, simObject) {
       cctx.scene.updateMatrixWorld(true);   // 프로그램적 이동 직후에도 정확하도록 강제 갱신
       const origin = simObject.root.getWorldPosition(new THREE.Vector3());
-      const dir = dirLocal.clone()
-        .applyQuaternion(simObject.root.getWorldQuaternion(new THREE.Quaternion()))
-        .normalize();
+      // 로컬 좌표계 축(detect_direction)을 월드 방향으로 변환 — 회전뿐 아니라 비균일
+      // 스케일/중첩 부모까지 반영해야 로컬축이 실제 향하는 방향으로 광선이 나간다.
+      // (transformDirection = 월드행렬 3x3 적용 후 정규화)
+      const dir = dirLocal.clone().transformDirection(simObject.root.matrixWorld);
       ray.set(origin, dir);
       ray.far = 50;
       const hits = ray.intersectObjects(cctx.scene.children, true);
