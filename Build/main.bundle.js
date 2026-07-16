@@ -8292,7 +8292,8 @@
     zoomSpeed: 0.4,
     wheelScale: 25e-4,
     smoothRate: 10,
-    minDistanceRatio: 0.35,
+    minDistanceRatio: 0.2,
+    // 프레이밍 거리의 0.2배까지 줌인 허용(로버에 더 가까이)
     maxDistanceRatio: 10,
     // 프레이밍 거리의 10배까지 줌아웃 허용(기존 3배는 너무 일찍 막힘)
     minDistanceFloor: 0.2,
@@ -9660,10 +9661,24 @@
           loop();
           await applyScene(sim.ctx, json);
           const T = sim.ctx.THREE;
-          const bb = new T.Box3();
           sim.ctx.scene.updateMatrixWorld(true);
-          sim.ctx.objects.items.forEach((o) => bb.expandByObject(o.root));
-          if (!bb.isEmpty()) {
+          const info = [];
+          sim.ctx.objects.getRoots().forEach((o) => {
+            const b = new T.Box3().expandByObject(o.root);
+            if (b.isEmpty()) return;
+            const s = b.getSize(new T.Vector3());
+            info.push({ box: b, r: Math.max(s.x, s.y, s.z), c: b.getCenter(new T.Vector3()) });
+          });
+          if (info.length) {
+            const full = new T.Box3();
+            info.forEach((p) => full.union(p.box));
+            const fs = full.getSize(new T.Vector3());
+            const fullMax = Math.max(fs.x, fs.y, fs.z, 1);
+            let best = info[0];
+            info.forEach((p) => {
+              if (p.c.x * p.c.x + p.c.z * p.c.z < best.c.x * best.c.x + best.c.z * best.c.z) best = p;
+            });
+            const bb = info.length > 1 && fullMax > 8 && fullMax > best.r * 4 ? best.box : full;
             const size = bb.getSize(new T.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z, 1);
             const fov = sim.ctx.camera.fov * Math.PI / 180;

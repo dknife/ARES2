@@ -472,12 +472,29 @@ export class Simulation_Main {
         sim.resize();
         cancelAnimationFrame(raf); loop();
         await applyScene(sim.ctx, json);
-        // 씬 전체가 보이도록 카메라 프레이밍
+        // 카메라 프레이밍 — 외곽 벽/테두리가 있는 큰 아레나에선 씬 전체를 담으면 카메라가
+        // 로버에서 너무 멀어지므로, 그럴 땐 원점(카메라 타깃)에 가장 가까운 '벽이 아닌'
+        // 최상위 객체(=로버)에 프레이밍한다. 벽이 없는 일반 씬은 기존대로 전체를 담는다.
         const T = sim.ctx.THREE;
-        const bb = new T.Box3();
         sim.ctx.scene.updateMatrixWorld(true);
-        sim.ctx.objects.items.forEach((o) => bb.expandByObject(o.root));
-        if (!bb.isEmpty()) {
+        const info = [];
+        sim.ctx.objects.getRoots().forEach((o) => {
+          const b = new T.Box3().expandByObject(o.root);
+          if (b.isEmpty()) return;
+          const s = b.getSize(new T.Vector3());
+          info.push({ box: b, r: Math.max(s.x, s.y, s.z), c: b.getCenter(new T.Vector3()) });
+        });
+        if (info.length) {
+          const full = new T.Box3();
+          info.forEach((p) => full.union(p.box));
+          const fs = full.getSize(new T.Vector3());
+          const fullMax = Math.max(fs.x, fs.y, fs.z, 1);
+          // 원점(카메라 타깃)에 가장 가까운 최상위 객체 = 주 대상(로버)
+          let best = info[0];
+          info.forEach((p) => { if (p.c.x * p.c.x + p.c.z * p.c.z < best.c.x * best.c.x + best.c.z * best.c.z) best = p; });
+          // 씬이 크고(>8m) 주 대상보다 훨씬 크면(외곽 벽/테두리 있는 아레나) 주 대상에만
+          // 프레이밍 → 카메라가 로버 근처에서 시작. 그 외 일반 씬은 전체를 담는다(기존).
+          const bb = (info.length > 1 && fullMax > 8 && fullMax > best.r * 4) ? best.box : full;
           const size = bb.getSize(new T.Vector3());
           const maxDim = Math.max(size.x, size.y, size.z, 1);
           const fov = sim.ctx.camera.fov * Math.PI / 180;
