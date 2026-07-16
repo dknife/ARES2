@@ -3876,3 +3876,8 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
     outline: 2px solid #FF6A00; outline-offset: -2px;
     background: rgba(255,106,0,0.18);
 }
+
+/* 인스펙터 에지 표시 토글 (2026-07-16) */
+.sim-editor-edge-toggle { display: flex; align-items: center; gap: 6px; grid-column: 1 / -1; font-size: 0.86em; color: #cfd9f2; margin-top: 4px; cursor: pointer; }
+.sim-editor-edge-toggle small { color: #8fa0c8; }
+.sim-editor-edge-toggle input { width: auto; }

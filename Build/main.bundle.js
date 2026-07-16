@@ -6315,7 +6315,7 @@
     }
   }
   function applyObjectColors(simObject) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e, _f, _g;
     const colors = (_a = simObject == null ? void 0 : simObject.metadata) == null ? void 0 : _a.colors;
     if (!colors) return;
     const [br = 1, bg = 1, bb = 1, ba = 1] = colors.base || [];
@@ -6348,6 +6348,35 @@
       mat.emissiveIntensity = 1;
     }
     mat.needsUpdate = true;
+    const edgeLine = (_e = (_d = simObject.root) == null ? void 0 : _d.userData) == null ? void 0 : _e._edgeLines;
+    if (((_f = simObject.metadata) == null ? void 0 : _f.edges) && ((_g = edgeLine == null ? void 0 : edgeLine.material) == null ? void 0 : _g.color)) {
+      edgeLine.material.color.setRGB(1 - br, 1 - bg, 1 - bb, "srgb");
+    }
+  }
+  function applyObjectEdges(ctx, simObject) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+    const THREE = ctx == null ? void 0 : ctx.THREE;
+    const root = simObject == null ? void 0 : simObject.root;
+    if (!THREE || !root || !root.isMesh) return;
+    const prev = root.userData._edgeLines;
+    if (prev) {
+      root.remove(prev);
+      (_b = (_a = prev.geometry) == null ? void 0 : _a.dispose) == null ? void 0 : _b.call(_a);
+      (_d = (_c = prev.material) == null ? void 0 : _c.dispose) == null ? void 0 : _d.call(_c);
+      root.userData._edgeLines = null;
+    }
+    if (!((_e = simObject.metadata) == null ? void 0 : _e.edges)) return;
+    const base = ((_g = (_f = simObject.metadata) == null ? void 0 : _f.colors) == null ? void 0 : _g.base) || [1, 1, 1, 1];
+    const comp = new THREE.Color().setRGB(1 - ((_h = base[0]) != null ? _h : 1), 1 - ((_i = base[1]) != null ? _i : 1), 1 - ((_j = base[2]) != null ? _j : 1), "srgb");
+    const line = new THREE.LineSegments(
+      new THREE.EdgesGeometry(root.geometry),
+      // 기본 threshold(1°) → 패싯 세로선 포함
+      new THREE.LineBasicMaterial({ color: comp })
+    );
+    line.userData.simEdge = true;
+    line.renderOrder = 1;
+    root.add(line);
+    root.userData._edgeLines = line;
   }
   function createPrimitiveObject(ctx, type) {
     var _a;
@@ -6384,7 +6413,7 @@
         label: `Cylinder ${id.split("-").pop()}`,
         root: root2,
         spawned: true,
-        metadata: { groundOffset: 0.35, colors: defaultColors("cylinder") }
+        metadata: { groundOffset: 0.35, colors: defaultColors("cylinder"), canEdges: true, edges: false }
       });
       applyObjectColors(sim2);
       return sim2;
@@ -6441,7 +6470,7 @@
       root,
       spawned: true,
       components: { movementBox: movementBoxComponent() },
-      metadata: { groundOffset: 0.35, colors: defaultColors("box") }
+      metadata: { groundOffset: 0.35, colors: defaultColors("box"), canEdges: true, edges: false }
     });
     applyObjectColors(sim);
     return sim;
@@ -6990,6 +7019,7 @@
       <div class="sim-editor-inspector-colors" hidden>
         <span>\uAE30\uBCF8\uC0C9</span><input data-col="b0" title="R (0~1)"><input data-col="b1" title="G (0~1)"><input data-col="b2" title="B (0~1)"><input data-col="b3" title="A \u2014 \uBD88\uD22C\uBA85\uB3C4 (0~1)">
         <span>\uBC1C\uAD11\uC0C9</span><input data-col="e0" title="R (0~1)"><input data-col="e1" title="G (0~1)"><input data-col="e2" title="B (0~1)"><input data-col="e3" title="A \u2014 \uBC1C\uAD11 \uC2DC \uBD88\uD22C\uBA85\uB3C4 (0~1)">
+        <label class="sim-editor-edge-toggle" hidden><input type="checkbox" data-edge> \uC5D0\uC9C0 \uD45C\uC2DC <small>(\uD68C\uC804 \uD655\uC778\uC6A9 \xB7 \uAE30\uBCF8\uC0C9 \uBCF4\uC0C9)</small></label>
       </div>
       <div class="sim-editor-inspector-comps"></div>
       <div class="sim-editor-inspector-status" hidden></div>
@@ -7040,7 +7070,7 @@
     }
     // 색상 입력칸(기본색·발광색 r,g,b,a) 갱신 — 색상 지원 객체(박스·구)만 노출
     refreshInspectorColors(simObject) {
-      var _a, _b;
+      var _a, _b, _c, _d;
       const wrap = (_a = this.inspector) == null ? void 0 : _a.querySelector(".sim-editor-inspector-colors");
       if (!wrap) return;
       const colors = (_b = simObject == null ? void 0 : simObject.metadata) == null ? void 0 : _b.colors;
@@ -7060,6 +7090,12 @@
         const el = wrap.querySelector(`[data-col="${key}"]`);
         if (el && document.activeElement !== el) el.value = Math.round((v != null ? v : 0) * 1e3) / 1e3;
       });
+      const edgeLabel = wrap.querySelector(".sim-editor-edge-toggle");
+      const edgeBox = wrap.querySelector("[data-edge]");
+      if (edgeLabel && edgeBox) {
+        edgeLabel.hidden = !((_c = simObject.metadata) == null ? void 0 : _c.canEdges);
+        edgeBox.checked = !!((_d = simObject.metadata) == null ? void 0 : _d.edges);
+      }
     }
     // 부착된 컴포넌트들을 필드별 입력칸(트랜스폼과 동일한 방식)으로 렌더
     renderInspectorComponents(simObject) {
@@ -7198,7 +7234,7 @@
       el.classList.toggle("error", isError);
     }
     applyInspector() {
-      var _a;
+      var _a, _b;
       const simObject = this.getSelectedSimObject();
       if (!simObject) return;
       const root = simObject.root;
@@ -7221,6 +7257,11 @@
         colors.base = [col("b0", colors.base[0]), col("b1", colors.base[1]), col("b2", colors.base[2]), col("b3", colors.base[3])];
         colors.emissive = [col("e0", colors.emissive[0]), col("e1", colors.emissive[1]), col("e2", colors.emissive[2]), col("e3", colors.emissive[3])];
         applyObjectColors(simObject);
+      }
+      if ((_b = simObject.metadata) == null ? void 0 : _b.canEdges) {
+        const edgeBox = this.inspector.querySelector("[data-edge]");
+        simObject.metadata.edges = !!(edgeBox == null ? void 0 : edgeBox.checked);
+        applyObjectEdges(this.ctx, simObject);
       }
       try {
         const list = this.collectInspectorComponents();
@@ -7679,7 +7720,7 @@
     // 씬 로드(applyScene)와 같은 방식으로 타입별 재생성 → 트랜스폼·라벨·컴포넌트 복사.
     // isTop 인 최상위만 _dup 라벨과 바운딩 박스 x 폭 오프셋을 받고, 하위는 원본 그대로 재귀 복제한다.
     async cloneObjectTree(source, parent, isTop) {
-      var _a, _b, _c;
+      var _a, _b, _c, _d, _e;
       let sim = null;
       try {
         if (source.type === "albi-body") {
@@ -7709,6 +7750,10 @@
         sim.metadata.colors.base = [...source.metadata.colors.base];
         sim.metadata.colors.emissive = [...source.metadata.colors.emissive];
         applyObjectColors(sim);
+      }
+      if (((_d = source.metadata) == null ? void 0 : _d.edges) && ((_e = sim.metadata) == null ? void 0 : _e.canEdges)) {
+        sim.metadata.edges = true;
+        applyObjectEdges(this.ctx, sim);
       }
       serializeComponents(source).forEach(({ type, fields }) => {
         try {
@@ -8881,7 +8926,7 @@
       (o) => o.spawned && !AUTO_CHILD_TYPES.has(o.type)
     );
     const objects = items.map((o) => {
-      var _a2, _b;
+      var _a2, _b, _c;
       const parent = ctx.objects.getParentOf(o);
       const entry = {
         id: o.id,
@@ -8901,6 +8946,7 @@
           emissive: [...o.metadata.colors.emissive]
         };
       }
+      if ((_c = o.metadata) == null ? void 0 : _c.edges) entry.edges = true;
       return entry;
     });
     return { version: SCENE_FORMAT_VERSION, name, unitScale: 1, topic, objects };
@@ -8952,6 +8998,10 @@
         if (Array.isArray(entry.colors.base)) sim.metadata.colors.base = [...entry.colors.base];
         if (Array.isArray(entry.colors.emissive)) sim.metadata.colors.emissive = [...entry.colors.emissive];
         applyObjectColors(sim);
+      }
+      if (entry.edges && sim.metadata) {
+        sim.metadata.edges = true;
+        applyObjectEdges(ctx, sim);
       }
       (entry.components || []).forEach(({ type, fields }) => {
         try {

@@ -4,7 +4,7 @@
 // - 개발자 모드에서 스폰된 객체(spawned=true)만 직렬화한다.
 //   토픽이 만드는 기본 객체(알비 본체 등, spawned=false)는 topic 필드로 재현된다.
 
-import { createPrimitiveObject, createGlbObject, applyObjectColors } from './object_factory.js';
+import { createPrimitiveObject, createGlbObject, applyObjectColors, applyObjectEdges } from './object_factory.js';
 import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
 import { attachComponent, serializeComponents } from './components.js';
 
@@ -38,6 +38,7 @@ export function serializeScene(ctx, { name = 'scene', topic = 'empty' } = {}) {
         emissive: [...o.metadata.colors.emissive],
       };
     }
+    if (o.metadata?.edges) entry.edges = true;   // 에지 표시 상태 보존
     return entry;
   });
   return { version: SCENE_FORMAT_VERSION, name, unitScale: 1, topic, objects };
@@ -95,6 +96,7 @@ export async function applyScene(ctx, json) {
       if (Array.isArray(entry.colors.emissive)) sim.metadata.colors.emissive = [...entry.colors.emissive];
       applyObjectColors(sim);
     }
+    if (entry.edges && sim.metadata) { sim.metadata.edges = true; applyObjectEdges(ctx, sim); }
     // 선언형 컴포넌트 복원 (팩토리 기본 부착분은 동일 타입이면 덮어씀)
     (entry.components || []).forEach(({ type, fields }) => {
       try { attachComponent(ctx, sim, type, fields || {}); }

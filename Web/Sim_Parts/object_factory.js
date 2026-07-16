@@ -85,6 +85,39 @@ export function applyObjectColors(simObject) {
     mat.emissiveIntensity = 1;
   }
   mat.needsUpdate = true;
+
+  // 에지 표시가 켜져 있으면 선 색을 기본색의 보색으로 갱신(선 생성/제거는 applyObjectEdges).
+  const edgeLine = simObject.root?.userData?._edgeLines;
+  if (simObject.metadata?.edges && edgeLine?.material?.color) {
+    edgeLine.material.color.setRGB(1 - br, 1 - bg, 1 - bb, 'srgb');
+  }
+}
+
+// 에지(모서리) 선 표시 토글 — 회전이 잘 안 보이는 원기둥 등에 유용하다.
+// metadata.edges 가 true 면 메시 지오메트리의 모서리를 기본색의 보색 선으로 덧그린다
+// (패싯 세로선까지 포함되어 축 회전도 눈에 보인다). THREE 생성자가 필요해 ctx 를 받는다.
+export function applyObjectEdges(ctx, simObject) {
+  const THREE = ctx?.THREE;
+  const root = simObject?.root;
+  if (!THREE || !root || !root.isMesh) return;
+  const prev = root.userData._edgeLines;
+  if (prev) {
+    root.remove(prev);
+    prev.geometry?.dispose?.();
+    prev.material?.dispose?.();
+    root.userData._edgeLines = null;
+  }
+  if (!simObject.metadata?.edges) return;
+  const base = simObject.metadata?.colors?.base || [1, 1, 1, 1];
+  const comp = new THREE.Color().setRGB(1 - (base[0] ?? 1), 1 - (base[1] ?? 1), 1 - (base[2] ?? 1), 'srgb');
+  const line = new THREE.LineSegments(
+    new THREE.EdgesGeometry(root.geometry),                 // 기본 threshold(1°) → 패싯 세로선 포함
+    new THREE.LineBasicMaterial({ color: comp }),
+  );
+  line.userData.simEdge = true;                             // 픽/직렬화에서 무시할 표식
+  line.renderOrder = 1;
+  root.add(line);
+  root.userData._edgeLines = line;
 }
 
 export function createPrimitiveObject(ctx, type) {
@@ -126,7 +159,7 @@ export function createPrimitiveObject(ctx, type) {
       label: `Cylinder ${id.split('-').pop()}`,
       root,
       spawned: true,
-      metadata: { groundOffset: 0.35, colors: defaultColors('cylinder') },
+      metadata: { groundOffset: 0.35, colors: defaultColors('cylinder'), canEdges: true, edges: false },
     });
     applyObjectColors(sim);
     return sim;
@@ -193,7 +226,7 @@ export function createPrimitiveObject(ctx, type) {
     root,
     spawned: true,
     components: { movementBox: movementBoxComponent() },
-    metadata: { groundOffset: 0.35, colors: defaultColors('box') },
+    metadata: { groundOffset: 0.35, colors: defaultColors('box'), canEdges: true, edges: false },
   });
   applyObjectColors(sim);
   return sim;

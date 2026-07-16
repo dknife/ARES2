@@ -1,7 +1,7 @@
 // ARES Simulation Editor Controls
 // Mouse-based object selection, TransformControls gizmos, and a small spawn menu.
 
-import { createPrimitiveObject, createGlbObject, applyObjectColors } from './object_factory.js';
+import { createPrimitiveObject, createGlbObject, applyObjectColors, applyObjectEdges } from './object_factory.js';
 import { COMPONENT_TYPES, attachComponent, detachComponent, serializeComponents } from './components.js';
 import { createSpawnedAlbiObjects } from '../Simulation/Simulation_AresRobot.js';
 
@@ -332,6 +332,7 @@ export class EditorControls {
       <div class="sim-editor-inspector-colors" hidden>
         <span>기본색</span><input data-col="b0" title="R (0~1)"><input data-col="b1" title="G (0~1)"><input data-col="b2" title="B (0~1)"><input data-col="b3" title="A — 불투명도 (0~1)">
         <span>발광색</span><input data-col="e0" title="R (0~1)"><input data-col="e1" title="G (0~1)"><input data-col="e2" title="B (0~1)"><input data-col="e3" title="A — 발광 시 불투명도 (0~1)">
+        <label class="sim-editor-edge-toggle" hidden><input type="checkbox" data-edge> 에지 표시 <small>(회전 확인용 · 기본색 보색)</small></label>
       </div>
       <div class="sim-editor-inspector-comps"></div>
       <div class="sim-editor-inspector-status" hidden></div>
@@ -395,6 +396,13 @@ export class EditorControls {
       const el = wrap.querySelector(`[data-col="${key}"]`);
       if (el && document.activeElement !== el) el.value = Math.round((v ?? 0) * 1000) / 1000;
     });
+    // 에지 표시 토글 — 지원 객체(원기둥·박스)에서만 노출
+    const edgeLabel = wrap.querySelector('.sim-editor-edge-toggle');
+    const edgeBox = wrap.querySelector('[data-edge]');
+    if (edgeLabel && edgeBox) {
+      edgeLabel.hidden = !simObject.metadata?.canEdges;
+      edgeBox.checked = !!simObject.metadata?.edges;
+    }
   }
 
   // 부착된 컴포넌트들을 필드별 입력칸(트랜스폼과 동일한 방식)으로 렌더
@@ -557,6 +565,13 @@ export class EditorControls {
       colors.base = [col('b0', colors.base[0]), col('b1', colors.base[1]), col('b2', colors.base[2]), col('b3', colors.base[3])];
       colors.emissive = [col('e0', colors.emissive[0]), col('e1', colors.emissive[1]), col('e2', colors.emissive[2]), col('e3', colors.emissive[3])];
       applyObjectColors(simObject);
+    }
+
+    // (2.5) 에지 표시 토글 적용 (지원 객체만) — 켜면 기본색 보색 선을 덧그린다
+    if (simObject.metadata?.canEdges) {
+      const edgeBox = this.inspector.querySelector('[data-edge]');
+      simObject.metadata.edges = !!edgeBox?.checked;
+      applyObjectEdges(this.ctx, simObject);
     }
 
     // (3) 컴포넌트 필드 적용 — 입력칸에서 수집해 재부착
@@ -1088,6 +1103,10 @@ export class EditorControls {
       sim.metadata.colors.base = [...source.metadata.colors.base];
       sim.metadata.colors.emissive = [...source.metadata.colors.emissive];
       applyObjectColors(sim);
+    }
+    if (source.metadata?.edges && sim.metadata?.canEdges) {
+      sim.metadata.edges = true;
+      applyObjectEdges(this.ctx, sim);   // 에지 표시도 함께 복제
     }
 
     serializeComponents(source).forEach(({ type, fields }) => {
