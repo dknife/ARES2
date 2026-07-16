@@ -5754,7 +5754,7 @@
     const axisTurn = fieldVec(THREE, fields.axis_turn);
     const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });
     const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });
-    const SPIN = 8;
+    const SPIN = 4;
     const MOVE = 0.4;
     const TURN = 1.5;
     let move = 0, turn = 0;
@@ -6353,7 +6353,7 @@
       edgeLine.material.color.setRGB(1 - br, 1 - bg, 1 - bb, "srgb");
     }
   }
-  var EDGE_TUBE_R = 0.012;
+  var EDGE_TUBE_R = 5e-3;
   function applyObjectEdges(ctx, simObject) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const THREE = ctx == null ? void 0 : ctx.THREE;

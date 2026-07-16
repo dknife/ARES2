@@ -469,7 +469,7 @@ function createServoComponent(ctx, fields = {}) {
   const axisTurn = fieldVec(THREE, fields.axis_turn);
   const rotOffset = fieldVec(THREE, fields.rotation_offset, { normalize: false });   // 스핀축 기준점(객체 로컬 좌표)
   const turnOffset = fieldVec(THREE, fields.turn_offset, { normalize: false });      // 선회축 기준점(객체 로컬 좌표)
-  const SPIN = 8.0;   // 바퀴 스핀 rad/s
+  const SPIN = 4.0;   // 바퀴 스핀 rad/s (≈38rpm — 레거시 로버 애니메이션과 동일, 과속 방지)
   const MOVE = 0.4;   // 이동 m/s
   const TURN = 1.5;   // 선회 rad/s
   let move = 0, turn = 0;

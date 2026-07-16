@@ -100,7 +100,7 @@ export function applyObjectColors(simObject) {
 //  · 원기둥은 옆면 세로선·위/아래 림에 더해 위·아래 캡의 방사형 스포크까지 그려
 //    어느 방향 회전이든 눈에 보인다.
 // THREE 생성자가 필요해 ctx 를 받는다.
-const EDGE_TUBE_R = 0.012;   // 튜브 반경(로컬 단위) — 선 두께감
+const EDGE_TUBE_R = 0.005;   // 튜브 반경(로컬 단위) — '두꺼운 선' 수준(굵지 않게)
 
 export function applyObjectEdges(ctx, simObject) {
   const THREE = ctx?.THREE;
