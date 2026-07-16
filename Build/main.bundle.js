@@ -6844,6 +6844,7 @@
       this.mode = "translate";
       this.lastSpawnPoint = new this.THREE.Vector3();
       this.hierarchyVersion = -1;
+      this.collapsedHierarchy = /* @__PURE__ */ new Set();
       this.axisEdit = null;
       this.axisHandle = null;
       this.raycaster = new this.THREE.Raycaster();
@@ -7371,6 +7372,12 @@
       this.stopAxisEdit();
       this.clearMultiSelection();
       this.selected = object || null;
+      const selForExpand = this.getSelectedSimObject();
+      if (selForExpand && this.collapsedHierarchy.size) {
+        for (let pa = this.ctx.objects.getParentOf(selForExpand); pa; pa = this.ctx.objects.getParentOf(pa)) {
+          this.collapsedHierarchy.delete(pa.id);
+        }
+      }
       if (this.selected && this.transform) {
         this.transform.setMode(this.mode);
         this.transform.attach(this.selected);
@@ -7953,15 +7960,28 @@
       row.dataset.simObjectId = simObject.id;
       row.style.setProperty("--depth", depth);
       row.setAttribute("aria-pressed", String(this.isSelectedRoot(simObject.root)));
+      const children = this.ctx.objects.getChildrenOf(simObject);
+      const hasChildren = children.length > 0;
+      const collapsed = hasChildren && this.collapsedHierarchy.has(simObject.id);
+      const toggle = document.createElement("span");
+      toggle.className = "sim-editor-hierarchy-toggle" + (hasChildren ? "" : " is-leaf");
+      toggle.dataset.role = hasChildren ? "toggle" : "leaf";
+      toggle.textContent = hasChildren ? collapsed ? "+" : "\u2212" : "";
+      if (hasChildren) toggle.title = collapsed ? "\uC790\uC2DD \uD3BC\uCE58\uAE30" : "\uC790\uC2DD \uC811\uAE30";
       const type = document.createElement("span");
       type.className = "sim-editor-hierarchy-type";
       type.textContent = simObject.type;
       const label = document.createElement("span");
       label.className = "sim-editor-hierarchy-label";
       label.textContent = simObject.label;
-      row.append(type, label);
+      row.append(toggle, type, label);
+      const isToggleTarget = (ev) => {
+        var _a, _b;
+        return (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, '[data-role="toggle"]');
+      };
       let holdTimer = 0, renamed = false;
-      row.addEventListener("pointerdown", () => {
+      row.addEventListener("pointerdown", (event) => {
+        if (isToggleTarget(event)) return;
         renamed = false;
         holdTimer = setTimeout(() => {
           renamed = true;
@@ -7975,6 +7995,11 @@
       row.addEventListener("pointerup", cancelHold);
       row.addEventListener("pointerleave", cancelHold);
       row.addEventListener("click", (event) => {
+        if (isToggleTarget(event)) {
+          event.stopPropagation();
+          this.toggleHierarchyCollapse(simObject.id);
+          return;
+        }
         if (renamed) {
           renamed = false;
           return;
@@ -8018,9 +8043,15 @@
         this.reparentInHierarchy(draggedId, simObject.id);
       });
       list.appendChild(row);
-      this.ctx.objects.getChildrenOf(simObject).forEach((child) => {
-        this.renderHierarchyItem(child, depth + 1, list);
-      });
+      if (!collapsed) {
+        children.forEach((child) => this.renderHierarchyItem(child, depth + 1, list));
+      }
+    }
+    // 자식 접기/펼치기 상태 토글 후 하이어라키 다시 그림
+    toggleHierarchyCollapse(id) {
+      if (this.collapsedHierarchy.has(id)) this.collapsedHierarchy.delete(id);
+      else this.collapsedHierarchy.add(id);
+      this.updateHierarchy(true);
     }
     // 드래그한 객체(draggedId)를 targetId 의 자식으로 옮긴다. target 이 없으면(빈 공간
     // 드롭) 최상위로 이동. 월드 트랜스폼을 보존(attach)해 화면상 위치가 튀지 않으며,

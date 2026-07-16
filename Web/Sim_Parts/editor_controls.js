@@ -66,6 +66,7 @@ export class EditorControls {
     this.mode = 'translate';
     this.lastSpawnPoint = new this.THREE.Vector3();
     this.hierarchyVersion = -1;
+    this.collapsedHierarchy = new Set();   // 하이어라키에서 자식을 접은(collapse) 객체 id 들
     this.axisEdit = null;     // 회전축 편집 상태 { simObject, comp, offsetField, axisField }
     this.axisHandle = null;   // 축 핸들(구 + 축 라인) — 끌어서 회전기준/선회기준을 설정
 
@@ -634,6 +635,14 @@ export class EditorControls {
     this.stopAxisEdit();
     this.clearMultiSelection();     // 일반 선택은 다중 선택을 해제한다
     this.selected = object || null;
+
+    // 선택이 접힌 조상 밑에 있으면, 보이도록 조상들을 펼친다(선택 변경 시에만 — 수동 접기와 충돌 방지)
+    const selForExpand = this.getSelectedSimObject();
+    if (selForExpand && this.collapsedHierarchy.size) {
+      for (let pa = this.ctx.objects.getParentOf(selForExpand); pa; pa = this.ctx.objects.getParentOf(pa)) {
+        this.collapsedHierarchy.delete(pa.id);
+      }
+    }
 
     if (this.selected && this.transform) {
       this.transform.setMode(this.mode);   // 다중 선택이 translate 로 강제했던 것 복원
@@ -1273,6 +1282,16 @@ export class EditorControls {
     row.style.setProperty('--depth', depth);
     row.setAttribute('aria-pressed', String(this.isSelectedRoot(simObject.root)));
 
+    // 접기/펼치기 토글 — 자식이 있으면 +/−, 없으면 빈 자리(정렬 유지)
+    const children = this.ctx.objects.getChildrenOf(simObject);
+    const hasChildren = children.length > 0;
+    const collapsed = hasChildren && this.collapsedHierarchy.has(simObject.id);
+    const toggle = document.createElement('span');
+    toggle.className = 'sim-editor-hierarchy-toggle' + (hasChildren ? '' : ' is-leaf');
+    toggle.dataset.role = hasChildren ? 'toggle' : 'leaf';
+    toggle.textContent = hasChildren ? (collapsed ? '+' : '−') : '';
+    if (hasChildren) toggle.title = collapsed ? '자식 펼치기' : '자식 접기';
+
     const type = document.createElement('span');
     type.className = 'sim-editor-hierarchy-type';
     type.textContent = simObject.type;
@@ -1281,10 +1300,12 @@ export class EditorControls {
     label.className = 'sim-editor-hierarchy-label';
     label.textContent = simObject.label;
 
-    row.append(type, label);
+    row.append(toggle, type, label);
+    const isToggleTarget = (ev) => ev.target?.closest?.('[data-role="toggle"]');
     // 짧은 클릭 = 선택, 길게 클릭(600ms) = 이름 변경
     let holdTimer = 0, renamed = false;
-    row.addEventListener('pointerdown', () => {
+    row.addEventListener('pointerdown', (event) => {
+      if (isToggleTarget(event)) return;   // 토글 클릭은 선택/이름변경 타이머를 시작하지 않음
       renamed = false;
       holdTimer = setTimeout(() => {
         renamed = true;
@@ -1296,6 +1317,11 @@ export class EditorControls {
     row.addEventListener('pointerup', cancelHold);
     row.addEventListener('pointerleave', cancelHold);
     row.addEventListener('click', (event) => {
+      if (isToggleTarget(event)) {                 // +/− 클릭 = 자식 접기/펼치기(선택 안 함)
+        event.stopPropagation();
+        this.toggleHierarchyCollapse(simObject.id);
+        return;
+      }
       if (renamed) { renamed = false; return; }   // 길게 클릭 직후의 click 은 무시
       // Hierarchy 에서도 Ctrl+클릭으로 다중 선택 토글
       if (event.ctrlKey || event.metaKey) { this.toggleMultiSelect(simObject.root); return; }
@@ -1336,9 +1362,16 @@ export class EditorControls {
 
     list.appendChild(row);
 
-    this.ctx.objects.getChildrenOf(simObject).forEach((child) => {
-      this.renderHierarchyItem(child, depth + 1, list);
-    });
+    if (!collapsed) {
+      children.forEach((child) => this.renderHierarchyItem(child, depth + 1, list));
+    }
+  }
+
+  // 자식 접기/펼치기 상태 토글 후 하이어라키 다시 그림
+  toggleHierarchyCollapse(id) {
+    if (this.collapsedHierarchy.has(id)) this.collapsedHierarchy.delete(id);
+    else this.collapsedHierarchy.add(id);
+    this.updateHierarchy(true);
   }
 
   // 드래그한 객체(draggedId)를 targetId 의 자식으로 옮긴다. target 이 없으면(빈 공간
