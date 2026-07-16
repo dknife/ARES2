@@ -1,0 +1,1236 @@
+{
+  "version": 1,
+  "name": "로버 장애물 피하기",
+  "unitScale": 1,
+  "topic": "empty",
+  "objects": [
+    {
+      "id": "box-1",
+      "type": "box",
+      "label": "roverTop",
+      "parent": null,
+      "position": [
+        -0.10808341246848663,
+        0.293516276279554,
+        -0.24728476964320034
+      ],
+      "quaternion": [
+        0,
+        -0.8735495095729603,
+        0,
+        -0.4867353021148566
+      ],
+      "scale": [
+        1,
+        0.5,
+        1
+      ],
+      "components": [
+        {
+          "type": "Servo",
+          "fields": {
+            "wheel": "neutral",
+            "axis_direction": [
+              -1,
+              0,
+              0
+            ],
+            "axis_turn": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-2",
+      "type": "box",
+      "label": "roverFrame",
+      "parent": "box-1",
+      "position": [
+        0,
+        -0.088,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1.618,
+        0.26,
+        1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.5,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-3",
+      "type": "cylinder",
+      "label": "WheelRight",
+      "parent": "box-2",
+      "position": [
+        -0.12,
+        0.063,
+        -0.429
+      ],
+      "quaternion": [
+        -0.6852664418668738,
+        0.17438435609633293,
+        0.1743843560963351,
+        -0.6852664418668721
+      ],
+      "scale": [
+        0.75,
+        0.175,
+        0.75
+      ],
+      "components": [
+        {
+          "type": "Servo",
+          "fields": {
+            "wheel": "right",
+            "axis_rotation": [
+              0,
+              0,
+              -1
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.47,
+          0.82,
+          0.55,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-4",
+      "type": "cylinder",
+      "label": "WheelLeft",
+      "parent": "box-2",
+      "position": [
+        -0.12,
+        0.063,
+        0.404
+      ],
+      "quaternion": [
+        0.3995425578312567,
+        0.5834087284928874,
+        0.5834087284928828,
+        0.3995425578312522
+      ],
+      "scale": [
+        0.75,
+        0.175,
+        0.75
+      ],
+      "components": [
+        {
+          "type": "Servo",
+          "fields": {
+            "wheel": "left",
+            "axis_rotation": [
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.47,
+          0.82,
+          0.55,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-5",
+      "type": "box",
+      "label": "OLEDFrame",
+      "parent": "box-1",
+      "position": [
+        -0.402,
+        0.06,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        -0.25881904510252074,
+        0.9659258262890683
+      ],
+      "scale": [
+        0.07,
+        0.549,
+        1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.5,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "oled-6",
+      "type": "oled",
+      "label": "OLED 6",
+      "parent": "box-5",
+      "position": [
+        -0.03802403031589052,
+        0.05197236832314431,
+        -0.0072641553808898696
+      ],
+      "quaternion": [
+        -0.010871198892539735,
+        -0.7138911188834659,
+        -0.015496683115243283,
+        0.7000008144469388
+      ],
+      "scale": [
+        0.7989101312366501,
+        0.6709169140438253,
+        1
+      ],
+      "components": [
+        {
+          "type": "Oled",
+          "fields": {}
+        }
+      ]
+    },
+    {
+      "id": "box-7",
+      "type": "box",
+      "label": "UltraSonicBody",
+      "parent": "box-2",
+      "position": [
+        -0.194,
+        0.426,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.14,
+        0.26,
+        0.487
+      ],
+      "components": [
+        {
+          "type": "UltraSonic",
+          "fields": {
+            "detect_direction": [
+              -1,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-8",
+      "type": "cylinder",
+      "label": "UltraSonicRight",
+      "parent": "box-7",
+      "position": [
+        -0.05776265175116632,
+        0.0040000000000000036,
+        -0.092
+      ],
+      "quaternion": [
+        0,
+        0,
+        0.7071067811865475,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.1,
+        0.10125112891763732,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-9",
+      "type": "cylinder",
+      "label": "UltraSonicLeft",
+      "parent": "cylinder-8",
+      "position": [
+        -1.1102230246251565e-16,
+        0.003800391423641414,
+        0.19785752231203152
+      ],
+      "quaternion": [
+        0,
+        0,
+        7.513334807226165e-33,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.10125112891763734,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-10",
+      "type": "cylinder",
+      "label": "GunBody",
+      "parent": "box-2",
+      "position": [
+        0.023,
+        0.394,
+        0.26
+      ],
+      "quaternion": [
+        0,
+        0,
+        0.7071067811865475,
+        0.7071067811865476
+      ],
+      "scale": [
+        0.2,
+        1.131,
+        0.2
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.47,
+          0.82,
+          0.55,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-11",
+      "type": "cylinder",
+      "label": "GunBarrel",
+      "parent": "cylinder-10",
+      "position": [
+        0,
+        0.162,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        1.131,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "Gun",
+          "fields": {
+            "explosion": [
+              0,
+              0.5,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.47,
+          0.82,
+          0.55,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-12",
+      "type": "sphere",
+      "label": "MagSensor",
+      "parent": "box-2",
+      "position": [
+        -0.52841978816661,
+        -0.07200000000000006,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.20000000000000007,
+        0.2,
+        0.2
+      ],
+      "components": [
+        {
+          "type": "Magnet",
+          "fields": {
+            "detection_point": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0.76,
+          1,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "cylinder-13",
+      "type": "cylinder",
+      "label": "Cylinder 15",
+      "parent": "box-2",
+      "position": [
+        0.48725682412937776,
+        0.33347536679467726,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.6426896595824638,
+        0.1
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          0.47,
+          0.82,
+          0.55,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-14",
+      "type": "box",
+      "label": "Box 16",
+      "parent": "cylinder-13",
+      "position": [
+        0,
+        0.27312823029125555,
+        0
+      ],
+      "quaternion": [
+        0,
+        -0.6730469522735345,
+        0,
+        0.7395997566490539
+      ],
+      "scale": [
+        0.1346655173553856,
+        0.32009613354193317,
+        0.572744528674607
+      ],
+      "components": [
+        {
+          "type": "DC",
+          "fields": {
+            "axis_rotation": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          1
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "sphere-15",
+      "type": "sphere",
+      "label": "Sphere 15",
+      "parent": "box-1",
+      "position": [
+        -0.5481791632299833,
+        -0.05189919004624455,
+        -0.2897979896271391
+      ],
+      "quaternion": [
+        0,
+        -6.938893903907228e-18,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 0
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          0.5,
+          0.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "sphere-16",
+      "type": "sphere",
+      "label": "Sphere 15_dup",
+      "parent": "box-1",
+      "position": [
+        -0.548,
+        -0.052,
+        -0.178
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 1
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          0.5,
+          0.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "sphere-17",
+      "type": "sphere",
+      "label": "Sphere 15_dup",
+      "parent": "box-1",
+      "position": [
+        -0.552,
+        -0.052,
+        -0.054
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 2
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          0.5,
+          0.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "sphere-18",
+      "type": "sphere",
+      "label": "Sphere 15_dup_dup",
+      "parent": "box-1",
+      "position": [
+        -0.552,
+        -0.052,
+        0.058
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 3
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          0.5,
+          0.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "sphere-19",
+      "type": "sphere",
+      "label": "Sphere 15_dup_dup",
+      "parent": "box-1",
+      "position": [
+        -0.559,
+        -0.052,
+        0.182
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 4
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          0.5,
+          0.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "sphere-20",
+      "type": "sphere",
+      "label": "Sphere 15_dup_dup_dup",
+      "parent": "box-1",
+      "position": [
+        -0.559,
+        -0.052,
+        0.294
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "components": [
+        {
+          "type": "LED",
+          "fields": {
+            "led_no": 5
+          }
+        }
+      ],
+      "colors": {
+        "base": [
+          0.31,
+          0,
+          0,
+          1
+        ],
+        "emissive": [
+          1,
+          0.5,
+          0.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "box-21",
+      "type": "box",
+      "label": "Box 82",
+      "parent": null,
+      "position": [
+        0,
+        0.342,
+        -12.731
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        37.749,
+        5.033,
+        0.774
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-22",
+      "type": "box",
+      "label": "Box 82_dup",
+      "parent": null,
+      "position": [
+        0.172,
+        0.342,
+        13.261
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        37.749,
+        3.404,
+        0.774
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-23",
+      "type": "box",
+      "label": "Box 82_dup",
+      "parent": null,
+      "position": [
+        -13.068,
+        0.332,
+        0
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        37.749,
+        3.114,
+        0.774
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-24",
+      "type": "box",
+      "label": "Box 82_dup_dup",
+      "parent": null,
+      "position": [
+        12.979,
+        0.332,
+        0
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        37.749,
+        5.715,
+        0.774
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-25",
+      "type": "box",
+      "label": "Box 82_dup_dup",
+      "parent": null,
+      "position": [
+        -8.060134834164876,
+        0.332,
+        5.045284690015597
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        14.619629432126514,
+        3.114,
+        0.774
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-26",
+      "type": "box",
+      "label": "Box 82_dup_dup_dup",
+      "parent": null,
+      "position": [
+        6.008230981579084,
+        0.332,
+        0.08699485040825317
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        14.619629432126514,
+        3.114,
+        0.774
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-27",
+      "type": "box",
+      "label": "Box 82_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -0.4560760341526775,
+        0.332,
+        7.092975567465851
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        1.0690974057721003,
+        2.3383062091806983,
+        2.3310667608829423
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-28",
+      "type": "box",
+      "label": "Box 82_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        1.175670670676901,
+        0.7967769704352798,
+        -4.967933721691363
+      ],
+      "quaternion": [
+        0,
+        0.7071067811865475,
+        0,
+        0.7071067811865476
+      ],
+      "scale": [
+        1.0690974057721003,
+        2.3383062091806983,
+        2.3310667608829423
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-29",
+      "type": "box",
+      "label": "Box 82_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        2.8074173755064793,
+        0.8279431856670805,
+        3.3977975757717456
+      ],
+      "quaternion": [
+        0,
+        0.9226720806673856,
+        0,
+        0.3855855696948702
+      ],
+      "scale": [
+        1.0690974057721003,
+        2.3383062091806983,
+        2.3310667608829423
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "box-30",
+      "type": "box",
+      "label": "Box 82_dup_dup_dup_dup_dup_dup",
+      "parent": null,
+      "position": [
+        -5.362474999026225,
+        0.9861199757168229,
+        -5.36374967826257
+      ],
+      "quaternion": [
+        0,
+        0.9226720806673856,
+        0,
+        0.3855855696948702
+      ],
+      "scale": [
+        1.0690974057721003,
+        2.3383062091806983,
+        2.3310667608829423
+      ],
+      "components": [],
+      "colors": {
+        "base": [
+          1,
+          0.48,
+          0.35,
+          0.6
+        ],
+        "emissive": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ]
+}

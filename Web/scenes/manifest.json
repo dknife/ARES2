@@ -9,7 +9,7 @@
     {
       "id": "launch_pad",
       "file": "scenes/launch_pad.json",
-      "label": "로켓 발사대"
+      "label": "발사대_제작"
     },
     {
       "id": "newalbo_01",
@@ -30,6 +30,11 @@
       "id": "rockscissors",
       "file": "scenes/rockscissors.json",
       "label": "가위바위보"
+    },
+    {
+      "id": "rover_move",
+      "file": "scenes/rover_move.json",
+      "label": "로버 장애물 피하기"
     }
   ]
 }
