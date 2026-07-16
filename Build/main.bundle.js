@@ -5858,6 +5858,7 @@
       }
     };
   }
+  var ULTRASONIC_SCALE = 5;
   function createUltraSonicComponent(ctx, fields = {}) {
     const THREE = ctx.THREE;
     const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
@@ -5888,7 +5889,7 @@
           if (((_a = cctx.editor) == null ? void 0 : _a.transform) && under(h.object, cctx.editor.transform)) continue;
           if (((_b = cctx.editor) == null ? void 0 : _b.boxHelper) && under(h.object, cctx.editor.boxHelper)) continue;
           if (((_c = cctx.editor) == null ? void 0 : _c.axisHandle) && under(h.object, cctx.editor.axisHandle)) continue;
-          return Math.round(h.distance * 100 * 100) / 100;
+          return Math.round(h.distance * 100 * ULTRASONIC_SCALE * 100) / 100;
         }
         return null;
       }

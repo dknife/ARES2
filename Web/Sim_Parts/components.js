@@ -537,6 +537,7 @@ function createServoComponent(ctx, fields = {}) {
 // UltraSonic — { detect_direction(로컬축) } : DISTANCE 명령에 ray 를 쏘아
 //   거리(cm, 소수 둘째 자리) 회신. 객체가 회전하면 ray 방향도 함께 돈다.
 // ============================================================
+const ULTRASONIC_SCALE = 5;   // 측정 거리 보정 배율 — 시뮬 스케일 대비 실측감이 짧아 5배로 확대
 function createUltraSonicComponent(ctx, fields = {}) {
   const THREE = ctx.THREE;
   const dirLocal = fieldVec(THREE, fields.detect_direction) || new THREE.Vector3(0, 0, 1);
@@ -561,7 +562,7 @@ function createUltraSonicComponent(ctx, fields = {}) {
         if (cctx.editor?.transform && under(h.object, cctx.editor.transform)) continue;   // 기즈모 제외
         if (cctx.editor?.boxHelper && under(h.object, cctx.editor.boxHelper)) continue;
         if (cctx.editor?.axisHandle && under(h.object, cctx.editor.axisHandle)) continue; // 축 핸들 제외
-        return Math.round(h.distance * 100 * 100) / 100;   // 1 unit = 1 m → cm, 소수 둘째 자리
+        return Math.round(h.distance * 100 * ULTRASONIC_SCALE * 100) / 100;   // 1 unit=1m → cm, ×보정배율, 소수 둘째 자리
       }
       return null;
     },
