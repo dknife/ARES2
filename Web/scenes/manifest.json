@@ -9,7 +9,7 @@
     {
       "id": "launch_pad",
       "file": "scenes/launch_pad.json",
-      "label": "발사대_제작"
+      "label": "로켓 발사대"
     },
     {
       "id": "newalbo_01",
