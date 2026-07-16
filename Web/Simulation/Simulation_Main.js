@@ -273,6 +273,7 @@ export class Simulation_Main {
         objects: () => sim.ctx.objects.items.map((o) => ({ id: o.id, type: o.type, comps: Object.keys(o.components || {}) })),
         parentOf: (id) => sim.ctx.objects.getParentOf(sim.ctx.objects.items.find((o) => o.id === id))?.id ?? null,
         reparent: (draggedId, targetId) => sim.ctx.editor?.reparentInHierarchy(draggedId, targetId),
+        editor: sim.ctx.editor,   // 개발자 모드 전용 — 편집기 내부 접근(테스트·콘솔용)
         state: (id) => {
           const o = sim.ctx.objects.items.find((x) => x.id === id);
           if (!o) return null;

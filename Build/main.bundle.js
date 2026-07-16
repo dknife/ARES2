@@ -6838,7 +6838,9 @@
       this.selectables = [];
       this.selected = null;
       this.multiSelection = [];
+      this._multiTargets = null;
       this._multiOffsets = null;
+      this._multiInitialQuat = null;
       this.multiHelpers = [];
       this.multiPivot = null;
       this.mode = "translate";
@@ -7359,7 +7361,7 @@
     }
     setMode(mode) {
       if (!MODES.includes(mode)) return;
-      if (this.isMultiActive() && mode !== "translate") return;
+      if (this.isMultiActive() && mode === "scale") return;
       this.stopAxisEdit();
       this.mode = mode;
       if (this.transform) this.transform.setMode(mode);
@@ -7421,6 +7423,12 @@
       this.clearMultiSelection();
       this.selected = null;
       this.multiSelection = list;
+      const selSet = new Set(list);
+      const targets = list.filter((root) => {
+        for (let p = root.parent; p; p = p.parent) if (selSet.has(p)) return false;
+        return true;
+      });
+      this._multiTargets = targets;
       const centroid = new THREE.Vector3();
       const box = new THREE.Box3();
       const center = new THREE.Vector3();
@@ -7435,20 +7443,23 @@
         this.multiHelpers.push(helper);
       });
       centroid.divideScalar(list.length);
-      this._multiOffsets = list.map((root) => {
-        const p = new THREE.Vector3();
-        root.getWorldPosition(p);
-        return p.sub(centroid);
-      });
+      this._multiOffsets = targets.map((root) => root.getWorldPosition(new THREE.Vector3()).sub(centroid));
+      this._multiInitialQuat = targets.map((root) => root.getWorldQuaternion(new THREE.Quaternion()));
       if (this.multiPivot && this.transform) {
         this.multiPivot.position.copy(centroid);
-        this.transform.setMode("translate");
+        this.multiPivot.quaternion.identity();
+        this.multiPivot.scale.set(1, 1, 1);
+        if (this.mode === "scale") this.mode = "translate";
+        this.transform.setMode(this.mode);
         this.transform.attach(this.multiPivot);
         this.transform.visible = true;
+        this.toolbar.querySelectorAll("button[data-mode]").forEach((btn) => {
+          btn.setAttribute("aria-pressed", String(btn.dataset.mode === this.mode));
+        });
       }
       this.boxHelper.visible = false;
       const text = this.toolbar.querySelector(".sim-editor-selection");
-      if (text) text.textContent = `\uB2E4\uC911 \uC120\uD0DD ${list.length}\uAC1C \u2014 \uC774\uB3D9\uB9CC \uAC00\uB2A5`;
+      if (text) text.textContent = `\uB2E4\uC911 \uC120\uD0DD ${list.length}\uAC1C \u2014 \uC774\uB3D9\xB7\uD68C\uC804 \uAC00\uB2A5`;
       this.updateAxisButtons(null);
       this.updateHierarchy(true);
       this.updateInspector();
@@ -7459,7 +7470,10 @@
         this.transform.visible = false;
       }
       this.multiSelection = [];
+      this._multiTargets = null;
       this._multiOffsets = null;
+      this._multiInitialQuat = null;
+      if (this.multiPivot) this.multiPivot.quaternion.identity();
       this.multiHelpers.forEach((h) => {
         var _a, _b, _c, _d;
         this.ctx.scene.remove(h);
@@ -7469,13 +7483,29 @@
       this.multiHelpers = [];
     }
     onMultiPivotChange() {
-      if (!this.isMultiActive() || !this._multiOffsets) return;
+      if (!this.isMultiActive() || !this._multiTargets) return;
       if (!this.transform || this.transform.object !== this.multiPivot) return;
-      const target = new this.THREE.Vector3();
-      this.multiSelection.forEach((root, i) => {
-        target.copy(this.multiPivot.position).add(this._multiOffsets[i]);
-        if (root.parent) root.parent.worldToLocal(target);
-        root.position.copy(target);
+      const THREE = this.THREE;
+      const pivotPos = this.multiPivot.position;
+      const pivotQ = this.multiPivot.quaternion;
+      const worldPos = new THREE.Vector3();
+      const worldQ = new THREE.Quaternion();
+      const parentQ = new THREE.Quaternion();
+      this._multiTargets.forEach((root, i) => {
+        worldPos.copy(this._multiOffsets[i]).applyQuaternion(pivotQ).add(pivotPos);
+        worldQ.copy(pivotQ).multiply(this._multiInitialQuat[i]);
+        if (root.parent) {
+          root.parent.updateWorldMatrix(true, false);
+          root.parent.worldToLocal(worldPos);
+          root.parent.getWorldQuaternion(parentQ).invert();
+          worldQ.premultiply(parentQ);
+        }
+        root.position.copy(worldPos);
+        root.quaternion.copy(worldQ);
+      });
+      this.multiHelpers.forEach((h) => {
+        var _a;
+        return (_a = h.update) == null ? void 0 : _a.call(h);
       });
     }
     // ==== 회전축 편집 (2026-07-09) — 회전 특성 컴포넌트를 가진 객체 선택 시 하단 바에
@@ -9351,6 +9381,8 @@
             var _a2;
             return (_a2 = sim.ctx.editor) == null ? void 0 : _a2.reparentInHierarchy(draggedId, targetId);
           },
+          editor: sim.ctx.editor,
+          // 개발자 모드 전용 — 편집기 내부 접근(테스트·콘솔용)
           state: (id) => {
             const o = sim.ctx.objects.items.find((x) => x.id === id);
             if (!o) return null;

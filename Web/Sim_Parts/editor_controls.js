@@ -57,10 +57,12 @@ export class EditorControls {
 
     this.selectables = [];
     this.selected = null;
-    // 다중 선택(Ctrl+클릭): 2개 이상일 때 활성. 이동(move) 기즈모만 허용하며,
-    // 기즈모는 선택 객체들의 중점(multiPivot)에 붙는다.
-    this.multiSelection = [];       // 선택된 루트 Object3D 목록
-    this._multiOffsets = null;      // 각 객체의 (월드) 중점 대비 오프셋 — 상대 배치 유지용
+    // 다중 선택(Ctrl+클릭): 2개 이상일 때 활성. 이동·회전 기즈모를 허용하며(크기는 불가),
+    // 기즈모는 선택 객체들의 중점(multiPivot)에 붙는다. 회전은 중점 기준으로 그룹 전체에 적용.
+    this.multiSelection = [];       // 선택된 루트 Object3D 목록(표시·개수용)
+    this._multiTargets = null;      // 실제 변환 대상(최상위 노드만 — 선택된 조상의 자손 제외)
+    this._multiOffsets = null;      // 각 대상의 중점 대비 (월드) 오프셋 — 상대 배치 유지용
+    this._multiInitialQuat = null;  // 각 대상의 초기 월드 자세 — 회전 합성 기준
     this.multiHelpers = [];         // 다중 선택 표시 BoxHelper 들
     this.multiPivot = null;         // 기즈모 부착점(중점) — enabled 일 때 생성
     this.mode = 'translate';
@@ -620,7 +622,7 @@ export class EditorControls {
 
   setMode(mode) {
     if (!MODES.includes(mode)) return;
-    if (this.isMultiActive() && mode !== 'translate') return;   // 다중 선택은 이동만
+    if (this.isMultiActive() && mode === 'scale') return;   // 다중 선택은 이동·회전만(크기 불가)
     this.stopAxisEdit();   // 이동/회전/크기 모드로 돌아오면 축 편집 종료
 
     this.mode = mode;
@@ -693,6 +695,15 @@ export class EditorControls {
     this.selected = null;
     this.multiSelection = list;
 
+    // 실제 변환 대상 = 최상위 노드만. 선택된 조상의 자손은 씬 그래프상 부모를 따라
+    // 움직이므로 별도 변환하면 회전이 이중 적용된다 → 제외한다.
+    const selSet = new Set(list);
+    const targets = list.filter((root) => {
+      for (let p = root.parent; p; p = p.parent) if (selSet.has(p)) return false;
+      return true;
+    });
+    this._multiTargets = targets;
+
     // 중점 = 각 객체 바운딩 박스 중심의 평균 (빈 박스는 월드 위치로 폴백)
     const centroid = new THREE.Vector3();
     const box = new THREE.Box3();
@@ -708,23 +719,26 @@ export class EditorControls {
     });
     centroid.divideScalar(list.length);
 
-    // 각 객체의 월드 위치 오프셋을 저장 — 피벗 이동 시 상대 배치를 유지한다
-    this._multiOffsets = list.map((root) => {
-      const p = new THREE.Vector3();
-      root.getWorldPosition(p);
-      return p.sub(centroid);
-    });
+    // 각 대상의 초기 월드 오프셋·자세 저장 — 피벗 이동/회전 시 상대 배치와 회전을 재구성한다
+    this._multiOffsets = targets.map((root) => root.getWorldPosition(new THREE.Vector3()).sub(centroid));
+    this._multiInitialQuat = targets.map((root) => root.getWorldQuaternion(new THREE.Quaternion()));
 
     if (this.multiPivot && this.transform) {
       this.multiPivot.position.copy(centroid);
-      this.transform.setMode('translate');    // move 기즈모만
+      this.multiPivot.quaternion.identity();   // 회전 기준 초기화(오프셋·자세는 이 상태 기준)
+      this.multiPivot.scale.set(1, 1, 1);
+      if (this.mode === 'scale') this.mode = 'translate';   // 다중 선택은 크기 불가
+      this.transform.setMode(this.mode);
       this.transform.attach(this.multiPivot);
       this.transform.visible = true;
+      this.toolbar.querySelectorAll('button[data-mode]').forEach((btn) => {
+        btn.setAttribute('aria-pressed', String(btn.dataset.mode === this.mode));
+      });
     }
     this.boxHelper.visible = false;
 
     const text = this.toolbar.querySelector('.sim-editor-selection');
-    if (text) text.textContent = `다중 선택 ${list.length}개 — 이동만 가능`;
+    if (text) text.textContent = `다중 선택 ${list.length}개 — 이동·회전 가능`;
     this.updateAxisButtons(null);
     this.updateHierarchy(true);
     this.updateInspector();
@@ -736,7 +750,10 @@ export class EditorControls {
       this.transform.visible = false;
     }
     this.multiSelection = [];
+    this._multiTargets = null;
     this._multiOffsets = null;
+    this._multiInitialQuat = null;
+    if (this.multiPivot) this.multiPivot.quaternion.identity();
     this.multiHelpers.forEach((h) => {
       this.ctx.scene.remove(h);
       h.geometry?.dispose?.();
@@ -746,14 +763,30 @@ export class EditorControls {
   }
 
   onMultiPivotChange() {
-    if (!this.isMultiActive() || !this._multiOffsets) return;
+    if (!this.isMultiActive() || !this._multiTargets) return;
     if (!this.transform || this.transform.object !== this.multiPivot) return;
-    const target = new this.THREE.Vector3();
-    this.multiSelection.forEach((root, i) => {
-      target.copy(this.multiPivot.position).add(this._multiOffsets[i]);
-      if (root.parent) root.parent.worldToLocal(target);
-      root.position.copy(target);
+    const THREE = this.THREE;
+    const pivotPos = this.multiPivot.position;
+    const pivotQ = this.multiPivot.quaternion;      // 피벗은 scene 자식이라 로컬=월드
+    const worldPos = new THREE.Vector3();
+    const worldQ = new THREE.Quaternion();
+    const parentQ = new THREE.Quaternion();
+    this._multiTargets.forEach((root, i) => {
+      // 월드 위치 = 피벗위치 + 피벗회전·초기오프셋 (이동만이면 pivotQ=단위 → 기존 동작과 동일)
+      worldPos.copy(this._multiOffsets[i]).applyQuaternion(pivotQ).add(pivotPos);
+      // 월드 자세 = 피벗회전 ∘ 초기자세 (그룹 회전이 각 객체 자세에도 반영)
+      worldQ.copy(pivotQ).multiply(this._multiInitialQuat[i]);
+      if (root.parent) {
+        root.parent.updateWorldMatrix(true, false);
+        root.parent.worldToLocal(worldPos);                       // 위치: 부모 로컬로
+        root.parent.getWorldQuaternion(parentQ).invert();          // 자세: 부모 월드회전 제거
+        worldQ.premultiply(parentQ);
+      }
+      root.position.copy(worldPos);
+      root.quaternion.copy(worldQ);
     });
+    // 선택 표시(BoxHelper)들도 갱신 — 자손 헬퍼는 부모를 따라 이동한 위치를 반영
+    this.multiHelpers.forEach((h) => h.update?.());
   }
 
   // ==== 회전축 편집 (2026-07-09) — 회전 특성 컴포넌트를 가진 객체 선택 시 하단 바에
