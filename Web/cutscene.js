@@ -2,7 +2,7 @@
 // cutscene.js — 차시 미션 컷씬
 // ============================================================
 // 각 차시(1~12)를 열어 미션 목록을 확인하기 직전, 그 차시 전용 배경
-// (assets/background/Lec0N.png)을 전체 화면 컷씬으로 보여준다.
+// (assets/background/Lec0N.webp)을 전체 화면 컷씬으로 보여준다.
 // 컷씬에는 "미션 선택" 메뉴 버튼이 있으며, 누르면 컷씬이 사라지고
 // 호출부(main.js)가 해당 차시의 미션을 이어서 노출한다.
 //
@@ -124,7 +124,7 @@ function injectStyles() {
 
 /**
  * 차시 컷씬을 전체 화면으로 띄우고, "미션 선택" 클릭(또는 ESC) 시 resolve.
- * @param {number} lessonNumber 1~12 차시 번호 (배경 파일 Lec0N.png 결정)
+ * @param {number} lessonNumber 1~12 차시 번호 (배경 파일 Lec0N.webp 결정)
  * @param {{title?: string, tag?: string, hint?: string}} [opts]
  * @returns {Promise<void>}
  */
@@ -202,7 +202,7 @@ export function showCutscene(lessonNumber, opts = {}) {
     lockScroll();
 
     // 배경 이미지 프리로드 → 로드되면 부드럽게 등장(실패해도 버튼은 항상 노출)
-    const src = `${BG_DIR}/Lec${padded}.png`;
+    const src = `${BG_DIR}/Lec${padded}.webp`;
     const img = new Image();
     const reveal = () => {
       bg.style.backgroundImage = `url('${src}')`;
