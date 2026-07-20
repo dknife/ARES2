@@ -99,9 +99,9 @@ def _asset_datauri(rel):
     return 'data:%s;base64,%s' % (mime, base64.b64encode(Rb(p)).decode())
 landing = re.sub(r"url\('(assets/[^'?]+)(\?[^']*)?'\)",
                  lambda m: "url('%s')" % (_asset_datauri(m.group(1)) or m.group(1)), landing)
-_bg = _asset_datauri('assets/background/planet_approach.png')
+_bg = _asset_datauri('assets/background/planet_approach.webp')
 if _bg:
-    landing = landing.replace("'assets/background/planet_approach.png'", "'%s'" % _bg)
+    landing = landing.replace("'assets/background/planet_approach.webp'", "'%s'" % _bg)
     print('        inlined cutscene bg + mask icons to data URI (file:// CORS)')
 W('Build/index.html', landing)
 
