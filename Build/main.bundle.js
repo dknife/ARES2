@@ -10782,7 +10782,7 @@
       activeOverlay = null;
     }
     const padded = String(lessonNumber).padStart(2, "0");
-    const { title = "", tag = "", hint = "\uC900\uBE44\uAC00 \uB418\uBA74 \uBBF8\uC158\uC744 \uACE8\uB77C \uC2DC\uC791\uD574\uC694!" } = opts;
+    const { title = "", tag = "", hint = "\uC900\uBE44\uAC00 \uB418\uBA74 \uBBF8\uC158\uC744 \uACE8\uB77C \uC2DC\uC791\uD574\uC694!", cta = "\uBBF8\uC158 \uC120\uD0DD" } = opts;
     return new Promise((resolve) => {
       const overlay = document.createElement("div");
       overlay.className = "lesson-cutscene";
@@ -10801,7 +10801,7 @@
       ${title ? `<h2 class="lesson-cutscene-title">${escapeHtml2(title)}</h2>` : ""}
       <p class="lesson-cutscene-hint">${escapeHtml2(hint)}</p>
       <button type="button" class="lesson-cutscene-btn">
-        <span class="lc-arrow" aria-hidden="true">\u25B6</span>\uBBF8\uC158 \uC120\uD0DD
+        <span class="lc-arrow" aria-hidden="true">\u25B6</span>${escapeHtml2(cta)}
       </button>`;
       overlay.appendChild(bg);
       overlay.appendChild(panel);
@@ -10960,6 +10960,7 @@
   var currentMission = null;
   var mobileBottomNavBound = false;
   var pendingDashboardOpen = false;
+  var pendingLessonCutscene = null;
   var mobileDashboardReturnHash = null;
   var mobileAiReturnHash = null;
   var aresBlocklyTheme = null;
@@ -12238,6 +12239,16 @@
     document.getElementById("missionTagBadge").textContent = mission.tag;
     document.getElementById("missionTagBadge").className = `lesson-tag tag-${mission.tag}`;
     document.getElementById("missionHardware").textContent = mission.hardware;
+    const cutsceneFor = pendingLessonCutscene;
+    pendingLessonCutscene = null;
+    if (cutsceneFor === n) {
+      await showCutscene(n, {
+        title: data.title,
+        tag: data.tag,
+        hint: `\uC0C8\uB85C\uC6B4 ${n}\uCC28\uC2DC\uAC00 \uC2DC\uC791\uB3FC\uC694. \uCCAB \uBBF8\uC158\uC73C\uB85C \uB4E4\uC5B4\uAC00 \uBCFC\uAE4C\uC694?`,
+        cta: "\uBBF8\uC158 \uC2DC\uC791"
+      });
+    }
     _storyCtx = { n, data, mission };
     _storyEditIdx = null;
     _goalEditIdx = null;
@@ -12259,7 +12270,10 @@
     };
     next.onclick = async () => {
       if (m < data.missions.length) navigate({ lesson: n, mission: m + 1 });
-      else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
+      else if (n < 12) {
+        pendingLessonCutscene = n + 1;
+        navigate({ lesson: n + 1, mission: 1 });
+      }
     };
     if (workspace) {
       setTimeout(() => {
