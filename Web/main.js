@@ -7,6 +7,7 @@ import { CommandExecutor } from './commandexecutor.js';
 import { setupSimulation } from './Simulation/Simulation_Main.js';
 import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js';
 import { parse as aiParse } from './ai_helper.js';
+import { showCutscene } from './cutscene.js';
 
 // ============================================================
 // 차시 카탈로그 — 네비게이션 드롭다운/개요 표 렌더링에 사용
@@ -1362,6 +1363,10 @@ async function enterOverview() {
            const lessonNum = Number(lessonButton.dataset.lesson);
            const data = await loadLesson(lessonNum);
            if (!data?.missions) return;
+           // 미션 목록을 보여주기 전, 해당 차시 전용 컷씬을 먼저 띄운다.
+           // "미션 선택" 클릭(또는 ESC) 후에야 아래 미션 카드가 펼쳐진다.
+           const meta = LESSON_CATALOG.find(l => l.n === lessonNum);
+           await showCutscene(lessonNum, { title: data.title || meta?.title, tag: data.tag || meta?.tag });
            // PDF 3페이지처럼 펼친 카드 안에는 미션 4개만 간결하게 표시
            panel.innerHTML = `
              <div class="inline-mission-list">
@@ -1493,6 +1498,9 @@ async function enterLesson(n) {
   document.getElementById('lessonHardware').textContent = `🔧 ${data.hardware}`;
   document.getElementById('lessonConcept').textContent = `💡 ${data.concept}`;
   document.getElementById('lessonIntro').textContent = data.intro;
+
+  // 차시를 열어 미션 목록이 드러나기 전, 전용 컷씬을 먼저 보여준다.
+  await showCutscene(n, { title: data.title, tag: data.tag });
 
   const ml = document.getElementById('lessonMissionList');
   ml.innerHTML = data.missions.map(m => `
