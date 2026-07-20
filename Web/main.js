@@ -103,6 +103,10 @@ let currentLesson = null;
 let currentMission = null;
 let mobileBottomNavBound = false;
 let pendingDashboardOpen = false;
+// "다음 미션 →" 으로 차시 경계를 넘을 때, 새 차시의 컷씬을 한 번 예약한다.
+// navigate() 는 해시만 바꾸고 실제 렌더는 enterMission 에서 일어나므로,
+// 여기에 차시 번호를 담아 두고 enterMission 이 소비(consume)한다.
+let pendingLessonCutscene = null;
 let mobileDashboardReturnHash = null;
 let mobileAiReturnHash = null;
 let aresBlocklyTheme = null;
@@ -1621,6 +1625,20 @@ async function enterMission(n, m) {
   document.getElementById('missionTagBadge').className = `lesson-tag tag-${mission.tag}`;
   document.getElementById('missionHardware').textContent = mission.hardware;
 
+  // 예약된 차시 컷씬 소비 — "다음 미션 →" 으로 차시를 넘어온 경우에만 재생한다.
+  // 제목 바·breadcrumb 가 이미 새 차시로 갱신된 뒤에 띄워야 뒤 배경이 어긋나지 않는다.
+  // 도착한 차시와 예약된 차시가 다르면(중간에 다른 이동) 조용히 버린다.
+  const cutsceneFor = pendingLessonCutscene;
+  pendingLessonCutscene = null;
+  if (cutsceneFor === n) {
+    await showCutscene(n, {
+      title: data.title,
+      tag: data.tag,
+      hint: `새로운 ${n}차시가 시작돼요. 첫 미션으로 들어가 볼까요?`,
+      cta: '미션 시작',
+    });
+  }
+
   // 스토리 — 렌더는 renderMissionStory 가 담당(대화 편집 모드 Ctrl+E 와 공유)
   _storyCtx = { n, data, mission };
   _storyEditIdx = null; _goalEditIdx = null; _sampleEditing = false;
@@ -1647,7 +1665,11 @@ async function enterMission(n, m) {
   };
   next.onclick = async () => {
     if (m < data.missions.length) navigate({ lesson: n, mission: m + 1 });
-    else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
+    else if (n < 12) {
+      // 차시가 바뀌는 순간 — 새 차시 컷씬을 예약하고 첫 미션으로 이동한다.
+      pendingLessonCutscene = n + 1;
+      navigate({ lesson: n + 1, mission: 1 });
+    }
   };
 
   // Blockly 리사이즈

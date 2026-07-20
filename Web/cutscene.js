@@ -125,7 +125,9 @@ function injectStyles() {
 /**
  * 차시 컷씬을 전체 화면으로 띄우고, "미션 선택" 클릭(또는 ESC) 시 resolve.
  * @param {number} lessonNumber 1~12 차시 번호 (배경 파일 Lec0N.webp 결정)
- * @param {{title?: string, tag?: string, hint?: string}} [opts]
+ * @param {{title?: string, tag?: string, hint?: string, cta?: string}} [opts]
+ *        cta — 버튼 문구. 미션 목록으로 가면 '미션 선택'(기본), 첫 미션으로 바로
+ *        들어가는 흐름이면 '미션 시작' 처럼 도착지에 맞춘다.
  * @returns {Promise<void>}
  */
 export function showCutscene(lessonNumber, opts = {}) {
@@ -143,7 +145,7 @@ export function showCutscene(lessonNumber, opts = {}) {
   }
 
   const padded = String(lessonNumber).padStart(2, '0');
-  const { title = '', tag = '', hint = '준비가 되면 미션을 골라 시작해요!' } = opts;
+  const { title = '', tag = '', hint = '준비가 되면 미션을 골라 시작해요!', cta = '미션 선택' } = opts;
 
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -165,7 +167,7 @@ export function showCutscene(lessonNumber, opts = {}) {
       ${title ? `<h2 class="lesson-cutscene-title">${escapeHtml(title)}</h2>` : ''}
       <p class="lesson-cutscene-hint">${escapeHtml(hint)}</p>
       <button type="button" class="lesson-cutscene-btn">
-        <span class="lc-arrow" aria-hidden="true">▶</span>미션 선택
+        <span class="lc-arrow" aria-hidden="true">▶</span>${escapeHtml(cta)}
       </button>`;
 
     overlay.appendChild(bg);
