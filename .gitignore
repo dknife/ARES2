@@ -1,6 +1,10 @@
 www/.idea*
 .idea/
 
+# Windows 바로가기(.lnk) — 특정 기기의 로컬 편의용 링크라 저장소에 둘 이유가 없다.
+# (경로가 그 PC 에만 유효해 다른 기기에서는 깨진 링크가 된다.)
+*.lnk
+
 # Node dependency folders generated while rebuilding local browser bundles.
 node_modules/
 .pnpm-store/

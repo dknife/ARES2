@@ -694,7 +694,7 @@
         const bgScene = new THREE.Scene();
         const bgCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10);
         bgCam.position.z = 1;
-        const tex = new THREE.TextureLoader().load('assets/background/planet_approach.png', () => resize());
+        const tex = new THREE.TextureLoader().load('assets/background/planet_approach.webp', () => resize());
         if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
         bgScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: tex })));
         let bgZoom = 1;

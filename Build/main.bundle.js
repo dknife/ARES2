@@ -10666,6 +10666,212 @@
     return { ok: true, replace, xml: wrapXml(descs), added, unmatched, suggest };
   }
 
+  // cutscene.js
+  var BG_DIR = "assets/background";
+  var STYLE_ID = "lesson-cutscene-styles";
+  var FADE_MS = 320;
+  var activeOverlay = null;
+  var scrollLock = null;
+  function lockScroll() {
+    if (scrollLock) return;
+    const els = [document.documentElement, document.body];
+    document.querySelectorAll(".content-view:not([hidden])").forEach((v) => els.push(v));
+    scrollLock = els.map((el) => ({ el, overflow: el.style.overflow }));
+    scrollLock.forEach(({ el }) => {
+      el.style.overflow = "hidden";
+    });
+  }
+  function unlockScroll() {
+    if (!scrollLock) return;
+    scrollLock.forEach(({ el, overflow }) => {
+      el.style.overflow = overflow;
+    });
+    scrollLock = null;
+  }
+  function injectStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = `
+/* \uC804\uCCB4 \uD654\uBA74\uC774 \uC544\uB2C8\uB77C \uC0C1\uB2E8 \uC81C\uBAA9 \uBC14 \uC544\uB798 ~ \uD558\uB2E8 \uB0B4\uBE44 \uC704 \uCF58\uD150\uCE20 \uC601\uC5ED\uC5D0\uB9CC \uB80C\uB354\uD55C\uB2E4.
+   top/bottom \uC740 JS(place)\uAC00 \uC2E4\uC81C \uD5E4\uB354\xB7\uD558\uB2E8 \uB0B4\uBE44 \uC704\uCE58\uB97C \uC7AC\uC5B4 \uC778\uB77C\uC778\uC73C\uB85C \uC9C0\uC815. */
+.lesson-cutscene {
+  position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 9000;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  overflow: hidden; background: #05030a;
+  opacity: 0; transition: opacity ${FADE_MS}ms ease;
+  /* \uCEF7\uC52C \uC704\uC5D0\uC11C\uC758 \uC2A4\uD06C\uB864/\uC90C \uC81C\uC2A4\uCC98 \uCC28\uB2E8 + \uC2A4\uD06C\uB864 \uCCB4\uC774\uB2DD \uBC29\uC9C0 */
+  touch-action: none; overscroll-behavior: contain;
+}
+.lesson-cutscene.is-visible { opacity: 1; }
+/* \uBC30\uACBD \uC774\uBBF8\uC9C0 \uB808\uC774\uC5B4 \u2014 \uB85C\uB4DC \uC644\uB8CC \uC2DC \uC11C\uC11C\uD788 \uB4F1\uC7A5 + \uB290\uB9B0 \uC90C\uC778 */
+.lesson-cutscene-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  opacity: 0; transform: scale(1.06);
+  transition: opacity 600ms ease, transform 8s ease-out;
+}
+.lesson-cutscene-bg.is-loaded { opacity: 1; transform: scale(1); }
+/* \uD558\uB2E8 \uAC00\uB3C5\uC131 \uADF8\uB77C\uB370\uC774\uC158 */
+.lesson-cutscene::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top,
+    rgba(3,3,12,0.86) 0%, rgba(3,3,12,0.55) 26%,
+    rgba(3,3,12,0.10) 52%, rgba(3,3,12,0.28) 100%);
+}
+.lesson-cutscene-panel {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 14px; text-align: center;
+  padding: 0 24px clamp(40px, 9vh, 92px);
+  max-width: 760px; margin: 0 auto; width: 100%;
+}
+.lesson-cutscene-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+  font-size: 0.95rem; font-weight: 800; letter-spacing: 1px;
+  color: #FFB27A; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+.lesson-cutscene-eyebrow .lc-tag {
+  padding: 2px 10px; border-radius: 999px; font-size: 0.78rem;
+  background: rgba(255,106,0,0.9); color: #fff; letter-spacing: 0.5px;
+}
+.lesson-cutscene-title {
+  margin: 0;
+  font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+  font-size: clamp(1.6rem, 5.2vw, 2.6rem); font-weight: 800; line-height: 1.2;
+  color: #fff; text-shadow: 0 3px 22px rgba(0,0,0,0.85);
+}
+.lesson-cutscene-hint {
+  margin: 2px 0 6px; font-size: 0.85rem; font-weight: 600; line-height: 1.5;
+  color: #e3e9f6; text-shadow: 0 2px 12px rgba(0,0,0,0.85);
+}
+.lesson-cutscene-btn {
+  font-family: 'GangwonEduTeun','Inter Tight',sans-serif;
+  font-size: 1.1rem; font-weight: 800;
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 54px; padding: 0 46px; margin-top: 6px;
+  border: none; border-radius: 16px; cursor: pointer;
+  background: #FF6A00; color: #fff;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.42);
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.lesson-cutscene-btn:hover { background: #ff7f22; transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0,0,0,0.5); }
+.lesson-cutscene-btn:active { transform: translateY(0); }
+.lesson-cutscene-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.lesson-cutscene-btn .lc-arrow { font-size: 1.15em; }
+@media (max-width: 480px) {
+  .lesson-cutscene-panel { padding-bottom: 34px; gap: 11px; }
+  .lesson-cutscene-btn { width: min(100%, 320px); justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lesson-cutscene, .lesson-cutscene-bg { transition: opacity 120ms linear; }
+  .lesson-cutscene-bg { transform: none; }
+}`;
+    document.head.appendChild(style);
+  }
+  function showCutscene(lessonNumber, opts = {}) {
+    injectStyles();
+    if (activeOverlay) {
+      if (activeOverlay._onKey) document.removeEventListener("keydown", activeOverlay._onKey);
+      if (activeOverlay._place) {
+        window.removeEventListener("resize", activeOverlay._place);
+        window.removeEventListener("orientationchange", activeOverlay._place);
+      }
+      activeOverlay.remove();
+      activeOverlay = null;
+    }
+    const padded = String(lessonNumber).padStart(2, "0");
+    const { title = "", tag = "", hint = "\uC900\uBE44\uAC00 \uB418\uBA74 \uBBF8\uC158\uC744 \uACE8\uB77C \uC2DC\uC791\uD574\uC694!", cta = "\uBBF8\uC158 \uC120\uD0DD" } = opts;
+    return new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.className = "lesson-cutscene";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-label", `${lessonNumber}\uCC28\uC2DC \uCEF7\uC52C`);
+      const bg = document.createElement("div");
+      bg.className = "lesson-cutscene-bg";
+      const panel = document.createElement("div");
+      panel.className = "lesson-cutscene-panel";
+      panel.innerHTML = `
+      <span class="lesson-cutscene-eyebrow">
+        <span>${lessonNumber}\uCC28\uC2DC</span>
+        ${tag ? `<span class="lc-tag">${escapeHtml2(tag)}</span>` : ""}
+      </span>
+      ${title ? `<h2 class="lesson-cutscene-title">${escapeHtml2(title)}</h2>` : ""}
+      <p class="lesson-cutscene-hint">${escapeHtml2(hint)}</p>
+      <button type="button" class="lesson-cutscene-btn">
+        <span class="lc-arrow" aria-hidden="true">\u25B6</span>${escapeHtml2(cta)}
+      </button>`;
+      overlay.appendChild(bg);
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+      activeOverlay = overlay;
+      const place = () => {
+        const header = document.querySelector(".header");
+        const bottomNav = document.getElementById("mobileBottomNav");
+        const vh = window.innerHeight;
+        const top = header ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+        let bottomGap = 0;
+        if (bottomNav) {
+          const cs = getComputedStyle(bottomNav);
+          if (cs.display !== "none" && cs.visibility !== "hidden") {
+            const nr = bottomNav.getBoundingClientRect();
+            if (nr.height > 0 && nr.top < vh) bottomGap = Math.max(0, vh - nr.top);
+          }
+        }
+        overlay.style.top = `${top}px`;
+        overlay.style.bottom = `${bottomGap}px`;
+      };
+      place();
+      overlay._place = place;
+      window.addEventListener("resize", place);
+      window.addEventListener("orientationchange", place);
+      lockScroll();
+      const src = `${BG_DIR}/Lec${padded}.webp`;
+      const img = new Image();
+      const reveal = () => {
+        bg.style.backgroundImage = `url('${src}')`;
+        requestAnimationFrame(() => bg.classList.add("is-loaded"));
+      };
+      img.onload = reveal;
+      img.onerror = reveal;
+      img.src = src;
+      requestAnimationFrame(() => overlay.classList.add("is-visible"));
+      let done = false;
+      const dismiss = () => {
+        if (done) return;
+        done = true;
+        document.removeEventListener("keydown", onKey);
+        window.removeEventListener("resize", place);
+        window.removeEventListener("orientationchange", place);
+        unlockScroll();
+        overlay.classList.remove("is-visible");
+        const cleanup = () => {
+          overlay.remove();
+          if (activeOverlay === overlay) activeOverlay = null;
+          resolve();
+        };
+        overlay.addEventListener("transitionend", cleanup, { once: true });
+        setTimeout(cleanup, FADE_MS + 80);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          dismiss();
+        }
+      };
+      overlay._onKey = onKey;
+      document.addEventListener("keydown", onKey);
+      const btn = panel.querySelector(".lesson-cutscene-btn");
+      btn.addEventListener("click", dismiss);
+      requestAnimationFrame(() => btn.focus({ preventScroll: true }));
+    });
+  }
+  function escapeHtml2(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  }
+
   // main.js
   var LESSON_CATALOG = [
     { n: 1, title: "\uCF54\uB529 \uC785\uBB38\uACFC \uC54C\uBE44 \uB9CC\uB0A8", tag: "theory", hardware: "(\uC774\uB860) Bluetooth \uD398\uC5B4\uB9C1", concept: "\uC21C\uCC28/\uBC18\uBCF5 \uAC1C\uB150, \uC571 \uC124\uCE58" },
@@ -10754,6 +10960,7 @@
   var currentMission = null;
   var mobileBottomNavBound = false;
   var pendingDashboardOpen = false;
+  var pendingLessonCutscene = null;
   var mobileDashboardReturnHash = null;
   var mobileAiReturnHash = null;
   var aresBlocklyTheme = null;
@@ -11698,20 +11905,20 @@
           tbody.innerHTML = LESSON_CATALOG.map((l) => l.bonus ? `
           <tr class="bonus" data-lesson-item="bonus">
             <td class="lesson-n">${l.n}</td>
-            <td class="lesson-title-cell">${escapeHtml2(l.title)}</td>
-            <td>${escapeHtml2(l.hardware)}</td>
-            <td>${escapeHtml2(l.concept)}</td>
-            <td><span class="tag tag-BONUS">${escapeHtml2(l.tag)}</span></td>
+            <td class="lesson-title-cell">${escapeHtml3(l.title)}</td>
+            <td>${escapeHtml3(l.hardware)}</td>
+            <td>${escapeHtml3(l.concept)}</td>
+            <td><span class="tag tag-BONUS">${escapeHtml3(l.tag)}</span></td>
           </tr>
          ` : `
           <tr data-lesson="${l.n}">
             <td class="lesson-n">${l.n}</td>
             <td class="lesson-title-cell">
-              <a href="#lesson=${l.n}">${escapeHtml2(l.title)}</a>
+              <a href="#lesson=${l.n}">${escapeHtml3(l.title)}</a>
             </td>
-            <td>${escapeHtml2(l.hardware)}</td>
-            <td>${escapeHtml2(l.concept)}</td>
-            <td><span class="tag tag-${l.tag}">${escapeHtml2(l.tag)}</span></td>
+            <td>${escapeHtml3(l.hardware)}</td>
+            <td>${escapeHtml3(l.concept)}</td>
+            <td><span class="tag tag-${l.tag}">${escapeHtml3(l.tag)}</span></td>
           </tr>
          `).join("");
         }
@@ -11722,8 +11929,8 @@
              <button class="flow-step-btn" data-bonus="1" aria-expanded="false" aria-controls="inlineMissionsBonus">
                <span class="flow-num">${lesson.n}</span>
                <span class="flow-main">
-                 <strong>${escapeHtml2(lesson.title)}</strong>
-                 <small>${escapeHtml2(lesson.hardware)}</small>
+                 <strong>${escapeHtml3(lesson.title)}</strong>
+                 <small>${escapeHtml3(lesson.hardware)}</small>
                </span>
                <span class="flow-arrow" aria-hidden="true">\u25C0</span>
              </button>
@@ -11734,8 +11941,8 @@
              <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
                <span class="flow-num">${lesson.n}</span>
                <span class="flow-main">
-                 <strong>${escapeHtml2(lesson.title)}</strong>
-                 <small>${escapeHtml2(lesson.hardware)}</small>
+                 <strong>${escapeHtml3(lesson.title)}</strong>
+                 <small>${escapeHtml3(lesson.hardware)}</small>
                </span>
                <span class="flow-count">${completedMissionCount(lesson.n)}/4</span>
                <span class="flow-arrow" aria-hidden="true">\u25C0</span>
@@ -11799,6 +12006,8 @@
             const lessonNum = Number(lessonButton.dataset.lesson);
             const data = await loadLesson(lessonNum);
             if (!(data == null ? void 0 : data.missions)) return;
+            const meta = LESSON_CATALOG.find((l) => l.n === lessonNum);
+            await showCutscene(lessonNum, { title: data.title || (meta == null ? void 0 : meta.title), tag: data.tag || (meta == null ? void 0 : meta.tag) });
             panel.innerHTML = `
              <div class="inline-mission-list">
                ${data.missions.map((m) => renderInlineMissionItem(lessonNum, m)).join("")}
@@ -11821,10 +12030,10 @@
     <div class="inline-mission-item" data-mission-item="${mission.id}">
       <button type="button" class="inline-mission-btn${completed ? " completed" : ""}"
               data-lesson="${n}" data-inline-mission="${mission.id}"
-              aria-label="${escapeHtml2(mission.title)} \uBBF8\uC158 \uC5F4\uAE30">
+              aria-label="${escapeHtml3(mission.title)} \uBBF8\uC158 \uC5F4\uAE30">
         <span class="inline-mission-marker" aria-hidden="true">\u25B6</span>
         <span class="inline-mission-main">
-          <strong>${escapeHtml2(mission.title)}</strong>
+          <strong>${escapeHtml3(mission.title)}</strong>
         </span>
         <span class="inline-mission-check" ${completed ? "" : "hidden"} aria-label="\uC644\uB8CC">\u2713</span>
       </button>
@@ -11922,13 +12131,14 @@
     document.getElementById("lessonHardware").textContent = `\u{1F527} ${data.hardware}`;
     document.getElementById("lessonConcept").textContent = `\u{1F4A1} ${data.concept}`;
     document.getElementById("lessonIntro").textContent = data.intro;
+    await showCutscene(n, { title: data.title, tag: data.tag });
     const ml = document.getElementById("lessonMissionList");
     ml.innerHTML = data.missions.map((m) => `
     <li class="mission-list-item">
       <a href="#lesson=${n}&mission=${m.id}">
         <span class="mission-id">\uBBF8\uC158 ${m.id}</span>
-        <span class="mission-list-title">${escapeHtml2(m.title)}</span>
-        <span class="mission-list-hw">${escapeHtml2(m.hardware)}</span>
+        <span class="mission-list-title">${escapeHtml3(m.title)}</span>
+        <span class="mission-list-hw">${escapeHtml3(m.hardware)}</span>
       </a>
     </li>
   `).join("");
@@ -11936,8 +12146,8 @@
     if (data.summary) {
       sm.innerHTML = `
       <div class="summary-box summary-${data.summary.type}">
-        <h4>${escapeHtml2(data.summary.title)}</h4>
-        <p>${escapeHtml2(data.summary.text)}</p>
+        <h4>${escapeHtml3(data.summary.title)}</h4>
+        <p>${escapeHtml3(data.summary.text)}</p>
       </div>
     `;
     } else {
@@ -12029,6 +12239,16 @@
     document.getElementById("missionTagBadge").textContent = mission.tag;
     document.getElementById("missionTagBadge").className = `lesson-tag tag-${mission.tag}`;
     document.getElementById("missionHardware").textContent = mission.hardware;
+    const cutsceneFor = pendingLessonCutscene;
+    pendingLessonCutscene = null;
+    if (cutsceneFor === n) {
+      await showCutscene(n, {
+        title: data.title,
+        tag: data.tag,
+        hint: `\uC0C8\uB85C\uC6B4 ${n}\uCC28\uC2DC\uAC00 \uC2DC\uC791\uB3FC\uC694. \uCCAB \uBBF8\uC158\uC73C\uB85C \uB4E4\uC5B4\uAC00 \uBCFC\uAE4C\uC694?`,
+        cta: "\uBBF8\uC158 \uC2DC\uC791"
+      });
+    }
     _storyCtx = { n, data, mission };
     _storyEditIdx = null;
     _goalEditIdx = null;
@@ -12050,7 +12270,10 @@
     };
     next.onclick = async () => {
       if (m < data.missions.length) navigate({ lesson: n, mission: m + 1 });
-      else if (n < 12) navigate({ lesson: n + 1, mission: 1 });
+      else if (n < 12) {
+        pendingLessonCutscene = n + 1;
+        navigate({ lesson: n + 1, mission: 1 });
+      }
     };
     if (workspace) {
       setTimeout(() => {
@@ -12099,7 +12322,7 @@
       agentCode = (localStorage.getItem("ares-agent-code") || "").replace(/[^A-Za-z0-9]/g, "");
     } catch (_) {
     }
-    const aresName = agentCode ? `\uC544\uB808\uC2A4 ${escapeHtml2(agentCode)}` : "\uC544\uB808\uC2A4";
+    const aresName = agentCode ? `\uC544\uB808\uC2A4 ${escapeHtml3(agentCode)}` : "\uC544\uB808\uC2A4";
     const nameFor = (sp) => sp === "ares" ? aresName : "\uC54C\uBE44";
     const padded = String(_storyCtx.n).padStart(2, "0");
     const devbar = dialogueDevMode ? `
@@ -12122,7 +12345,7 @@
           <option value="ares"${line.speaker === "ares" ? " selected" : ""}>\uC544\uB808\uC2A4</option>
           <option value="albi"${line.speaker === "albi" ? " selected" : ""}>\uC54C\uBE44</option>
         </select>
-        <textarea data-story-field="text" rows="3">${escapeHtml2(line.text || "")}</textarea>
+        <textarea data-story-field="text" rows="3">${escapeHtml3(line.text || "")}</textarea>
         <span class="story-editor-btns">
           <button type="button" data-story-act="commit" data-idx="${i}">\uD655\uC778</button>
           <button type="button" data-story-act="cancel" data-idx="${i}">\uCDE8\uC18C</button>
@@ -12139,7 +12362,7 @@
     <div class="story-line story-${line.speaker}">
       <span class="story-avatar"><img src="assets/design/avatar-${line.speaker}.png" alt="${nameFor(line.speaker)}"></span>
       <span class="story-name">${nameFor(line.speaker)}</span>
-      <span class="story-text">${escapeHtml2(line.text)}</span>${tools}
+      <span class="story-text">${escapeHtml3(line.text)}</span>${tools}
     </div>`;
     };
     storyEl.classList.toggle("story-dev", dialogueDevMode);
@@ -12164,7 +12387,7 @@
     const li = (g, i) => {
       if (dialogueDevMode && _goalEditIdx === i) {
         return `<li class="goal-editing">
-        <textarea data-goal-field="text" rows="2">${escapeHtml2(g || "")}</textarea>
+        <textarea data-goal-field="text" rows="2">${escapeHtml3(g || "")}</textarea>
         <span class="story-editor-btns">
           <button type="button" data-goal-act="commit" data-idx="${i}">\uD655\uC778</button>
           <button type="button" data-goal-act="cancel" data-idx="${i}">\uCDE8\uC18C</button>
@@ -12175,7 +12398,7 @@
         <button type="button" data-goal-act="edit" data-idx="${i}" title="\uC774 \uBAA9\uD45C \uC218\uC815">\u270F\uFE0F</button>
         <button type="button" data-goal-act="del" data-idx="${i}" title="\uC774 \uBAA9\uD45C \uC0AD\uC81C">\u{1F5D1}</button>
       </span>` : "";
-      return `<li>${escapeHtml2(g)}${tools}</li>`;
+      return `<li>${escapeHtml3(g)}${tools}</li>`;
     };
     const addBtn = dialogueDevMode ? `<li class="goal-addrow"><button type="button" data-goal-act="add">\uFF0B \uD559\uC2B5 \uBAA9\uD45C \uCD94\uAC00</button></li>` : "";
     goalsEl.innerHTML = mission.goals.map(li).join("") + addBtn;
@@ -12242,13 +12465,13 @@
         level++;
       }
       if (t.startsWith("#")) {
-        html += `<div class="blk-comment"># ${escapeHtml2(t.replace(/^#+\s*/, ""))}</div>`;
+        html += `<div class="blk-comment"># ${escapeHtml3(t.replace(/^#+\s*/, ""))}</div>`;
         continue;
       }
       const hashAt = t.indexOf("#");
       const blockText = (hashAt >= 0 ? t.slice(0, hashAt) : t).trim();
       const note = hashAt >= 0 ? t.slice(hashAt + 1).trim() : "";
-      html += '<div class="blk-row">' + (blockText ? `<div class="blk-chip">${escapeHtml2(blockText)}</div>` : "") + (note ? `<span class="blk-note"># ${escapeHtml2(note)}</span>` : "") + "</div>";
+      html += '<div class="blk-row">' + (blockText ? `<div class="blk-chip">${escapeHtml3(blockText)}</div>` : "") + (note ? `<span class="blk-note"># ${escapeHtml3(note)}</span>` : "") + "</div>";
     }
     while (level > 0) {
       html += "</div>";
@@ -12272,7 +12495,7 @@
       box.className = "sample-editor";
       box.innerHTML = `
       <div class="sample-hint">\uD55C \uC904 = \uBE14\uB85D 1\uAC1C \xB7 <b>#</b> \uB85C \uC2DC\uC791\uD558\uBA74 \uC8FC\uC11D(\uB179\uC0C9) \xB7 \uC904 \uC911\uAC04 <b>#</b> \uB4A4\uB294 \uBE14\uB85D \uC606 \uC8FC\uC11D \xB7 \uB4E4\uC5EC\uC4F0\uAE30(\uACF5\uBC31 4\uCE78) = \uBC18\uBCF5/\uC870\uAC74 \uC548\uCABD</div>
-      <textarea data-sample-field="code" rows="12" spellcheck="false">${escapeHtml2(mission.sampleCode || "")}</textarea>
+      <textarea data-sample-field="code" rows="12" spellcheck="false">${escapeHtml3(mission.sampleCode || "")}</textarea>
       <span class="story-editor-btns">
         <button type="button" data-sample-act="commit">\uD655\uC778</button>
         <button type="button" data-sample-act="cancel">\uCDE8\uC18C</button>
@@ -12542,7 +12765,7 @@
     else if (n) bc.textContent = `${n}\uCC28\uC2DC`;
     else bc.textContent = "";
   }
-  function escapeHtml2(s) {
+  function escapeHtml3(s) {
     return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function toggleDashboard() {
