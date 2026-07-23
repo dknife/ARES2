@@ -9,6 +9,15 @@ www/.idea*
 node_modules/
 .pnpm-store/
 
+# 비밀 키(.env) — Gemini 프록시(AI/server.py)용 GEMINI_API_KEY 등. 절대 커밋 금지.
+.env
+*.env
+!*.env.example
+# 파이썬 캐시·가상환경
+__pycache__/
+.venv/
+venv/
+
 # Document 폴더는 마크다운(.md)만 추적.
 # 원본 산출물(.hwp, .pdf, .docx 등)은 로컬에만 보관하고 원격에 올리지 않는다.
 # 단, CodeChange 보고서(LaTeX 원본·PDF)는 변경 기록 보관용으로 추적한다.

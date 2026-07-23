@@ -38,6 +38,22 @@ export const DEFAULT_SYSTEM_CONFIG = {
     command_delay: 100
 };
 
+// AI 도우미(대화형 튜터) 설정 — Gemini 프록시 백엔드(AI/server.py) 주소.
+// 로컬 개발: http://localhost:8787 / 배포: 클라우드 호스팅 URL 로 교체.
+// localStorage('ares-ai-proxy-url') 이 있으면 그 값이 우선(코드 수정 없이 기기별 전환).
+export const AI_CONFIG = {
+    // 프록시의 /api/chat 앞부분(베이스 URL). 뒤에 /api/chat 이 붙는다.
+    PROXY_BASE_URL: (() => {
+        try {
+            const saved = localStorage.getItem('ares-ai-proxy-url');
+            if (saved) return saved.replace(/\/+$/, '');
+        } catch (e) { /* localStorage 접근 불가 시 기본값 */ }
+        return 'http://localhost:8787';
+    })(),
+    // 요청 타임아웃 (ms)
+    REQUEST_TIMEOUT: 30000
+};
+
 // 상태 색상
 export const STATUS_COLORS = {
     GREEN: '#00ff9d',
