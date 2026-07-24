@@ -8,6 +8,7 @@ import { setupSimulation } from './Simulation/Simulation_Main.js';
 import { updateBlockCodingButtonUI, setupLogToggle, setupContentToggle } from './ui.js';
 import { AiChat } from './ai_chat.js';
 import { showCutscene } from './cutscene.js';
+import { lessonBadgeIcon, lessonIcon, missionIcon } from './mission_theme.js';
 
 // ============================================================
 // 차시 카탈로그 — 네비게이션 드롭다운/개요 표 렌더링에 사용
@@ -236,6 +237,21 @@ function applyMissionToolboxDomState() {
     if (id) categoryEl.classList.add(`ares-cat-${id}`);
     categoryEl.classList.toggle('ares-muted-category', muted);
   });
+  mountToolboxActionsInScroll();
+}
+
+// 코드저장·코드열기 버튼을 Blockly 툴박스 스크롤 영역 안(카테고리 8칸 바로 아래)으로
+// 옮긴다. 이렇게 하면 카테고리+버튼이 한 열로 함께 스크롤돼, 화면이 짧아도 버튼이
+// 카드 밖으로 삐져나오지 않고 스크롤로 접근된다. updateToolbox 마다 다시 호출된다.
+function mountToolboxActionsInScroll() {
+  const actions = document.getElementById('toolboxActions');
+  const toolboxDiv = document.querySelector('.blocklyToolboxDiv');
+  if (!actions || !toolboxDiv) return;
+  const contents = toolboxDiv.querySelector('.blocklyToolboxContents') || toolboxDiv;
+  // 카테고리(.blocklyToolboxContents) 바로 다음에 오도록 배치
+  if (actions.parentElement !== toolboxDiv || contents.nextElementSibling !== actions) {
+    toolboxDiv.appendChild(actions);
+  }
 }
 
 function updateDynamicToolbox() {
@@ -434,6 +450,9 @@ function setupToolboxDrawer(ws) {
   };
 
   div.addEventListener('pointerdown', (event) => {
+    // 툴박스 스크롤 안으로 옮겨진 코드저장·코드열기 버튼은 접기/펼치기 로직에서 제외
+    // (preventDefault 로 버튼 클릭이 막히면 안 되므로 그대로 통과시킨다)
+    if (event.target.closest && event.target.closest('#toolboxActions')) return;
     const onCategory = !!(event.target.closest && event.target.closest('.blocklyToolboxCategory'));
     if (isCollapsed()) {
       // 접힘 상태에서 클릭 → 펼친다. 클릭 위치가 특정 카테고리(라벨)면 그 영역의
@@ -1165,12 +1184,25 @@ function resetScrollTop() {
   requestAnimationFrame(toTop);
 }
 
+// 화성 배경 헤더는 개요·차시·미션(설명) 화면에만 깐다. 코딩/시뮬 모드는
+// 전체 캔버스라 흰 헤더로 되돌린다. contentMode 변경 시에도 다시 계산한다.
+function updateMarsChrome() {
+  const on = currentView === 'overview'
+    || currentView === 'lesson'
+    || currentView === 'mission';   // 미션 뷰(설명·코딩·시뮬) 전부 화성 헤더 사용
+  document.body.classList.toggle('mars-chrome', on);
+}
+window.addEventListener('ares:contentmode', updateMarsChrome);
+
 function showView(view) {
   for (const v of ['overview', 'lesson', 'mission']) {
     const el = document.getElementById(v + 'View');
     if (el) el.hidden = (v !== view);
   }
   currentView = view;
+  // 화성 배경 헤더 등 뷰별 스타일 훅 (styles.css 팔레트 블록에서 사용)
+  document.body.dataset.view = view;
+  updateMarsChrome();
 
   // 내비게이션으로 뷰가 바뀌면 그 화면의 스크롤을 항상 상단으로 초기화.
   // 데스크톱(≥769px)은 뷰 요소가 스크롤 컨테이너, 모바일(≤768px)은 뷰가
@@ -1212,6 +1244,7 @@ function showView(view) {
 
   // 미션 뷰 진입 시 항상 미션 설명 모드로 시작
   if (inMission && setContentMode) setContentMode('description');
+  updateMarsChrome();   // _contentMode 확정 후 화성 헤더 재계산
 
   // 미션 뷰에 진입할 때만 Blockly 리사이즈
   if (inMission && workspace) {
@@ -1287,8 +1320,10 @@ async function enterOverview() {
            </section>
          ` : `
            <section class="lesson-accordion-item" data-lesson-item="${lesson.n}">
-             <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}">
-               <span class="flow-num">${lesson.n}</span>
+             <button class="flow-step-btn" data-lesson="${lesson.n}" aria-expanded="false" aria-controls="inlineMissions${lesson.n}"
+                     aria-label="${lesson.n}차시 ${escapeHtml(lesson.title)}">
+               <span class="flow-num" aria-hidden="true"><img src="${lessonBadgeIcon(lesson.n)}" alt=""></span>
+               <span class="flow-ico" aria-hidden="true"><img src="${lessonIcon(lesson.n)}" alt=""></span>
                <span class="flow-main">
                  <strong>${escapeHtml(lesson.title)}</strong>
                  <small>${escapeHtml(lesson.hardware)}</small>
@@ -1394,12 +1429,14 @@ async function enterOverview() {
 // ============================================================
 function renderInlineMissionItem(n, mission) {
   const completed = isMissionCompleted(n, mission.id);
+  const icon = missionIcon(n, mission.id);
   return `
     <div class="inline-mission-item" data-mission-item="${mission.id}">
+      <span class="inline-mission-marker" aria-hidden="true"></span>
       <button type="button" class="inline-mission-btn${completed ? ' completed' : ''}"
               data-lesson="${n}" data-inline-mission="${mission.id}"
               aria-label="${escapeHtml(mission.title)} 미션 열기">
-        <span class="inline-mission-marker" aria-hidden="true">▶</span>
+        <span class="inline-mission-icon" aria-hidden="true">${icon ? `<img src="${icon}" alt="">` : ''}</span>
         <span class="inline-mission-main">
           <strong>${escapeHtml(mission.title)}</strong>
         </span>

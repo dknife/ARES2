@@ -8,7 +8,7 @@
     <script src="mobile-preview.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="fonts/fonts.css">
-    <link rel="stylesheet" href="styles.css?v=20260709f">
+    <link rel="stylesheet" href="styles.css?v=20260724r">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
@@ -16,7 +16,7 @@
     <script src="vendor/meshopt_decoder.js"></script>
     <!-- 저사양 기기 감지 + 품질 티어링 + WebGL 가드 → window.AresPerf (모듈 실행 전에 로드) -->
     <script src="perf_tier.js"></script>
-    <script type="module" src="main.js?v=20260709f"></script>
+    <script type="module" src="main.js?v=20260724r"></script>
     <style>
         /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
            버튼으로 닫으면 아래 원래 화면이 그대로 드러난다(원위치 복귀). */
@@ -156,10 +156,10 @@
                     <!-- 툴박스 이미지 메뉴 아래 도구 버튼: UI 개편 전 상단에 있던 기능 복원 -->
                     <div id="toolboxActions" aria-label="미션 도구">
                         <button type="button" class="tbx-action" data-action="save" title="코드 저장 — 현재 코드를 파일로 저장">
-                            <span class="tbx-ico"><img src="assets/design/Save.png" alt=""></span><span class="tbx-lbl">코드저장</span>
+                            <span class="tbx-ico"><img src="assets/coding/save.png" alt=""></span><span class="tbx-lbl">코드저장</span>
                         </button>
-                        <button type="button" class="tbx-action" data-action="load" title="코드 읽기 — 저장된 코드 파일 불러오기">
-                            <span class="tbx-ico"><img src="assets/design/Load.png" alt=""></span><span class="tbx-lbl">코드읽기</span>
+                        <button type="button" class="tbx-action" data-action="load" title="코드 열기 — 저장된 코드 파일 불러오기">
+                            <span class="tbx-ico"><img src="assets/coding/open.png" alt=""></span><span class="tbx-lbl">코드열기</span>
                         </button>
                     </div>
                 </div>

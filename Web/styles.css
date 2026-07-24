@@ -2958,6 +2958,42 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     -webkit-mask-image: url('assets/design/nav-connect.png');
 }
 
+/* ── 중앙 연결 버튼: 시안 메뉴_아이콘(btn01~03)을 통째로 버튼 얼굴로 사용 ──
+   btn01=신호연결 / btn02=재연결 / btn03=연결됨 는 아이콘+글자가 이미 그려진
+   원형 버튼이라, 이 상태에서는 배경 원·테두리·내부 아이콘/라벨을 모두 숨기고
+   이미지 한 장으로 대체한다. 코딩/시뮬 실행(▶·■) 상태는 기존 렌더 유지. */
+.mobile-bottom-nav .mobile-connect-btn:not(.coding-run):not(.run-stop) {
+    background: transparent !important;
+    border: 0;
+    box-shadow: none !important;
+    padding: 0;
+}
+
+.mobile-connect-btn:not(.coding-run):not(.run-stop)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('assets/design/connect-signal.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .18));
+}
+
+.mobile-connect-btn.connected:not(.coding-run):not(.run-stop)::after {
+    background-image: url('assets/design/connect-connected.png');
+}
+
+.mobile-connect-btn.btn-failed:not(.coding-run):not(.run-stop)::after {
+    background-image: url('assets/design/connect-retry.png');
+}
+
+/* 이미지에 아이콘·글자가 포함되므로 내부 아이콘/라벨은 숨긴다. */
+.mobile-connect-btn:not(.coding-run):not(.run-stop) .mobile-connect-icon,
+.mobile-connect-btn:not(.coding-run):not(.run-stop) .mobile-nav-label {
+    display: none;
+}
+
 /* AI·로그 팝업은 연결 원보다 앞에 표시한다(PDF 6·7페이지). */
 .mobile-bottom-nav { z-index: 900; }
 .ai-panel,
@@ -3315,9 +3351,9 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
 .story-name {
     grid-column: 2;
     grid-row: 1;
-    margin: 0 0 4px;
-    color: #e65448;
-    font-size: .78rem;
+    margin: 0 0 6px;
+    color: #f0704a;               /* 아레스 이름: 주황빛 */
+    font-size: .82rem;
     font-weight: 800;
 }
 
@@ -3326,13 +3362,13 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     grid-row: 2;
     justify-self: start;
     max-width: min(100%, 330px);
-    padding: 8px 12px;
-    border: 1px solid #c7c9cc;
-    border-radius: 7px;
-    background: #f3f4f5;
-    color: #45464a;
+    padding: 12px 16px;
+    border: 1.5px solid #fccea7;      /* 아레스: 복숭아빛 말풍선 */
+    border-radius: 14px;
+    background: #fef4ec;
+    color: #4a4034;
     font-size: clamp(.8rem, 2.15vw, .96rem);
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .story-line.story-albi {
@@ -3346,14 +3382,15 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
 .story-albi .story-name {
     grid-column: 1;
     justify-self: end;
-    color: #4680a6;
+    color: #4a90d9;               /* 알비 이름: 파랑 */
 }
 
 .story-albi .story-text {
     grid-column: 1;
     justify-self: end;
-    background: #e6e6e6;
-    border-color: #e6e6e6;
+    color: #33465c;
+    background: #e8f0f9;          /* 알비: 하늘빛 말풍선 */
+    border-color: #b2d4f9;
 }
 
 .story-goal-question {
@@ -3373,24 +3410,26 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     grid-row: 2;
     justify-self: end;
     width: min(100%, 390px);
-    padding: 14px 18px;
-    border-radius: 7px;
-    background: #e6e6e6;
-    color: #343539;
+    padding: 16px 20px;
+    border: 1.5px solid #b2d4f9;      /* 학습목표도 알비의 하늘빛 말풍선 */
+    border-radius: 14px;
+    background: #e8f0f9;
+    color: #33465c;
 }
 
 .goal-bubble h4 {
-    margin: 0 0 8px;
-    font-size: .88rem;
-    font-weight: 500;
+    margin: 0 0 10px;
+    color: #f0704a;                   /* 제목 "학습목표"는 주황 강조 */
+    font-size: .95rem;
+    font-weight: 800;
 }
 
 #missionGoals {
     margin: 0;
     padding-left: 18px;
-    color: #343539;
+    color: #33465c;
     font-size: clamp(.76rem, 2vw, .9rem);
-    line-height: 1.55;
+    line-height: 1.6;
 }
 
 #missionGoals li {
@@ -3399,41 +3438,59 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
 
 .mission-sample {
     margin: 0;
-    padding: 0 16px 16px;
-    border: 1px solid #c9cbce;
-    border-radius: 12px;
+    padding: 0 18px;
+    border: 1.5px solid #e2d7c3;
+    border-radius: 14px;
     background: #fff;
+}
+
+details.mission-sample:not([open]) {
+    padding-bottom: 0;
+}
+details.mission-sample[open] {
+    padding-bottom: 16px;
 }
 
 details.mission-sample summary {
     position: relative;
     display: flex;
     align-items: center;
-    padding: 16px 0 12px;
-    padding-right: 32px;
-    border-bottom: 1px solid #c9cbce;
-    color: #292a2d;
+    padding: 16px 32px 16px 0;
+    color: #35302a;
     font-size: clamp(.92rem, 2.5vw, 1.08rem);
-    font-weight: 800;
+    font-weight: 700;
     list-style: none;
     cursor: pointer;
 }
 
+details.mission-sample[open] summary {
+    border-bottom: 1.5px solid #eee2d0;
+}
+
+/* 앞머리 "# " 는 주황으로 강조 (시안) */
+details.mission-sample summary::first-letter {
+    color: #fd8f09;
+    font-weight: 800;
+}
+
 details.mission-sample summary::-webkit-details-marker { display: none; }
 details.mission-sample summary::after {
-    content: '◀';
+    content: '';
     position: absolute;
     right: 2px;
     top: 50%;
-    color: #65666a;
-    font-size: .82rem;
-    line-height: 1;
-    transform: translateY(-50%) rotate(0deg);
-    transform-origin: center;
+    width: 16px;
+    height: 16px;
+    background: #b79a6a;
+    transform: translateY(-50%);
     transition: transform .18s ease;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 7.5l6 6 6-6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 7.5l6 6 6-6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-repeat: no-repeat; mask-position: center; mask-size: contain;
+    -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain;
 }
 details.mission-sample[open] summary::after {
-    transform: translateY(-50%) rotate(-90deg);
+    transform: translateY(-50%) rotate(180deg);
 }
 
 .mission-sample .sample-code {
@@ -3452,16 +3509,45 @@ details.mission-sample[open] summary::after {
 }
 
 .mission-prev-next .nav-btn-small {
-    height: 50px;
+    height: 52px;
     margin: 0;
-    border-radius: 9px;
+    border-radius: 12px;
     font-size: clamp(.84rem, 2.2vw, 1rem);
+    font-weight: 700;
+}
+
+/* 이전 미션: 보라 외곽선 버튼 / 다음 미션: 보라 채움 버튼 (시안 4페이지) */
+#prevMissionBtn {
+    background: #fff;
+    color: #805bc6;
+    border: 1.5px solid #805bc6;
+}
+
+#prevMissionBtn:hover:not(:disabled) {
+    background: #f4eefc;
+}
+
+#prevMissionBtn:disabled {
+    color: #c3b7dd;
+    border-color: #ddd4ec;
+    background: #fff;
 }
 
 #nextMissionBtn {
-    background: #272324;
+    background: #805bc6;
     color: #fff;
-    border-color: #272324;
+    border: 1.5px solid #805bc6;
+}
+
+#nextMissionBtn:hover:not(:disabled) {
+    background: #6f4bb3;
+    border-color: #6f4bb3;
+}
+
+#nextMissionBtn:disabled {
+    background: #cdc0e6;
+    border-color: #cdc0e6;
+    color: #fff;
 }
 
 @media (max-width: 520px) {
@@ -3499,29 +3585,36 @@ details.mission-sample[open] summary::after {
    (미디어쿼리 밖 + 파일 맨 끝 + !important 로 모바일 규칙보다 우선.)
    ============================================================ */
 :root {
-    --tb-rail: 52px;                               /* 펼침(전체 아이콘+라벨) 폭 */
-    --tb-rail-col: 30px;                           /* 접힘(라벨만) 폭 */
-    --tb-cell: 35px;
+    --tb-rail: 64px;                               /* 아이콘+라벨 세로 스택 폭 */
+    --tb-cell: 52px;                               /* 아이콘(34) + 라벨(14) 스택 높이 */
+    --tb-icon: 34px;
     --tb-gap: 8px;
-    --tb-top-gap: 2px;
-    --tb-w: var(--tb-rail);                        /* 현재 보이는 폭(기본=펼침) */
-    --tb-bg-x: 0px;                                /* 스프라이트 X 이동(기본=펼침) */
+    --tb-top-gap: 6px;
+    --tb-w: var(--tb-rail);
 }
-/* 접힘 상태: 라벨 부분만 보이도록 폭을 줄이고 스프라이트를 좌로 이동 */
-body.toolbox-collapsed {
-    --tb-w: var(--tb-rail-col);
-    --tb-bg-x: -22px;
-}
+/* 접힘 개념 제거 — 시안(코딩 페이지)은 항상 아이콘+라벨을 함께 보인다 */
+body.toolbox-collapsed { --tb-w: var(--tb-rail); }
+
 .blocklyToolboxDiv {
     width: var(--tb-w) !important;
     max-width: var(--tb-w) !important;
     padding: 0 !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    background: #ffffff !important;
+    background: #fdf8f2 !important;                /* 시안: 크림빛 툴박스 바탕 */
+    border-right: 1.5px solid #fce1c5 !important;
+    /* 스크롤은 유지하되 스크롤바는 최대한 안 보이게 (기능만 남김) */
+    scrollbar-width: none;                         /* Firefox */
+    -ms-overflow-style: none;                      /* 구형 Edge/IE */
+}
+.blocklyToolboxDiv::-webkit-scrollbar {           /* Chrome·Safari·Edge */
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }
 .blocklyToolboxContents { padding: var(--tb-top-gap) 0 0 !important; }
 
+/* 카테고리 = 세로 스택(위 컬러 아이콘 · 아래 라벨). 개별 coding0N 아이콘을 배경으로. */
 .blocklyToolboxCategory {
     position: relative;
     width: var(--tb-w) !important;
@@ -3531,36 +3624,31 @@ body.toolbox-collapsed {
     padding: 0 !important;
     margin: 0 0 var(--tb-gap) 0 !important;
     box-sizing: border-box !important;
-    background-image: url('assets/design/toolbox-menu-active-web.png?v=20260710e');
     background-repeat: no-repeat;
-    background-size: var(--tb-rail) calc(var(--tb-cell) * 8);
-    background-position-x: var(--tb-bg-x);     /* 접힘 시 라벨 부분만 보이도록 좌로 이동 */
+    background-position: center var(--tb-top-gap);
+    background-size: var(--tb-icon) var(--tb-icon);
     cursor: pointer;
-    transition: background-position-x 0.18s ease;
 }
 
-.blocklyToolboxCategory::after {
-    content: '';
-    position: absolute;
-    left: 30px;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    background: #ffffff;
-    pointer-events: none;
-    z-index: 0;
-}
+.blocklyToolboxCategory:nth-child(1) { background-image: url('assets/coding/coding01.png'); }
+.blocklyToolboxCategory:nth-child(2) { background-image: url('assets/coding/coding02.png'); }
+.blocklyToolboxCategory:nth-child(3) { background-image: url('assets/coding/coding03.png'); }
+.blocklyToolboxCategory:nth-child(4) { background-image: url('assets/coding/coding04.png'); }
+.blocklyToolboxCategory:nth-child(5) { background-image: url('assets/coding/coding05.png'); }
+.blocklyToolboxCategory:nth-child(6) { background-image: url('assets/coding/coding06.png'); }
+.blocklyToolboxCategory:nth-child(7) { background-image: url('assets/coding/coding07.png'); }
+.blocklyToolboxCategory:nth-child(8) { background-image: url('assets/coding/coding08.png'); }
 
-.blocklyToolboxCategory:nth-child(1) { background-position-y: top; }
-.blocklyToolboxCategory:nth-child(2) { background-position-y: calc(var(--tb-cell) * -1); }
-.blocklyToolboxCategory:nth-child(3) { background-position-y: calc(var(--tb-cell) * -2); }
-.blocklyToolboxCategory:nth-child(4) { background-position-y: calc(var(--tb-cell) * -3); }
-.blocklyToolboxCategory:nth-child(5) { background-position-y: calc(var(--tb-cell) * -4); }
-.blocklyToolboxCategory:nth-child(6) { background-position-y: calc(var(--tb-cell) * -5); }
-.blocklyToolboxCategory:nth-child(7) { background-position-y: calc(var(--tb-cell) * -6); }
-.blocklyToolboxCategory:nth-child(8) { background-position-y: calc(var(--tb-cell) * -7); }
+/* 선택/호버 = 진한 컬러(-on) 아이콘 */
+.blocklyToolboxCategory:nth-child(1):hover, .blocklyToolboxCategory:nth-child(1)[aria-selected="true"] { background-image: url('assets/coding/coding01-on.png'); }
+.blocklyToolboxCategory:nth-child(2):hover, .blocklyToolboxCategory:nth-child(2)[aria-selected="true"] { background-image: url('assets/coding/coding02-on.png'); }
+.blocklyToolboxCategory:nth-child(3):hover, .blocklyToolboxCategory:nth-child(3)[aria-selected="true"] { background-image: url('assets/coding/coding03-on.png'); }
+.blocklyToolboxCategory:nth-child(4):hover, .blocklyToolboxCategory:nth-child(4)[aria-selected="true"] { background-image: url('assets/coding/coding04-on.png'); }
+.blocklyToolboxCategory:nth-child(5):hover, .blocklyToolboxCategory:nth-child(5)[aria-selected="true"] { background-image: url('assets/coding/coding05-on.png'); }
+.blocklyToolboxCategory:nth-child(6):hover, .blocklyToolboxCategory:nth-child(6)[aria-selected="true"] { background-image: url('assets/coding/coding06-on.png'); }
+.blocklyToolboxCategory:nth-child(7):hover, .blocklyToolboxCategory:nth-child(7)[aria-selected="true"] { background-image: url('assets/coding/coding07-on.png'); }
+.blocklyToolboxCategory:nth-child(8):hover, .blocklyToolboxCategory:nth-child(8)[aria-selected="true"] { background-image: url('assets/coding/coding08-on.png'); }
 
-/* Blockly 기본 행/라벨/아이콘/색상바 제거 (이미지가 전부 담고 있음) */
 .blocklyToolboxCategory .blocklyTreeRow {
     position: relative;
     z-index: 1;
@@ -3575,20 +3663,20 @@ body.toolbox-collapsed {
     box-sizing: border-box !important;
 }
 
+/* 라벨은 아이콘 아래, 가로쓰기·가운데 정렬 */
 .blocklyToolboxCategory .blocklyTreeLabel {
     display: block !important;
     position: absolute;
-    left: 34px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #3f4542 !important;
+    left: 0;
+    right: 0;
+    bottom: 2px;
+    text-align: center;
+    color: #6b5844 !important;
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
-    font-size: 10px !important;
+    font-size: 11px !important;
     font-weight: 800 !important;
     line-height: 1.05 !important;
     letter-spacing: 0 !important;
-    writing-mode: vertical-rl;
-    text-orientation: upright;
     white-space: nowrap;
     background: transparent !important;
     border: none !important;
@@ -3596,45 +3684,12 @@ body.toolbox-collapsed {
     padding: 0 !important;
 }
 
+.blocklyToolboxCategory[aria-selected="true"] .blocklyTreeLabel { color: #3f3428 !important; }
+
 .blocklyToolboxCategory .blocklyTreeIcon { display: none !important; }
 
-/* 호버/선택 강조 */
-.blocklyToolboxCategory:hover,
-.blocklyToolboxCategory[aria-selected="true"] {
-    filter: none;
-}
-
-.blocklyToolboxCategory[aria-selected="true"]::before {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: rgba(0, 0, 0, 0.38);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.blocklyToolboxCategory.ares-muted-category {
-    background-image: url('assets/design/toolbox-menu-muted-web.png?v=20260709f') !important;
-    background-color: transparent !important;
-    filter: none;
-}
-
-.blocklyToolboxCategory.ares-muted-category .blocklyTreeLabel {
-    color: #9a9a9a !important;
-}
-
-.blocklyToolboxCategory.ares-muted-category:hover,
-.blocklyToolboxCategory.ares-muted-category[aria-selected="true"] {
-    filter: none;
-}
-
-.blocklyToolboxCategory.ares-cat-category_math:not(.ares-muted-category) {
-    background-color: #CACACB !important;
-    background-blend-mode: luminosity;
-}
+.blocklyToolboxCategory.ares-muted-category { opacity: .4; }
+.blocklyToolboxCategory.ares-muted-category .blocklyTreeLabel { color: #b3a795 !important; }
 
 /* 카테고리를 클릭해 관련 블록(플라이아웃)이 열릴 때 0.5초 부드럽게 나타난다 */
 @keyframes aresFlyoutIn {
@@ -3753,36 +3808,36 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     top: 30%;
 }
 
+/* 코드저장·코드열기 — JS(mountToolboxActionsInScroll)가 Blockly 툴박스 스크롤
+   안, 카테고리 바로 아래로 옮긴다. 그래서 흐름(static) 배치로 카테고리와 함께
+   세로로 쌓이고 함께 스크롤된다. */
 #toolboxActions {
-    position: absolute;
-    left: 0;
-    /* 카테고리 8칸 바로 아래 (workspace 가 이미 배너 아래에서 시작) */
-    top: calc(var(--tb-top-gap) + (var(--tb-cell) * 8) + (var(--tb-gap) * 7) + 8px);
+    position: static;
     width: var(--tb-w);
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    padding: 4px 4px 8px;
+    gap: var(--tb-gap);
+    margin-top: 4px;
+    padding: 0;
     box-sizing: border-box;
-    /* Blockly 툴박스 div 가 전체 높이로 이 영역을 덮으므로 그 위로 올린다
-       (점검 오버레이 z:10000 보다는 낮게 유지) */
-    z-index: 900;
 }
 .tbx-action {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 2px;
-    width: 100%;
-    padding: 6px 2px;
+    justify-content: flex-start;
+    gap: 3px;
+    width: var(--tb-w);              /* 카테고리 셀과 동일 폭 */
+    height: var(--tb-cell);          /* 카테고리 셀과 동일 높이 */
+    padding: var(--tb-top-gap) 2px 2px;
+    box-sizing: border-box;
     border: none;
     border-radius: 8px;
-    background: transparent;          /* 색 없음 — 배경 채우지 않음 */
-    color: #454549;                   /* 중립 다크 텍스트 */
+    background: transparent;
+    color: #6b5844;                   /* 라벨과 동일 톤 */
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 700;
+    font-size: 0.62rem;
+    font-weight: 800;
     line-height: 1.05;
     text-align: center;
     cursor: pointer;
@@ -3793,15 +3848,19 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: var(--tb-icon);
+    height: var(--tb-icon);
     line-height: 1;
 }
 .tbx-action .tbx-ico img {
     display: block;
-    width: 20px;
-    height: 20px;
+    width: var(--tb-icon);
+    height: var(--tb-icon);
     object-fit: contain;
+}
+.tbx-action .tbx-lbl {
+    color: #6b5844;
+    font-size: 0.62rem;
 }
 .tbx-action .tbx-lbl { display: block !important; white-space: nowrap; }
 /* 이전 접힘 상태가 남아 있어도 도구 이름은 계속 표시한다. */
@@ -3900,3 +3959,392 @@ body.toolbox-collapsed .tbx-action .tbx-lbl { display: inline; }
 }
 .sim-editor-edge-toggle small { color: rgba(238, 243, 251, 0.5); font-weight: 500; }
 .sim-editor-edge-toggle input { width: auto; margin: 0; flex: 0 0 auto; }
+
+/* ============================================================
+   2026 미션 목록 컬러 가이드 (시안: 미션P_색상가이드00)
+   - 차시마다 --acc(강조) / --surf(연한 바탕) / --soft(접힘 테두리) 3색
+   - 아이콘은 Web/assets/mission/ (원본 미션P_아이콘 → 96² 축소)
+   ============================================================ */
+
+/* ── 화성 배경 헤더: 로고 + 설정 + 차시/미션 선택이 이미지 위에 얹힌다 ── */
+body.mars-chrome .container {
+    background-image: url('assets/design/header-mars.jpg');
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-size: 100% auto;
+}
+
+body.mars-chrome .header,
+body.mars-chrome .header-main,
+body.mars-chrome #missionNav {
+    background: transparent;
+    border-bottom: 0;
+}
+
+body.mars-chrome .header-settings {
+    color: #2f3b52;
+}
+
+body.mars-chrome #missionNav {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px 12px 14px;
+}
+
+/* 선택 상자 = 흰 알약 + 왼쪽 아이콘(로켓/깃발) + 주황 화살표 */
+body.mars-chrome #missionNav select {
+    height: 44px;
+    padding: 0 34px 0 40px;
+    font-size: .88rem;
+    border: 0;
+    border-radius: 22px;
+    color: #6b7280;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(90, 40, 20, .18);
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M2 2l5 5 5-5' fill='none' stroke='%23fd8f09' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+        var(--nav-select-icon, none);
+    background-repeat: no-repeat, no-repeat;
+    background-position: right 13px center, left 10px center;
+    background-size: 13px 8px, 22px 22px;
+}
+
+body.mars-chrome #lessonSelect  { --nav-select-icon: url('assets/mission/rocket.png'); }
+body.mars-chrome #missionSelect { --nav-select-icon: url('assets/mission/flag.png'); }
+
+/* ── 차시별 팔레트 ── */
+.lesson-accordion-item {
+    --acc: #8a8b8f;
+    --surf: #f7f7f8;
+    --soft: #e4e4e6;
+}
+.lesson-accordion-item[data-lesson-item="1"],
+.lesson-accordion-item[data-lesson-item="12"] { --acc: #ff7f0d; --surf: #fef4ec; --soft: #ffbe92; }
+.lesson-accordion-item[data-lesson-item="2"],
+.lesson-accordion-item[data-lesson-item="11"] { --acc: #fdba05; --surf: #fffaf1; --soft: #f7e6cd; }
+.lesson-accordion-item[data-lesson-item="3"],
+.lesson-accordion-item[data-lesson-item="8"],
+.lesson-accordion-item[data-lesson-item="10"] { --acc: #23b6a6; --surf: #f5faf8; --soft: #d9f4e8; }
+.lesson-accordion-item[data-lesson-item="4"]  { --acc: #378ef6; --surf: #f4f8fd; --soft: #e0edfc; }
+.lesson-accordion-item[data-lesson-item="5"],
+.lesson-accordion-item[data-lesson-item="9"]  { --acc: #805bc6; --surf: #f8f5fb; --soft: #ece1f9; }
+.lesson-accordion-item[data-lesson-item="6"]  { --acc: #f5497d; --surf: #fef5f7; --soft: #f9dce4; }
+.lesson-accordion-item[data-lesson-item="7"]  { --acc: #3d96da; --surf: #f6f7fe; --soft: #dee3fc; }
+
+/* ── 차시 카드 ── */
+.overview-flow { gap: 12px; }
+
+.lesson-accordion-item {
+    border: 1.5px solid var(--soft);
+    border-radius: 14px;
+    background: var(--surf);
+}
+
+.lesson-accordion-item:has(.lesson-panel:not([hidden])) {
+    border-color: var(--acc);
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(60, 40, 30, .07);
+    /* 펼친 동안에는 모서리 클리핑을 푼다 — 여닫이 애니메이션은 패널 자체의
+       overflow:hidden(.accordion-opening/closing)이 담당하므로, 여기서 visible 로
+       바꿔도 애니메이션은 그대로이고 마지막 미션 호버 알약 아래가 잘리지 않는다. */
+    overflow: visible;
+}
+
+.flow-step-btn {
+    grid-template-columns: 30px 34px minmax(0, 1fr) auto 20px;
+    gap: 10px;
+    min-height: 58px;
+    padding: 10px 16px;
+    background: var(--surf);
+    border-radius: 12px;
+}
+
+.flow-step-btn:hover,
+.flow-step-btn:active,
+.flow-step-btn[aria-expanded="true"] {
+    background: var(--surf);
+}
+
+.flow-step-btn[aria-expanded="true"] {
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid var(--acc);
+    border-radius: 12px 12px 0 0;
+}
+
+.lesson-accordion-item:not(.bonus) .flow-num,
+.flow-ico,
+.inline-mission-icon {
+    display: grid;
+    place-items: center;
+    width: auto;
+    height: auto;
+    background: none;
+    border-radius: 0;
+}
+
+.flow-num img { width: 30px; height: 30px; }
+.flow-ico img { width: 30px; height: 30px; object-fit: contain; }
+
+/* 보너스(+) 항목에는 차시 아이콘이 없다 → 4칸 그리드로 되돌린다 */
+.lesson-accordion-item.bonus .flow-step-btn {
+    grid-template-columns: 30px minmax(0, 1fr) auto 20px;
+}
+
+.flow-step-btn strong {
+    color: #2f3237;
+    font-size: .95rem;
+    font-weight: 700;
+}
+
+/* 화살표는 시안대로 차시 색상의 얇은 ∨ / ∧ (글자 대신 마스크로 그린다) */
+.flow-arrow {
+    left: 0;
+    width: 20px;
+    height: 20px;
+    font-size: 0;
+    background: var(--acc);
+    transform: none;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 7.5l6 6 6-6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 7.5l6 6 6-6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+.flow-step-btn[aria-expanded="true"] .flow-arrow {
+    transform: rotate(180deg);
+}
+
+/* ── 펼친 미션 목록: 점선 타임라인 + 아이콘 + 호버 알약 ──
+   하단 패딩을 넉넉히(20px) 줘서 마지막 미션의 호버 알약 아래 테두리가
+   아코디언(.lesson-accordion-item: overflow hidden + border-radius 14px)의
+   둥근 모서리 클립 영역에 걸려 잘리지 않게 한다. */
+.lesson-panel {
+    padding: 12px 14px 20px;
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+}
+
+/* 예전 단일 세로 점선(패널 전체 관통)은 제거 — 대신 점끼리 잇는 연결선을 쓴다.
+   이렇게 하면 첫 번째 점 위쪽에는 선이 생기지 않는다. */
+.lesson-panel::before {
+    display: none !important;
+}
+
+.inline-mission-list { background: transparent; }
+
+.inline-mission-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+}
+
+/* 각 점에서 "다음 점"까지만 잇는 점선. 마지막 항목은 그리지 않는다.
+   → 첫 점 위/마지막 점 아래로는 선이 남지 않는다. */
+.inline-mission-item::before {
+    content: '';
+    position: absolute;
+    left: 11px;                 /* 마커(22px) 중앙 = 점 중심 */
+    top: 50%;                   /* 이 항목의 점 중심에서 시작 */
+    height: 100%;               /* 다음 항목의 점 중심까지 */
+    width: 2px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+        to bottom,
+        var(--acc) 0 7px,
+        transparent 7px 15px
+    );
+    z-index: 0;
+    pointer-events: none;
+}
+.inline-mission-item:last-child::before { display: none; }
+
+/* 타임라인 점 — 점선 위에 얹혀 끊어 보이게 흰 바탕을 깐다 */
+.inline-mission-marker {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    font-size: 0;
+}
+
+.inline-mission-marker::after {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--acc);
+}
+
+.inline-mission-btn {
+    position: relative;                /* ::after 링의 기준 */
+    grid-template-columns: 34px minmax(0, 1fr) 18px;
+    gap: 8px;
+    min-height: 22px;
+    padding: 4px 10px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    border-radius: 10px;
+    color: #3c4046;
+}
+
+/* 호버 테두리(알약 링)는 버튼 본체가 아니라 ::after 로 그린다.
+   <button> 네이티브 렌더링이 border/box-shadow 를 무시(특히 아래 테두리가 0px 로
+   잘림)하는 문제를, 별도 박스인 가상요소로 우회한다. 위치 고정이라 레이아웃 영향 없음. */
+.inline-mission-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    border-radius: inherit;
+    pointer-events: none;
+    transition: border-color .15s ease;
+}
+
+.inline-mission-icon img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.inline-mission-btn .inline-mission-main strong {
+    font-size: .84rem;
+    font-weight: 500;
+}
+
+/* 호버(또는 터치)한 버튼에만 차시 색 알약 링(::after)이 뜬다. 배경·글자색은 버튼 본체. */
+.inline-mission-btn:hover,
+.inline-mission-btn:active,
+.inline-mission-btn.completed:hover,
+.inline-mission-btn.completed:active {
+    background: var(--surf);
+    color: var(--acc);
+}
+.inline-mission-btn:hover::after,
+.inline-mission-btn:active::after,
+.inline-mission-btn.completed:hover::after,
+.inline-mission-btn.completed:active::after {
+    border-color: var(--acc);
+}
+
+@media (hover: none) {
+    /* 터치 기기: 호버가 고정되지 않도록 누르는 순간에만 표시 */
+    .inline-mission-btn:hover { background: transparent; color: #3c4046; }
+    .inline-mission-btn:hover::after { border-color: transparent; }
+    .inline-mission-btn:active { background: var(--surf); color: var(--acc); }
+    .inline-mission-btn:active::after { border-color: var(--acc); }
+}
+
+.inline-mission-check { color: var(--acc); }
+
+/* ── 하단 내비게이션: 주황 바 + 흰 아이콘, 선택 시 노랑 ── */
+.mobile-bottom-nav {
+    background: #f6654a;
+    border-top: 0;
+}
+
+.mobile-bottom-nav .mobile-nav-btn,
+.mobile-bottom-nav .mobile-nav-btn:hover,
+.mobile-bottom-nav .mobile-nav-btn:active,
+.mobile-bottom-nav .mobile-nav-btn:not(.active),
+.mobile-bottom-nav .mobile-nav-btn:not(.active):hover,
+.mobile-bottom-nav .mobile-nav-btn:not(.active):active { color: #fff; }
+
+.mobile-bottom-nav .mobile-nav-btn.active { color: #fff100; }
+
+/* ============================================================
+   코딩 페이지 (시안: 코딩P_색상가이드) — 화성 헤더 + 크림 툴박스 + 복숭아 카드
+   ============================================================ */
+
+/* 코딩 모드에서도 차시·미션 알약을 헤더에 노출한다(시안). 컴팩트 배너는 감춘다.
+   (모바일 미디어쿼리가 #missionNav 를 display:none 하므로 여기서 되살린다) */
+body.mars-chrome[data-content-mode="coding"] #missionNav {
+    display: grid !important;
+}
+body.mars-chrome[data-content-mode="coding"] #missionNav > #lessonSelect,
+body.mars-chrome[data-content-mode="coding"] #missionSelect {
+    display: block !important;
+}
+/* 코딩 헤더에는 알약 2개만 — 나머지 컨트롤은 숨긴다 */
+body.mars-chrome[data-content-mode="coding"] #missionNav > #contentToggleBtn,
+body.mars-chrome[data-content-mode="coding"] #missionNav > #simToggle,
+body.mars-chrome[data-content-mode="coding"] #missionNav > #exampleSelect,
+body.mars-chrome[data-content-mode="coding"] #missionNav > #aiHelpButton,
+body.mars-chrome[data-content-mode="coding"] #missionNav > #breadcrumb {
+    display: none !important;
+}
+body[data-content-mode="coding"] #codingMissionBanner {
+    display: none !important;
+}
+/* 배너가 사라졌으므로 캔버스는 카드 상단부터 시작 */
+#missionView[data-mode="coding"] > .mission-workspace { top: 0; }
+
+/* 편집기 카드: 크림 바탕 + 복숭아 테두리 (툴박스+캔버스를 함께 감싼다) */
+#missionView[data-mode="coding"] > .mission-workspace {
+    padding: 10px 12px calc(var(--mobile-bottom-nav-height) + 6px);
+    background: transparent;
+    box-sizing: border-box;
+}
+#missionView[data-mode="coding"] > .mission-workspace > #blocklyDiv {
+    inset: 10px 12px calc(var(--mobile-bottom-nav-height) + 6px);
+    /* width/height:100% 규칙(#missionView #blocklyDiv)을 눌러 left/right inset 로
+       폭을 정하게 한다 — 안 그러면 100% 폭이 우측 inset 을 넘어 오른쪽으로 삐져나온다 */
+    width: auto !important;
+    height: auto !important;
+    border: 2px solid #f7ac6f;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+}
+/* Blockly 툴박스가 카드 왼쪽 모서리에 딱 맞도록 라운드 클리핑 */
+#missionView[data-mode="coding"] .blocklyToolboxDiv {
+    border-radius: 16px 0 0 16px;
+}
+
+#toolboxActions { background: transparent; }
+
+/* ============================================================
+   시뮬레이션 페이지 — 코딩 페이지와 동일한 화성 헤더 + 복숭아 카드
+   ============================================================ */
+body.mars-chrome[data-content-mode="simulation"] #missionNav {
+    display: grid !important;
+}
+body.mars-chrome[data-content-mode="simulation"] #missionNav > #lessonSelect,
+body.mars-chrome[data-content-mode="simulation"] #missionSelect {
+    display: block !important;
+}
+/* 시뮬레이션 헤더에도 알약 2개만 노출 */
+body.mars-chrome[data-content-mode="simulation"] #missionNav > #contentToggleBtn,
+body.mars-chrome[data-content-mode="simulation"] #missionNav > #simToggle,
+body.mars-chrome[data-content-mode="simulation"] #missionNav > #exampleSelect,
+body.mars-chrome[data-content-mode="simulation"] #missionNav > #aiHelpButton,
+body.mars-chrome[data-content-mode="simulation"] #missionNav > #breadcrumb {
+    display: none !important;
+}
+body[data-content-mode="simulation"] #codingMissionBanner {
+    display: none !important;
+}
+
+/* 배너 제거 → 카드는 상단부터 하단(네비 위)까지 꽉 채운다.
+   (missionView 는 body padding 으로 이미 하단 네비 위에서 끝나므로 별도 네비 여백 불필요) */
+#missionView[data-mode="simulation"] > .sim-card {
+    top: 0 !important;
+    height: 100% !important;
+    padding: 10px 12px;
+    background: transparent;
+    box-sizing: border-box;
+}
+#missionView[data-mode="simulation"] .sim-stage {
+    border: 2px solid #f7ac6f;
+    border-radius: 18px;
+    overflow: hidden;
+}
