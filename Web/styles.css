@@ -344,7 +344,7 @@ button:focus-visible {
 }
 
 .mobile-bottom-nav .mobile-nav-icon {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     line-height: 1;
 }
 
@@ -2843,7 +2843,7 @@ details.mission-section summary {
     grid-template-rows: 29px 14px;
     place-items: center;
     align-content: center;
-    gap: 1px;
+    gap: 4px;
 }
 
 .mobile-bottom-nav .mobile-nav-btn.active {
@@ -2853,8 +2853,8 @@ details.mission-section summary {
 
 .mobile-bottom-nav .mobile-nav-icon {
     flex: 0 0 auto;
-    width: 31px;
-    height: 31px;
+    width: 40px;
+    height: 40px;
 }
 
 .mobile-nav-icon-mission {
@@ -2994,6 +2994,40 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     display: none;
 }
 
+/* 시뮬레이션 중앙 버튼: 모의실행(coding-run)/실행중단(run-stop)을 시안 이미지
+   (btn04·btn05)로 대체. 연결 버튼(btn01~03)과 동일한 방식·크기(::after inset:0)로
+   그려 크기가 일치한다. 코딩 모드의 실행/비상정지는 그대로 둔다(라벨이 다름). */
+body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.coding-run,
+body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.run-stop {
+    background: transparent !important;
+    border: 0;
+    box-shadow: none !important;
+    padding: 0;
+}
+body[data-content-mode="simulation"] .mobile-connect-btn.coding-run::after,
+body[data-content-mode="simulation"] .mobile-connect-btn.run-stop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .18));
+}
+body[data-content-mode="simulation"] .mobile-connect-btn.coding-run::after {
+    background-image: url('assets/design/sim-run.png');   /* 모의실행 */
+}
+body[data-content-mode="simulation"] .mobile-connect-btn.run-stop::after {
+    background-image: url('assets/design/sim-stop.png');  /* 실험중단 */
+}
+/* 이미지에 삼각형/사각형·글자가 포함되므로 내부 아이콘·라벨 숨김 */
+body[data-content-mode="simulation"] .mobile-connect-btn.coding-run .mobile-connect-icon,
+body[data-content-mode="simulation"] .mobile-connect-btn.run-stop .mobile-connect-icon,
+body[data-content-mode="simulation"] .mobile-connect-btn.coding-run .mobile-nav-label,
+body[data-content-mode="simulation"] .mobile-connect-btn.run-stop .mobile-nav-label {
+    display: none !important;
+}
+
 /* AI·로그 팝업은 연결 원보다 앞에 표시한다(PDF 6·7페이지). */
 .mobile-bottom-nav { z-index: 900; }
 .ai-panel,
@@ -3047,10 +3081,10 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     max-height: 70vh;
     /* 전체 폰트를 0.8배로 — 하위 em 글자들이 모두 비례 축소되어 여백이 생긴다 */
     font-size: 0.8em;
-    background: var(--background-white);
-    border: 1px solid var(--border-color);
+    background: #fdf8f2;                       /* 크림빛 바탕 (테마) */
+    border: 1.5px solid #fce1c5;               /* 크림 테두리 (툴박스와 동일 톤) */
     border-radius: 16px;
-    box-shadow: none;
+    box-shadow: 0 10px 30px rgba(90, 40, 20, .18);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -3063,7 +3097,7 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     align-items: center;
     justify-content: space-between;
     padding: 12px 14px;
-    background: var(--accent-color);
+    background: #f6654a;                       /* 테마 카드 액센트 */
     color: #fff;
     font-weight: 700;
 }
@@ -3098,29 +3132,31 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
 }
 .ai-msg-user {
     align-self: flex-end;
-    background: var(--accent-color);
-    color: #fff;
+    background: #fce1c5;                 /* 사용자: 크림-탄 (액센트 테두리로 구분) */
+    border: 1px solid #fd8f09;
+    color: #4a4034;
     border-bottom-right-radius: 4px;
 }
 .ai-msg-bot {
     align-self: flex-start;
-    background: var(--background-secondary);
-    color: var(--text-primary);
+    background: #fdf8f2;                 /* 봇: 연한 크림 */
+    border: 1px solid #fce1c5;
+    color: #4a4034;
     border-bottom-left-radius: 4px;
 }
-.ai-msg em { color: var(--accent-color); font-style: normal; font-weight: 600; }
+.ai-msg em { color: #fd8f09; font-style: normal; font-weight: 700; }
 .ai-msg .ai-warn { color: var(--error-color); font-size: 0.92em; }
 .ai-msg .ai-typing { color: var(--text-muted); font-style: italic; animation: ai-typing-blink 1.2s ease-in-out infinite; }
 @keyframes ai-typing-blink { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 .ai-suggest {
     margin-top: 6px;
     padding: 8px 10px;
-    background: var(--background-white);
-    border: 1px dashed var(--accent-color);
+    background: #fdf8f2;
+    border: 1px dashed #fd8f09;
     border-radius: 10px;
     font-size: 0.9em;
 }
-.ai-suggest b { color: var(--accent-color); }
+.ai-suggest b { color: #fd8f09; }
 .ai-suggest .ai-hint { color: var(--text-muted); font-size: 0.9em; }
 
 .ai-chips {
@@ -3130,36 +3166,38 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     padding: 0 12px 8px;
 }
 .ai-chip {
-    background: var(--background-secondary);
-    border: 1px solid var(--border-color);
+    background: #fdf8f2;                 /* 크림 칩 */
+    border: 1px solid #fce1c5;
     border-radius: 999px;
     padding: 5px 10px;
     font-size: 0.8em;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: #8a6a45;
 }
-.ai-chip:hover { background: var(--accent-color); color: #fff; }
+.ai-chip:hover { background: #fd8f09; border-color: #fd8f09; color: #fff; }
 
 .ai-form {
     display: flex;
     gap: 6px;
     padding: 10px 12px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #fce1c5;
+    background: #fdf8f2;
 }
 .ai-form input {
     flex: 1;
     height: 38px;
     padding: 0 12px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #fce1c5;
     border-radius: 10px;
+    background: #fff;
     font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
     font-size: 0.9em;
 }
-.ai-form input:focus { outline: none; border-color: var(--accent-color); }
+.ai-form input:focus { outline: none; border-color: #fd8f09; }
 .ai-form button {
     height: 38px;
     padding: 0 14px;
-    background: var(--accent-color);
+    background: #f6654a;;
     color: #fff;
     border: none;
     border-radius: 10px;
@@ -3167,7 +3205,7 @@ body[data-content-mode="simulation"] .mobile-bottom-nav .mobile-connect-btn.codi
     cursor: pointer;
     white-space: nowrap;
 }
-.ai-form button:hover { filter: brightness(1.08); }
+.ai-form button:hover { filter: brightness(1.04); }
 
 @media (max-width: 768px) {
     .ai-panel {
@@ -3586,7 +3624,7 @@ details.mission-sample[open] summary::after {
    ============================================================ */
 :root {
     --tb-rail: 64px;                               /* 아이콘+라벨 세로 스택 폭 */
-    --tb-cell: 52px;                               /* 아이콘(34) + 라벨(14) 스택 높이 */
+    --tb-cell: 55px;                               /* 아이콘(34) + 라벨 스택 높이 (값↑ = 아이콘↔라벨 간격↑) */
     --tb-icon: 34px;
     --tb-gap: 8px;
     --tb-top-gap: 6px;
@@ -3817,8 +3855,12 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     display: flex;
     flex-direction: column;
     gap: var(--tb-gap);
-    margin-top: 4px;
-    padding: 0;
+    /* 카테고리(함수)와 도구 버튼 사이 구분선 — 위쪽 경계선 + 여백 */
+    margin-top: 8px;
+    padding-top: 10px;
+    padding-bottom: 0;
+    padding-right: 30px;
+    border-top: 1.5px solid #fce1c5;
     box-sizing: border-box;
 }
 .tbx-action {
@@ -3827,6 +3869,7 @@ body:has(#aiPanel:not([hidden])) .workspace-empty-hint {
     align-items: center;
     justify-content: flex-start;
     gap: 3px;
+    margin: 0;                       /* 다른 버튼 규칙의 좌우 4px 마진 제거 → 카테고리와 x 정렬 */
     width: var(--tb-w);              /* 카테고리 셀과 동일 폭 */
     height: var(--tb-cell);          /* 카테고리 셀과 동일 높이 */
     padding: var(--tb-top-gap) 2px 2px;
@@ -3996,8 +4039,8 @@ body.mars-chrome #missionNav select {
     height: 44px;
     padding: 0 34px 0 40px;
     font-size: .88rem;
-    border: 0;
-    border-radius: 22px;
+    border: 1.5px solid #fd8f09;          /* 차시·미션 알약 주황 테두리 */
+    border-radius: 14px;                  /* 미션 박스(.lesson-accordion-item)와 동일 */
     color: #6b7280;
     font-weight: 600;
     box-shadow: 0 2px 6px rgba(90, 40, 20, .18);
@@ -4330,12 +4373,33 @@ body.mars-chrome[data-content-mode="simulation"] #missionNav > #aiHelpButton,
 body.mars-chrome[data-content-mode="simulation"] #missionNav > #breadcrumb {
     display: none !important;
 }
+/* 시뮬레이션: '예제 선택' 드롭다운을 렌더링 창 '우하단'에 띄운다.
+   화면 아래쪽에 두면 네이티브 select 옵션이 자동으로 '위로' 열린다.
+   차시·미션은 헤더 알약이 담당하므로 배너에서는 라벨·미션선택을 숨기고 예제만 남긴다. */
 body[data-content-mode="simulation"] #codingMissionBanner {
+    display: flex !important;
+    top: auto;
+    bottom: 16px;
+    left: auto;
+    right: 20px;
+    width: auto;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    border-bottom: 0;
+    justify-content: flex-end;
+    z-index: 20;                     /* 캔버스(sim-card) 위로 */
+}
+body[data-content-mode="simulation"] #codingMissionLabel,
+body[data-content-mode="simulation"] #codingMissionSelect {
     display: none !important;
 }
+body[data-content-mode="simulation"] #codingExampleSelect {
+    max-width: none;                 /* 하단 플로팅이라 폭 제한 해제 */
+    height: 30px;
+}
 
-/* 배너 제거 → 카드는 상단부터 하단(네비 위)까지 꽉 채운다.
-   (missionView 는 body padding 으로 이미 하단 네비 위에서 끝나므로 별도 네비 여백 불필요) */
+/* 배너가 캔버스 위에 떠 있으므로 카드는 상단부터 꽉 채운다 */
 #missionView[data-mode="simulation"] > .sim-card {
     top: 0 !important;
     height: 100% !important;
@@ -4347,4 +4411,16 @@ body[data-content-mode="simulation"] #codingMissionBanner {
     border: 2px solid #f7ac6f;
     border-radius: 18px;
     overflow: hidden;
+}
+
+/* 코딩 페이지 줌 아이콘(조준·＋·－)에만 연한 그림자 — 휴지통은 제외 */
+.blocklyZoom image {
+    filter: drop-shadow(0 1.5px 2px rgba(0,0,0,0.22));
+}
+
+/* 휴지통 위치 미세 조정 — Blockly 가 준 기본 위치(transform)에 상대적으로 더한다.
+   (CSS translate 는 transform 속성과 합성되므로 기본 배치를 유지한 채 nudge 가능)
+   값: translate: X Y  →  X 양수=오른쪽 / Y 양수=아래 */
+.blocklyTrash {
+    translate: 7.5px 0;   /* 오른쪽 7.5px = 위쪽 줌 아이콘(조준·＋·－) 열과 x 중심 정렬 */
 }

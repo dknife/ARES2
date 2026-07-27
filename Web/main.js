@@ -497,6 +497,33 @@ function setupToolboxDrawer(ws) {
   }, true);
 }
 
+// Blockly 내장 줌 컨트롤(조준·＋·－)·휴지통은 sprites.png 스프라이트로 그려진다.
+// 클릭·드래그 핸들러는 부모 <g> 에 있으므로, 각 <image> 의 href·크기만 시안 아이콘
+// (assets/coding/)으로 바꿔치기하면 "동작은 그대로, 아이콘만 교체"가 된다.
+// Blockly 는 inject 이후 이 요소들을 다시 만들지 않으므로 1회 적용으로 유지된다.
+function skinBlocklyControls() {
+  const base = 'assets/coding/';
+  const swap = (img, file, x, y, w, h) => {
+    if (!img) return;
+    img.removeAttribute('clip-path');
+    img.setAttribute('x', x); img.setAttribute('y', y);
+    img.setAttribute('width', w); img.setAttribute('height', h);
+    img.setAttribute('href', base + file);
+    img.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', base + file);
+  };
+  const one = (sel, file) => swap(document.querySelector(sel + ' image'), file, 0, 0, 32, 32);
+  one('.blocklyZoomReset', 'location.png');   // 조준(리셋/가운데)
+  one('.blocklyZoomIn',    'zoom-in.png');     // ＋
+  one('.blocklyZoomOut',   'zoom-out.png');    // －
+  // 휴지통: 몸통 이미지를 trash.png 로 교체, 뚜껑(lid) 이미지는 숨긴다(핸들러는 유지)
+  const trash = document.querySelector('.blocklyTrash');
+  if (trash) {
+    const imgs = trash.querySelectorAll('image');
+    swap(imgs[0], 'trash.png', 0, 6, 47, 47);
+    if (imgs[1]) imgs[1].style.display = 'none';
+  }
+}
+
 function initializeBlockly() {
   if (!navigator.bluetooth) {
     alert('이 브라우저는 Web Bluetooth API를 지원하지 않습니다. Chrome 56+ 또는 Edge 79+를 사용해주세요.');
@@ -540,6 +567,7 @@ function initializeBlockly() {
   setupBlockContextMenu(workspace);
   setupFlyoutBehavior(workspace);
   setupFlyoutFixedScale(workspace);
+  skinBlocklyControls();          // 줌·휴지통 아이콘을 시안(코딩P) 이미지로 교체
   // 카테고리 툴박스는 항상 펼친 상태로 유지한다.
   document.body.classList.remove('toolbox-collapsed');
 
@@ -1193,6 +1221,14 @@ function updateMarsChrome() {
   document.body.classList.toggle('mars-chrome', on);
 }
 window.addEventListener('ares:contentmode', updateMarsChrome);
+// 코딩 모드로 들어올 때 도구 버튼(코드저장·코드열기)을 툴박스 스크롤 안으로 다시 넣는다.
+// (초기 렌더 타이밍에 따라 mount 가 누락되는 경우가 있어 진입 시 한 번 더 보장)
+// 동기 호출 + 다음 프레임 호출 둘 다 — rAF 만 쓰면 탭이 비활성일 때 실행이 밀린다.
+window.addEventListener('ares:contentmode', (e) => {
+  if (e.detail?.mode !== 'coding') return;
+  mountToolboxActionsInScroll();
+  requestAnimationFrame(mountToolboxActionsInScroll);
+});
 
 function showView(view) {
   for (const v of ['overview', 'lesson', 'mission']) {
