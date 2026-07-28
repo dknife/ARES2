@@ -1,5 +1,7 @@
 // ai_chat.js
-// 대화형 AI 튜터 클라이언트 — Gemini 프록시 백엔드(AI/server.py)와 주고받는다.
+// 대화형 AI 튜터 클라이언트 — Gemini 프록시 백엔드와 주고받는다.
+// 백엔드는 Cloudflare Pages 서버리스 함수(functions/api/chat.js, https://ares2-ai.pages.dev).
+// 주소는 constants.js 의 AI_CONFIG.PROXY_BASE_URL (localStorage 로 로컬 등 다른 주소로 교체 가능).
 //
 // 기존 ai_helper.js(규칙 기반 자동 블록 생성)와 달리, 이 모듈은 "정답 블록을
 // 대신 만들지 않고" 학생이 스스로 코드를 짜도록 유도하는 대화형 Q&A 를 담당한다.
