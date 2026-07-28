@@ -8,7 +8,7 @@
     <script src="mobile-preview.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="fonts/fonts.css">
-    <link rel="stylesheet" href="styles.css?v=20260709f">
+    <link rel="stylesheet" href="styles.css?v=20260725i">
     <script src="https://unpkg.com/blockly@11/blockly_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly@11/python_compressed.js"></script>
@@ -16,7 +16,7 @@
     <script src="vendor/meshopt_decoder.js"></script>
     <!-- 저사양 기기 감지 + 품질 티어링 + WebGL 가드 → window.AresPerf (모듈 실행 전에 로드) -->
     <script src="perf_tier.js"></script>
-    <script type="module" src="main.js?v=20260709f"></script>
+    <script type="module" src="main.js?v=20260725i"></script>
     <style>
         /* 점검 오버레이: 어느 화면 위로든 전체를 덮는다. 자체 "점검완료 복귀"
            버튼으로 닫으면 아래 원래 화면이 그대로 드러난다(원위치 복귀). */
@@ -71,7 +71,7 @@
                 <option value="obstacle_avoid">&nbsp;🚧&nbsp; 장애물 피하기</option>
                 <option value="rover_wakeup">&nbsp;🤖&nbsp; 로버 깨우기</option>
             </select>
-            <button id="aiHelpButton" class="nav-btn" type="button" hidden title="하고 싶은 일을 자연어로 적으면 블록을 만들어 줘요">🤖 AI 도움</button>
+            <button id="aiHelpButton" class="nav-btn" type="button" hidden title="궁금한 걸 물어보면 코딩을 도와줘요">🤖 AI 도움</button>
             <span id="breadcrumb" aria-live="polite"></span>
         </nav>
 
@@ -156,10 +156,10 @@
                     <!-- 툴박스 이미지 메뉴 아래 도구 버튼: UI 개편 전 상단에 있던 기능 복원 -->
                     <div id="toolboxActions" aria-label="미션 도구">
                         <button type="button" class="tbx-action" data-action="save" title="코드 저장 — 현재 코드를 파일로 저장">
-                            <span class="tbx-ico"><img src="assets/design/Save.png" alt=""></span><span class="tbx-lbl">코드저장</span>
+                            <span class="tbx-ico"><img src="assets/coding/save.png" alt=""></span><span class="tbx-lbl">코드저장</span>
                         </button>
-                        <button type="button" class="tbx-action" data-action="load" title="코드 읽기 — 저장된 코드 파일 불러오기">
-                            <span class="tbx-ico"><img src="assets/design/Load.png" alt=""></span><span class="tbx-lbl">코드읽기</span>
+                        <button type="button" class="tbx-action" data-action="load" title="코드 열기 — 저장된 코드 파일 불러오기">
+                            <span class="tbx-ico"><img src="assets/coding/open.png" alt=""></span><span class="tbx-lbl">코드열기</span>
                         </button>
                     </div>
                 </div>
@@ -244,15 +244,15 @@
         </div>
         <div id="aiMessages" class="ai-messages" aria-live="polite"></div>
         <div class="ai-chips">
-            <button type="button" class="ai-chip">앞으로 2초 가기</button>
-            <button type="button" class="ai-chip">불 켜줘</button>
-            <button type="button" class="ai-chip">도레미 울려줘</button>
-            <button type="button" class="ai-chip">화면에 안녕 표시</button>
-            <button type="button" class="ai-chip">3번 반복 앞으로 가기</button>
+            <button type="button" class="ai-chip">앞으로 가려면 어떤 블록을 써?</button>
+            <button type="button" class="ai-chip">불을 깜빡이게 하고 싶어</button>
+            <button type="button" class="ai-chip">거리 센서는 어떻게 써?</button>
+            <button type="button" class="ai-chip">반복은 언제 쓰는 거야?</button>
+            <button type="button" class="ai-chip">잘 모르겠어, 힌트 줘</button>
         </div>
         <form id="aiForm" class="ai-form" autocomplete="off">
-            <input id="aiInput" type="text" placeholder="하고 싶은 일을 적어줘 (예: 앞으로 3초 가고 도레미 울려줘)" />
-            <button type="submit" title="블록 만들기">보내기</button>
+            <input id="aiInput" type="text" placeholder="궁금한 걸 물어봐 (예: 앞으로 가려면 어떤 블록이 필요해?)" />
+            <button type="submit" title="보내기">보내기</button>
         </form>
     </div>
 
