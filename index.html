@@ -7,33 +7,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Web/fonts/fonts.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* ===== 디자인 토큰 (UI 시안 가이드 기준) ===== */
+        :root {
+            --bg: #fefbf9;          /* 배경 */
+            --accent: #ff6a00;      /* 강조 (오렌지) */
+            --title: #3e3a39;       /* 제목 텍스트 */
+            --body: #595757;        /* 본문 텍스트 */
+            --card: #ffffff;        /* 카드 배경 */
+            --card-border: #ffa96e; /* 카드 테두리 0.5px */
+            --cream: #fffde5;       /* CTA 밝은 크림 */
+            --yellow: #fff462;
+            --shadow: 0 2px 6px rgba(0,0,0,0.12);    /* 오브젝트에 더 가까운 그림자 */
+            --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+        }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
 
         body {
             min-height: 100vh;
-            background: #F8F8F8;
-            color: #0D1117;
+            background: var(--bg);
+            color: var(--body);
             font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
-            font-size: 1.06em;   /* 강원교육튼튼 기준 — 적당히 크게 */
-            font-weight: 700;     /* 대체로 굵게 */
+            font-size: 1.06em;
+            font-weight: 700;
             line-height: 1.6;
         }
 
-        /* Navigation */
+        /* ===== Navigation ===== */
         nav {
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(254, 251, 249, 0.92);
             backdrop-filter: blur(12px);
-            border-bottom: 1px solid #D9DDE2;
+            border-bottom: 1px solid #f0e4dc;
             height: 64px;
         }
 
         .nav-inner {
-            max-width: 1300px;
+            max-width: 1200px;
             margin: 0 auto;
             display: flex;
             align-items: center;
@@ -45,14 +58,11 @@
         .nav-logo {
             font-size: 1.4em;
             font-weight: 800;
-            color: #0D1117;
+            color: var(--title);
             text-decoration: none;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
-
-        .nav-logo span {
-            color: #FF6A00;
-        }
+        .nav-logo span { color: var(--accent); }
 
         .nav-links {
             display: flex;
@@ -62,434 +72,309 @@
 
         .nav-links a {
             font-size: 0.9em;
-            font-weight: 500;
-            color: #4A515C;
+            font-weight: 600;
+            color: var(--body);
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
         }
-
-        .nav-links a:hover {
-            color: #0D1117;
-            background: #D9DDE2;
-        }
-
-        .nav-links a.active {
-            color: #0D1117;
-            background: #D9DDE2;
-        }
+        .nav-links a:hover { color: var(--accent); background: #fff1e8; }
+        .nav-links a.active { color: var(--accent); }
 
         .nav-links a.service-btn {
-            background: #0D1117;
+            background: var(--accent);
             color: #fff;
             margin-left: 8px;
+            box-shadow: 0 4px 12px rgba(255,106,0,0.25);
         }
+        .nav-links a.service-btn:hover { background: #e85f00; color: #fff; }
 
-        .nav-links a.service-btn:hover {
-            background: #383838;
-        }
+        /* 가이드에 없는 부가 링크 묶음 — 기본 숨김. 다시 노출하려면 이 그룹의 hidden 속성만 제거. */
+        .nav-extra { display: inline-flex; gap: 4px; align-items: center; }
+        .nav-extra[hidden] { display: none; }
 
-        /* Content */
+        /* ===== Content ===== */
         .content {
-            max-width: 1300px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 52px;
         }
 
-        /* Hero */
+        /* ===== Hero ===== */
         .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 120px 0 80px;
+            padding: 150px 0 0;
+            text-align: left;
         }
 
         .hero-eyebrow {
             font-size: 0.9em;
-            font-weight: 600;
-            color: #FF6A00;
+            font-weight: 700;
+            color: var(--accent);
             letter-spacing: 3px;
             text-transform: uppercase;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             opacity: 0;
-            transform: translateY(1.3em);
-            animation: revealUp 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.2s forwards;
+            animation: revealUp 1.1s cubic-bezier(0.25,1,0.5,1) 0.2s forwards;
         }
 
         .hero h1 {
-            font-size: clamp(42px, 8vw, 120px);
+            font-size: clamp(40px, 6.5vw, 82px);
             font-weight: 800;
-            line-height: 1.05;
-            letter-spacing: -2px;
-            color: #0D1117;
-            margin-bottom: 32px;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            color: var(--title);
+            margin-bottom: 24px;
             opacity: 0;
-            transform: translateY(1.3em);
-            animation: revealUp 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.4s forwards;
+            animation: revealUp 1.1s cubic-bezier(0.25,1,0.5,1) 0.35s forwards;
         }
-
-        .hero h1 .accent {
-            color: #FF6A00;
-        }
+        .hero h1 .accent { color: var(--accent); }
 
         .hero p {
-            font-size: clamp(16px, 1.8vw, 20px);
-            line-height: 1.7;
-            color: #4A515C;
-            max-width: 600px;
+            font-size: clamp(16px, 1.7vw, 20px);
+            line-height: 1.3;
+            color: var(--body);
+            max-width: 560px;
+            margin: 0;
             opacity: 0;
-            transform: translateY(1.3em);
-            animation: revealUp 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.6s forwards;
+            animation: revealUp 1.1s cubic-bezier(0.25,1,0.5,1) 0.5s forwards;
         }
 
         .hero-cta {
-            margin-top: 48px;
+            margin-top: 36px;
             display: flex;
-            gap: 16px;
+            gap: 14px;
+            justify-content: flex-start;
             opacity: 0;
-            transform: translateY(1.3em);
-            animation: revealUp 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.8s forwards;
+            animation: revealUp 1.1s cubic-bezier(0.25,1,0.5,1) 0.65s forwards;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
-            height: 48px;
-            padding: 0 24px;
-            border-radius: 8px;
+            height: 50px;
+            padding: 0 28px;
+            border-radius: 10px;
             font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
-            font-size: 0.95em;
-            font-weight: 600;
+            font-size: 0.98em;
+            font-weight: 700;
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             border: none;
             cursor: pointer;
         }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(255,106,0,0.28); }
+        .btn-primary:hover { background: #e85f00; transform: translateY(-2px); }
+        .btn-outline { background: #fff; color: var(--title); border: 1.5px solid #e7d9cf; }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 
-        .btn-primary {
-            background: #0D1117;
-            color: #fff;
+        /* 화성 파노라마 배경 (히어로 하단) */
+        .hero-mars {
+            margin-top: 48px;
+            width: 100%;
+            display: block;
+            max-height: 200px;   /* ← 이 높이까지만 보임. 나머지 밑부분은 잘림 */
+            overflow: hidden;    /* ← 넘치는 밑부분 숨김 */
+        }
+        .hero-mars img {
+            width: 100%;
+            display: block;
+            border-radius: 20px 20px 0 0;
         }
 
-        .btn-primary:hover {
-            background: #383838;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: #0D1117;
-            border: 1.5px solid #0D1117;
-        }
-
-        .btn-outline:hover {
-            background: #0D1117;
-            color: #fff;
-        }
-
-        /* Section common */
-        section {
-            padding: 100px 0;
-        }
+        /* ===== Section common ===== */
+        section { padding: 90px 0; text-align: left; }
 
         .section-eyebrow {
             font-size: 0.85em;
-            font-weight: 600;
-            color: #FF6A00;
+            font-weight: 700;
+            color: var(--accent);
             letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
-
         section h2 {
-            font-size: clamp(28px, 4vw, 42px);
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 48px;
-            color: #0D1117;
+            font-size: clamp(26px, 4vw, 40px);
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 52px;
+            color: var(--title);
         }
 
         /* Fade-in on scroll */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
+        .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Cards */
+        /* ===== About cards ===== */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            max-width: 980px;
+            margin: 0;
         }
-
         .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 36px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            background: var(--card);
+            border: 0.5px solid var(--card-border);
+            border-radius: 18px;
+            padding: 40px 32px;
+            box-shadow: var(--shadow);
+            text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 14px rgba(0,0,0,0.15); }
+        .card img.card-ico { width: 64px; height: 64px; margin: 0 auto 22px; display: block; }
+        .card h3 { font-size: 1.15em; font-weight: 800; margin-bottom: 14px; color: var(--title); }
+        .card p { font-size: 0.92em; line-height: 1.75; color: var(--body); }
 
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        /* ===== Architecture — 8 numbered steps ===== */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1040px;
+            margin: 0;
         }
-
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4em;
-            margin-bottom: 20px;
-        }
-
-        .card-icon.orange { background: rgba(255, 106, 0, 0.1); }
-        .card-icon.blue { background: rgba(31, 111, 174, 0.1); }
-        .card-icon.mint { background: rgba(123, 220, 181, 0.15); }
-
-        .card h3 {
-            font-size: 1.15em;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #0D1117;
-        }
-
-        .card p {
-            font-size: 0.95em;
-            line-height: 1.7;
-            color: #4A515C;
-        }
-
-        /* Architecture */
-        .arch-flow {
-            background: #fff;
+        .step {
+            position: relative;
+            background: var(--card);
+            border: 0.5px solid var(--card-border);
             border-radius: 16px;
-            padding: 48px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            margin-bottom: 32px;
+            padding: 30px 22px 26px;
+            box-shadow: var(--shadow-sm);
+            text-align: left;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
-        .flow-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin: 16px 0;
-        }
-
-        .arch-box {
+        .step:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+        .step-num {
             display: inline-flex;
             align-items: center;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-
-        .arch-web { background: rgba(31, 111, 174, 0.1); color: #1F6FAE; border: 1px solid rgba(31, 111, 174,0.3); }
-        .arch-ble { background: rgba(255, 106, 0, 0.1); color: #FF6A00; border: 1px solid rgba(255, 106, 0,0.3); }
-        .arch-pico { background: rgba(155, 81, 224, 0.1); color: #9B51E0; border: 1px solid rgba(155,81,224,0.3); }
-        .arch-hw { background: rgba(123, 220, 181, 0.15); color: #2a9d6a; border: 1px solid rgba(123,220,181,0.5); }
-
-        .arch-arrow {
-            color: #8A929E;
-            font-size: 1.2em;
-        }
-
-        /* Tech tags */
-        .tech-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .tech-tag {
-            padding: 8px 18px;
-            border-radius: 100px;
-            font-size: 0.85em;
-            font-weight: 500;
-            background: #fff;
-            border: 1px solid #D9DDE2;
-            color: #4A515C;
-            transition: all 0.3s ease;
-        }
-
-        .tech-tag:hover {
-            border-color: #FF6A00;
-            color: #FF6A00;
-        }
-
-        /* Components section */
-        .components-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .comp-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 28px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-            border-left: 3px solid #FF6A00;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .comp-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        }
-
-        .comp-card h3 {
-            font-size: 1.05em;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #0D1117;
-        }
-
-        .comp-card p {
-            font-size: 0.9em;
-            line-height: 1.6;
-            color: #4A515C;
-        }
-
-        /* SVG Wave Divider */
-        .wave-divider {
-            position: relative;
-            height: 100px;
-            overflow: hidden;
-        }
-
-        .wave-divider svg {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: #0D1117;
-            border-radius: 24px;
-            padding: 80px 60px;
-            text-align: center;
-            margin: 0 0 100px;
-        }
-
-        .cta-section h2 {
+            justify-content: center;
+            width: 30px; height: 30px;
+            border-radius: 9px;
             color: #fff;
+            font-size: 0.95em;
+            font-weight: 800;
             margin-bottom: 16px;
         }
+        .step h3 { font-size: 1.05em; font-weight: 800; margin-bottom: 10px; color: var(--title); }
+        .step p { font-size: 0.85em; line-height: 1.6; color: var(--body); }
+        /* 번호 배지 색상 (가이드 순서대로) */
+        .n1 { background: #2d8cf0; } .n2 { background: #f5c518; } .n3 { background: #ff2e74; } .n4 { background: #7bc043; }
+        .n5 { background: #9b51e0; } .n6 { background: #2d8cf0; } .n7 { background: #17a589; } .n8 { background: #ff6a00; }
 
-        .cta-section p {
-            color: rgba(255,255,255,0.7);
-            font-size: 1.1em;
-            margin-bottom: 36px;
+        /* ===== Components ===== */
+        .comp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 980px;
+            margin: 0;
         }
-
-        .cta-section .btn-primary {
-            background: #FF6A00;
-            color: #fff;
+        .comp-card {
+            background: var(--card);
+            border: 0.5px solid var(--card-border);
+            border-radius: 18px;
+            padding: 36px 28px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        .comp-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+        .comp-card img.comp-ico { height: 64px; margin: 0 auto 20px; display: block; object-fit: contain; }
+        .comp-card h3 { font-size: 1.05em; font-weight: 800; margin-bottom: 10px; color: var(--title); }
+        .comp-card p { font-size: 0.88em; line-height: 1.65; color: var(--body); }
 
-        .cta-section .btn-primary:hover {
-            background: #e04d1f;
+        /* ===== CTA ===== */
+        .cta-section {
+            position: relative;
+            overflow: hidden;
+            background: var(--accent);
+            border-radius: 28px;
+            padding: 68px 60px;
+            text-align: center;
+            margin: 20px 0 90px;
+            box-shadow: 0 16px 40px rgba(255,106,0,0.25);
         }
+        /* 화성 배경 이미지 — 오렌지 위에 25% 투명도로 깔기 (가이드 기준) */
+        .cta-section::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            /* 세로 위치: calc 의 px 값이 클수록 배경이 더 아래로 내려간다 (지금 24px 살짝 내림) */
+            background: url('assets/landing/mars_bg.png') center calc(100% + 150px) / cover no-repeat;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+        /* 콘텐츠는 배경 위로 */
+        .cta-section h2, .cta-section p, .cta-section .cta-btn { position: relative; z-index: 1; }
+        .cta-section h2 { color: #fff; font-size: clamp(26px, 4vw, 40px); font-weight: 800; margin-bottom: 4px; }
+        .cta-section p { color: var(--yellow); font-size: 1.05em; margin-bottom: 30px; }
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            height: 56px;
+            padding: 0 40px;
+            border-radius: 100px;
+            background: var(--cream);
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            font-family: 'GangwonEduTeun', 'Inter Tight', sans-serif;
+            font-size: 1.05em;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+        .cta-btn:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
 
-        /* Footer */
+        /* ===== Footer ===== */
         footer {
             text-align: center;
             padding: 40px 52px;
-            color: #8A929E;
+            color: #a99;
             font-size: 0.85em;
-            border-top: 1px solid #D9DDE2;
+            border-top: 1px solid #f0e4dc;
         }
+        footer a { color: var(--accent); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
 
-        footer a {
-            color: #FF6A00;
-            text-decoration: none;
+        @keyframes revealUp { from { opacity: 0; transform: translateY(1.3em); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== Mobile hamburger ===== */
+        .nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+        .nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--title); margin: 5px 0; transition: all 0.3s ease; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 900px) {
+            .steps-grid { grid-template-columns: repeat(2, 1fr); }
+            .comp-grid { grid-template-columns: repeat(2, 1fr); }
         }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Animations */
-        @keyframes revealUp {
-            from { opacity: 0; transform: translateY(1.3em); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Mobile hamburger */
-        .nav-hamburger {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .nav-hamburger span {
-            display: block;
-            width: 22px;
-            height: 2px;
-            background: #0D1117;
-            margin: 5px 0;
-            transition: all 0.3s ease;
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
             .nav-inner { padding: 0 24px; }
             .content { padding: 0 24px; }
-
             .nav-hamburger { display: block; }
-
             .nav-links {
                 display: none;
                 position: absolute;
-                top: 64px;
-                left: 0; right: 0;
-                background: rgba(255,255,255,0.98);
+                top: 64px; left: 0; right: 0;
+                background: rgba(254,251,249,0.98);
                 backdrop-filter: blur(12px);
                 flex-direction: column;
                 padding: 16px 24px;
-                border-bottom: 1px solid #D9DDE2;
+                border-bottom: 1px solid #f0e4dc;
             }
-
             .nav-links.open { display: flex; }
-
             .nav-links a.service-btn { margin-left: 0; margin-top: 8px; text-align: center; }
-
-            .hero { min-height: auto; padding: 120px 0 60px; }
-            .hero h1 { letter-spacing: -1px; }
-            .hero-cta { flex-direction: column; }
-            .hero-cta .btn { justify-content: center; }
-
+            .hero { padding: 120px 0 0; }
+            .hero-cta { flex-direction: column; align-items: center; }
+            .hero-cta .btn { justify-content: center; width: 100%; max-width: 280px; }
             section { padding: 60px 0; }
-            .card-grid { grid-template-columns: 1fr; }
-            .components-grid { grid-template-columns: 1fr; }
-            .arch-flow { padding: 24px; }
-            .cta-section { padding: 48px 24px; border-radius: 16px; }
+            .cta-section { padding: 48px 24px; border-radius: 20px; }
             footer { padding: 32px 24px; }
-
-            .wave-divider { height: 60px; }
         }
-
-        @media (max-width: 576px) {
-            .flow-row { flex-direction: column; gap: 8px; }
-            .arch-arrow { transform: rotate(90deg); }
+        @media (max-width: 560px) {
+            .steps-grid { grid-template-columns: 1fr; }
+            .comp-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -504,147 +389,123 @@
                 <a href="#about" class="active">소개</a>
                 <a href="#architecture">구조</a>
                 <a href="#components">구성</a>
-                <a href="https://github.com/dknife/ARES2" target="_blank">코드</a>
-                <a href="dev.html">개발</a>
-                <a href="Document/진행보고/report.html">진행</a>
-                <a href="Web/index.html" class="service-btn">서비스 시작</a>
+                <!-- 가이드에 없는 버튼: 코드/개발/진행 — 그룹으로 묶어 숨김. 다시 보이려면 아래 span 의 hidden 제거 -->
+                <span class="nav-extra" hidden>
+                    <a href="https://github.com/dknife/ARES2" target="_blank">코드</a>
+                    <a href="dev.html">개발</a>
+                    <a href="Document/진행보고/report.html">진행</a>
+                </span>
+                <a href="Web/index.html" class="service-btn">탐사 시작</a>
             </div>
         </div>
     </nav>
 
     <div class="content">
-        <!-- Hero -->
+        <!-- ===== Hero ===== -->
         <div class="hero">
             <div class="hero-eyebrow">Korea Science 2026</div>
-            <h1>블록 코딩으로<br>화성을 <span class="accent">탐사</span>하다</h1>
+            <h1>블록 코딩으로<br>떠나는 <span class="accent">화성 탐사</span></h1>
             <p>
-                ARES는 블록을 조합하여 로버를 제어하는 교육용 로봇 프로젝트입니다.
-                웹 브라우저에서 코딩하고, 블루투스로 명령을 전송하세요.
+                블록을 연결해 화성 탐사 로봇을 움직여 보세요!<br>
+                웹 브라우저에서 코딩하고 블루투스로 로봇에게 명령을 보낼 수 있어요.
             </p>
             <div class="hero-cta">
                 <a href="Web/index.html" class="btn btn-primary">탐사 시작하기</a>
                 <a href="#about" class="btn btn-outline">프로젝트 소개</a>
             </div>
         </div>
+        <div class="hero-mars">
+            <img src="assets/landing/mars_bg.png" alt="화성 표면" loading="lazy">
+        </div>
 
-        <!-- About -->
+        <!-- ===== About ===== -->
         <section id="about">
             <div class="fade-in">
                 <div class="section-eyebrow">About</div>
-                <h2>누구나 쉽게,<br>로봇을 코딩하다</h2>
+                <h2>언제 어디서든,<br>로봇을 코딩할 수 있어!</h2>
             </div>
             <div class="card-grid">
                 <div class="card fade-in">
-                    <div class="card-icon orange">🧩</div>
-                    <h3>블록 코딩 인터페이스</h3>
-                    <p>Google Blockly 기반의 시각적 프로그래밍 환경으로, 코딩 경험이 없는 초등학생도 쉽게 로버를 제어할 수 있습니다.</p>
+                    <img class="card-ico" src="assets/landing/icon_about01.png" alt="">
+                    <h3>블록을 연결하며 코딩해요!</h3>
+                    <p>퍼즐처럼 블록을 이어 붙이면 코딩이 완성돼요. 코딩 경험이 없어도 괜찮아요.</p>
                 </div>
                 <div class="card fade-in">
-                    <div class="card-icon blue">📡</div>
-                    <h3>무선 블루투스 제어</h3>
-                    <p>Web Bluetooth를 통해 브라우저에서 직접 로버와 통신합니다. 별도 앱 설치 없이 웹만으로 제어할 수 있습니다.</p>
+                    <img class="card-ico" src="assets/landing/icon_about02.png" alt="">
+                    <h3>선 없이 로봇과 연결해요!</h3>
+                    <p>웹 블루투스를 통해 로봇과 무선으로 연결해요. 앱 설치 없이 웹만 있으면 돼요.</p>
                 </div>
                 <div class="card fade-in">
-                    <div class="card-icon mint">🤖</div>
-                    <h3>AI 코딩 도우미</h3>
-                    <p>로컬 AI 모델이 블록 코딩에 대한 질문에 답변합니다. 아이들이 로봇 제어 방법을 쉽게 이해할 수 있도록 도와줍니다.</p>
+                    <img class="card-ico" src="assets/landing/icon_about03.png" alt="">
+                    <h3>AI가 코딩을 도와줘요!</h3>
+                    <p>AI 친구에게 물어보면 코딩 방법을 쉽게 알려줘요. 어려운 문제도 함께 해결해요.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Wave Divider -->
-        <div class="wave-divider">
-            <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
-                <path d="M0,50 C360,100 720,0 1080,50 C1260,75 1380,60 1440,50 L1440,100 L0,100Z" fill="#D9DDE2"/>
-            </svg>
-        </div>
-
-        <!-- Architecture -->
-        <section id="architecture" style="background: #D9DDE2; margin: 0 -52px; padding-left: 52px; padding-right: 52px;">
+        <!-- ===== Architecture ===== -->
+        <section id="architecture">
             <div class="fade-in">
                 <div class="section-eyebrow">Architecture</div>
-                <h2>시스템 구조</h2>
+                <h2>어떻게 작동할까?</h2>
             </div>
-            <div class="arch-flow fade-in">
-                <div class="flow-row">
-                    <span class="arch-box arch-web">Web UI (Blockly)</span>
-                    <span class="arch-arrow">&rarr;</span>
-                    <span class="arch-box arch-ble">Web Bluetooth (BLE)</span>
-                    <span class="arch-arrow">&rarr;</span>
-                    <span class="arch-box arch-pico">Pico (UART 9600)</span>
-                    <span class="arch-arrow">&rarr;</span>
-                    <span class="arch-box arch-hw">Hardware Modules</span>
-                </div>
-                <div class="flow-row" style="margin-top: 24px;">
-                    <span class="arch-box arch-hw">센서 데이터</span>
-                    <span class="arch-arrow">&rarr;</span>
-                    <span class="arch-box arch-pico">CommandProcessor</span>
-                    <span class="arch-arrow">&rarr;</span>
-                    <span class="arch-box arch-ble">BLE 응답 (20B)</span>
-                    <span class="arch-arrow">&rarr;</span>
-                    <span class="arch-box arch-web">Web UI 표시</span>
-                </div>
-            </div>
-
-            <div class="tech-list fade-in">
-                <span class="tech-tag">Raspberry Pi Pico</span>
-                <span class="tech-tag">MicroPython</span>
-                <span class="tech-tag">Web Bluetooth</span>
-                <span class="tech-tag">Google Blockly</span>
-                <span class="tech-tag">BLE / UART</span>
-                <span class="tech-tag">HM-10 / BT05</span>
-                <span class="tech-tag">SSD1306 OLED</span>
-                <span class="tech-tag">HC-SR04</span>
-                <span class="tech-tag">EXAONE 3.5 LLM</span>
+            <div class="steps-grid">
+                <div class="step fade-in"><span class="step-num n1">1</span><h3>블록 코딩</h3><p>블록을 연결해서 로봇이 움직이게 해요.</p></div>
+                <div class="step fade-in"><span class="step-num n2">2</span><h3>무선으로 연결</h3><p>블루투스로 명령을 컴퓨터로 보내요.</p></div>
+                <div class="step fade-in"><span class="step-num n3">3</span><h3>초코보드 컴퓨터</h3><p>컴퓨터가 명령을 이해하고 장비를 제어해요.</p></div>
+                <div class="step fade-in"><span class="step-num n4">4</span><h3>탐사 장비</h3><p>로봇이 명령대로 움직이고 작동해요!</p></div>
+                <div class="step fade-in"><span class="step-num n5">5</span><h3>센서가 알려줘요</h3><p>센서가 주변 정보를 모아서 초코보드로 보내요.</p></div>
+                <div class="step fade-in"><span class="step-num n6">6</span><h3>명령 확인</h3><p>컴퓨터가 센서 정보를 확인하고 결과를 정리해요.</p></div>
+                <div class="step fade-in"><span class="step-num n7">7</span><h3>결과 보내기</h3><p>정리된 결과를 블루투스를 통해 화면으로 보내요.</p></div>
+                <div class="step fade-in"><span class="step-num n8">8</span><h3>화면에서 확인</h3><p>화면에서 로봇의 상태와 센서 정보를 확인해요.</p></div>
             </div>
         </section>
 
-        <!-- Wave Divider (reverse) -->
-        <div class="wave-divider" style="transform: scaleY(-1);">
-            <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
-                <path d="M0,50 C360,100 720,0 1080,50 C1260,75 1380,60 1440,50 L1440,100 L0,100Z" fill="#D9DDE2"/>
-            </svg>
-        </div>
-
-        <!-- Components -->
+        <!-- ===== Components ===== -->
         <section id="components">
             <div class="fade-in">
                 <div class="section-eyebrow">Components</div>
-                <h2>주요 구성 요소</h2>
+                <h2>함께 탐험할 친구들을 만나보자!</h2>
             </div>
-            <div class="components-grid">
+            <div class="comp-grid">
                 <div class="comp-card fade-in">
+                    <img class="comp-ico" src="assets/landing/icon_compo01.png" alt="">
                     <h3>서보 모터 (바퀴)</h3>
-                    <p>360도 연속 회전 서보 2개로 전진, 후진, 좌회전, 우회전을 수행합니다.</p>
+                    <p>360도 연속 회전, 서보 2개로 전진, 후진, 좌회전, 우회전을 할 수 있어요.</p>
                 </div>
                 <div class="comp-card fade-in">
+                    <img class="comp-ico" src="assets/landing/icon_compo02.png" alt="">
                     <h3>DC 모터</h3>
-                    <p>메인 구동 모터로 강한 힘을 제공합니다. PWM 속도 제어와 방향 전환을 지원합니다.</p>
+                    <p>메인 구동 모터로 강한 힘을 가지고 있어요. 속도와 방향을 제어할 수 있어요.</p>
                 </div>
                 <div class="comp-card fade-in">
+                    <img class="comp-ico" src="assets/landing/icon_compo03.png" alt="">
                     <h3>초음파 센서 (HC-SR04)</h3>
-                    <p>전방 물체까지의 거리를 cm 단위로 측정합니다. 자동 정지 기능과 연동됩니다.</p>
+                    <p>앞 물체까지의 거리(cm)를 측정해요. 자동 정지 기능과 연동돼요.</p>
                 </div>
                 <div class="comp-card fade-in">
+                    <img class="comp-ico" src="assets/landing/icon_compo04.png" alt="">
                     <h3>자기장 센서</h3>
-                    <p>자석의 존재를 감지하여 탐사 미션에 활용됩니다.</p>
+                    <p>자석의 존재를 감지하여 탐사 미션에 활용할 수 있어요.</p>
                 </div>
                 <div class="comp-card fade-in">
+                    <img class="comp-ico" src="assets/landing/icon_compo05.png" alt="">
                     <h3>LED 배열 (5개)</h3>
-                    <p>5개의 LED를 개별 또는 전체 제어합니다. 밝기 조절이 가능합니다.</p>
+                    <p>5개의 LED를 개별 또는 전체 제어를 해요. 밝기 조절도 가능해요.</p>
                 </div>
                 <div class="comp-card fade-in">
+                    <img class="comp-ico" src="assets/landing/icon_compo06.png" alt="">
                     <h3>OLED 디스플레이</h3>
-                    <p>128x64 SSD1306 OLED에 메시지를 표시합니다.</p>
+                    <p>128 x 64 SSD1306 OLED에 메시지를 표시해요.</p>
                 </div>
             </div>
         </section>
 
-        <!-- CTA -->
+        <!-- ===== CTA ===== -->
         <div class="cta-section fade-in">
-            <h2>화성 탐사를 시작하세요</h2>
-            <p>블록을 조합하고, 로버에 명령을 전송하세요.</p>
-            <a href="Web/index.html" class="btn btn-primary">서비스 시작하기</a>
+            <h2>화성으로 출발해 볼까요?</h2>
+            <p>블록을 연결해 로봇을 움직여 보세요!</p>
+            <a href="Web/index.html" class="cta-btn">탐사 시작하기</a>
         </div>
     </div>
 
@@ -655,13 +516,8 @@
     <script>
     // Scroll fade-in observer
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
+        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
     }, { threshold: 0.1 });
-
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
     </script>
 </body>
