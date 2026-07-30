@@ -22,6 +22,9 @@ export class AiChat {
     // 서버에 보낼 최근 대화. 서버 쪽에서도 길이를 자르지만 여기서도 가볍게 유지.
     this.history = [];
     this.maxHistory = opts.maxHistory || 20;
+    // 매 질문마다 "지금 화면 상황"(현재 미션·작업공간 블록 등)을 만들어 주는 함수(선택).
+    // 반환한 문자열이 서버로 전달돼 AI 가 현재 상태를 알고 답하도록 한다.
+    this.getContext = typeof opts.getContext === 'function' ? opts.getContext : null;
   }
 
   reset() {
@@ -36,6 +39,12 @@ export class AiChat {
     this.history.push({ role: 'user', content: text });
     this._trim();
 
+    // 현재 화면 상황(현재 미션·작업공간 블록 등)을 수집해 함께 보낸다. 실패해도 대화는 진행.
+    let context = '';
+    if (this.getContext) {
+      try { context = String(this.getContext() || '').slice(0, 4000); } catch (e) { context = ''; }
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeout);
     let resp;
@@ -43,7 +52,7 @@ export class AiChat {
       resp = await fetch(`${this.baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: this.history }),
+        body: JSON.stringify({ messages: this.history, context }),
         signal: controller.signal,
       });
     } catch (err) {

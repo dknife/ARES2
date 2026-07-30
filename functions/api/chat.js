@@ -37,7 +37,19 @@ const SYSTEM_PROMPT = `너는 초등학생이 블록코딩으로 로봇(ARES 화
 - 반복: 안에 든 블록을 정한 횟수만큼 되풀이해.
 - 조건(만약~이면): 조건이 맞을 때만 안쪽 블록을 실행해.
 - 변수: 값을 담아 두고 이름으로 꺼내 써.
-- 수학: 더하기·빼기 같은 간단한 계산과 크기 비교.`;
+- 수학: 더하기·빼기 같은 간단한 계산과 크기 비교.
+
+[화면 구성 — 아이가 보는 실제 화면이야. 이 이름 그대로 안내해]
+- 화면 가운데: 블록을 끌어다 붙이는 "코딩 작업 공간".
+- 왼쪽: 블록 서랍(카테고리) — 동작 / 출력 / 발사 / 감지 / 제어 / 변수 / 수학 / 함수.
+  · LED·화면(글자 보여주기)·부저는 "출력" 안에 있어.
+  · 거리·자기(자석) 센서는 "감지" 안에 있어.
+  · 반복·조건(만약~이면)·기다리기는 "제어" 안에 있어.
+  · 앞뒤좌우 이동·멈추기는 "동작" 안에, 로켓/총 발사는 "발사" 안에 있어.
+- 위쪽 버튼: [🏠 개요] [▶️ 미션 전송](만든 블록을 로봇으로 보내 실행) [💾 미션 저장] [📂 미션 읽기] [🧩 블록코딩] [시뮬레이션] [🤖 AI 도움(=지금 이 대화창)].
+- 미션 이동은 [← 이전 미션] [다음 미션 →], 로봇 연결은 "연결" 버튼.
+- 블록을 만들려면 "왼쪽 서랍에서 해당 카테고리를 열고, 블록을 가운데 작업 공간으로 끌어다 놓으면 돼" 처럼 실제 조작을 알려줘.
+- 참고: 이 대화 아래에 "[지금 화면 상황]"이 함께 오면, 그건 아이가 지금 보고 있는 실제 미션·작업공간이야. 반드시 그것에 맞춰 구체적으로 answer 해.`;
 
 // 대화 폭주 방지 가드 (server.py 와 동일)
 const MAX_MESSAGES = 24;         // 최근 N턴만 모델에 전달
@@ -95,6 +107,12 @@ export async function onRequestPost({ request, env }) {
     const contents = toGeminiContents(messages);
     if (!contents.length) return j({ detail: '보낼 메시지가 없어요.' }, 400, cors);
 
+    // 프론트가 보낸 "지금 화면 상황"(현재 미션·작업공간 블록). 있으면 시스템 프롬프트에 덧붙인다.
+    const context = typeof body.context === 'string' ? body.context.slice(0, 4000) : '';
+    const sysText = context
+      ? SYSTEM_PROMPT + '\n\n[지금 화면 상황 — 아이가 보고 있는 실제 상태야. 이걸 근거로 답해]\n' + context
+      : SYSTEM_PROMPT;
+
     const model = env.GEMINI_MODEL || 'gemini-flash-latest';
     let resp;
     try {
@@ -102,7 +120,7 @@ export async function onRequestPost({ request, env }) {
         'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key,
         { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            system_instruction: { parts: [{ text: sysText }] },
             contents,
             generationConfig: { temperature: 0.7, topP: 0.95, maxOutputTokens: MAX_OUTPUT_TOKENS },
           }) });

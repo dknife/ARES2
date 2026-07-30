@@ -2598,7 +2598,35 @@ function initializeMissionListeners(ws) {
   const aiMessages = document.getElementById('aiMessages');
   const aiInput = document.getElementById('aiInput');
   const aiForm = document.getElementById('aiForm');
-  const aiChat = new AiChat();
+  // AI 에게 보낼 "지금 화면 상황" 을 만든다: 현재 차시/미션 + 작업공간에 놓인 블록.
+  // 이 덕분에 AI 가 아이가 지금 보고 있는 화면·진행 상황을 알고 맞춤 힌트를 줄 수 있다.
+  function buildAiContext() {
+    const parts = [];
+    try {
+      const cur = getLastCodingMission();
+      if (cur && Number.isFinite(cur.lesson)) {
+        const les = LESSON_CATALOG.find((l) => l.n === cur.lesson);
+        if (les) {
+          const mno = Number.isFinite(cur.mission) ? `, 미션 ${cur.mission}` : '';
+          parts.push(`현재 학습: ${cur.lesson}차시 "${les.title}"${mno}. 배우는 개념: ${les.concept}. 사용 하드웨어: ${les.hardware}.`);
+        }
+      }
+    } catch (e) { /* 미션 정보 없으면 생략 */ }
+    try {
+      if (workspace) {
+        const tops = workspace.getTopBlocks(true);
+        if (tops.length) {
+          const summary = tops.map((b) => b.toString()).join(' / ');
+          parts.push(`아이가 지금 작업공간에 놓은 블록: ${summary}`);
+        } else {
+          parts.push('아이의 작업공간은 지금 비어 있어(놓은 블록 없음).');
+        }
+      }
+    } catch (e) { /* 작업공간 접근 실패 시 생략 */ }
+    return parts.join('\n');
+  }
+
+  const aiChat = new AiChat({ getContext: buildAiContext });
   let aiBusy = false; // 응답 대기 중 중복 전송 방지
 
   function aiAddMessage(role, html) {
