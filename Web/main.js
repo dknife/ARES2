@@ -2691,6 +2691,24 @@ function initializeMissionListeners(ws) {
     updateMobileBottomNav();
     e.currentTarget?.blur?.();
   });
+
+  // AI 패널이 열려 있는 동안 배경(패널 밖) 스크롤을 막는다.
+  // 패널을 여닫는 경로가 여러 곳이라, hidden 속성 변화를 감시해 한 곳에서 처리한다.
+  if (aiPanel) {
+    const blockBgScroll = (e) => { if (!aiPanel.contains(e.target)) e.preventDefault(); };
+    const syncScrollLock = () => {
+      if (!aiPanel.hasAttribute('hidden')) {
+        document.addEventListener('wheel', blockBgScroll, { passive: false });
+        document.addEventListener('touchmove', blockBgScroll, { passive: false });
+      } else {
+        document.removeEventListener('wheel', blockBgScroll, { passive: false });
+        document.removeEventListener('touchmove', blockBgScroll, { passive: false });
+      }
+    };
+    new MutationObserver(syncScrollLock).observe(aiPanel, { attributes: true, attributeFilter: ['hidden'] });
+    syncScrollLock();
+  }
+
   aiForm?.addEventListener('submit', (e) => {
     e.preventDefault();
     const text = aiInput.value;
