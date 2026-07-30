@@ -3116,6 +3116,8 @@ body[data-content-mode="simulation"] .mobile-connect-btn.run-stop .mobile-nav-la
 .ai-messages {
     flex: 1;
     overflow-y: auto;
+    /* 채팅 스크롤이 끝에 닿아도 뒤 배경으로 전파(scroll chaining)되지 않게 막는다 */
+    overscroll-behavior: contain;
     padding: 12px;
     display: flex;
     flex-direction: column;
