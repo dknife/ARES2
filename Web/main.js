@@ -2697,9 +2697,6 @@ function initializeMissionListeners(ws) {
     aiInput.value = '';
     aiHandle(text);
   });
-  document.querySelectorAll('.ai-chip').forEach((chip) => {
-    chip.addEventListener('click', () => aiHandle(chip.textContent));
-  });
 
   // 대시보드 메시지 (iframe → main)
   window.addEventListener('message', async (event) => {
