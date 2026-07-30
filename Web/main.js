@@ -2695,14 +2695,34 @@ function initializeMissionListeners(ws) {
   // AI 패널이 열려 있는 동안 배경(패널 밖) 스크롤을 막는다.
   // 패널을 여닫는 경로가 여러 곳이라, hidden 속성 변화를 감시해 한 곳에서 처리한다.
   if (aiPanel) {
+    // 배경의 실제 스크롤 컨테이너들 — 열려 있는 동안 overflow 를 잠근다(스크롤바·키보드까지 차단).
+    const SCROLLERS = '#overviewView, #lessonView, #missionView .mission-panel';
+    let locked = []; // [el, 이전 overflow] 복원용
+
     const blockBgScroll = (e) => { if (!aiPanel.contains(e.target)) e.preventDefault(); };
+
+    const lockScrollers = () => {
+      locked = [];
+      document.querySelectorAll(SCROLLERS).forEach((el) => {
+        if (aiPanel.contains(el)) return;
+        locked.push([el, el.style.overflow]);
+        el.style.overflow = 'hidden';
+      });
+    };
+    const unlockScrollers = () => {
+      locked.forEach(([el, prev]) => { el.style.overflow = prev; });
+      locked = [];
+    };
+
     const syncScrollLock = () => {
       if (!aiPanel.hasAttribute('hidden')) {
         document.addEventListener('wheel', blockBgScroll, { passive: false });
         document.addEventListener('touchmove', blockBgScroll, { passive: false });
+        lockScrollers();
       } else {
         document.removeEventListener('wheel', blockBgScroll, { passive: false });
         document.removeEventListener('touchmove', blockBgScroll, { passive: false });
+        unlockScrollers();
       }
     };
     new MutationObserver(syncScrollLock).observe(aiPanel, { attributes: true, attributeFilter: ['hidden'] });
