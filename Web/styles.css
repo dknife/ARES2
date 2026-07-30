@@ -3159,23 +3159,6 @@ body[data-content-mode="simulation"] .mobile-connect-btn.run-stop .mobile-nav-la
 .ai-suggest b { color: #fd8f09; }
 .ai-suggest .ai-hint { color: var(--text-muted); font-size: 0.9em; }
 
-.ai-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 0 12px 8px;
-}
-.ai-chip {
-    background: #fdf8f2;                 /* 크림 칩 */
-    border: 1px solid #fce1c5;
-    border-radius: 999px;
-    padding: 5px 10px;
-    font-size: 0.8em;
-    cursor: pointer;
-    color: #8a6a45;
-}
-.ai-chip:hover { background: #fd8f09; border-color: #fd8f09; color: #fff; }
-
 .ai-form {
     display: flex;
     gap: 6px;
