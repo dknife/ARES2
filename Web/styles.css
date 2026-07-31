@@ -2385,6 +2385,9 @@ details.mission-section summary {
         min-height: 0 !important;
         max-height: calc(100dvh - var(--mobile-bottom-nav-height) - env(safe-area-inset-bottom)) !important;
         overflow: hidden !important;
+        /* 높이가 이미 내비를 뺐으므로 스크롤 레이아웃용 padding-bottom(내비높이)은
+           제거한다 — 안 그러면 코딩/시뮬 카드 아래에 내비높이만큼 빈 공간이 생긴다 */
+        padding-bottom: 0 !important;
     }
     .header {
         position: static;
@@ -4322,12 +4325,14 @@ body[data-content-mode="coding"] #codingMissionBanner {
 
 /* 편집기 카드: 크림 바탕 + 복숭아 테두리 (툴박스+캔버스를 함께 감싼다) */
 #missionView[data-mode="coding"] > .mission-workspace {
-    padding: 10px 12px calc(var(--mobile-bottom-nav-height) + 6px);
+    /* 컨테이너가 이미 하단 내비 공간을 확보(100dvh - 내비높이)하므로, 여기서 또
+       내비높이만큼 빼면 카드 아래에 큰 빈 공간이 생긴다 → 작은 균일 여백으로 축소 */
+    padding: 6px;
     background: transparent;
     box-sizing: border-box;
 }
 #missionView[data-mode="coding"] > .mission-workspace > #blocklyDiv {
-    inset: 10px 12px calc(var(--mobile-bottom-nav-height) + 6px);
+    inset: 6px;
     /* width/height:100% 규칙(#missionView #blocklyDiv)을 눌러 left/right inset 로
        폭을 정하게 한다 — 안 그러면 100% 폭이 우측 inset 을 넘어 오른쪽으로 삐져나온다 */
     width: auto !important;
