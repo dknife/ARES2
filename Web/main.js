@@ -2669,7 +2669,11 @@ function initializeMissionListeners(ws) {
       if (aiMessages && !aiMessages.childElementCount) {
         aiAddMessage('bot', '안녕! 나는 코딩을 도와주는 선생님이야. 답을 바로 알려주진 않지만, 어떤 블록을 쓰면 좋을지 같이 생각해줄게. 뭘 만들고 싶어? 🙂');
       }
-      setTimeout(() => aiInput?.focus(), 0);
+      // 터치 기기(태블릿/폰)에선 자동 포커스하지 않는다 — 열자마자 키보드가 뜨는 걸 막음.
+      // (사용자가 입력창을 직접 탭하면 그때 키보드가 올라온다.) 데스크톱은 편의상 자동 포커스 유지.
+      if (!window.matchMedia('(pointer: coarse)').matches) {
+        setTimeout(() => aiInput?.focus(), 0);
+      }
     } else {
       aiPanel.setAttribute('hidden', '');
     }
