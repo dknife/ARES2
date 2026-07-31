@@ -1130,20 +1130,10 @@ function bindMobileBottomNav() {
         openDashboardFromAnywhere();
         break;
       case 'ai':
-        if (currentView !== 'mission') {
-          // 개요/차시 화면에서 AI를 열 때도 1차시 1미션으로 리셋하지 말고
-          // 마지막으로 선택(기록)한 미션을 유지한다
-          const aiTarget = getLastCodingMission();
-          const aiLesson = aiTarget?.lesson ?? lesson;
-          const aiMission = aiTarget?.mission ?? mission;
-          mobileAiReturnHash = window.location.hash || '';
-          navigate({ lesson: aiLesson, mission: aiMission });
-          pendingDashboardOpen = false;
-          setTimeout(() => document.getElementById('aiHelpButton')?.click(), 450);
-        } else {
-          mobileAiReturnHash = null;
-          document.getElementById('aiHelpButton')?.click();
-        }
+        // 페이지 이동 없이 현재 화면 위에 팝업으로 AI 도움 패널만 연다.
+        // (예전엔 개요/차시 화면에서 누르면 미션 화면으로 자동 이동했음 — 제거)
+        mobileAiReturnHash = null;
+        document.getElementById('aiHelpButton')?.click();
         break;
       case 'log':
         document.getElementById('logHeader')?.click();
