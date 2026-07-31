@@ -516,10 +516,12 @@ function skinBlocklyControls() {
   one('.blocklyZoomIn',    'zoom-in.png');     // ＋
   one('.blocklyZoomOut',   'zoom-out.png');    // －
   // 휴지통: 몸통 이미지를 trash.png 로 교체, 뚜껑(lid) 이미지는 숨긴다(핸들러는 유지)
+  // 작은 화면(폰)에선 47px 이 과하게 커서 잘려 보이므로 크기를 줄인다.
   const trash = document.querySelector('.blocklyTrash');
   if (trash) {
+    const tSize = window.matchMedia('(max-width: 600px)').matches ? 34 : 47;
     const imgs = trash.querySelectorAll('image');
-    swap(imgs[0], 'trash.png', 0, 6, 47, 47);
+    swap(imgs[0], 'trash.png', 0, 6, tSize, tSize);
     if (imgs[1]) imgs[1].style.display = 'none';
   }
 }
