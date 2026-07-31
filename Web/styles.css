@@ -2379,9 +2379,11 @@ details.mission-section summary {
     }
     body[data-content-mode="coding"] .container,
     body[data-content-mode="simulation"] .container {
-        height: 100dvh !important;
+        /* 하단 고정 내비 높이만큼 빼서 바닥 UI 가 내비 뒤로 잘리지 않게 한다
+           (태블릿 세로 768px 등 ≤768 화면에서 하단 잘림 방지) */
+        height: calc(100dvh - var(--mobile-bottom-nav-height) - env(safe-area-inset-bottom)) !important;
         min-height: 0 !important;
-        max-height: 100dvh !important;
+        max-height: calc(100dvh - var(--mobile-bottom-nav-height) - env(safe-area-inset-bottom)) !important;
         overflow: hidden !important;
     }
     .header {
