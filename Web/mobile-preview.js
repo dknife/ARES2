@@ -90,7 +90,9 @@
       'body.ares-mp{background:#e9ebef;display:flex;justify-content:center;',
       'align-items:stretch;overflow:hidden;}',
       'body.ares-mp>iframe{display:block;border:0;width:768px;max-width:100%;',
-      'height:100vh;background:#fff;box-shadow:0 0 60px rgba(0,0,0,.18);}',
+      // 100vh 는 모바일/태블릿에서 주소창 제외한 "큰 뷰포트"라 하단이 잘린다.
+      // 100dvh(동적 뷰포트 높이)로 실제 보이는 높이에 맞춘다. (미지원 브라우저는 100vh 폴백)
+      'height:100vh;height:100dvh;background:#fff;box-shadow:0 0 60px rgba(0,0,0,.18);}',
     ].join('');
     document.head.appendChild(style);
 
