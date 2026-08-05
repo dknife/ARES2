@@ -113,7 +113,9 @@ export async function onRequestPost({ request, env }) {
       ? SYSTEM_PROMPT + '\n\n[지금 화면 상황 — 아이가 보고 있는 실제 상태야. 이걸 근거로 답해]\n' + context
       : SYSTEM_PROMPT;
 
-    const model = env.GEMINI_MODEL || 'gemini-flash-latest';
+    // 모델 고정: gemini-flash (일반 Flash, lite 보다 한 단계 위). 대시보드 GEMINI_MODEL
+    // 변수(현재 lite)보다 이 코드값을 우선한다. 다시 env 로 제어하려면 env.GEMINI_MODEL 을 앞에 둘 것.
+    const model = 'gemini-flash-latest';
     let resp;
     try {
       resp = await fetch(
