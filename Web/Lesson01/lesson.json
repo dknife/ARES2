@@ -69,7 +69,7 @@
       ],
       "goals": [
         "스마트폰과 피코 W 블루투스 페어링",
-        "앱에서 연결 버튼 눌러 CONNECTED 확인",
+        "앱에서 연결 버튼 눌러 연결됨 확인",
         "연결 상태 LED로 확인하기"
       ],
       "sampleCode": "# 연결 확인\n만약 bluetooth.connected()\n    출력: CONNECTED\n    LED 1번 켜기 (밝기 100%)   # 연결 확인 LED"
