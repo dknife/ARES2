@@ -2273,15 +2273,11 @@ function initializeAlwaysOnListeners() {
   // 툴박스 하단 도구 버튼(저장·읽기) 위임 배선
   setupToolboxActions();
 
-  // 상단 ARES 로고 → "만든 사람들"(크레딧) WebGL 오버레이 (필요할 때만 로드)
-  document.querySelector('.ares-brand')?.addEventListener('click', async (e) => {
+  // 상단 ARES 로고 → 홈(개요)으로 이동
+  document.querySelector('.ares-brand')?.addEventListener('click', (e) => {
     e.preventDefault();
-    try {
-      const { openCredits } = await import('./credits.js?v=20260705m');
-      openCredits();
-    } catch (err) {
-      Logger.add(`[오류] 크레딧 로드 실패: ${err.message}`, 'error');
-    }
+    navigate({});
+    e.currentTarget?.blur?.();
   });
 
   // 신호 연결 통합 버튼: 현재 상태에 따라 connect / disconnect / retry 분기
